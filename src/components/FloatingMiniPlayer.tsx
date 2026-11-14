@@ -3,7 +3,7 @@ import { Play, Pause, Volume2, VolumeX, ChevronLeft, ChevronRight, Loader2, Radi
 import { useAlbumColors } from "@/hooks/useAlbumColors";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { readMusicData, writeMusicData, MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
+import { readMusicData, readMusicStart, writeMusicData, writeMusicStart, MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
 import { getStationDatabaseSync } from "@/lib/stationDatabaseService";
 import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
 import { fetchTrackCover, getTrackCoverSync } from "@/lib/musicCoverResolver";
@@ -73,7 +73,16 @@ export default function FloatingMiniPlayer({ isBehindPages = false, effectiveUse
 
   const [state, setState] = useState<MusicState>(() => {
     const last = (window as any)?.__lastPlayerMusicState;
-    if (last?.currentMusic?.titulo) return last;
+    if (last?.currentMusic?.titulo) {
+      const latestLocal = candidateUids
+        .map((uid) => ({ data: readMusicData(uid) as any, startedAt: readMusicStart(uid) }))
+        .filter(({ data }) => data && (data.titulo || data.excecao))
+        .sort((a, b) => b.startedAt - a.startedAt)[0];
+      const normalize = (value: unknown) => String(value || "").trim().toLocaleLowerCase();
+      const lastIdentity = `${normalize(last.currentMusic.titulo)}::${normalize(last.currentMusic.artista)}`;
+      const latestIdentity = latestLocal ? `${normalize(latestLocal.data.titulo)}::${normalize(latestLocal.data.artista)}` : lastIdentity;
+      if (!latestLocal || lastIdentity === latestIdentity || Date.now() - latestLocal.startedAt >= Math.max(240_000, (Number(latestLocal.data.duracao) || 180) * 1000)) return last;
+    }
     for (const uid of candidateUids) {
       try {
         const d = readMusicData(uid) as any;
@@ -113,35 +122,97 @@ export default function FloatingMiniPlayer({ isBehindPages = false, effectiveUse
 
   // Fallback and listener for continuous updates across all pages
   useEffect(() => {
-    if ((window as any)?.__lastPlayerMusicState) {
-      setState((window as any).__lastPlayerMusicState as MusicState);
-    }
+    // Remote bootstrap sources can lag behind the local/realtime track update.
+    // Do not let an older server snapshot overwrite a newer track already saved
+    // for this station; broadcasts with a newer startTime still pass immediately.
+    const isRemoteTrackCurrentOrNewer = (track: any, rawStartTime?: unknown) => {
+      const normalize = (value: unknown) => String(value || "").trim().toLocaleLowerCase();
+      const incomingIdentity = `${normalize(track?.titulo)}::${normalize(track?.artista)}`;
+      const latestLocal = candidateUids
+        .map((uid) => ({ data: readMusicData(uid) as any, startedAt: readMusicStart(uid) }))
+        .filter(({ data }) => data && (data.titulo || data.excecao))
+        .sort((a, b) => b.startedAt - a.startedAt)[0];
+
+      if (!latestLocal) return true;
+      const localIdentity = `${normalize(latestLocal.data.titulo)}::${normalize(latestLocal.data.artista)}`;
+      if (incomingIdentity === localIdentity) return true;
+
+      const incomingStartedAt = Number(rawStartTime) || 0;
+      if (incomingStartedAt > 0 && latestLocal.startedAt > 0) {
+        return incomingStartedAt >= latestLocal.startedAt;
+      }
+
+      if (latestLocal.startedAt <= 0) return true;
+      const localDurationMs = Math.max(240_000, (Number(latestLocal.data.duracao) || 180) * 1000);
+      return Date.now() - latestLocal.startedAt >= localDurationMs;
+    };
+
+    const applyRemoteTrack = (track: any, startTime?: unknown) => {
+      if (!track || !isRemoteTrackCurrentOrNewer(track, startTime)) return false;
+      const capa = track.capa || getTrackCoverSync(track.titulo, track.artista) || "";
+      const normalizedTrack = {
+        ...track,
+        titulo: track.titulo || "",
+        artista: track.artista || "",
+        capa,
+      };
+      const normalized = (value: unknown) => String(value || "").trim().toLocaleLowerCase();
+      const sameAsLatestLocal = candidateUids.some((uid) => {
+        const local = readMusicData(uid) as any;
+        return local && normalized(local.titulo) === normalized(normalizedTrack.titulo) && normalized(local.artista) === normalized(normalizedTrack.artista);
+      });
+      const latestStartedAt = Math.max(0, ...candidateUids.map((uid) => readMusicStart(uid)));
+      const acceptedStartTime = Number(startTime) || (sameAsLatestLocal && latestStartedAt ? latestStartedAt : Date.now());
+      for (const target of candidateUids) {
+        writeMusicData(target, normalizedTrack);
+        writeMusicStart(target, acceptedStartTime);
+      }
+      setState(prev => ({
+        ...prev,
+        currentMusic: normalizedTrack,
+        displayArt: capa || (prev.currentMusic?.titulo === normalizedTrack.titulo && prev.currentMusic?.artista === normalizedTrack.artista ? prev.displayArt : null),
+      }));
+      return true;
+    };
+
     const onMusic = (e: Event) => {
-      const d = (e as CustomEvent).detail;
-      if (d) setState(d as MusicState);
+      const incoming = (e as CustomEvent).detail as MusicState | undefined;
+      if (!incoming) return;
+      const track = incoming.currentMusic;
+      if (track && !isRemoteTrackCurrentOrNewer(track)) return;
+      setState(prev => {
+        const sameTrack = prev.currentMusic?.titulo === track?.titulo && prev.currentMusic?.artista === track?.artista;
+        const trackArt = track?.capa || (track?.titulo ? getTrackCoverSync(track.titulo, track.artista) : "") || null;
+        return {
+          ...prev,
+          ...incoming,
+          currentMusic: track || null,
+          displayArt: trackArt || (sameTrack ? incoming.displayArt || prev.displayArt : null),
+        };
+      });
     };
     window.addEventListener("player:music", onMusic as EventListener);
+    const lastPlayerState = (window as any)?.__lastPlayerMusicState;
+    if (lastPlayerState?.currentMusic?.titulo) {
+      onMusic(new CustomEvent("player:music", { detail: lastPlayerState }));
+    }
 
     const onStorage = () => {
-      for (const uid of candidateUids) {
-        try {
-          const d = readMusicData(uid) as any;
-          if (d && (d.titulo || d.excecao)) {
-            const capa = d.capa || getTrackCoverSync(d.titulo, d.artista) || "";
-            setState(prev => ({
-              ...prev,
-              currentMusic: {
-                titulo: d.titulo || "",
-                artista: d.artista || "",
-                capa: capa,
-                excecao: d.excecao || null,
-              },
-              displayArt: capa || prev.displayArt,
-            }));
-            break;
-          }
-        } catch {}
-      }
+      const latest = candidateUids
+        .map((uid) => ({ data: readMusicData(uid) as any, startedAt: readMusicStart(uid) }))
+        .filter(({ data }) => data && (data.titulo || data.excecao))
+        .sort((a, b) => b.startedAt - a.startedAt)[0];
+      if (!latest || !isRemoteTrackCurrentOrNewer(latest.data, latest.startedAt)) return;
+      const d = latest.data;
+      const capa = d.capa || getTrackCoverSync(d.titulo, d.artista) || "";
+      setState(prev => {
+        const sameTrack = prev.currentMusic?.titulo === d.titulo && prev.currentMusic?.artista === d.artista;
+        return {
+          ...prev,
+          currentMusic: { titulo: d.titulo || "", artista: d.artista || "", capa, excecao: d.excecao || null },
+          displayArt: capa || (sameTrack ? prev.displayArt : null),
+        };
+      });
     };
     onStorage();
 
@@ -156,21 +227,7 @@ export default function FloatingMiniPlayer({ isBehindPages = false, effectiveUse
         .on("broadcast", { event: "track_change" }, (payload: any) => {
           const d = payload.payload || payload;
           if (d && (d.titulo || d.excecao)) {
-            const capa = d.capa || getTrackCoverSync(d.titulo, d.artista) || "";
-            const track = { ...d, capa };
-            for (const target of candidateUids) {
-              writeMusicData(target, track);
-            }
-            setState(prev => ({
-              ...prev,
-              currentMusic: {
-                titulo: d.titulo || "",
-                artista: d.artista || "",
-                capa: capa,
-                excecao: d.excecao || null,
-              },
-              displayArt: capa || prev.displayArt,
-            }));
+            applyRemoteTrack({ ...d, excecao: d.excecao || null }, d.startTime);
           } else if (d && d.titulo === "" && d.artista === "") {
             setState(prev => ({
               ...prev,
@@ -205,14 +262,7 @@ export default function FloatingMiniPlayer({ isBehindPages = false, effectiveUse
               capa: liveCapa || "",
               duracao: liveDur,
             };
-            for (const target of candidateUids) {
-              writeMusicData(target, liveTrack);
-            }
-            setState(prev => ({
-              ...prev,
-              currentMusic: liveTrack,
-              displayArt: liveCapa || prev.displayArt,
-            }));
+            applyRemoteTrack(liveTrack, live.startTime);
             return;
           }
         }
@@ -247,14 +297,7 @@ export default function FloatingMiniPlayer({ isBehindPages = false, effectiveUse
               capa: curCover || "",
               excecao: curExcecao,
             };
-            for (const target of candidateUids) {
-              writeMusicData(target, trackData);
-            }
-            setState(prev => ({
-              ...prev,
-              currentMusic: trackData,
-              displayArt: curCover || prev.displayArt,
-            }));
+            applyRemoteTrack(trackData, di.music_start_time);
             return;
           }
         } catch {}
@@ -302,9 +345,21 @@ export default function FloatingMiniPlayer({ isBehindPages = false, effectiveUse
   const targetArtista = (state.currentMusic?.artista || (state.activeChannel?.nome ? "Ao vivo" : "")).trim();
   // Never show a leftover cover/logo when there is no real track playing.
   const hasRealTrack = !!targetTitulo && !["sem título", "sem titulo", "sem reprodução", "sem reproducao", "aguardando leitura..."].includes(targetTitulo.toLowerCase());
-  const targetArt = hasRealTrack
+  const resolvedTargetArt = hasRealTrack
     ? (state.displayArt || state.currentMusic?.capa || getTrackCoverSync(targetTitulo, targetArtista) || null)
     : null;
+
+  // A mesma faixa pode chegar de fontes diferentes com capas distintas (por
+  // exemplo, cache local e sincronização remota). Escolha a primeira capa
+  // válida e mantenha-a até mudar o título/artista, evitando alternância.
+  const coverIdentity = `${targetTitulo}:::${targetArtista}`;
+  const stableCoverRef = useRef<{ identity: string; art: string | null }>({ identity: coverIdentity, art: resolvedTargetArt });
+  if (stableCoverRef.current.identity !== coverIdentity) {
+    stableCoverRef.current = { identity: coverIdentity, art: resolvedTargetArt };
+  } else if (!stableCoverRef.current.art && resolvedTargetArt) {
+    stableCoverRef.current.art = resolvedTargetArt;
+  }
+  const targetArt = stableCoverRef.current.art;
 
   // A animação depende só de música/artista; a capa que chega depois entra sem reanimar.
   const currentKey = `${targetTitulo}:::${targetArtista}`;
@@ -573,6 +628,7 @@ export default function FloatingMiniPlayer({ isBehindPages = false, effectiveUse
                     try {
                       const freshCover = await fetchTrackCover(t, a);
                       if (freshCover && freshCover !== displayedInfo.art) {
+                        stableCoverRef.current = { identity: coverIdentity, art: freshCover };
                         setDisplayedInfo(prev => ({ ...prev, art: freshCover }));
                         setState(prev => ({
                           ...prev,

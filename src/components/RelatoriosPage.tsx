@@ -528,7 +528,7 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
 
   return (
     <div className="min-h-full bg-slate-50 p-4 md:p-6" style={{ fontFamily: "'Montserrat', sans-serif" }}>
-      <div className="mx-auto max-w-[1500px]">
+      <div className="mx-0 w-full max-w-none">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-blue-600"><BarChart3 size={14} /> Central de relatórios</div>

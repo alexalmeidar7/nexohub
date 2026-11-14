@@ -814,6 +814,17 @@ table:not([data-no-row-hover]) tbody tr:hover {
   color: var(--layout-icon-color, #888888);
 }
 
+.mv-content-area button.agenda-clear-button,
+.mv-content-area [style*="background: var(--layout-header-bg"] button.agenda-clear-button {
+  color: #ffffff !important;
+}
+
+.mv-content-area button.agenda-clear-button svg,
+.mv-content-area [style*="background: var(--layout-header-bg"] button.agenda-clear-button svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
 /* ====== Bento-style section headers inside content area ====== */
 /* Transform dark solid header bars into clean, light-styled headers */
 .mv-content-area [style*="background: var(--layout-header-bg"],
@@ -2181,6 +2192,22 @@ img, video, canvas, svg { max-width: 100%; }
   display: none;
   width: 0;
   height: 0;
+}
+
+/* Keep the agenda destructive action readable inside themed content headers. */
+.mv-content-area button.agenda-clear-button,
+.mv-content-area button.agenda-clear-button *,
+button.agenda-clear-button,
+button.agenda-clear-button * {
+  color: #ffffff !important;
+}
+.mv-content-area button.agenda-clear-button,
+button.agenda-clear-button {
+  opacity: 1 !important;
+}
+.mv-content-area button.agenda-clear-button svg,
+button.agenda-clear-button svg {
+  stroke: #ffffff !important;
 }
 .nexo-table-scroll {
   scrollbar-width: thin;

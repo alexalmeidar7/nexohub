@@ -69,6 +69,22 @@ interface Testemunhal {
   updated_at?: string | null;
 }
 
+interface StreamAudienceSource { url: string; xpath: string; }
+
+function normalizeAudienceSources(primaryUrl: unknown, primaryXpath: unknown, extras: unknown): StreamAudienceSource[] {
+  const candidates = [
+    { url: primaryUrl, xpath: primaryXpath },
+    ...(Array.isArray(extras) ? extras : []),
+  ].map((source: any) => ({
+    url: String(source?.url || "").trim(),
+    xpath: String(source?.xpath || "").trim(),
+  })).filter(source => /^https?:\/\//i.test(source.url));
+
+  return candidates.filter((source, index) =>
+    candidates.findIndex(candidate => candidate.url === source.url) === index
+  );
+}
+
 const PROGRAMAS_VISIVEIS = [
   "SERTANEJO BOM DEMAIS - 2",
   "PRIMEIRA HORA",
@@ -426,7 +442,13 @@ export default function PromocoesKiosk() {
   }, []);
   const [audienceUserId, setAudienceUserId] = useState<string | null>(null);
   const [weatherInfo, setWeatherInfo] = useState<{ city: string | null; lat: number | null; lon: number | null }>({ city: null, lat: null, lon: null });
-  const [streamCfg, setStreamCfg] = useState<{ audioUrl: string; audioXpath: string; videoUrl: string; videoXpath: string }>({ audioUrl: "", audioXpath: "", videoUrl: "", videoXpath: "" });
+  const [streamCfg, setStreamCfg] = useState<{
+    audioSources: StreamAudienceSource[];
+    videoSources: StreamAudienceSource[];
+    youtubeUrl: string;
+    youtubeApiKey: string;
+    youtubeChannelId: string;
+  }>({ audioSources: [], videoSources: [], youtubeUrl: "", youtubeApiKey: "", youtubeChannelId: "" });
   const [audioCount, setAudioCount] = useState<number | null>(null);
   const [videoCount, setVideoCount] = useState<number | null>(null);
   const peakStorageKey = `promo-peak-audience:${userSlug || "self"}`;
@@ -710,10 +732,19 @@ export default function PromocoesKiosk() {
           plano: empresa.plano || "",
         });
         setStreamCfg({
-          audioUrl: (empresa as any).audio_stream_api_url || empresa.audioUrl || "",
-          audioXpath: (empresa as any).audio_stream_xpath || empresa.audioXpath || "",
-          videoUrl: (empresa as any).video_stream_api_url || (empresa as any).videoStreamApiUrl || empresa.videoUrl || "",
-          videoXpath: (empresa as any).video_stream_xpath || empresa.videoXpath || "",
+          audioSources: normalizeAudienceSources(
+            (empresa as any).audio_stream_api_url || empresa.audioUrl,
+            (empresa as any).audio_stream_xpath || empresa.audioXpath,
+            (empresa as any).audio_sources,
+          ),
+          videoSources: normalizeAudienceSources(
+            (empresa as any).video_stream_api_url || (empresa as any).videoStreamApiUrl || empresa.videoUrl,
+            (empresa as any).video_stream_xpath || empresa.videoXpath,
+            (empresa as any).video_sources,
+          ),
+          youtubeUrl: (empresa as any).youtube || "",
+          youtubeApiKey: (empresa as any).youtube_api_key || "",
+          youtubeChannelId: (empresa as any).youtube_channel_id || "",
         });
       }
       if (data?.userId || isPositivaStation || syncDb?.userId) {
@@ -894,16 +925,17 @@ export default function PromocoesKiosk() {
           const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 2000));
           const streamPromise = supabase
             .from("empresa_config")
-            .select("audio_stream_api_url, audio_stream_xpath, video_stream_api_url, video_stream_xpath")
+            .select("audio_stream_api_url, audio_stream_xpath, audio_sources, video_stream_api_url, video_stream_xpath, video_sources, youtube, youtube_api_key, youtube_channel_id")
             .eq("user_id", localUid as any)
             .maybeSingle();
           const { data: ec }: any = await Promise.race([streamPromise, timeoutPromise]).catch(() => ({ data: null }));
           if (ec) {
             setStreamCfg({
-              audioUrl: (ec as any).audio_stream_api_url || "",
-              audioXpath: (ec as any).audio_stream_xpath || "",
-              videoUrl: (ec as any).video_stream_api_url || "",
-              videoXpath: (ec as any).video_stream_xpath || "",
+              audioSources: normalizeAudienceSources((ec as any).audio_stream_api_url, (ec as any).audio_stream_xpath, (ec as any).audio_sources),
+              videoSources: normalizeAudienceSources((ec as any).video_stream_api_url, (ec as any).video_stream_xpath, (ec as any).video_sources),
+              youtubeUrl: (ec as any).youtube || "",
+              youtubeApiKey: (ec as any).youtube_api_key || "",
+              youtubeChannelId: (ec as any).youtube_channel_id || "",
             });
           }
         } catch { /* ignore */ }
@@ -1096,48 +1128,90 @@ export default function PromocoesKiosk() {
   };
 
   // ---- Audiência ao vivo (áudio x vídeo) ----
+  const audioSourcesKey = JSON.stringify(streamCfg.audioSources);
   useEffect(() => {
-    if (!audienceUserId || !streamCfg.audioUrl) { setAudioCount(null); return; }
+    const sources = streamCfg.audioSources;
+    if (!audienceUserId) { setAudioCount(null); return; }
     let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const tick = async () => {
-      try {
-        const body: Record<string, unknown> = { userId: audienceUserId, urls: [streamCfg.audioUrl] };
-        if (streamCfg.audioXpath) body.xpath = streamCfg.audioXpath;
-        const { data } = await supabase.functions.invoke("count-stream-listeners", { body });
-        if (!cancelled && data && (data as any).ok) {
-          const n = (data as any).listeners;
-          setAudioCount(typeof n === "number" ? n : null);
-        }
-      } catch { /* ignore */ }
+      const targets: Array<StreamAudienceSource | null> = sources.length ? sources : [null];
+      const results = await Promise.all(targets.map(async source => {
+        try {
+          const body: Record<string, unknown> = { userId: audienceUserId };
+          if (source) {
+            body.urls = [source.url];
+            if (source.xpath) body.xpath = source.xpath;
+          }
+          const { data, error } = await supabase.functions.invoke("count-stream-listeners", { body });
+          const value = !error && (data as any)?.ok ? (data as any).listeners : null;
+          return typeof value === "number" && Number.isFinite(value) ? value : null;
+        } catch { return null; }
+      }));
+      if (cancelled) return;
+      if (results.some(value => value !== null)) {
+        setAudioCount(results.reduce<number>((total, value) => total + (value ?? 0), 0));
+      }
+      timer = setTimeout(tick, 10_000);
     };
-    tick();
-    const iv = setInterval(tick, 30000);
-    return () => { cancelled = true; clearInterval(iv); };
-  }, [audienceUserId, streamCfg.audioUrl, streamCfg.audioXpath]);
+    void tick();
+    return () => { cancelled = true; if (timer) clearTimeout(timer); };
+  }, [audienceUserId, audioSourcesKey]);
 
   // Busca espectadores de vídeo usando a URL cadastrada em Configurações.
   // A Edge Function faz a leitura no servidor (evita bloqueio CORS) e tenta
   // detectar automaticamente o campo de espectadores da resposta Logicahost.
+  const videoSourcesKey = JSON.stringify(streamCfg.videoSources);
+  const youtubeAudienceKey = `${streamCfg.youtubeUrl}|${streamCfg.youtubeApiKey}|${streamCfg.youtubeChannelId}`;
   useEffect(() => {
-    const url = streamCfg.videoUrl?.trim();
-    if (!url) { setVideoCount(null); return; }
+    const sources = streamCfg.videoSources;
+    const hasYoutube = Boolean(streamCfg.youtubeUrl || streamCfg.youtubeChannelId);
+    if (!audienceUserId) { setVideoCount(null); return; }
     let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const tick = async () => {
-      try {
-        const body: Record<string, unknown> = { userId: audienceUserId, urls: [url] };
-        if (streamCfg.videoXpath?.trim()) body.xpath = streamCfg.videoXpath.trim();
-        const { data, error } = await supabase.functions.invoke("count-stream-listeners", { body });
-        if (cancelled) return;
-        const n = !error && (data as any)?.ok ? (data as any).listeners : null;
-        setVideoCount(typeof n === "number" && Number.isFinite(n) ? n : null);
-      } catch {
-        if (!cancelled) setVideoCount(null);
+      const requests = sources.length ? sources.map(async ({ url, xpath }) => {
+        try {
+          const body: Record<string, unknown> = { userId: audienceUserId, urls: [url] };
+          if (xpath) body.xpath = xpath;
+          const { data, error } = await supabase.functions.invoke("count-video-viewers", { body });
+          const value = !error && (data as any)?.ok ? (data as any).viewers : null;
+          return typeof value === "number" && Number.isFinite(value) ? value : null;
+        } catch { return null; }
+      }) : [(async () => {
+        try {
+          // Without legacy URL fields, let the edge function load active video
+          // channels and YouTube settings for this station from the database.
+          const { data, error } = await supabase.functions.invoke("count-video-viewers", {
+            body: { userId: audienceUserId },
+          });
+          const value = !error && (data as any)?.ok ? (data as any).viewers : null;
+          return typeof value === "number" && Number.isFinite(value) ? value : null;
+        } catch { return null; }
+      })()];
+      if (sources.length > 0 && hasYoutube) {
+        requests.push((async () => {
+          try {
+            const body: Record<string, unknown> = { userId: audienceUserId, urls: [] };
+            if (streamCfg.youtubeUrl) body.youtubeUrl = streamCfg.youtubeUrl;
+            if (streamCfg.youtubeApiKey) body.youtubeApiKey = streamCfg.youtubeApiKey;
+            if (streamCfg.youtubeChannelId) body.youtubeChannelId = streamCfg.youtubeChannelId;
+            const { data, error } = await supabase.functions.invoke("count-video-viewers", { body });
+            const value = !error && (data as any)?.ok ? (data as any).youtubeLive : null;
+            return typeof value === "number" && Number.isFinite(value) ? value : null;
+          } catch { return null; }
+        })());
       }
+      const results = await Promise.all(requests);
+      if (cancelled) return;
+      if (results.some(value => value !== null)) {
+        setVideoCount(results.reduce<number>((total, value) => total + (value ?? 0), 0));
+      }
+      timer = setTimeout(tick, 10_000);
     };
-    tick();
-    const iv = setInterval(tick, 30000);
-    return () => { cancelled = true; clearInterval(iv); };
-  }, [audienceUserId, streamCfg.videoUrl, streamCfg.videoXpath]);
+    void tick();
+    return () => { cancelled = true; if (timer) clearTimeout(timer); };
+  }, [audienceUserId, videoSourcesKey, youtubeAudienceKey]);
 
   // Rastreia o pico de audiência do dia
   useEffect(() => {
@@ -1866,7 +1940,7 @@ export default function PromocoesKiosk() {
         </nav>
 
         {/* Barra Batalha de Audiência: Áudio (esq) vs Vídeo (dir) - oculta para usuário Positiva */}
-        {!isPositivaUser && (() => {
+        {(() => {
           const a = Math.max(0, audioCount ?? 0);
           const v = Math.max(0, videoCount ?? 0);
           const total = a + v;

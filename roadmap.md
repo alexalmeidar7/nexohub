@@ -8,3 +8,4 @@
 - [x] Ajustar botões de citação em /locutor (logo estável, WhatsApp Positiva, destaque no ar) e unificar o visual dos pop-ups.
 - [x] Simplificar o formulário Podcast com título/subtítulo e fluxo único “Agendar e salvar”.
 - [ ] Confirmar com uma conta que tenha programas Podcast que o roteiro salvo entra imediatamente em Roteiros Agendados (a conta disponível no preview não possui opções de estúdio/programa).
+- [ ] Na proxima publicacao, reenviar /vmix-control/automation com o popup Botao Personalizado visivel para usuarios finais, mantendo a aparencia atual do print.

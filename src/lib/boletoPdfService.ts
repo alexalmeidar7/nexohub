@@ -25,6 +25,12 @@ function computeCRC16(payload: string): string {
   return crc.toString(16).toUpperCase().padStart(4, "0");
 }
 
+function requirePixKey(pixKey?: string): string {
+  const value = pixKey?.trim();
+  if (!value) throw new Error("Cadastre a chave PIX da agência antes de gerar a cobrança.");
+  return value;
+}
+
 /**
  * Generates an official Banco Central do Brasil Pix EMV BR Code string.
  */
@@ -176,7 +182,7 @@ function buildBoletoElement(
           <div>
             <div style="font-size: 11.5px; font-weight: 800; color: #0055ff; margin-bottom: 3px;">nome do beneficiário:</div>
             <div style="font-size: 13px; font-weight: 800; color: #011c5b;">ALEXSANDRO DE ALMEIDA ROSA</div>
-            <div style="font-size: 12px; font-weight: 600; color: #011c5b; margin-top: 1px;">13.130.809/0001-80</div>
+            <div style="font-size: 12px; font-weight: 600; color: #011c5b; margin-top: 1px;">${config.bankInfo || "Dados bancários não cadastrados"}</div>
             
             <div style="font-size: 11.5px; font-weight: 800; color: #0055ff; margin-top: 22px; margin-bottom: 4px;">após vencimento</div>
             <div style="display: flex; gap: 40px; font-size: 11.5px; color: #64748b;">
@@ -251,6 +257,7 @@ export async function generateAndDownloadBoletoPdf(
     daysBeforeDue?: number;
   }
 ): Promise<{ blob: Blob; filename: string; pixPayload: string }> {
+  const pixKey = requirePixKey(config.pixKey);
   const now = new Date();
 
   let vencimentoStr = "";
@@ -268,7 +275,7 @@ export async function generateAndDownloadBoletoPdf(
 
   const numDoc = `FAT-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}-${Math.floor(1000 + Math.random() * 9000)}`;
   const pixPayload = generatePixBRCode({
-    pixKey: config.pixKey || "13.130.809/0001-80",
+    pixKey,
     merchantName: "NEXO AGENCIA PUBLICIDADE",
     merchantCity: "SAO PAULO",
     amount: client.valorMensal || 0,
@@ -345,6 +352,7 @@ export async function generateBoletoPdfBlob(
     daysBeforeDue?: number;
   }
 ): Promise<{ blob: Blob; filename: string; pixPayload: string; base64: string }> {
+  const pixKey = requirePixKey(config.pixKey);
   const now = new Date();
 
   let vencimentoStr = "";
@@ -362,7 +370,7 @@ export async function generateBoletoPdfBlob(
 
   const numDoc = `FAT-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}-${Math.floor(1000 + Math.random() * 9000)}`;
   const pixPayload = generatePixBRCode({
-    pixKey: config.pixKey || "13.130.809/0001-80",
+    pixKey,
     merchantName: "NEXO AGENCIA PUBLICIDADE",
     merchantCity: "SAO PAULO",
     amount: client.valorMensal || 0,
@@ -492,13 +500,13 @@ export async function sendBoletoByEmailBackend(
     bankInfo?: string;
     daysBeforeDue?: number;
     customMessage?: string;
-    resendApiKey?: string;
     senderEmail?: string;
   }
-): Promise<{ success: boolean; message: string; method?: "edge" | "resend" | "mailto" }> {
+): Promise<{ success: boolean; message: string; method?: "edge" | "mailto" }> {
   if (!client.email) {
     throw new Error(`O cliente ${client.nome} não possui e-mail cadastrado.`);
   }
+  const pixKey = requirePixKey(config.pixKey);
 
   // Generate payload details
   const now = new Date();
@@ -509,7 +517,7 @@ export async function sendBoletoByEmailBackend(
 
   const numDoc = `FAT-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}-${Math.floor(1000 + Math.random() * 9000)}`;
   const pixPayload = generatePixBRCode({
-    pixKey: config.pixKey || "13.130.809/0001-80",
+    pixKey,
     merchantName: "NEXO AGENCIA PUBLICIDADE",
     merchantCity: "SAO PAULO",
     amount: client.valorMensal || 0,
@@ -535,16 +543,7 @@ export async function sendBoletoByEmailBackend(
     console.warn("Erro ao gerar base64 do PDF para anexo:", err);
   }
 
-  // Check available Resend API Key
-  let resendApiKey = config.resendApiKey?.trim() || "re_SVZ23gud_6ywq9ABMgkEUVmP6u1CGECEF";
-  if (typeof window !== "undefined") {
-    try {
-      const savedConfig = JSON.parse(localStorage.getItem("nexo_superadmin_finance_config") || "{}");
-      if (savedConfig?.resendApiKey) resendApiKey = savedConfig.resendApiKey.trim();
-    } catch {}
-  }
-
-  // 1. Try invoking Supabase Edge function (safely ignored if endpoint not deployed)
+  // Resend stays on the server; no API key is read from client storage or sent by the browser.
   let edgeSuccess = false;
   try {
     const { supabase } = await import("@/integrations/supabase/client");
@@ -557,12 +556,11 @@ export async function sendBoletoByEmailBackend(
         valor: valorFormatado,
         vencimento: vencimentoStr,
         servicoNome,
-        pixKey: config.pixKey || "13.130.809/0001-80",
+        pixKey,
         pixPayload,
         numDoc,
         pdfBase64,
         pdfFilename,
-        resendApiKey: resendApiKey || undefined,
       },
     });
 
@@ -570,7 +568,7 @@ export async function sendBoletoByEmailBackend(
       edgeSuccess = true;
     }
   } catch (e) {
-    console.warn("Edge function not available, proceeding to direct/fallback dispatch:", e);
+    console.warn("Edge function not available, proceeding to the email-client fallback:", e);
   }
 
   // 2. If Edge function succeeded
@@ -583,68 +581,7 @@ export async function sendBoletoByEmailBackend(
     };
   }
 
-  // 3. Direct Resend API Dispatch if key is present
-  if (resendApiKey) {
-    const emailHtml = buildBillingEmailHtml({
-      clientName: nomeCliente,
-      valor: valorFormatado,
-      vencimento: vencimentoStr,
-      servicoNome,
-    });
-
-    const attachments = pdfBase64 ? [{ filename: pdfFilename, content: pdfBase64 }] : undefined;
-
-    let resendRes = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: "Nexo Soluções Visuais <alex@nexobrasil.net>",
-        reply_to: "alex@nexobrasil.net",
-        to: [client.email],
-        subject,
-        html: emailHtml,
-        attachments,
-      }),
-    });
-
-    let resendData = await resendRes.json();
-
-    // Fallback to onboarding domain if domain not yet verified
-    if (!resendRes.ok && (resendData?.message?.toLowerCase().includes("domain") || resendRes.status === 403)) {
-      resendRes = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${resendApiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: "Nexo Soluções Visuais <onboarding@resend.dev>",
-          reply_to: "alex@nexobrasil.net",
-          to: [client.email],
-          subject,
-          html: emailHtml,
-          attachments,
-        }),
-      });
-      resendData = await resendRes.json();
-    }
-
-    if (resendRes.ok) {
-      logEmailDispatch(client, vencimentoStr, numDoc, subject);
-      return {
-        success: true,
-        method: "resend",
-        message: `Fatura ${numDoc} enviada via Resend com boleto em anexo para ${client.email}!`,
-      };
-    } else {
-      console.warn("Resend API direct error:", resendData);
-    }
-  }
-
-  // 4. Graceful Fallback: Download Boleto PDF & open default email client (Gmail / Outlook / System Mail)
+  // If the backend is unavailable, download the PDF and open the default email client.
   if (pdfBlob) {
     const url = URL.createObjectURL(pdfBlob);
     const a = document.createElement("a");
@@ -657,7 +594,7 @@ export async function sendBoletoByEmailBackend(
   }
 
   const mailtoBody = encodeURIComponent(
-    `Olá ${nomeCliente},\n\nSegue sua fatura Nexo Soluções Visuais no valor de R$ ${valorFormatado} com vencimento em ${vencimentoStr}.\n\nServiço: ${servicoNome}\nIdentificador: ${numDoc}\n\nChave PIX: ${config.pixKey || "13.130.809/0001-80"}\nPIX Copia e Cola:\n${pixPayload}\n\nO arquivo PDF do boleto bancário foi baixado em seu computador e está pronto para ser anexado.\n\nAtenciosamente,\nNexo Soluções Visuais\nalex@nexobrasil.net`
+    `Olá ${nomeCliente},\n\nSegue sua fatura Nexo Soluções Visuais no valor de R$ ${valorFormatado} com vencimento em ${vencimentoStr}.\n\nServiço: ${servicoNome}\nIdentificador: ${numDoc}\n\nChave PIX: ${pixKey}\nPIX Copia e Cola:\n${pixPayload}\n\nO arquivo PDF do boleto bancário foi baixado em seu computador e está pronto para ser anexado.\n\nAtenciosamente,\nNexo Soluções Visuais\nalex@nexobrasil.net`
   );
 
   const mailtoUrl = `mailto:${client.email}?subject=${encodeURIComponent(subject)}&body=${mailtoBody}`;

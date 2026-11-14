@@ -3414,10 +3414,10 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
               type="button"
               onClick={handleClearCurrentMonth}
               disabled={loadingData}
-              className="h-10 px-4 rounded-full bg-rose-600 hover:bg-rose-700 disabled:opacity-60 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95 cursor-pointer"
+              className="agenda-clear-button h-10 px-4 rounded-full bg-rose-600 hover:bg-rose-700 disabled:opacity-100 !text-white text-xs font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95 cursor-pointer"
               title="Excluir eventos do House Mix com data cadastrada no mês vigente"
             >
-              <Trash2 size={14} />
+              <Trash2 size={14} className="!text-white" />
               Limpar agenda
             </button>
           </div>

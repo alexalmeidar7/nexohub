@@ -412,12 +412,6 @@ export default function ConfiguracoesPage({
       videoStreamApiUrl: newConfig.videoStreamApiUrl || "",
       timezone: newConfig.timezone || "America/Sao_Paulo",
     };
-    try {
-      if (tid) {
-        localStorage.setItem(`${EMPRESA_EXTRA_KEY}_${tid}`, JSON.stringify(extraToSave));
-        localStorage.setItem(`nexohub_empresa_config_${tid}`, JSON.stringify(newConfig));
-      }
-    } catch {}
 
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(async () => {
@@ -441,14 +435,19 @@ export default function ConfiguracoesPage({
             },
           }),
         });
-      } catch {}
+      } catch (e) {
+        console.warn("Local sync failed:", e);
+      }
 
       const toBigInt = (v?: string) => {
         if (!v) return null;
         const n = parseInt(String(v).replace(/\D/g, ""), 10);
         return isNaN(n) ? null : n;
       };
+
       try {
+        // IMPORTANTE: Tenta salvar no banco PRIMEIRO
+        const clienteDesdeValue = newConfig.clienteDesde?.trim();
         const { error: configSaveError } = await supabase.from("empresa_config").upsert({
           user_id: saveId,
           nome: (newConfig.nome || "").trim(),
@@ -458,7 +457,7 @@ export default function ConfiguracoesPage({
           endereco: (newConfig.endereco || "").trim(),
           telefone_comercial: newConfig.telefoneComercial || "",
           telefone_participacao: newConfig.telefoneParticipacao || "",
-          cliente_desde: newConfig.clienteDesde || "",
+          cliente_desde: clienteDesdeValue ? clienteDesdeValue : null,
           executiva_venda: (newConfig.nomeContato || "").trim(),
           site: newConfig.site,
           instagram: newConfig.instagram,
@@ -472,10 +471,36 @@ export default function ConfiguracoesPage({
           audio_sources: extraToSave as any,
           updated_at: new Date().toISOString(),
         } as any, { onConflict: "user_id" });
+
         if (configSaveError) throw configSaveError;
+
+        // SUCESSO: Só DEPOIS de salvar no banco, salva em localStorage
+        try {
+          if (tid) {
+            localStorage.setItem(`${EMPRESA_EXTRA_KEY}_${tid}`, JSON.stringify(extraToSave));
+            localStorage.setItem(`nexohub_empresa_config_${tid}`, JSON.stringify(newConfig));
+          }
+        } catch (lsErr) {
+          console.warn("localStorage save failed:", lsErr);
+        }
+
+        toast.success("Configurações salvas com sucesso!");
       } catch (err: any) {
         console.error("Supabase empresa_config upsert failed:", err);
-        toast.error("As alterações ficaram no navegador, mas não foram confirmadas no banco: " + (err?.message || "falha ao salvar."));
+        const message = err?.message || "falha ao salvar";
+        const errorCode = err?.code;
+
+        if (errorCode === "42P01") {
+          toast.error("Tabela empresa_config não existe no banco. Contacte o suporte.");
+        } else if (errorCode === "42501" || message.includes("permission")) {
+          toast.error("Sem permissão para salvar. Verifique suas credenciais de banco.");
+        } else if (message.includes("column") && message.includes("does not exist")) {
+          toast.error("Coluna não existe na tabela empresa_config. Contacte o suporte.");
+        } else {
+          toast.error("Falha ao salvar no banco: " + message);
+        }
+
+        console.warn("Failed to persist to database:", { errorCode, message });
       }
     }, 500);
   };
@@ -1106,9 +1131,9 @@ export default function ConfiguracoesPage({
   if (loading) return <ModulePageSkeleton variant={isAdmin ? "configuracoes" : "form"} />;
 
   // ── SUPER ADMIN VIEW (Alinhado à identidade visual das outras páginas do Super Admin) ──
-  if (isAdmin) {
+  if (isAdmin && section !== "player") {
     return (
-      <div className="w-full max-w-6xl mx-auto space-y-6 pt-2 pb-12 font-sans animate-fade-in">
+      <div className="w-full max-w-none mx-0 space-y-6 pt-2 pb-12 font-sans animate-fade-in">
         {/* Top Header Card */}
         <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(1,28,91,0.04)] border border-[#d0deff] flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
@@ -1876,7 +1901,7 @@ export default function ConfiguracoesPage({
   const btnSecondary: React.CSSProperties = { backgroundColor: "#ffffff", color: "#002132", border: "1px solid rgba(226, 232, 240, 0.9)", borderRadius: "999px", padding: "8px 20px", fontWeight: 700 };
 
   return (
-    <div className="nexo-scope animate-fade-in max-w-6xl mx-auto w-full" style={{ fontFamily: NEXO_FONT }}>
+    <div className="nexo-scope animate-fade-in w-full max-w-none mx-0" style={{ fontFamily: NEXO_FONT }}>
       <div style={{ background: "transparent", padding: 0 }}>
         <div className="flex items-center gap-3 mb-6">
           <div
@@ -1888,7 +1913,7 @@ export default function ConfiguracoesPage({
           <div>
             <h3 style={{ fontSize: 18, fontWeight: 800, letterSpacing: 2, color: "#002132", textTransform: "uppercase", margin: 0 }}>Configurações</h3>
             <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", color: "#64748B", margin: "4px 0 0" }}>
-              {isAdmin ? "Gerencie os dados e informações da empresa" : (section === "player" ? "Gerencie os dados dos canais do player" : "Gerencie os dados da empresa")}
+              {section === "player" ? "Gerencie os dados dos canais do player" : (isAdmin ? "Gerencie os dados e informações da empresa" : "Gerencie os dados da empresa")}
             </p>
           </div>
         </div>

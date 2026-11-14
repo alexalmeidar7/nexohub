@@ -5,8 +5,8 @@ import {
   Music, Layers, LogOut, Check, ArrowRight,
   User, Mail, X, Building2,
   FileText, Gift, Siren, Tag, MonitorPlay, Film, Mic2, Globe, CalendarDays, Home,
-  Scissors, ShoppingCart, MessageSquareQuote, HelpCircle, Swords, ExternalLink, BarChart3,
-  Mic, Headphones
+  Scissors, ShoppingCart, MessageSquareQuote, HelpCircle, Swords, ExternalLink,
+  Mic, Headphones, MessagesSquare
 } from "lucide-react";
 import { format, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -1080,7 +1080,6 @@ export default function HouseMixHeader({
                       currentPage === "relatorios" ? "text-black font-bold bg-slate-100/80" : "text-slate-700 hover:text-black hover:bg-slate-100/70"
                     }`}
                   >
-                    <BarChart3 size={13} />
                     <span>relatórios</span>
                   </button>
                 ),
@@ -1199,7 +1198,7 @@ export default function HouseMixHeader({
                       : "Chatbot & Atendimento"
                   }
                 >
-                  <Bell className="w-3.5 h-3.5 text-white" />
+                  <MessagesSquare className="w-3.5 h-3.5 text-white" />
                   {unreadChatbotCount > 0 && (
                     <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#ef4444] text-white text-[9px] font-black flex items-center justify-center ring-2 ring-white shadow leading-none">
                       {unreadChatbotCount > 99 ? "99+" : unreadChatbotCount}

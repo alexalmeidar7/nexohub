@@ -5,10 +5,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { getProgramas, getProgramasSync, findCurrentProgram } from "@/components/OnAirWidget";
 import { getApresentadores } from "@/components/ApresentadorForm";
-import { resolveEffectiveOnAir } from "@/lib/onAirResolver";
+import { getZonedNow, resolveEffectiveOnAir } from "@/lib/onAirResolver";
 import { getStationDatabaseSync } from "@/lib/stationDatabaseService";
 import { resolvePresenterForProgram, resolveSafePresenterPhoto } from "@/lib/onAirPresenterResolver";
-import { normalizeClientKey } from "@/lib/houseMixProgramasService";
 
 export { resolveSafePresenterPhoto };
 
@@ -31,6 +30,8 @@ type AnimPhase = "idle" | "exiting" | "entering-prep";
 
 const PHOTO_TRANSITION_MS = 700;
 const PRESENTER_INTERVAL_MS = 4000;
+const REFRESH_INTERVAL_MS = 15000;
+const MAX_REFRESH_BACKOFF_MS = 120000;
 
 function CardGradient({ primary, secondary }: { primary: string; secondary: string }) {
   const layer: React.CSSProperties = {
@@ -88,7 +89,7 @@ export default function FloatingOnAirPresenter({
     const current = findCurrentProgram(syncPrograms);
 
     const active = current?.programa || syncDb?.currentProgram;
-    const progNome = active?.nome || "Programação Normal";
+    const progNome = active?.nome || "Programa" + String.fromCharCode(231) + String.fromCharCode(227) + "o Normal";
     const hInicio = active?.horarioInicio || active?.horario_inicio || "00:00";
     const hFim = active?.horarioFim || active?.horario_fim || "23:59";
 
@@ -118,30 +119,43 @@ export default function FloatingOnAirPresenter({
   const rafRef = useRef<number | null>(null);
   const [presenterIndex, setPresenterIndex] = useState(0);
   const [photoExiting, setPhotoExiting] = useState(false);
+  const [photoFailed, setPhotoFailed] = useState(false);
+  const refreshInFlightRef = useRef(false);
+  const mountedRef = useRef(false);
 
   // Load timezone
   useEffect(() => {
     if (!targetUid) return;
-    supabase
+    let cancelled = false;
+    setTimezone(null);
+    void supabase
       .from("empresa_config")
       .select("timezone")
       .eq("user_id", targetUid)
       .maybeSingle()
-      .then(({ data }) => {
-        if (data?.timezone) setTimezone(data.timezone);
-      });
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Erro ao carregar o fuso da estação:", error);
+          return;
+        }
+        if (!cancelled) setTimezone(data?.timezone || null);
+      })
+    return () => { cancelled = true; };
   }, [targetUid]);
 
   // 2. Resolve program & locutor asynchronously and keep refreshed
   const resolveOnAir = useCallback(async () => {
+    if (refreshInFlightRef.current) return false;
+    refreshInFlightRef.current = true;
     try {
       const uid = targetUid || user?.id;
       const [programasData, apresentadoresData] = await Promise.all([
         getProgramas(uid, targetEmail),
         getApresentadores(uid, targetEmail),
       ]);
+      if (!mountedRef.current) return false;
 
-      const todayName = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][new Date().getDay()];
+      const todayName = ["Domingo", "Segunda", "Ter" + String.fromCharCode(231) + "a", "Quarta", "Quinta", "Sexta", "S" + String.fromCharCode(225) + "bado"][getZonedNow(timezone).weekday];
       const browseSchedule: OnAirDisplayState[] = programasData
         .filter((p) => Array.isArray(p.diasSemana) && p.diasSemana.includes(todayName))
         .sort((a, b) => (a.horarioInicio || "00:00").localeCompare(b.horarioInicio || "00:00"))
@@ -150,8 +164,8 @@ export default function FloatingOnAirPresenter({
           return {
             programaKey: p.id || p.nome,
             programaNome: p.nome || "Programação Normal",
-            horarioInicio: p.horarioInicio || p.horario_inicio || "00:00",
-            horarioFim: p.horarioFim || p.horario_fim || "23:59",
+            horarioInicio: p.horarioInicio || "00:00",
+            horarioFim: p.horarioFim || "23:59",
             locutorNome: locutores[0]?.nome || "—",
             locutorFoto: locutores[0]?.foto || "",
             locutores,
@@ -159,7 +173,7 @@ export default function FloatingOnAirPresenter({
         });
       setScheduleItems(browseSchedule);
 
-      // Use resolveEffectiveOnAir with timezone, fallback to findCurrentProgram
+      // Resolve using the station timezone; avoid a local-time fallback.
       let activeProg: any = null;
       if (programasData.length > 0) {
         const mapped = programasData.map((p) => ({
@@ -170,16 +184,6 @@ export default function FloatingOnAirPresenter({
         }));
         const resolved = resolveEffectiveOnAir(mapped, new Date(), timezone);
         activeProg = resolved.current;
-        if (!activeProg) {
-          const fallback = findCurrentProgram(programasData);
-          if (fallback) {
-            activeProg = {
-              ...fallback.programa,
-              horario_inicio: fallback.programa.horarioInicio,
-              horario_fim: fallback.programa.horarioFim,
-            };
-          }
-        }
       }
 
       if (activeProg) {
@@ -229,18 +233,36 @@ export default function FloatingOnAirPresenter({
           programaKey: "",
         }));
       }
+      return true;
     } catch (error) {
       console.error("Erro ao atualizar o programa no ar:", error);
+      return false;
+    } finally {
+      refreshInFlightRef.current = false;
     }
   }, [targetUid, user, targetEmail, timezone]);
 
   useEffect(() => {
-    resolveOnAir();
-    const iv = setInterval(resolveOnAir, 15000); // refresh every 15s
-    window.addEventListener("apresentadores-updated", resolveOnAir);
+    let cancelled = false;
+    let timer: number | undefined;
+    let backoffMs = REFRESH_INTERVAL_MS;
+    const refreshAndSchedule = async () => {
+      const succeeded = await resolveOnAir();
+      if (cancelled) return;
+      backoffMs = succeeded ? REFRESH_INTERVAL_MS : Math.min(backoffMs * 2, MAX_REFRESH_BACKOFF_MS);
+      timer = window.setTimeout(refreshAndSchedule, backoffMs);
+    };
+    const refreshImmediately = () => {
+      if (refreshInFlightRef.current) return;
+      if (timer !== undefined) window.clearTimeout(timer);
+      void refreshAndSchedule();
+    };
+    void refreshAndSchedule();
+    window.addEventListener("apresentadores-updated", refreshImmediately);
     return () => {
-      clearInterval(iv);
-      window.removeEventListener("apresentadores-updated", resolveOnAir);
+      cancelled = true;
+      if (timer !== undefined) window.clearTimeout(timer);
+      window.removeEventListener("apresentadores-updated", refreshImmediately);
     };
   }, [resolveOnAir]);
 
@@ -249,8 +271,8 @@ export default function FloatingOnAirPresenter({
     if (!targetUid) return;
     const channel = supabase
       .channel(`floating-onair-${targetUid}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "programas" }, () => resolveOnAir())
-      .on("postgres_changes", { event: "*", schema: "public", table: "apresentadores" }, () => resolveOnAir())
+      .on("postgres_changes", { event: "*", schema: "public", table: "programas", filter: `user_id=eq.${targetUid}` }, () => { void resolveOnAir(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "apresentadores", filter: `user_id=eq.${targetUid}` }, () => { void resolveOnAir(); })
       .subscribe();
 
     return () => {
@@ -260,14 +282,21 @@ export default function FloatingOnAirPresenter({
 
   // Clean up animation timers on unmount
   useEffect(() => {
+    mountedRef.current = true;
     return () => {
+      mountedRef.current = false;
       if (animTimerRef.current) clearTimeout(animTimerRef.current);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (photoSlideTimerRef.current) clearTimeout(photoSlideTimerRef.current);
     };
   }, []);
 
-  const isBrowsingSchedule = scheduleIndex !== null && scheduleItems.length > 0;
-  const displayedInfo = isBrowsingSchedule ? scheduleItems[scheduleIndex as number] : onAirInfo;
+  const safeScheduleIndex = scheduleIndex !== null && scheduleIndex < scheduleItems.length ? scheduleIndex : null;
+  const isBrowsingSchedule = safeScheduleIndex !== null && scheduleItems.length > 0;
+  const displayedInfo = isBrowsingSchedule ? scheduleItems[safeScheduleIndex] : onAirInfo;
+  useEffect(() => {
+    if (scheduleIndex !== null && scheduleIndex >= scheduleItems.length) setScheduleIndex(null);
+  }, [scheduleIndex, scheduleItems.length]);
 
   const presenterKey = JSON.stringify([displayedInfo.programaKey, displayedInfo.locutores?.map(p => p.id)]);
   useEffect(() => {
@@ -292,6 +321,7 @@ export default function FloatingOnAirPresenter({
   const currentPresenter = displayedInfo.locutores?.[presenterIndex] || displayedInfo.locutores?.[0];
   const currentName = currentPresenter?.nome || displayedInfo.locutorNome;
   const currentPhoto = currentPresenter ? currentPresenter.foto : displayedInfo.locutorFoto;
+  useEffect(() => setPhotoFailed(false), [currentPhoto]);
   // 3. Dynamic colors extracted from the locutor's photo
   const locutorColors = useAlbumColors(currentPhoto || null);
   const primaryColor = locutorColors[0] || "#0055ff";
@@ -378,7 +408,7 @@ export default function FloatingOnAirPresenter({
           data-testid="onair-current-program-box"
           className={`${
             isBehindPages ? "pointer-events-none" : "pointer-events-auto"
-          } hidden sm:flex items-center gap-3.5 relative group`}
+          } hidden sm:flex items-center justify-center gap-3.5 relative group`}
           style={{
             userSelect: "none",
             height: 100,
@@ -386,22 +416,22 @@ export default function FloatingOnAirPresenter({
             backdropFilter: "blur(24px) saturate(1.5)",
             WebkitBackdropFilter: "blur(24px) saturate(1.5)",
             borderRadius: 20,
-            padding: "0 44px 0 0",
+            padding: "0 34px",
             overflow: "hidden",
             border: `1px solid ${primaryColor}40`,
             boxShadow: `0 16px 40px rgba(0,0,0,0.55), 0 0 24px ${primaryColor}20, inset 0 1px 0 rgba(255,255,255,0.12)`,
-            minWidth: 360,
-            width: "min(390px, calc(100vw - 48px))",
-            maxWidth: "min(390px, calc(100vw - 48px))",
-            transition: "box-shadow 1.2s ease-in-out, border-color 1.2s ease-in-out, transform 0.25s ease",
+            minWidth: 0,
+            width: "360px",
+            maxWidth: "calc(100vw - 48px)",
+            transition: "box-shadow 1.2s ease-in-out, border-color 1.2s ease-in-out",
             marginRight: 10,
           }}
         >
           <CardGradient primary={primaryColor} secondary={secondaryColor} />
           <div
             style={{
-              width: 82,
-              height: "100%",
+              width: 72,
+              height: 72,
               overflow: "visible",
               position: "relative",
               flexShrink: 0,
@@ -410,8 +440,8 @@ export default function FloatingOnAirPresenter({
           >
             {!photoSlide && (
               <div key={`${presenterKey}:${presenterIndex}`} style={{ width: "100%", height: "100%", position: "relative", zIndex: 2 }}>
-                {currentPhoto ? (
-                  <img key={currentPhoto} src={currentPhoto} alt={currentName || "Locutor no ar"} onError={(e) => { e.currentTarget.style.display = "none"; }} style={{
+                {currentPhoto && !photoFailed ? (
+                  <img key={currentPhoto} src={currentPhoto} alt={currentName || "Locutor no ar"} onError={() => setPhotoFailed(true)} style={{
                     width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center", ...photoAnimStyle,
                   }} />
                 ) : (
@@ -427,20 +457,18 @@ export default function FloatingOnAirPresenter({
             <div key={photoSlide.key} style={{ position: "absolute", inset: 0, zIndex: 1, overflow: "hidden", pointerEvents: "none" }}>
               {photoSlide.from && (
                 <img src={photoSlide.from} alt="" aria-hidden="true" style={{
-                  position: "absolute", top: 0, left: 0, width: 82, height: "100%", objectFit: "cover", objectPosition: "top center",
+                  position: "absolute", top: "calc(50% - 36px)", left: "calc(50% - 138px)", width: 72, height: 72, objectFit: "cover", objectPosition: "top center",
                   animation: `fmp-photo-exit-${photoSlide.direction} ${PHOTO_TRANSITION_MS}ms cubic-bezier(0.16, 1, 0.3, 1) forwards`,
                 }} />
               )}
               {photoSlide.to && (
                 <img key={`${photoSlide.key}-incoming`} src={photoSlide.to} alt="" aria-hidden="true" style={{
-                  position: "absolute", top: 0, width: 82, height: "100%", objectFit: "cover", objectPosition: "top center",
+                  position: "absolute", top: "calc(50% - 36px)", left: "calc(50% - 138px)", width: 72, height: 72, objectFit: "cover", objectPosition: "top center",
                   animation: `fmp-photo-enter-${photoSlide.direction} ${PHOTO_TRANSITION_MS}ms cubic-bezier(0.16, 1, 0.3, 1) forwards`,
                 }} />
               )}
             </div>
           )}
-
-          </div>
 
           {/* Info beside photo: 'NO AR' -> Nome do Programa -> Horário inicial e final -> Locutor */}
           <div
@@ -449,7 +477,7 @@ export default function FloatingOnAirPresenter({
               position: "relative",
               zIndex: 3,
               minWidth: 0,
-              flex: 1,
+              flex: "0 1 190px",
               display: "flex",
               flexDirection: "column",
               justifyContent: "center",
@@ -569,13 +597,12 @@ export default function FloatingOnAirPresenter({
               </div>
             )}
           </div>
-        </div>
 
           {/* Setas dentro do próprio box */}
           <div style={{ position: "absolute", inset: 0, zIndex: 6, pointerEvents: "none" }}>
             <button type="button" data-testid="previous-program-button" aria-label="Programa anterior"
               onClick={() => navigateSchedule("backward")}
-              style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", width: 24, height: 40, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", outline: "none", cursor: "pointer", color: "rgba(255,255,255,0.9)", pointerEvents: "auto" }}
+              style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", width: 24, height: 40, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", outline: "none", cursor: "pointer", color: "rgba(255,255,255,0.9)", pointerEvents: "auto", zIndex: 7 }}
               title="Programa anterior">
               <ArrowRight size={17} style={{ transform: "rotate(180deg)" }} />
             </button>

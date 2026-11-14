@@ -216,10 +216,9 @@ export default function FinanceiroSuperAdminPage() {
   const [autoBillingConfig, setAutoBillingConfig] = useState({
     autoDispatchEnabled: true,
     daysBeforeDue: 3,
-    pixKey: "13.130.809/0001-80",
-    bankInfo: "Chave PIX: 13.130.809/0001-80 - Nexo Soluções Visuais",
+    pixKey: "",
+    bankInfo: "",
     senderEmail: "alex@nexobrasil.net",
-    resendApiKey: "re_SVZ23gud_6ywq9ABMgkEUVmP6u1CGECEF",
     customMessage: "Olá {cliente}! Sua fatura Nexo no valor de R$ {valor} vence em {vencimento}. Chave PIX: {pix}. Qualquer dúvida estamos à disposição!",
   });
 
@@ -250,7 +249,12 @@ export default function FinanceiroSuperAdminPage() {
         const savedConfig = localStorage.getItem(STORAGE_CONFIG_KEY);
         if (savedConfig) {
           try {
-            setAutoBillingConfig(prev => ({ ...prev, ...JSON.parse(savedConfig) }));
+            const parsedConfig = JSON.parse(savedConfig);
+            const { resendApiKey: legacyResendApiKey, ...safeConfig } = parsedConfig;
+            setAutoBillingConfig(prev => ({ ...prev, ...safeConfig }));
+            if (Object.prototype.hasOwnProperty.call(parsedConfig, "resendApiKey")) {
+              localStorage.setItem(STORAGE_CONFIG_KEY, JSON.stringify(safeConfig));
+            }
           } catch { /* use defaults */ }
         }
 
@@ -338,7 +342,7 @@ export default function FinanceiroSuperAdminPage() {
         
         const valorFormatado = (client.valorMensal || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
         const nomeCliente = (client.nome_empresarial || client.nome || "Cliente").toUpperCase();
-        const chavePix = autoBillingConfig.pixKey || "13.130.809/0001-80";
+        const chavePix = autoBillingConfig.pixKey.trim();
 
         // Message matching Image 1
         const msg = `Olá *${nomeCliente}*!\n\nSua fatura Nexo Soluções Visuais no valor de\n*R$ ${valorFormatado}* vence em *${formattedDate}*.\n\n*Dados para Pagamento:*\n· Chave PIX: *${chavePix}*\n· Valor: *R$ ${valorFormatado}*\n· Vencimento: *${formattedDate}*\n\n*PIX Copia e Cola:*\n${pixPayload}\n\nSegue boleto na próxima mensagem. 🤓\nQualquer dúvida, nossa equipe está à disposição!`;
@@ -533,7 +537,7 @@ export default function FinanceiroSuperAdminPage() {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto space-y-6 pt-2 pb-12 font-sans animate-fade-in">
+    <div className="w-full max-w-none mx-0 space-y-6 pt-2 pb-12 font-sans animate-fade-in">
       {/* Top Header Section (Card Branco com Variações de Azul) */}
       <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(1,28,91,0.04)] border border-[#d0deff] flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -1129,6 +1133,17 @@ export default function FinanceiroSuperAdminPage() {
             </div>
 
             <div>
+              <label className="text-xs text-[#011c5b] font-black uppercase tracking-wider block mb-1.5">Identificação do beneficiário no boleto</label>
+              <input
+                type="text"
+                value={autoBillingConfig.bankInfo}
+                onChange={e => setAutoBillingConfig({ ...autoBillingConfig, bankInfo: e.target.value })}
+                placeholder="Razão social ou CNPJ"
+                className="w-full h-11 px-4 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-bold outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white transition-all"
+              />
+            </div>
+
+            <div>
               <label className="text-xs text-[#011c5b] font-black uppercase tracking-wider block mb-1.5">E-mail Remetente de Cobrança</label>
               <input
                 type="email"
@@ -1140,19 +1155,8 @@ export default function FinanceiroSuperAdminPage() {
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs text-[#011c5b] font-black uppercase tracking-wider">Chave de API Resend (Envio de E-mail)</label>
-                <span className="text-[10px] text-slate-400 font-semibold">re_...</span>
-              </div>
-              <input
-                type="password"
-                value={autoBillingConfig.resendApiKey || ""}
-                onChange={e => setAutoBillingConfig({ ...autoBillingConfig, resendApiKey: e.target.value })}
-                placeholder="re_123456789... (Opcional se já configurado no Supabase)"
-                className="w-full h-11 px-4 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-mono outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white transition-all"
-              />
-              <div className="text-[10px] text-slate-400 font-medium mt-1">
-                Utilizada pelo backend para enviar os e-mails com o boleto PDF anexado diretamente para a caixa de entrada do cliente.
+              <div className="text-[10px] text-slate-500 font-medium">
+                O envio usa a chave Resend configurada com segurança no servidor. Não insira chaves de API nesta página.
               </div>
             </div>
 

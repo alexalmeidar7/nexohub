@@ -643,7 +643,7 @@ function SettingsTab({ userId }: { userId: string }) {
   }
 
   return (
-    <div className="p-6 max-w-3xl">
+    <div className="w-full max-w-none p-6">
       <div className="text-lg font-bold mb-1" style={{ color: "#002132" }}>Configuração da integração</div>
       <div className="text-xs mb-6" style={{ color: "#002132", opacity: 0.6 }}>
         Passo a passo para conectar seu número WhatsApp Business à Meta Cloud API.
