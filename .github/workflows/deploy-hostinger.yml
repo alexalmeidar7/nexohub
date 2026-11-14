@@ -74,7 +74,7 @@ jobs:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-          FTP_SERVER_DIR: ${{ secrets.FTP_SERVER_DIR }}
+          FTP_SERVER_DIR: ${{ steps.ftpdir.outputs.server_dir }}
         run: |
           set -euo pipefail
           python3 - <<'PY'
@@ -103,28 +103,31 @@ jobs:
               ftp.set_pasv(True)
               return ftp
 
-          def ensure_dir(ftp, path):
-              current = ''
-              for part in [p for p in path.split('/') if p]:
-                  current = posixpath.join(current, part)
+          def ensure_dir(ftp, path, login_dir):
+              ftp.cwd(login_dir)
+              for part in [p for p in path.split('/') if p and p != '.']:
+                  if part == '..':
+                      ftp.cwd('..')
+                      continue
                   try:
-                      ftp.cwd(current)
+                      ftp.cwd(part)
                   except error_perm:
-                      ftp.mkd(current)
-                      ftp.cwd(current)
+                      ftp.mkd(part)
+                      ftp.cwd(part)
 
           def upload(tls):
               ftp = connect(tls)
               try:
+                  login_dir = ftp.pwd()
                   for local in sorted(root.rglob('*')):
                       if not local.is_file():
                           continue
                       rel = local.relative_to(root).as_posix()
-                      remote_path = posixpath.join(remote_root, rel)
-                      ensure_dir(ftp, posixpath.dirname(remote_path))
+                      remote_dir = posixpath.join(remote_root, posixpath.dirname(rel))
+                      ensure_dir(ftp, remote_dir, login_dir)
                       print(f'Enviando {rel}')
                       with local.open('rb') as fh:
-                          ftp.storbinary(f'STOR {remote_path}', fh, blocksize=1024*64)
+                          ftp.storbinary(f'STOR {posixpath.basename(rel)}', fh, blocksize=1024*64)
                   print(f'Deploy concluído via {"FTPS" if tls else "FTP"}.')
               finally:
                   try: ftp.quit()
