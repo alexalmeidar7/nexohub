@@ -16,6 +16,30 @@ protocol.registerSchemesAsPrivileged([{
 let mainWindow;
 let localApiHost;
 let isQuitting = false;
+let desktopAutoUpdater = null;
+
+function configureAutoUpdater() {
+  if (!app.isPackaged) return;
+
+  try {
+    ({ autoUpdater: desktopAutoUpdater } = require("electron-updater"));
+    desktopAutoUpdater.autoDownload = true;
+    desktopAutoUpdater.autoInstallOnAppQuit = true;
+  } catch {
+    // Updates are optional; an updater issue must not block the local app.
+    desktopAutoUpdater = null;
+  }
+}
+
+async function checkForDesktopUpdate() {
+  if (!app.isPackaged || !desktopAutoUpdater) return;
+
+  try {
+    await desktopAutoUpdater.checkForUpdates();
+  } catch {
+    // Offline startup and local data access must continue when updates fail.
+  }
+}
 
 async function registerRendererProtocol() {
   const rendererRoot = path.join(app.getAppPath(), "dist");
@@ -93,7 +117,7 @@ app.whenReady().then(async () => {
   } catch {
     dialog.showErrorBox(
       "House Mix Desktop",
-      "Não foi possível iniciar o House Mix Desktop. Verifique a instalação e a configuração do ambiente local."
+      "NÃ£o foi possÃ­vel iniciar o House Mix Desktop. Verifique a instalaÃ§Ã£o e a configuraÃ§Ã£o do ambiente local."
     );
     app.quit();
   }
@@ -111,3 +135,4 @@ app.on("before-quit", (event) => {
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
+

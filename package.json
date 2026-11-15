@@ -123,7 +123,6 @@
       "dist/**/*",
       "desktop/**/*.cjs",
       "package.json",
-      "desktop/runtime/**/*",
       "desktop/**/*.ico"
     ],
     "win": {
@@ -197,3 +196,4 @@
     }
   }
 }
+
