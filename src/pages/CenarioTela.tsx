@@ -26,6 +26,7 @@ interface PublicCenarioPayload {
   ok: boolean;
   cenario_config: CenarioConfig;
   currentProgram: any;
+  previousProgram?: { nome: string; horario_inicio: string; horario_fim: string } | null;
   nextProgram: any;
   sponsorLogos: any[];
   musicData: any;

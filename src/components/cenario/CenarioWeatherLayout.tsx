@@ -25,9 +25,9 @@ interface CenarioWeatherLayoutProps {
 
 const dayLabel = (date: string) => {
   const parsed = new Date(`${date}T12:00:00`);
-  const weekday = parsed.toLocaleDateString("pt-BR", { weekday: "short" }).replaceAll(".", "");
+  const weekday = parsed.toLocaleDateString("pt-BR", { weekday: "short" }).replace(/\./g, "");
   const day = parsed.toLocaleDateString("pt-BR", { day: "2-digit" });
-  const month = parsed.toLocaleDateString("pt-BR", { month: "short" }).replaceAll(".", "");
+  const month = parsed.toLocaleDateString("pt-BR", { month: "short" }).replace(/\./g, "");
   return `${weekday}. ${day} ${month}.`;
 };
 

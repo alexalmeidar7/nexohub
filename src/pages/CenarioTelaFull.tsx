@@ -146,6 +146,7 @@ type PublicCenarioPayload = {
   ok: boolean;
   cenario_config: any;
   currentProgram: any;
+  previousProgram?: { nome: string; horario_inicio: string; horario_fim: string } | null;
   nextProgram?: any;
   sponsorLogos: any[];
   musicData?: { titulo: string; artista: string; capa: string } | null;
