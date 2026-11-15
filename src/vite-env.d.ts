@@ -7,7 +7,7 @@ interface FileSystemFileHandle {
 }
 
 interface HouseMixDesktopUpdateStatus {
-  status: "idle" | "checking" | "downloading" | "downloaded";
+  status: "idle" | "checking" | "available" | "downloading" | "downloaded";
   version?: string;
   percent?: number;
 }
@@ -21,6 +21,7 @@ interface Window {
     getAppVersion: () => Promise<string>;
     getUpdateStatus: () => Promise<HouseMixDesktopUpdateStatus>;
     onUpdateStatus: (callback: (status: HouseMixDesktopUpdateStatus) => void) => () => void;
+    downloadUpdate: () => Promise<boolean>;
     installUpdate: () => Promise<boolean>;
     initializeLocalAssets: (slug: string) => Promise<string>;
     getXmlPath: (slug: string, filename: string) => Promise<string>;

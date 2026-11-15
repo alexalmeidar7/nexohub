@@ -237,6 +237,17 @@ async function initializeLocalAssetFolders() {
 function configureDesktopIpc() {
   ipcMain.handle("housemix:app-version", () => app.getVersion());
   ipcMain.handle("housemix:update-status", () => latestUpdateStatus);
+  ipcMain.handle("housemix:download-update", async () => {
+    if (!desktopAutoUpdater || latestUpdateStatus.status !== "available") return false;
+    latestUpdateStatus = { ...latestUpdateStatus, status: "downloading", percent: 0 };
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("housemix:update-status", latestUpdateStatus);
+    try {
+      await desktopAutoUpdater.downloadUpdate();
+      return true;
+    } catch {
+      return false;
+    }
+  });
   ipcMain.handle("housemix:install-update", () => {
     if (!updateDownloaded || !desktopAutoUpdater) return false;
     if (updateCheckTimer) clearInterval(updateCheckTimer);
@@ -292,14 +303,14 @@ function configureAutoUpdater() {
 
   try {
     ({ autoUpdater: desktopAutoUpdater } = require("electron-updater"));
-    desktopAutoUpdater.autoDownload = true;
+    desktopAutoUpdater.autoDownload = false;
     desktopAutoUpdater.autoInstallOnAppQuit = true;
     const publishStatus = (status) => {
       latestUpdateStatus = status;
       if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("housemix:update-status", status);
     };
     desktopAutoUpdater.on("checking-for-update", () => publishStatus({ status: "checking" }));
-    desktopAutoUpdater.on("update-available", (info) => publishStatus({ status: "downloading", version: info.version, percent: 0 }));
+    desktopAutoUpdater.on("update-available", (info) => publishStatus({ status: "available", version: info.version, percent: 0 }));
     desktopAutoUpdater.on("download-progress", (progress) => publishStatus({
       ...latestUpdateStatus,
       status: "downloading",

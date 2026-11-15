@@ -1404,19 +1404,24 @@ export default function HouseMixHeader({
           <div className="flex items-center gap-3 shrink-0">
           {["available", "downloading", "downloaded"].includes(updateStatus.status) && (
             <div className="flex items-center gap-2 rounded-full bg-[#0055ff] px-3 py-1.5 text-white shadow-md" aria-live="polite">
-              <RefreshCw size={16} className={updateStatus.status === "downloaded" ? "shrink-0" : "shrink-0 animate-spin"} />
+              <RefreshCw size={16} className={updateStatus.status === "downloading" ? "shrink-0 animate-spin" : "shrink-0"} />
               <span className="text-[10px] font-bold whitespace-nowrap">
-                {updateStatus.status === "downloaded"
+                {updateStatus.status === "available"
                   ? `Tenho uma nova atualização${updateStatus.version ? ` v${updateStatus.version}` : ""}`
-                  : `Baixando atualização${updateStatus.version ? ` v${updateStatus.version}` : ""} · ${updateStatus.percent || 0}%`}
+                  : updateStatus.status === "downloaded"
+                    ? `Atualização pronta${updateStatus.version ? ` v${updateStatus.version}` : ""}`
+                    : `Baixando atualização${updateStatus.version ? ` v${updateStatus.version}` : ""} · ${updateStatus.percent || 0}%`}
               </span>
               <button
                 type="button"
-                disabled={updateStatus.status !== "downloaded"}
-                onClick={() => void window.houseMixDesktop?.installUpdate()}
+                disabled={updateStatus.status === "downloading"}
+                onClick={() => {
+                  if (updateStatus.status === "available") void window.houseMixDesktop?.downloadUpdate();
+                  else if (updateStatus.status === "downloaded") void window.houseMixDesktop?.installUpdate();
+                }}
                 className="rounded-full bg-blue-800/80 px-3 py-1 text-[10px] font-bold whitespace-nowrap transition hover:bg-blue-900 disabled:cursor-wait disabled:opacity-70"
               >
-                {updateStatus.status === "downloaded" ? "atualizar agora" : "baixando..."}
+                {updateStatus.status === "available" ? "atualizar agora" : updateStatus.status === "downloaded" ? "reiniciar para instalar" : "baixando..."}
               </button>
             </div>
           )}

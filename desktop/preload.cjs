@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld("houseMixDesktop", Object.freeze({
   version: process.env.npm_package_version || "0.0.0",
   getAppVersion: () => ipcRenderer.invoke("housemix:app-version"),
   getUpdateStatus: () => ipcRenderer.invoke("housemix:update-status"),
+  downloadUpdate: () => ipcRenderer.invoke("housemix:download-update"),
   onUpdateStatus: (callback) => {
     const listener = (_event, status) => callback(status);
     ipcRenderer.on("housemix:update-status", listener);
