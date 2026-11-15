@@ -1,7 +1,7 @@
 const path = require("node:path");
 const fs = require("node:fs");
 const { pathToFileURL } = require("node:url");
-const { app, BrowserWindow, dialog, shell, protocol, net } = require("electron");
+const { app, BrowserWindow, dialog, shell, protocol, net, Notification } = require("electron");
 const { spawn } = require("node:child_process");
 const { createWindowOptions, isAllowedExternalUrl, resolveRendererRequestPath } = require("./runtime.cjs");
 const { startLocalApiHost } = require("./local-api-host.cjs");
@@ -17,6 +17,11 @@ let mainWindow;
 let localApiHost;
 let isQuitting = false;
 let desktopAutoUpdater = null;
+let updateCheckInFlight = false;
+let updateDownloaded = false;
+let updateCheckTimer = null;
+
+const UPDATE_CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000;
 
 function configureAutoUpdater() {
   if (!app.isPackaged) return;
@@ -25,6 +30,14 @@ function configureAutoUpdater() {
     ({ autoUpdater: desktopAutoUpdater } = require("electron-updater"));
     desktopAutoUpdater.autoDownload = true;
     desktopAutoUpdater.autoInstallOnAppQuit = true;
+    desktopAutoUpdater.on("update-downloaded", (info) => {
+      updateDownloaded = true;
+      if (!Notification.isSupported()) return;
+      new Notification({
+        title: "House Mix Desktop atualizado",
+        body: `A versão ${info.version} será instalada quando você fechar o aplicativo.`
+      }).show();
+    });
   } catch {
     // Updates are optional; an updater issue must not block the local app.
     desktopAutoUpdater = null;
@@ -32,13 +45,25 @@ function configureAutoUpdater() {
 }
 
 async function checkForDesktopUpdate() {
-  if (!app.isPackaged || !desktopAutoUpdater) return;
+  if (!app.isPackaged || !desktopAutoUpdater || updateCheckInFlight || updateDownloaded) return;
 
+  updateCheckInFlight = true;
   try {
     await desktopAutoUpdater.checkForUpdates();
   } catch {
     // Offline startup and local data access must continue when updates fail.
+  } finally {
+    updateCheckInFlight = false;
   }
+}
+
+function scheduleDesktopUpdates() {
+  if (!app.isPackaged || !desktopAutoUpdater || updateCheckTimer) return;
+  void checkForDesktopUpdate();
+  updateCheckTimer = setInterval(() => {
+    void checkForDesktopUpdate();
+  }, UPDATE_CHECK_INTERVAL_MS);
+  updateCheckTimer.unref?.();
 }
 
 async function registerRendererProtocol() {
@@ -110,7 +135,7 @@ app.whenReady().then(async () => {
     await registerRendererProtocol();
     await startLocalRuntime();
     createMainWindow();
-    void checkForDesktopUpdate();
+    scheduleDesktopUpdates();
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
     });
@@ -124,6 +149,7 @@ app.whenReady().then(async () => {
 });
 
 app.on("before-quit", (event) => {
+  if (updateCheckTimer) clearInterval(updateCheckTimer);
   if (isQuitting || !localApiHost) return;
   event.preventDefault();
   isQuitting = true;

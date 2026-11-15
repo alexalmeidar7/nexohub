@@ -43,6 +43,8 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path "desktop/runtime/provisioner/schema" | Out-Null
           Copy-Item "infra/offline-first/schema/*.sql" "desktop/runtime/provisioner/schema/" -Force
+      - name: Bundle local API runtime
+        run: npm run desktop:bundle-local-api
       - name: Test Desktop shell security
         run: node --test desktop/runtime.test.cjs desktop/local-api-host.test.cjs
       - name: Build Desktop frontend
@@ -58,6 +60,7 @@ jobs:
           if (-not (Test-Path "desktop/runtime/provisioner/schema/001_local_control_plane.sql")) { throw "Local database schema is missing." }
           if (-not (Test-Path "desktop/runtime/provisioner/schema/002_one_time_device_enrollment.sql")) { throw "Device enrollment schema is missing." }
           if (-not (Test-Path "desktop/runtime/node/node.exe")) { throw "Bundled Node runtime is missing." }
+          if (-not (Test-Path "desktop/runtime/api/server.mjs")) { throw "Bundled local API is missing." }
           if (-not (Test-Path "infra/offline-first/api/node_modules/express/package.json")) { throw "Local API Express dependency is missing." }
           if (-not (Test-Path "infra/offline-first/api/node_modules/postgres/package.json")) { throw "Local API PostgreSQL client is missing." }
       - name: Package Windows installer

@@ -1,7 +1,7 @@
 {
   "name": "vite_react_shadcn_ts",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "scripts": {
     "predev": "npx tsx scripts/generate-sitemap.ts",
@@ -14,7 +14,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:responsive": "playwright test --config=playwright.config.ts",
-    "desktop:build": "vite build --base=./"
+    "desktop:build": "vite build --base=./",
+    "desktop:bundle-local-api": "esbuild infra/offline-first/api/server.mjs --bundle --platform=node --format=esm --target=node22 --outfile=desktop/runtime/api/server.mjs"
   },
   "dependencies": {
     "@ffmpeg/ffmpeg": "0.12.10",
@@ -90,6 +91,7 @@
     "@tailwindcss/typography": "^0.5.16",
     "@testing-library/jest-dom": "^6.6.0",
     "@testing-library/react": "^16.0.0",
+    "esbuild": "0.21.5",
     "@types/dompurify": "^3.2.0",
     "@types/node": "^22.16.5",
     "@types/react": "^18.3.23",
@@ -164,13 +166,9 @@
         ]
       },
       {
-        "from": "infra/offline-first/api",
+        "from": "desktop/runtime/api",
         "to": "runtime/api",
-        "filter": [
-          "**/*",
-          "!tests/**",
-          "!scripts/**"
-        ]
+        "filter": ["**/*"]
       },
       {
         "from": "desktop/runtime/provisioner",

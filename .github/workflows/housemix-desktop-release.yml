@@ -24,6 +24,34 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Install local API production dependencies
+        run: npm install --prefix infra/offline-first/api --omit=dev --no-audit --no-fund
+
+      - name: Bundle portable Node runtime
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "desktop/runtime/node" | Out-Null
+          Copy-Item (Get-Command node).Source "desktop/runtime/node/node.exe" -Force
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Publish offline-first runtime
+        shell: pwsh
+        run: |
+          dotnet publish infra/offline-first/desktop-client/HouseMix.OfflineFirst.Host/HouseMix.OfflineFirst.Host.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -o desktop/runtime/local-api-host
+          dotnet publish infra/offline-first/desktop-client/HouseMix.OfflineFirst.Provisioner/HouseMix.OfflineFirst.Provisioner.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -o desktop/runtime/provisioner
+          New-Item -ItemType Directory -Force -Path "desktop/runtime/provisioner/schema" | Out-Null
+          Copy-Item "infra/offline-first/schema/*.sql" "desktop/runtime/provisioner/schema/" -Force
+
+      - name: Bundle local API runtime
+        run: npm run desktop:bundle-local-api
+
+      - name: Build Desktop frontend
+        run: npm run desktop:build
+
       - name: Build and publish House Mix Desktop
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
