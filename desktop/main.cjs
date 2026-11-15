@@ -54,17 +54,24 @@ function xmlFilePath(accountSlug, filename) {
 function imageCategory(sourceUrl, hint = "") {
   const value = `${sourceUrl} ${hint}`.toLowerCase();
   const pathname = (() => { try { return new URL(sourceUrl).pathname.toLowerCase(); } catch { return ""; } })();
+  if (/video[-_ ]cover|capa[-_ ]video/.test(value)) return "player/capas-videos";
+  if (/video[-_ ]thumb|thumb[-_ ]video/.test(value)) return "player/thumb-videos";
+  if (/player.{0,30}(logo[-_ ]canal|canal.{0,12}logo)|(logo[-_ ]canal|canal.{0,12}logo).{0,30}player/.test(value)) return "player/logo-canal";
+  if (/player.{0,30}(capa[-_ ]canal|canal.{0,12}capa)|(capa[-_ ]canal|canal.{0,12}capa).{0,30}player/.test(value)) return "player/capa-canal";
+  if (/player.{0,30}(thumb[-_ ]canal|canal.{0,12}thumb)|(thumb[-_ ]canal|canal.{0,12}thumb).{0,30}player/.test(value)) return "player/thumb-canal";
   if (/apresentador|locutor|speaker|host/.test(value)) return "apresentadores";
   if (/banner/.test(value)) return "banners";
   if (/fundo|background|wallpaper/.test(value)) return "fundos";
+  if (/selo/.test(value)) return "selos";
+  if (/thumb|thumbnail/.test(value) && /player|canal/.test(value)) return "player/thumb-canal";
   if (/capa|album|cover|artwork/.test(value) || /\/images\/cover\//.test(pathname)) return "capas";
   if (/\/images\/artist\//.test(pathname) || /deezer.{0,20}(artista|artist)|(artista|artist).{0,20}deezer/.test(value)) return "deezer";
   if (/logo|patrocin|sponsor|anunciante/.test(value)) return "logos";
-  return "geral";
+  return "diversas";
 }
 
 function cachedImagePath(accountSlug, relativePath) {
-  if (typeof relativePath !== "string" || !/^imagens\/(apresentadores|banners|fundos|capas|deezer|logos|geral)\/[a-f0-9]{64}\.(?:png|jpe?g|webp|gif|avif|svg)$/i.test(relativePath)) {
+  if (typeof relativePath !== "string" || !/^imagens\/(apresentadores|banners|fundos|capas|selos|deezer|logos|diversas|geral|player\/(?:logo-canal|capa-canal|thumb-canal|capas-videos|thumb-videos))\/[a-f0-9]{64}\.(?:png|jpe?g|webp|gif|avif|svg|bmp|tiff?)$/i.test(relativePath)) {
     throw new Error("Invalid local image path");
   }
   const root = path.resolve(accountAssetsRoot(accountSlug), "imagens");
@@ -109,6 +116,25 @@ async function cacheRemoteImage(sourceUrl, hint, accountSlug, forceRefresh = fal
       existingRelative = relativePath;
       if (!forceRefresh) return localImageUrl(safeSlug, relativePath);
       break;
+    }
+  }
+
+  // Reuse older account-scoped catch-all cache files without deleting them.
+  if (!existingRelative) {
+    for (const oldCategory of ["geral", "diversas"]) {
+      for (const extension of Object.values(extensions)) {
+        const oldRelative = `imagens/${oldCategory}/${key}.${extension}`;
+        const oldPath = cachedImagePath(safeSlug, oldRelative);
+        if (!fs.existsSync(oldPath)) continue;
+        existingRelative = `imagens/${category}/${key}.${extension}`;
+        const target = cachedImagePath(safeSlug, existingRelative);
+        await fs.promises.mkdir(path.dirname(target), { recursive: true });
+        try { await fs.promises.copyFile(oldPath, target, fs.constants.COPYFILE_EXCL); }
+        catch (error) { if (error.code !== "EEXIST") throw error; }
+        if (!forceRefresh) return localImageUrl(safeSlug, existingRelative);
+        break;
+      }
+      if (existingRelative) break;
     }
   }
 
@@ -175,7 +201,7 @@ async function cacheRemoteImage(sourceUrl, hint, accountSlug, forceRefresh = fal
 async function saveLocalImage(accountSlug, input, contentType, hint = "") {
   const safeSlug = safeAccountSlug(accountSlug);
   const bytes = input instanceof ArrayBuffer ? Buffer.from(input) : (Buffer.isBuffer(input) || input instanceof Uint8Array ? Buffer.from(input) : null);
-  const extension = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif", "image/avif": "avif" }[String(contentType || "").split(";")[0].toLowerCase()];
+  const extension = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif", "image/avif": "avif", "image/svg+xml": "svg", "image/bmp": "bmp", "image/tiff": "tiff" }[String(contentType || "").split(";")[0].toLowerCase()];
   if (!safeSlug || !bytes || !bytes.length || bytes.length > 20 * 1024 * 1024 || !extension) throw new Error("Invalid local image payload");
   const category = imageCategory("", hint);
   const key = crypto.createHash("sha256").update(bytes).digest("hex");
@@ -188,9 +214,18 @@ async function saveLocalImage(accountSlug, input, contentType, hint = "") {
 
 async function ensureAccountLocalAssetFolders(accountSlug) {
   const root = accountAssetsRoot(accountSlug);
+  const oldGeneral = path.join(root, "imagens", "geral");
+  const diverseFolder = path.join(root, "imagens", "diversas");
+  try {
+    await fs.promises.access(oldGeneral);
+    try { await fs.promises.access(diverseFolder); }
+    catch { await fs.promises.rename(oldGeneral, diverseFolder); }
+  } catch { /* No legacy folder to migrate. */ }
   await Promise.all([
     "xmls", "imagens/apresentadores", "imagens/banners", "imagens/fundos",
-    "imagens/capas", "imagens/deezer", "imagens/logos", "imagens/geral"
+    "imagens/capas", "imagens/selos", "imagens/deezer", "imagens/logos", "imagens/diversas",
+    "imagens/player/logo-canal", "imagens/player/capa-canal", "imagens/player/thumb-canal",
+    "imagens/player/capas-videos", "imagens/player/thumb-videos"
   ].map((folder) => fs.promises.mkdir(path.join(root, folder), { recursive: true })));
   return root;
 }

@@ -2608,6 +2608,7 @@ export type Database = {
           logo_url: string | null
           name: string
           numero_canal: string | null
+          sort_order: number
           type: string
           updated_at: string
           url: string
@@ -2630,6 +2631,7 @@ export type Database = {
           logo_url?: string | null
           name: string
           numero_canal?: string | null
+          sort_order?: number
           type?: string
           updated_at?: string
           url: string
@@ -2652,6 +2654,7 @@ export type Database = {
           logo_url?: string | null
           name?: string
           numero_canal?: string | null
+          sort_order?: number
           type?: string
           updated_at?: string
           url?: string

@@ -13,16 +13,16 @@ const XML_FEEDS = [
   ["tclock-shows.xml", "serve-xml-tclock-shows"], ["vmix-live.xml", "serve-xml-vmix-live"],
 ] as const;
 
-const IMAGE_FIELDS: Array<[string, string[], string]> = [
-  ["apresentadores", ["foto", "background_url"], "apresentadores"],
-  ["programas", ["thumb", "capa"], "capas"],
-  ["empresa_config", ["logo", "background_url"], "geral"],
-  ["logos_patrocinadores", ["logo_url"], "logos"],
-  ["infomusic_excecoes", ["artista_url", "background_url", "capa_url"], "deezer"],
-  ["user_settings", ["infomusic_excecoes_artista_url", "infomusic_excecoes_capa_url"], "deezer"],
-  ["streaming_channels", ["background_url", "cover_url", "logo_url"], "geral"],
-  ["shopping_products", ["image_url"], "geral"],
-  ["comercial_preroll", ["background_url"], "banners"],
+const IMAGE_FIELDS: Array<[string, Array<[string, string]>]> = [
+  ["apresentadores", [["foto", "apresentadores"], ["background_url", "fundos"]]],
+  ["programas", [["thumb", "capas"], ["capa", "capas"], ["selo", "selos"]]],
+  ["empresa_config", [["logo", "logos"], ["background_url", "fundos"]]],
+  ["logos_patrocinadores", [["logo_url", "logos"]]],
+  ["infomusic_excecoes", [["artista_url", "deezer"], ["background_url", "deezer"], ["capa_url", "capas"]]],
+  ["user_settings", [["infomusic_excecoes_artista_url", "deezer"], ["infomusic_excecoes_capa_url", "capas"]]],
+  ["streaming_channels", [["background_url", "player logo-canal"], ["cover_url", "player capa-canal"], ["logo_url", "player thumb-canal"]]],
+  ["shopping_products", [["image_url", "diversas"]]],
+  ["comercial_preroll", [["background_url", "banners"]]],
 ];
 
 function collectUrls(value: unknown, urls: Set<string>) {
@@ -71,11 +71,12 @@ export default function DesktopLocalMediaSync() {
 
         const syncImages = async () => {
           const urls = new Map<string, string>();
-          for (const [table, fields, category] of IMAGE_FIELDS) {
+          for (const [table, mappedFields] of IMAGE_FIELDS) {
             if (stopped) return;
             try {
+              const fields = mappedFields.map(([field]) => field);
               const { data } = await (supabase.from(table as any) as any).select(fields.join(",")).eq("user_id", ownerId);
-              for (const row of data || []) for (const field of fields) {
+              for (const row of data || []) for (const [field, category] of mappedFields) {
                 const found = new Set<string>(); collectUrls(row[field], found);
                 found.forEach((url) => urls.set(url, `${category} ${field}`));
               }

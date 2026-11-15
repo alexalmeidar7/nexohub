@@ -24,6 +24,8 @@ import { confirmDialog } from "@/lib/confirmDialog";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { EMPRESA_EXTRA_KEY } from "@/lib/empresaConfigService";
 import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
+import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
+import { useUserSlug } from "@/hooks/useUserSlug";
 export {
   type EmpresaConfig,
   type EmpresaArquivo,
@@ -213,6 +215,7 @@ export default function ConfiguracoesPage({
 }) {
   const { user, role } = useAuth();
   const targetUid = effectiveUserId || user?.id;
+  const localUserSlug = useUserSlug(targetUid);
   const isLocal = typeof window !== "undefined" && (
     window.location.hostname === "localhost" ||
     window.location.hostname === "127.0.0.1" ||
@@ -796,6 +799,17 @@ export default function ConfiguracoesPage({
       const ext = file.name.split(".").pop() || "png";
       const uid = user?.id || "empresa";
       const path = `${uid}/${folder}-${Date.now()}.${ext}`;
+      if (window.houseMixDesktop) {
+        const account = findClientAccountById(targetUid || user?.id) || findClientAccountByEmail(user?.email);
+        const accountSlug = account?.slug || localUserSlug;
+        if (!accountSlug) throw new Error("Não foi possível identificar a pasta local desta emissora.");
+        const localHint = folder === "canal-background_url" ? "player logo-canal"
+          : folder === "canal-cover_url" ? "player capa-canal"
+            : folder === "canal-logo_url" ? "player thumb-canal"
+              : folder === "video-cover" ? "video-cover"
+                : folder === "video-thumb" ? "video-thumb" : folder;
+        await window.houseMixDesktop.saveLocalImage(accountSlug, await file.arrayBuffer(), file.type || "image/png", localHint);
+      }
 
       // 1. Tenta bucket empresa-assets
       try {
