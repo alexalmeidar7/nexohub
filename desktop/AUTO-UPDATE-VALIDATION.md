@@ -19,3 +19,6 @@ Builds locais não publicam nem criam uma Release.
 O mecanismo de atualização não instala alterações de schema no banco local. Uma
 versão que exigir migration precisa oferecer migration aditiva e compatível com
 versões anteriores antes de ser publicada.
+
+
+Teste do auto update: publicar a proxima versao patch para validar a notificacao no HMD.
