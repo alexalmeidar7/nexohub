@@ -93,7 +93,21 @@ jobs:
       - name: Build Desktop frontend
         run: npm run desktop:build
 
-      - name: Build and publish House Mix Desktop
+      - name: Build House Mix Desktop
+        run: npm exec electron-builder -- --win nsis --publish never
+
+      - name: Publish House Mix Desktop release
+        shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm exec electron-builder -- --win nsis --publish always
+          VERSION: ${{ steps.version.outputs.next }}
+          TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          $tag = "v$env:VERSION"
+          $installer = "release/House-Mix-Desktop-$env:VERSION-Setup.exe"
+          $blockmap = "$installer.blockmap"
+          $metadata = "release/latest.yml"
+          foreach ($file in @($installer, $blockmap, $metadata)) {
+            if (-not (Test-Path -LiteralPath $file)) { throw "Missing updater file: $file" }
+          }
+          gh release create $tag $installer $blockmap $metadata --title $env:VERSION --notes "House Mix Desktop $env:VERSION" --target $env:TARGET_SHA
