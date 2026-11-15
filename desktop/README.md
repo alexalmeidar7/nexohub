@@ -37,4 +37,3 @@ does not yet synchronize House Mix application records. Making the computer's
 database the primary source still requires PostgreSQL installation, safe schema
 migrations, app data access through the local API, bidirectional sync with
 conflict handling, backup/restore, and failover acceptance.
-

@@ -117,7 +117,7 @@ app.whenReady().then(async () => {
   } catch {
     dialog.showErrorBox(
       "House Mix Desktop",
-      "NÃ£o foi possÃ­vel iniciar o House Mix Desktop. Verifique a instalaÃ§Ã£o e a configuraÃ§Ã£o do ambiente local."
+      "Não foi possível iniciar o House Mix Desktop. Verifique a instalação e a configuração do ambiente local."
     );
     app.quit();
   }
@@ -135,4 +135,3 @@ app.on("before-quit", (event) => {
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
-
