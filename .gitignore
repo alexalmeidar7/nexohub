@@ -12,6 +12,8 @@ dist
 dist-ssr
 release/
 desktop/runtime/
+infra/offline-first/desktop-client/**/bin/
+infra/offline-first/desktop-client/**/obj/
 *.local
 
 # Editor directories and files
