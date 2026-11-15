@@ -17,6 +17,7 @@ export default function XmlPublicEndpoint() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [localXmlPath, setLocalXmlPath] = useState("");
 
   // Normalize slug & filename
   let resolvedFile = pathFile || "";
@@ -72,6 +73,11 @@ export default function XmlPublicEndpoint() {
   const rawFile = (resolvedFile || "broadcast.xml").toLowerCase();
   const filename = rawFile.endsWith(".xml") ? rawFile : `${rawFile}.xml`;
 
+  useEffect(() => {
+    if (!window.houseMixDesktop || !cleanSlug || !filename) return;
+    void window.houseMixDesktop.getXmlPath(cleanSlug, filename).then(setLocalXmlPath).catch(() => setLocalXmlPath(""));
+  }, [cleanSlug, filename]);
+
   // Build the official live endpoint (never another tenant's default XML)
   let supabaseFallbackUrl = `${SUPABASE_BASE}/functions/v1/serve-xml-broadcast?user_id=${stationUid}`;
   if (filename.includes("geral")) {
@@ -101,6 +107,10 @@ export default function XmlPublicEndpoint() {
       if (!liveXml.includes("<") || liveXml.includes("<error>") || liveXml.includes("<!DOCTYPE html>")) {
         throw new Error("Feed XML retornou conteúdo inválido");
       }
+      if (window.houseMixDesktop && cleanSlug) {
+        const savedPath = await window.houseMixDesktop.saveXml(cleanSlug, filename, liveXml.trim());
+        setLocalXmlPath(savedPath);
+      }
       if (isMounted) {
         setXmlContent(liveXml.trim());
         setLoading(false);
@@ -113,7 +123,7 @@ export default function XmlPublicEndpoint() {
         setLoading(false);
       }
     }
-  }, [supabaseFallbackUrl, stationUid]);
+  }, [supabaseFallbackUrl, stationUid, cleanSlug, filename]);
 
   useEffect(() => {
     let isMounted = true;
@@ -187,7 +197,7 @@ export default function XmlPublicEndpoint() {
               <span className="text-xs text-slate-300 font-semibold">{stationName}</span>
             </div>
             <h1 className="text-sm font-mono font-bold text-white tracking-tight">
-              /xml/{cleanSlug}/{filename}
+              {localXmlPath || `/xml/${cleanSlug}/${filename}`}
             </h1>
           </div>
         </div>

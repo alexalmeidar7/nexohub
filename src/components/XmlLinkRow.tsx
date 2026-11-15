@@ -92,6 +92,38 @@ export default function XmlLinkRow({
   }, [externalUrl]);
 
   useEffect(() => {
+    if (!externalUrl || !window.houseMixDesktop) return;
+    try {
+      const parts = new URL(externalUrl).pathname.split("/").filter(Boolean);
+      const slug = decodeURIComponent(parts.at(-2) || "");
+      const filename = decodeURIComponent(parts.at(-1) || "");
+      void window.houseMixDesktop.getXmlPath(slug, filename).then(setUrl).catch(() => {});
+    } catch { /* retain the web endpoint if URL parsing is unavailable */ }
+  }, [externalUrl]);
+
+  useEffect(() => {
+    if (!externalUrl || !supabaseUrl || !window.houseMixDesktop) return;
+    let active = true;
+    const parts = new URL(externalUrl).pathname.split("/").filter(Boolean);
+    const slug = decodeURIComponent(parts.at(-2) || "");
+    const filename = decodeURIComponent(parts.at(-1) || "");
+    const sync = async () => {
+      try {
+        const response = await fetch(supabaseUrl, { cache: "no-store", signal: AbortSignal.timeout(12000) });
+        if (!response.ok) return;
+        const xml = (await response.text()).trim();
+        if (active && xml.startsWith("<") && !xml.includes("<!DOCTYPE html>") && !xml.includes("<error>")) {
+          const saved = await window.houseMixDesktop?.saveXml(slug, filename, xml);
+          if (active && saved) setUrl(saved);
+        }
+      } catch { /* keep the last good local XML when offline */ }
+    };
+    void sync();
+    const timer = window.setInterval(() => void sync(), 30000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [externalUrl, supabaseUrl]);
+
+  useEffect(() => {
     if (externalUrl || !xmlContent) return;
     const uploadSignature = `${scopeKey || "__global__"}::${xmlContent}`;
     if (uploadSignature === lastUploadSignatureRef.current) return;
@@ -238,7 +270,7 @@ export default function XmlLinkRow({
 
       {/* Ações à direita */}
       <div className="shrink-0 flex items-center gap-1.5">
-        {ready && url && (
+        {ready && url && !window.houseMixDesktop && (
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); setXpathOpen(true); }}

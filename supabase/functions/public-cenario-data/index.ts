@@ -390,7 +390,15 @@ Deno.serve(async (req) => {
 
     // Find next program
     let nextProgram: { nome: string; selo?: string | null; horario_inicio: string; horario_fim: string } | null = null;
+    let previousProgram: { nome: string; horario_inicio: string; horario_fim: string } | null = null;
     if (progs) {
+      const completed = progs
+        .filter((p: any) => (p.dias_semana || []).includes(today) && p.horario_inicio <= nowTime && p.horario_fim <= nowTime)
+        .sort((a: any, b: any) => b.horario_fim.localeCompare(a.horario_fim));
+      if (completed.length > 0) {
+        const pp = completed[0];
+        previousProgram = { nome: pp.nome, horario_inicio: pp.horario_inicio, horario_fim: pp.horario_fim };
+      }
       const upcoming = progs
         .filter((p: any) => (p.dias_semana || []).includes(today) && p.horario_inicio > nowTime)
         .sort((a: any, b: any) => a.horario_inicio.localeCompare(b.horario_inicio));
@@ -406,6 +414,7 @@ Deno.serve(async (req) => {
       ok: true,
       cenario_config: (settings as any)?.cenario_config || {},
       currentProgram,
+      previousProgram,
       nextProgram,
       sponsorLogos,
       musicData,

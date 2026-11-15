@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { createPortal } from "react-dom";
 import { MonitorPlay, CloudSun, CloudRain, Car, DollarSign, MessageCircle, Trash2, Eye, EyeOff, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, Plus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw, Palette, Undo2, Shapes, Square, Circle, Triangle, ArrowUp, ArrowRight, ArrowDown, ArrowLeft, Star, Hexagon, Diamond, Music, Mic, RotateCw, Play, Maximize2, Tag, Smartphone, Monitor, Copy } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
+import CenarioWeatherLayout from "@/components/cenario/CenarioWeatherLayout";
 import DraggableElement, { ElementPosition, defaultPositions } from "@/components/cenario/DraggableElement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
@@ -993,6 +995,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
   const [sponsorLogos, setSponsorLogos] = useState<{ id: string; nome: string; logo_url: string }[]>([]);
   const [sponsorIdx, setSponsorIdx] = useState(0);
   const [nextProgram, setNextProgram] = useState<{ nome: string; selo?: string | null; horario_inicio: string; horario_fim: string } | null>(null);
+  const [previousProgram, setPreviousProgram] = useState<{ nome: string; horario_inicio: string; horario_fim: string } | null>(null);
   const [liveWeather, setLiveWeather] = useState<LiveWeather | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [weatherCoords, setWeatherCoords] = useState<{ lat: number; lon: number } | null>(null);
@@ -1117,6 +1120,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
       setCurrentProgram(null);
       setSponsorLogos([]);
       setNextProgram(null);
+      setPreviousProgram(null);
       return;
     }
     const load = async () => {
@@ -1234,6 +1238,21 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
         return est.includes("fm") || est.includes("principal") || est.includes("ao vivo");
       });
       const onAir = mainStudioMatch || (candidates.length > 0 ? candidates[0] : null);
+      const completedProgram = allProgs
+        .filter(p => {
+          if (p.variavel && p.data_variavel !== dateStr) return false;
+          if (!p.variavel) {
+            const days = (p.dias_semana || []).map((d: string) => String(d).toLowerCase());
+            const todayLower = today.toLowerCase();
+            const allDays = days.length === 0 || days.some((d: string) => d.includes("todos") || d.includes("diário") || d.includes("diario"));
+            if (!allDays && !days.some((d: string) => d.includes(todayLower) || todayLower.includes(d))) return false;
+          }
+          const start = parseTimeToSec(p.horario_inicio);
+          const end = parseTimeToSec(p.horario_fim);
+          return start >= 0 && end >= 0 && start <= nowSeconds && end <= nowSeconds && p.id !== onAir?.id;
+        })
+        .sort((a, b) => parseTimeToSec(b.horario_fim) - parseTimeToSec(a.horario_fim))[0];
+      setPreviousProgram(completedProgram ? { nome: completedProgram.nome, horario_inicio: completedProgram.horario_inicio, horario_fim: completedProgram.horario_fim } : null);
 
       if (onAir) {
         let apresentadorNome = "";
@@ -2334,7 +2353,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                               />
                               <Button 
                                 size="sm" 
-                                className="h-8 px-2 text-[10px] font-bold uppercase tracking-tight bg-[var(--layout-accent-color)] hover:bg-[var(--layout-accent-color)]/90 text-white"
+                                 className="h-8 px-2 text-[10px] font-bold uppercase tracking-tight whitespace-nowrap bg-[var(--layout-accent-color)] hover:bg-[var(--layout-accent-color)]/90 text-white"
                                 onClick={() => {
                                   if (!config.weather.city || !weatherCoords) return;
                                   const favs = config.weather.favorites || [];
@@ -2344,7 +2363,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                                   });
                                 }}
                               >
-                                <Star size={12} className="mr-1" /> Favoritar
+                                 <Plus size={12} className="mr-1" /> Adicionar cidade
                               </Button>
                             </div>
                             
@@ -3288,6 +3307,16 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                           
                           {activeTab === "currency" && config.currency.bgImage && <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
                           {activeTab === "chat" && config.chat.bgImage && <img src={config.chat.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                          <div
+                            className="absolute inset-0"
+                            style={{
+                              zIndex: 4,
+                              opacity: config.home.artistOverlayEnabled ? (config.home.artistOverlayOpacity ?? 60) / 100 : 0.35,
+                              background: config.home.artistOverlayEnabled ? (config.home.artistOverlayColor || "#000000") : "#000000",
+                              pointerEvents: "none",
+                              transition: "opacity 900ms ease-in-out",
+                            }}
+                          />
                         </div>
                       );
                     })()}
@@ -3302,34 +3331,35 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                       const sPad = `${pvh(0.6)}px`;
                       const btnBg = (active: boolean) => active ? (config.home.colorButtonBgOn || "rgba(0,191,240,0.85)") : (config.home.colorButtonBgOff || "rgba(0,0,0,0.8)");
                       const btnIcon = (active: boolean) => active ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)");
+                      const activeOutline = (active: boolean) => active ? { outline: "2px solid rgba(255,255,255,0.95)", outlineOffset: "3px" } : {};
                       return (
-                        <div className="flex items-center" style={{ position: "absolute", left: 0, top: "28%", width: "8%", zIndex: 10, pointerEvents: "none" }}>
+                        <div className="flex items-center" style={{ position: "absolute", left: `${pvh(3.2)}px`, top: "28%", width: "8%", zIndex: 10, pointerEvents: "none" }}>
                           <div className="flex flex-col items-center" style={{ pointerEvents: "auto", gap: sPad, padding: 0, marginLeft: 0 }}>
-                            <button onClick={() => handleTabChange("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: btnBg(activeTab === "home"), border: "none", color: btnIcon(activeTab === "home"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                            <button onClick={() => handleTabChange("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: btnBg(activeTab === "home"), border: "none", ...activeOutline(activeTab === "home"), color: btnIcon(activeTab === "home"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                               <Home style={{ width: iS, height: iS }} />
                             </button>
                             <div className="flex flex-col items-center" style={{ padding: `${pvh(0.4)}px`, opacity: config.weather.enabled ? 1 : 0.35 }}>
-                              <button onClick={() => { if (activeTab === "weather" || activeTab === "enquete") { handleTabChange("home"); } else { handleTabChange("weather"); handleWeatherSubTabChange("today"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: btnBg(activeTab === "weather" || activeTab === "enquete"), border: "none", color: btnIcon(activeTab === "weather" || activeTab === "enquete"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                              <button onClick={() => { if (activeTab === "weather" || activeTab === "enquete") { handleTabChange("home"); } else { handleTabChange("weather"); handleWeatherSubTabChange("today"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: btnBg(activeTab === "weather" || activeTab === "enquete"), border: "none", ...activeOutline(activeTab === "weather" || activeTab === "enquete"), color: btnIcon(activeTab === "weather" || activeTab === "enquete"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                                 <CloudSun style={{ width: iS, height: iS }} />
                               </button>
                               <div style={{ overflow: "hidden", maxHeight: (activeTab === "weather" || activeTab === "enquete") ? `${pvh(20)}px` : "0", transition: "max-height 0.35s cubic-bezier(0.4,0,0.2,1)", opacity: (activeTab === "weather" || activeTab === "enquete") ? 1 : 0 }}>
                                 <div className="flex flex-col items-center" style={{ gap: `${pvh(0.4)}px`, paddingTop: `${pvh(0.4)}px` }}>
                                   {config.weather.enabled && (
-                                    <button onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("today"); }} className="rounded-full flex items-center justify-center font-bold cursor-pointer transition-all" style={{ width: sBS, height: sBS, fontSize: sFS, background: btnBg(activeTab === "weather" && weatherSubTab === "today"), border: "none", color: btnIcon(activeTab === "weather" && weatherSubTab === "today"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>1</button>
+                                    <button onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("today"); }} className="rounded-full flex items-center justify-center font-bold cursor-pointer transition-all" style={{ width: sBS, height: sBS, fontSize: sFS, background: btnBg(activeTab === "weather" && weatherSubTab === "today"), border: "none", ...activeOutline(activeTab === "weather" && weatherSubTab === "today"), color: btnIcon(activeTab === "weather" && weatherSubTab === "today"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>1</button>
                                   )}
                                   {config.weather.enabled && config.weather.showSatellite && (
-                                    <button onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("satellite"); }} className="rounded-full flex items-center justify-center font-bold cursor-pointer transition-all" style={{ width: sBS, height: sBS, fontSize: sFS, background: btnBg(activeTab === "weather" && weatherSubTab === "satellite"), border: "none", color: btnIcon(activeTab === "weather" && weatherSubTab === "satellite"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>2</button>
+                                    <button onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("satellite"); }} className="rounded-full flex items-center justify-center font-bold cursor-pointer transition-all" style={{ width: sBS, height: sBS, fontSize: sFS, background: btnBg(activeTab === "weather" && weatherSubTab === "satellite"), border: "none", ...activeOutline(activeTab === "weather" && weatherSubTab === "satellite"), color: btnIcon(activeTab === "weather" && weatherSubTab === "satellite"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>2</button>
                                   )}
 
                                   </div>
                                 </div>
                               </div>
 
-                            <button onClick={() => config.traffic.enabled && handleTabChange("traffic")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, marginTop: `${pvh(0.3)}px`, background: btnBg(activeTab === "traffic"), border: "none", color: btnIcon(activeTab === "traffic"), opacity: config.traffic.enabled ? 1 : 0.35, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                            <button onClick={() => config.traffic.enabled && handleTabChange("traffic")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, marginTop: `${pvh(0.3)}px`, background: btnBg(activeTab === "traffic"), border: "none", ...activeOutline(activeTab === "traffic"), color: btnIcon(activeTab === "traffic"), opacity: config.traffic.enabled ? 1 : 0.35, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                               <Car style={{ width: iS, height: iS }} />
                             </button>
                             <div className="flex flex-col items-center" style={{ padding: `${pvh(0.4)}px`, opacity: config.currency.enabled ? 1 : 0.35 }}>
-                              <button onClick={() => { if (!config.currency.enabled) return; if (activeTab === "currency") { handleTabChange("home"); } else { handleTabChange("currency"); handleCurrencySubTabChange("moedas"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: btnBg(activeTab === "currency"), border: "none", color: btnIcon(activeTab === "currency"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                              <button onClick={() => { if (!config.currency.enabled) return; if (activeTab === "currency") { handleTabChange("home"); } else { handleTabChange("currency"); handleCurrencySubTabChange("moedas"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: btnBg(activeTab === "currency"), border: "none", ...activeOutline(activeTab === "currency"), color: btnIcon(activeTab === "currency"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                                 <DollarSign style={{ width: iS, height: iS }} />
                               </button>
                               <div style={{ overflow: "hidden", maxHeight: activeTab === "currency" ? `${pvh(10)}px` : "0", transition: "max-height 0.4s cubic-bezier(0.4,0,0.2,1)", opacity: activeTab === "currency" ? 1 : 0 }}>
@@ -3339,10 +3369,10 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                                 </div>
                               </div>
                             </div>
-                            <button onClick={() => config.chat.enabled && handleTabChange("chat")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: btnBg(activeTab === "chat"), border: "none", color: btnIcon(activeTab === "chat"), opacity: config.chat.enabled ? 1 : 0.35, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                            <button onClick={() => config.chat.enabled && handleTabChange("chat")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: btnBg(activeTab === "chat"), border: "none", ...activeOutline(activeTab === "chat"), color: btnIcon(activeTab === "chat"), opacity: config.chat.enabled ? 1 : 0.35, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                               <MessageCircle style={{ width: iS, height: iS }} />
                             </button>
-                            <button onClick={() => { setPreviewDrawActive(p => { const n = !p; if (!n) { setShowPreviewDrawOptions(false); setShowShapesPanel(false); } else { setPreviewDrawMode("pen"); } return n; }); }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, marginTop: `${pvh(0.3)}px`, background: btnBg(previewDrawActive), border: "none", color: btnIcon(previewDrawActive), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                            <button onClick={() => { setPreviewDrawActive(p => { const n = !p; if (!n) { setShowPreviewDrawOptions(false); setShowShapesPanel(false); } else { setPreviewDrawMode("pen"); } return n; }); }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, marginTop: `${pvh(0.3)}px`, background: btnBg(previewDrawActive), border: "none", ...activeOutline(previewDrawActive), color: btnIcon(previewDrawActive), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                               <Pen style={{ width: iS, height: iS }} />
                             </button>
                             {previewDrawActive && (
@@ -3448,61 +3478,75 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                             })()}
                             
 
-                                                          {/* Relógio e data no canto superior esquerdo */}
-                             <div style={{ position: "absolute", top: `${pvh(3.2)}px`, left: `${pvh(3.2)}px`, zIndex: 20, display: "flex", flexDirection: "column", alignItems: "flex-start", textAlign: "left", color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.45)", pointerEvents: "none" }}>
-                               <div style={{ fontSize: `${pvh(2.7)}px`, fontWeight: 400, fontVariantNumeric: "tabular-nums", lineHeight: 1.05, letterSpacing: "0.01em", color: config.home.colorClock || "#fff", whiteSpace: "nowrap" }}>{currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</div>
-                               <div style={{ fontSize: `${pvh(1.05)}px`, fontWeight: 400, lineHeight: 1.25, marginTop: `${pvh(0.45)}px`, color: config.home.colorDate || "#fff", whiteSpace: "nowrap" }}>{currentTime.toLocaleDateString("pt-BR", { weekday: "long" }).replace(/-feira$/, "").replace(/^./, c => c.toUpperCase()) + " - " + currentTime.getDate() + " de " + currentTime.toLocaleDateString("pt-BR", { month: "long" }).replace(/^./, c => c.toUpperCase()) + "/" + currentTime.toLocaleDateString("pt-BR", { year: "2-digit" })}</div>
-                             </div>
-                             {/* Condição atual no canto superior direito; indicadores alternam a cada 4 segundos */}
-                             {liveWeather && (
-                               <div style={{ position: "absolute", top: `${pvh(2.5)}px`, right: `${pvh(3.2)}px`, zIndex: 20, width: `${pvh(20)}px`, display: "flex", flexDirection: "column", alignItems: "flex-end", textAlign: "right", color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)", pointerEvents: "none" }}>
-                                 <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${pvh(0.7)}px` }}>
-                                   <div style={{ fontSize: `${pvh(2.3)}px`, fontWeight: 400, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{liveWeather.current.temp}°</div>
-                                   <WeatherIcon code={liveWeather.current.code} size={pvh(4.4)} forceDay />
-                                 </div>
-                                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: `${pvh(0.45)}px`, width: "100%", marginTop: `${pvh(0.45)}px`, fontSize: `${pvh(1.05)}px`, fontWeight: 500, lineHeight: 1.2, whiteSpace: "nowrap" }}>
-                                   <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${pvh(0.6)}px` }}><CloudRain size={pvh(1.25)} /> <span>{liveWeather.daily?.[0]?.precip ?? 0}%</span></div>
-                                   <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${pvh(0.6)}px` }}><Droplets size={pvh(1.25)} /> <span>{liveWeather.current.humidity}%</span></div>
-                                   {(liveWeather.daily?.[0]?.precip ?? 0) > 0 && <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${pvh(0.6)}px` }}><CloudRain size={pvh(1.25)} /> <span>{(liveWeather.daily?.[0]?.rainMm ?? 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mm</span></div>}
-                                 </div>
-                               </div>
-                             )}
-                             
-{/* ── BOTTOM-RIGHT: "A seguir" ── */}
-                             {nextProgram && (
-                               <div style={{ position: "absolute", bottom: `${pvh(4)}px`, right: `${pvh(5)}px`, zIndex: 20, textAlign: "right" }}>
-                                  <div className="font-semibold" style={{ fontSize: `${pvh(1.1)}px`, color: config.home.colorASeguirLabel || "var(--layout-accent-color, #888)", marginBottom: `${pvh(0.5)}px` }}>
-                                    <span style={{ color: config.home.colorASeguirLabel || "var(--layout-accent-color)" }}>a seguir</span>
+                              {/* Relógio/data e clima alternam no mesmo espaço do canto superior direito */}
+                              {(() => {
+                                const showWeather = !!liveWeather && Math.floor(currentTime.getTime() / 8000) % 2 === 1;
+                                const dateLabel = `${currentTime.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "")} - ${currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}`;
+                                const panelStyle = (visible: boolean) => ({ position: "absolute" as const, top: 0, right: 0, opacity: visible ? 1 : 0, transform: `translateY(${visible ? 0 : pvh(1)}px)`, transition: `opacity 650ms ease, transform 650ms ease, visibility 0s linear ${visible ? 0 : 650}ms`, visibility: (visible ? "visible" : "hidden") as "visible" | "hidden" });
+                                return <>
+                                  <style>{"@keyframes scenarioWeatherIconFloat { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-7%) scale(1.06); } }"}</style>
+                                  <div style={{ position: "absolute", top: `${pvh(3.2)}px`, right: `${pvh(3.2)}px`, zIndex: 20, width: `${pvh(20)}px`, height: `${pvh(10)}px`, color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)", pointerEvents: "none", textAlign: "right" }}>
+                                    <div style={{ ...panelStyle(!showWeather), display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                                      <div style={{ fontSize: `${pvh(2.7)}px`, fontWeight: 400, fontVariantNumeric: "tabular-nums", lineHeight: 1.05, letterSpacing: "0.01em", color: config.home.colorClock || "#fff", whiteSpace: "nowrap" }}>{currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</div>
+                                      <div style={{ fontSize: `${pvh(1.05)}px`, fontWeight: 400, lineHeight: 1.25, marginTop: `${pvh(0.45)}px`, color: config.home.colorDate || "#fff", whiteSpace: "nowrap" }}>{dateLabel}</div>
+                                    </div>
+                                    {liveWeather && <div style={{ ...panelStyle(showWeather), display: "flex", flexDirection: "column", alignItems: "flex-end", gap: `${pvh(0.35)}px` }}>
+                                      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${pvh(0.7)}px` }}>
+                                        <div style={{ fontSize: `${pvh(2.3)}px`, fontWeight: 400, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{liveWeather.current.temp}°</div>
+                                        <span style={{ display: "inline-flex", animation: "scenarioWeatherIconFloat 2.8s ease-in-out infinite" }}><WeatherIcon code={liveWeather.current.code} size={pvh(4.4)} forceDay /></span>
+                                      </div>
+                                      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: `${pvh(0.45)}px`, width: "100%", fontSize: `${pvh(1.05)}px`, fontWeight: 500, lineHeight: 1.2, whiteSpace: "nowrap" }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: `${pvh(0.6)}px` }}><CloudRain size={pvh(1.25)} /> <span>{liveWeather.daily?.[0]?.precip ?? 0}%</span></div>
+                                        <div style={{ display: "flex", alignItems: "center", gap: `${pvh(0.6)}px` }}><Droplets size={pvh(1.25)} /> <span>{liveWeather.current.humidity}%</span></div>
+                                        {(liveWeather.daily?.[0]?.precip ?? 0) > 0 && <div style={{ display: "flex", alignItems: "center", gap: `${pvh(0.6)}px` }}><CloudRain size={pvh(1.25)} /> <span>{(liveWeather.daily?.[0]?.rainMm ?? 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mm</span></div>}
+                                      </div>
+                                    </div>}
                                   </div>
-                                  <div className="font-bold" style={{ fontSize: `${pvh(1.65)}px`, lineHeight: 1.1, textShadow: "0 1px 6px rgba(0,0,0,0.4)", color: config.home.colorNextProgram || "#fff" }}>{nextProgram.nome.length > 12 ? `${nextProgram.nome.slice(0, 12)}...` : nextProgram.nome}</div>
-                                  <div className="font-medium" style={{ fontSize: `${pvh(0.9)}px`, color: config.home.colorNextProgram || "#fff", fontVariantNumeric: "tabular-nums", marginTop: `${pvh(0.2)}px` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
-                               </div>
-                             )}
+                                </>;
+                              })()}
+                             
+                              {/* Rodapé de programação: anterior, atual e próximo dentro do safe area */}
+                              <AnimatePresence mode="wait" initial={false}>
+                              <motion.div key={`${currentProgram?.id ?? currentProgram?.nome ?? "sem-programa"}-${currentProgram?.horario_inicio ?? ""}-${currentProgram?.horario_fim ?? ""}`} initial={{ x: "8%", opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: "-8%", opacity: 0 }} transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }} style={{ position: "absolute", left: `${pvh(3.2)}px`, right: `${pvh(3.2)}px`, bottom: `${pvh(4.2)}px`, zIndex: 20, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", alignItems: "end", gap: `${pvh(1.5)}px`, pointerEvents: "none", textShadow: "0 2px 8px rgba(0,0,0,0.9)" }}>
+                                {[
+                                  { label: "já foi:", program: previousProgram, align: "left" as const, titleColor: config.home.colorMusicTitle || "var(--layout-accent-color, #fff)", opacity: 0.5 },
+                                  { label: "no ar:", program: currentProgram, align: "center" as const, titleColor: config.home.colorNextProgram || "#fff", opacity: 1 },
+                                  { label: "a seguir:", program: nextProgram, align: "right" as const, titleColor: config.home.colorASeguirLabel || "var(--layout-accent-color, #fff)", opacity: 0.5 },
+                                ].map(({ label, program, align, titleColor, opacity }) => (
+                                  <div key={label} style={{ minWidth: 0, opacity, textAlign: align, display: "flex", flexDirection: "column", gap: `${pvh(0.2)}px` }}>
+                                    <span style={{ fontSize: `${pvh(0.9)}px`, fontWeight: 600, color: titleColor, letterSpacing: "0.03em" }}>{label}</span>
+                                    <span style={{ fontSize: `${pvh(1.35)}px`, fontWeight: 700, color: "#fff", lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{program?.nome || "—"}</span>
+                                    <span style={{ fontSize: `${pvh(0.85)}px`, fontWeight: 500, color: "rgba(255,255,255,0.9)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{program ? `${program.horario_inicio.slice(0,5)} às ${program.horario_fim.slice(0,5)}` : "--:-- às --:--"}</span>
+                                  </div>
+                                ))}
+                              </motion.div>
+                              </AnimatePresence>
 
                              <style>{"@keyframes artistBackgroundPan { 0% { transform: scale(1.08) translateX(-1.8%); } 100% { transform: scale(1.08) translateX(1.8%); } }"}</style>
                              {/* ── WRAPPER: BOX DO LOCUTOR + BOX CAPA (Top Right) ── */}
                              {(() => {
-                               const showProgram = false; // A capa do programa no ar foi removida; exibir somente a capa da música.
-                               const showMusic = !!musicData?.capa && !isBreakTrack && config.home.showMusicCover !== false;
+                               const isJournalisticProgram = ["jornalístico", "jornalistico"].includes(currentProgram?.tipo_programa?.toLowerCase() || "");
+                               const showProgram = isJournalisticProgram && config.home.showProgramThumb !== false && !!(currentProgram?.thumb || currentProgram?.capa);
+                               const showMusic = !isJournalisticProgram && !!musicData?.capa && !isBreakTrack && config.home.showMusicCover !== false;
                                const currentPhase = (showProgram && showMusic) ? (Math.floor(currentTime.getTime() / 8000) % 2 === 0 ? "program" : "music") : (showProgram ? "program" : "music");
                                
                                return (
                                  <div style={{
                                    position: "absolute",
-                                   top: "50%",
-                                   left: "50%",
-                                   transform: "translate(-50%, -50%)",
-                                   display: "flex",
-                                   flexDirection: "column",
-                                   alignItems: "center",
+                                    top: `${pvh(3.2)}px`,
+                                    left: `${pvh(3.2)}px`,
+                                         display: showProgram || showMusic ? "flex" : "none",
+                                    flexDirection: "row",
+                                    alignItems: "center",
+                                    gap: `${pvh(1.5)}px`,
                                    zIndex: 15,
                                  }}>
                                    <div style={{
                                      display: "flex",
                                      alignItems: "stretch",
                                      position: "relative",
-                                     width: `${pvh(18.2)}px`,
-                                     height: `${pvh(18.2)}px`
+                                      width: `${pvh(10)}px`,
+                                      height: `${pvh(10)}px`
                                    }}>
                                      {/* ── BOX DO LOCUTOR: quadrado 1:1 ── */}
                                      <div style={{
@@ -3521,12 +3565,15 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                                        gap: `${pvh(0.6)}px`,
                                        zIndex: 2,
                                        flexShrink: 0,
-                                       transition: "opacity 1s cubic-bezier(0.4, 0, 0.2, 1), transform 1s cubic-bezier(0.4, 0, 0.2, 1)",
-                                       transform: `scale(${currentPhase === "program" ? 1 : 0.9}) rotate(${currentPhase === "program" ? 0 : -5}deg)`,
+                                        opacity: currentPhase === "program" ? 1 : 0,
+                                        visibility: currentPhase === "program" ? "visible" : "hidden",
+                                        transition: "opacity 0.45s ease, transform 0.45s ease",
+                                        transform: `scale(${currentPhase === "program" ? 1 : 0.9})`,
                                        position: "absolute",
                                        inset: 0
                                      }}>
-                                        <div className="flex items-start justify-end" style={{ minWidth: 0 }}>
+                                         {(currentProgram?.thumb || currentProgram?.capa) && showProgram && <img src={currentProgram.thumb || currentProgram.capa || ""} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 0 }} />}
+                                         <div className="flex items-start justify-end" style={{ minWidth: 0, position: "relative", zIndex: 2 }}>
                                           {currentProgram?.selo && (
                                             <img src={currentProgram.selo} alt="" className="object-contain" style={{ maxHeight: `${pvh(5.82)}px`, maxWidth: `${pvh(8.74)}px`, flexShrink: 0, filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.3))" }} />
                                           )}
@@ -3558,20 +3605,14 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                                          </div>
                                      </div>
 
-                                     {/* Vinil: aparece após 10s e fica visível por 20s, atrás da capa */}
-                                     {showMusic && !isNoPlayback && musicData?.capa && (
-                                       <div style={{ position: "absolute", left: "42%", top: 0, width: "100%", height: "100%", zIndex: 1, pointerEvents: "none", overflow: "visible", opacity: 1 }}>
-                                         <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "radial-gradient(circle, #343434 0%, #151515 38%, #555 39%, #080808 42%, #292929 44%, #050505 57%, #383838 59%, #090909 63%, #252525 65%, #050505 100%)", border: "2px solid rgba(255,255,255,0.42)", boxShadow: "0 0 0 2px rgba(0,0,0,0.65), 0 5px 16px rgba(0,0,0,0.65)", animation: "vinylSpin 2.4s linear infinite", willChange: "transform" }}>
-                                           <div style={{ position: "absolute", inset: "8%", borderRadius: "50%", background: "repeating-conic-gradient(from 0deg, rgba(255,255,255,0.12) 0deg, rgba(255,255,255,0.02) 3deg, transparent 6deg, rgba(0,0,0,0.18) 8deg)", opacity: 0.55 }} />
-                                           <div style={{ position: "absolute", inset: "3%", borderRadius: "50%", background: "conic-gradient(from 18deg, transparent 0deg, rgba(255,255,255,0.42) 12deg, rgba(255,255,255,0.08) 26deg, transparent 42deg, transparent 155deg, rgba(255,255,255,0.16) 178deg, transparent 205deg, transparent 360deg)", opacity: 0.8 }} />
-                                           <div style={{ position: "absolute", width: "34%", height: "34%", left: "33%", top: "33%", borderRadius: "50%", overflow: "hidden", background: "#333", border: "2px solid rgba(255,255,255,0.16)" }}><img src={musicData.capa} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /></div>
-                                           <div style={{ position: "absolute", left: "49%", top: "49%", width: "2%", height: "2%", borderRadius: "50%", background: "#ddd", boxShadow: "0 0 0 1px #111" }} />
-                                         </div>
-                                       </div>
-                                     )}
-                                     <style>{"@keyframes vinylSpin { to { transform: rotate(360deg); } }"}</style>
 {/* ── BOX CAPA: music album art ── */}
-                                     <div
+                                      <AnimatePresence mode="wait" initial={false}>
+                                      {showMusic && musicData?.capa && <motion.div
+                                        key={`${musicData.capa}-${musicData.titulo}-${musicData.artista}`}
+                                        initial={{ opacity: 0, scale: 0.96, y: 7 }}
+                                        animate={{ opacity: currentPhase === "music" ? 1 : 0, scale: currentPhase === "music" ? 1 : 0.97, y: currentPhase === "music" ? 0 : -5 }}
+                                        exit={{ opacity: 0, scale: 0.97, y: -5 }}
+                                        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                                        style={{
                                          width: "100%",
                                          height: "100%",
@@ -3579,40 +3620,33 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                                          overflow: "hidden",
                                          flexShrink: 0,
                                          zIndex: 2,
-                                         opacity: showMusic && currentPhase === "music" ? 1 : 0,
-                                         visibility: showMusic && currentPhase === "music" ? "visible" : "hidden",
-                                         transition: "opacity 1s cubic-bezier(0.4, 0, 0.2, 1), transform 1s cubic-bezier(0.4, 0, 0.2, 1)",
-                                         transform: `scale(${currentPhase === "music" ? 1 : 0.9}) rotate(${currentPhase === "music" ? 0 : 5}deg)`,
+                                          pointerEvents: "none",
                                          position: "absolute",
                                          inset: 0,
                                          boxShadow: "0 8px 32px rgba(0,0,0,0.4)"
                                        }}
-                                     >
-                                       {musicData?.capa && (
-                                         <img
-                                           src={musicData.capa}
-                                           alt=""
-                                           style={{
-                                             width: "100%",
-                                             height: "100%",
-                                             objectFit: "cover",
-                                             borderRadius: `${pvh(2)}px`,
-                                           }}
-                                         />
-                                       )}
-                                     </div>
+                                      >
+                                        <img src={musicData.capa} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: `${pvh(2)}px` }} />
+                                      </motion.div>}
+                                      </AnimatePresence>
                                    </div>
 
                                    {/* ── Music Details (Text below cover) ── */}
-                                   {musicData && showMusic && (
-                                     <div style={{
-                                       marginTop: `${pvh(1)}px`,
-                                       textAlign: "center",
-                                       width: "100%",
-                                       opacity: currentPhase === "music" ? 1 : 0,
-                                       transform: `translateY(${currentPhase === "music" ? 0 : pvh(1)}px)`,
-                                       transition: "opacity 0.8s ease, transform 0.8s ease",
-                                       visibility: currentPhase === "music" ? "visible" : "hidden"
+                                    <AnimatePresence mode="wait" initial={false}>
+                                    {musicData && showMusic && (
+                                      <motion.div
+                                        key={`${musicData.capa}-${musicData.titulo}-${musicData.artista}`}
+                                        initial={{ opacity: 0, x: 8, filter: "blur(4px)" }}
+                                        animate={{ opacity: currentPhase === "music" ? 1 : 0, x: currentPhase === "music" ? 0 : -5, filter: "blur(0px)" }}
+                                        exit={{ opacity: 0, x: -5, filter: "blur(4px)" }}
+                                        transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+                                        style={{
+                                        marginTop: 0,
+                                        marginLeft: `${pvh(1.5)}px`,
+                                        textAlign: "left",
+                                        width: `${pvh(20)}px`,
+                                        maxWidth: `${pvh(20)}px`,
+                                        alignSelf: "center",
                                       }}>
                                        <div className="font-extrabold" style={{ fontSize: `${pvh(1.7)}px`, color: config.home.colorMusicName || "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
                                          {musicData.titulo}
@@ -3620,8 +3654,9 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                                        <div className="font-normal" style={{ fontSize: `${pvh(1)}px`, color: config.home.colorMusicTitle || "var(--layout-accent-color, #4ade80)", marginTop: `${pvh(0.2)}px`, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
                                          {musicData.artista}
                                        </div>
-                                     </div>
+                                      </motion.div>
                                    )}
+                                    </AnimatePresence>
                                  </div>
                                );
                              })()}
@@ -3637,23 +3672,8 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                                </div>
                              )}
 
-                                                                                       {/* Foto do locutor ampliada 40%, ancorada na base; identificação sobre a foto */}
-                             {currentProgram && (() => {
-                               const fotos = currentProgram.apresentadoresFotos?.length ? currentProgram.apresentadoresFotos : (currentProgram.apresentadorFoto ? [currentProgram.apresentadorFoto] : []);
-                               const foto = fotos[presenterIdx % (fotos.length || 1)];
-                               return (
-                                 <div style={{ position: "absolute", left: `${pvh(2.6)}px`, bottom: 0, width: `${pvh(26.6)}px`, height: `${pvh(23.8)}px`, zIndex: 14, pointerEvents: "none" }}>
-                                   {foto && <img src={foto} alt="" style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom left", filter: "drop-shadow(0 2px 12px rgba(0,0,0,0.35))", WebkitMaskImage: "none", maskImage: "none" }} />}
-                                   <div style={{ position: "absolute", left: 0, bottom: `${pvh(3.5)}px`, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: `${pvh(0.25)}px`, maxWidth: `${pvh(34)}px`, textAlign: "left", textShadow: "0 2px 8px rgba(0,0,0,0.8)", zIndex: 16 }}>
-                                   <span style={{ fontSize: `${pvh(1)}px`, fontWeight: 600, color: config.home.colorASeguirLabel || "var(--layout-accent-color, #fff)", letterSpacing: "0.04em" }}>no ar</span>
-                                   <span style={{ fontSize: `${pvh(1.65)}px`, fontWeight: 700, color: "#fff", lineHeight: 1.1 }}>{currentProgram.nome}</span>
-                                   <span style={{ fontSize: `${pvh(1)}px`, fontWeight: 500, color: "#fff", opacity: 0.9, lineHeight: 1.1 }}>{currentProgram.apresentador || ""}</span>
-                                   </div>
-                                 </div>
-                               );
-                             })()}
                              {/* Barra premium: trilho translúcido e preenchimento luminoso */}
-                             <div style={{ position: "absolute", bottom: `${pvh(2)}px`, left: `${pvh(2.6)}px`, right: `${pvh(2.6)}px`, height: `${pvh(0.32)}px`, background: "rgba(255,255,255,0.42)", zIndex: 15, overflow: "hidden", borderRadius: "999px" }}>
+                              <div style={{ position: "absolute", bottom: `${pvh(3.2)}px`, left: `${pvh(3.2)}px`, right: `${pvh(3.2)}px`, height: `${pvh(0.32)}px`, background: "rgba(255,255,255,0.42)", zIndex: 15, overflow: "hidden", borderRadius: "999px" }}>
                                <div style={{ width: `${progressPct}%`, height: "100%", background: config.home.colorProgressBar || "#fff", transition: "width 1s linear" }} />
                              </div>
                              <style>{`
@@ -3717,85 +3737,8 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                           {!config.weather.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #0a1628 0%, #0d2847 30%, #134e7a 60%, #1a6fad 85%, #4a9fd4 100%)" }} />}
                           <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 75% 15%, rgba(255,255,255,0.12) 0%, transparent 55%)" }} />
                           <div className="absolute bottom-0 left-0 right-0" style={{ height: "40%", background: "linear-gradient(to top, rgba(0,0,0,0.45), transparent)" }} />
-                          <div className="relative z-10 flex flex-col h-full items-center justify-start overflow-y-auto" style={{ padding: `${pvh(2.5)}px ${pvh(3)}px ${pvh(2)}px`, paddingLeft: `calc(${pvh(3)}px + 50px)` }}>
-                            {liveWeather ? (<>
-                              {weatherSubTab === "today" && (
-                                <div className="flex flex-col items-center justify-start h-full w-full overflow-y-auto" style={{ gap: `${pvh(1.5)}px`, padding: `${pvh(1.5)}px ${pvh(2)}px` }}>
-                                  <div className="text-center" style={{ marginBottom: `${pvh(1)}px` }}>
-                                    <div className="font-black leading-none" style={{ fontSize: `${pvh(3.8)}px`, letterSpacing: "-0.03em", color: config.home.colorMusicName || "#fff", textShadow: "0 3px 16px rgba(0,0,0,0.35)" }}>{weatherCity || config.city || "Cidade"}</div>
-                                    <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${pvh(1.5)}px`, color: config.home.colorMusicTitle || "var(--layout-accent-color, #00BFF0)", marginTop: `${pvh(0.6)}px`, letterSpacing: "0.2em" }}>Previsão do Tempo</div>
-                                  </div>
-
-                                  {config.weather.showCurrent && (
-                                    <div className="rounded-2xl w-full max-w-[92%]" style={{ padding: `${pvh(1.8)}px`, background: "rgba(255,255,255,0.08)", backdropFilter: "blur(18px)", border: "1px solid rgba(255,255,255,0.14)", boxShadow: "0 8px 24px rgba(0,0,0,0.16)" }}>
-                                      <div className="flex items-center justify-center" style={{ gap: `${pvh(3)}px`, marginBottom: `${pvh(2)}px` }}>
-                                        <div style={{ width: `${pvh(10)}px`, height: `${pvh(10)}px`, filter: "drop-shadow(0 6px 16px rgba(0,0,0,0.3))" }}>
-                                          <WeatherIcon code={liveWeather.current.code} size={pvh(10)} forceDay />
-                                        </div>
-                                        <div className="flex flex-col">
-                                          <div className="font-black" style={{ fontSize: `${pvh(5.2)}px`, lineHeight: 0.9, textShadow: "0 3px 16px rgba(0,0,0,0.4)" }}>{liveWeather.current.temp}°</div>
-                                          <div className="font-medium" style={{ fontSize: `${pvh(1.8)}px`, opacity: 0.85, marginTop: `${pvh(0.3)}px` }}>{getWLabel(liveWeather.current.code)}</div>
-                                        </div>
-                                      </div>
-                                      <div className="flex items-center justify-between rounded-2xl" style={{ padding: `${pvh(1.5)}px ${pvh(2.2)}px`, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                                        <div className="flex items-center" style={{ gap: `${pvh(0.8)}px` }}>
-                                          <Thermometer size={pvh(2)} style={{ opacity: 0.7 }} />
-                                          <span className="font-bold tabular-nums" style={{ fontSize: `${pvh(2)}px` }}>{liveWeather.daily[0]?.min ?? "--"}° / {liveWeather.daily[0]?.max ?? "--"}°</span>
-                                        </div>
-                                        <div className="flex items-center" style={{ gap: `${pvh(1.5)}px`, fontSize: `${pvh(1.6)}px` }}>
-                                          <span className="flex items-center" style={{ gap: `${pvh(0.4)}px` }}><Droplets size={pvh(1.6)} style={{ color: "var(--layout-accent-color, #444)" }} /> <span style={{ color: "var(--layout-accent-color, #444)", fontWeight: 700 }}>{liveWeather.current.humidity}%</span></span>
-                                          <span className="flex items-center" style={{ gap: `${pvh(0.4)}px` }}><CloudRain size={pvh(1.6)} style={{ color: "rgba(255,255,255,0.7)" }} /> <span style={{ color: "rgba(255,255,255,0.7)", fontWeight: 700 }}>{liveWeather.daily[0]?.precip ?? 0}%</span></span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {config.weather.showForecast3Days && (
-                                    <div className="w-full max-w-[92%] flex flex-col" style={{ gap: `${pvh(0.8)}px` }}>
-                                      <div className="font-bold uppercase tracking-widest text-center" style={{ fontSize: `${pvh(1.3)}px`, opacity: 0.5, marginBottom: `${pvh(0.5)}px` }}>Próximos Dias</div>
-                                      {liveWeather.daily.slice(1, 4).map((d, i) => (
-                                        <div key={i} className={`w-full flex items-center cenario-anim-row-${i + 1}`} style={{
-                                          padding: `${pvh(0.9)}px ${pvh(1.5)}px`,
-                                          background: "rgba(255,255,255,0.08)",
-                                          borderRadius: `${pvh(1.2)}px`,
-                                          backdropFilter: "blur(20px)",
-                                          border: "1.5px solid rgba(255,255,255,0.15)",
-                                          boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
-                                          gap: `${pvh(1)}px`,
-                                        }}>
-                                          <div style={{ width: `${pvh(10)}px`, flexShrink: 0, display: "flex", alignItems: "center" }}>
-                                            <span className="font-bold capitalize block truncate" style={{ fontSize: `${pvh(1.7)}px`, lineHeight: 1 }}>
-                                              {new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" }).replace('.', '')}
-                                            </span>
-                                          </div>
-                                          <div style={{ width: `${pvh(4.5)}px`, height: `${pvh(4.5)}px`, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                            <WeatherIcon code={d.code} size={pvh(4.2)} forceDay />
-                                          </div>
-                                          <div className="flex-1" style={{ minWidth: 0, display: "flex", alignItems: "center", paddingLeft: `${pvh(1)}px` }}>
-                                            <div className="flex flex-col" style={{ gap: `${pvh(0.3)}px` }}>
-                                              <div className="flex items-center" style={{ gap: `${pvh(0.5)}px`, fontSize: `${pvh(1.2)}px`, lineHeight: 1 }}>
-                                                <Droplets size={pvh(1.2)} style={{ color: "var(--layout-accent-color, #7dd3fc)" }} />
-                                                <span className="font-bold" style={{ color: "var(--layout-accent-color, #7dd3fc)" }}>{d.humidity}%</span>
-                                              </div>
-                                              <div className="flex items-center" style={{ gap: `${pvh(0.5)}px`, fontSize: `${pvh(1.2)}px`, lineHeight: 1 }}>
-                                                <CloudRain size={pvh(1.2)} style={{ color: "rgba(255,255,255,0.7)" }} />
-                                                <span className="font-bold" style={{ color: "rgba(255,255,255,0.7)" }}>{d.rainMm ?? 0}mm</span>
-                                              </div>
-                                            </div>
-                                          </div>
-                                          <div style={{ width: `${pvh(8)}px`, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
-                                            <div className="flex flex-col items-end" style={{ gap: `${pvh(0.1)}px`, justifyContent: "center" }}>
-                                              <span className="font-black tabular-nums" style={{ fontSize: `${pvh(2.6)}px`, lineHeight: 1 }}>{d.max}°</span>
-                                              <span className="font-bold tabular-nums" style={{ fontSize: `${pvh(1.3)}px`, opacity: 0.5, lineHeight: 1 }}>{d.min}°</span>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </>) : (
+                          <div className="relative z-10 flex flex-col h-full items-center justify-start overflow-hidden" style={{ padding: 0 }}>
+                            {liveWeather ? (<CenarioWeatherLayout weather={liveWeather} city={weatherCity || config.city || "Cidade"} otherCities={config.weather.favorites?.map(favorite => favorite.name)} showCurrent={config.weather.showCurrent} showForecast3Days={config.weather.showForecast3Days} />) : (
                               <div className="flex-1 flex items-center justify-center opacity-50" style={{ fontSize: `${pvh(1.8)}px` }}>
                                 {weatherCity ? "Carregando..." : "Configure uma cidade"}
                               </div>

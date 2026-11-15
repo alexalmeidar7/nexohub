@@ -6,7 +6,7 @@ import {
   User, Mail, X, Building2,
   FileText, Gift, Siren, Tag, MonitorPlay, Film, Mic2, Globe, CalendarDays, Home,
   Scissors, ShoppingCart, MessageSquareQuote, HelpCircle, Swords, ExternalLink,
-  Mic, Headphones, MessagesSquare
+  Mic, Headphones, MessagesSquare, RefreshCw
 } from "lucide-react";
 import { format, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -72,8 +72,19 @@ export default function HouseMixHeader({
 }: HouseMixHeaderProps) {
   // Dropdown states
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [desktopVersion, setDesktopVersion] = useState("");
+  const [updateStatus, setUpdateStatus] = useState<HouseMixDesktopUpdateStatus>({ status: "idle" });
   const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const dropdownContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const desktop = window.houseMixDesktop;
+    if (!desktop) return;
+    const unsubscribe = desktop.onUpdateStatus(setUpdateStatus);
+    void desktop.getAppVersion().then(setDesktopVersion).catch(() => setDesktopVersion(desktop.version));
+    void desktop.getUpdateStatus().then(setUpdateStatus).catch(() => {});
+    return unsubscribe;
+  }, []);
 
   // Calendar states
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -494,6 +505,11 @@ export default function HouseMixHeader({
                 house mix
               </span>
             </button>
+            {window.houseMixDesktop && desktopVersion && (
+              <span className="px-2 py-1 rounded-md border border-slate-300 bg-white/75 text-[10px] font-bold text-slate-700 whitespace-nowrap" title="Versão instalada do House Mix Desktop">
+                v{desktopVersion}
+              </span>
+            )}
           </div>
 
           {/* Center: Navigation Links & Hover Dropdowns */}
@@ -1386,6 +1402,24 @@ export default function HouseMixHeader({
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
+          {["available", "downloading", "downloaded"].includes(updateStatus.status) && (
+            <div className="flex items-center gap-2 rounded-full bg-[#0055ff] px-3 py-1.5 text-white shadow-md" aria-live="polite">
+              <RefreshCw size={16} className={updateStatus.status === "downloaded" ? "shrink-0" : "shrink-0 animate-spin"} />
+              <span className="text-[10px] font-bold whitespace-nowrap">
+                {updateStatus.status === "downloaded"
+                  ? `Tenho uma nova atualização${updateStatus.version ? ` v${updateStatus.version}` : ""}`
+                  : `Baixando atualização${updateStatus.version ? ` v${updateStatus.version}` : ""} · ${updateStatus.percent || 0}%`}
+              </span>
+              <button
+                type="button"
+                disabled={updateStatus.status !== "downloaded"}
+                onClick={() => void window.houseMixDesktop?.installUpdate()}
+                className="rounded-full bg-blue-800/80 px-3 py-1 text-[10px] font-bold whitespace-nowrap transition hover:bg-blue-900 disabled:cursor-wait disabled:opacity-70"
+              >
+                {updateStatus.status === "downloaded" ? "atualizar agora" : "baixando..."}
+              </button>
+            </div>
+          )}
           <SystemStatusChip />
 
           {/* User Email: aligned to the right with the menu clock */}

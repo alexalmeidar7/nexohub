@@ -7,11 +7,12 @@ ou a verificação falhar, o HMD continua abrindo normalmente.
 
 ## Publicação
 
-O workflow `.github/workflows/housemix-desktop-release.yml` publica o instalador,
-o manifesto `latest.yml` e os arquivos de atualização quando uma tag `v*.*.*` é
-enviada. Cada versão publicada precisa ter um número maior que a instalada.
-Assim, os usuários recebem as próximas versões sem baixar e executar o instalador
-manualmente. A versão construída localmente não publica nem cria uma Release.
+O workflow `.github/workflows/housemix-desktop-release.yml` roda depois que o
+workflow `Verificar build` conclui com sucesso em um push para `main`. Ele calcula
+uma versão patch maior que a versão do código e a última GitHub Release, então
+publica o instalador, `latest.yml` e os arquivos de atualização no GitHub Releases.
+O HMD instalado baixa a nova versão automaticamente e aplica ao fechar o app.
+Builds locais não publicam nem criam uma Release.
 
 ## Limite atual
 

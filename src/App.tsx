@@ -1,4 +1,5 @@
-import { Suspense, Component, Fragment, useEffect, type ReactNode } from "react";
+import { Suspense, Component, Fragment, useEffect, useState, type ReactNode } from "react";
+import { Maximize2, Minimize2 } from "lucide-react";
 import { Toaster } from "@/components/ui/toaster";
 import RouteProgress from "@/components/RouteProgress";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -48,10 +49,34 @@ function OAuthCallbackRedirect() {
   const target = consumeOAuthReturnPath() || "/";
   return <Navigate to={target} replace />;
 }
+
+function DesktopWindowControls() {
+  const [windowState, setWindowState] = useState<{ auxiliary: boolean; fullscreen: boolean } | null>(null);
+  useEffect(() => {
+    if (!window.houseMixDesktop) return;
+    const refresh = () => void window.houseMixDesktop?.getWindowState().then(setWindowState).catch(() => setWindowState(null));
+    refresh();
+    const timer = window.setInterval(refresh, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  if (!windowState?.auxiliary) return null;
+  return (
+    <button
+      type="button"
+      onClick={() => void window.houseMixDesktop?.toggleFullscreen().then((fullscreen) => setWindowState((state) => state ? { ...state, fullscreen } : state))}
+      className="fixed right-3 top-3 z-[10000] flex items-center gap-2 rounded-lg bg-slate-950/85 px-3 py-2 text-sm font-semibold text-white shadow-lg ring-1 ring-white/20 backdrop-blur hover:bg-blue-700"
+      title={windowState.fullscreen ? "Sair da tela cheia (Esc)" : "Exibir em tela cheia"}
+    >
+      {windowState.fullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+      {windowState.fullscreen ? "Sair da tela cheia" : "Tela cheia"}
+    </button>
+  );
+}
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import ResetPassword from "./pages/ResetPassword";
 import InlineNotification from "@/components/InlineNotification";
+import LocalImageCache from "@/components/LocalImageCache";
 import { initGlobalNotifications } from "@/lib/notify";
 initGlobalNotifications();
 import NotFound from "./pages/NotFound";
@@ -277,7 +302,9 @@ const App = () => (
       <DailyUpdateGuard />
       
       <AuthProvider>
+        <LocalImageCache />
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <DesktopWindowControls />
           <OAuthReturnHandler />
           <NavigationErrorBoundary>
           <Suspense fallback={<RouteProgress />}>

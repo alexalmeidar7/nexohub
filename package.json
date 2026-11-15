@@ -1,7 +1,7 @@
 {
   "name": "vite_react_shadcn_ts",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.0.3",
   "type": "module",
   "scripts": {
     "predev": "npx tsx scripts/generate-sitemap.ts",
@@ -14,7 +14,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:responsive": "playwright test --config=playwright.config.ts",
-    "desktop:build": "vite build --base=./",
+    "desktop:build": "vite build --base=/",
     "desktop:bundle-local-api": "esbuild infra/offline-first/api/server.mjs --bundle --platform=node --format=esm --target=node22 --outfile=desktop/runtime/api/server.mjs"
   },
   "dependencies": {
@@ -141,14 +141,16 @@
     },
     "nsis": {
       "oneClick": false,
-      "perMachine": false,
-      "allowToChangeInstallationDirectory": true,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "House Mix Desktop",
       "installerIcon": "desktop/assets/house-mix.ico",
       "uninstallerIcon": "desktop/assets/house-mix.ico",
-      "installerHeaderIcon": "desktop/assets/house-mix.ico"
+      "installerHeaderIcon": "desktop/assets/house-mix.ico",
+      "packElevateHelper": true,
+      "include": "desktop/installer.nsh"
     },
     "extraResources": [
       {
