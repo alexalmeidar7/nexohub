@@ -36,7 +36,7 @@ export async function uploadImageToStorage(
   // HMD keeps the new image on this account's machine before attempting cloud sync.
   if (window.houseMixDesktop && local?.slug) {
     try { await window.houseMixDesktop.saveLocalImage(local.slug, await compressed.arrayBuffer(), compressed.type, local.hint); }
-    catch (error) { throw new Error("Não foi possível salvar a imagem localmente. O envio para a nuvem foi interrompido.", { cause: error }); }
+    catch { throw new Error("Não foi possível salvar a imagem localmente. O envio para a nuvem foi interrompido."); }
   }
 
   const { error } = await supabase.storage
