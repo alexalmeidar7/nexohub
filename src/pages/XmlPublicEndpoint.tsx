@@ -117,6 +117,15 @@ export default function XmlPublicEndpoint() {
         setError(null);
       }
     } catch (err: any) {
+      if (window.houseMixDesktop && cleanSlug) {
+        const localXml = await window.houseMixDesktop.readXml(cleanSlug, filename).catch(() => null);
+        if (localXml && isMounted) {
+          setXmlContent(localXml);
+          setError(null);
+          setLoading(false);
+          return;
+        }
+      }
       if (isMounted) {
         setXmlContent("");
         setError(err?.message || "Erro ao carregar feed XML");

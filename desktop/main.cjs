@@ -32,39 +32,63 @@ function getLocalAssetsRoot() {
   return path.join(programFiles, "House Mix Desktop", "arquivos_locais");
 }
 
-function safeXmlName(value, pattern) {
-  return typeof value === "string" && pattern.test(value);
+function safeAccountSlug(value) {
+  return typeof value === "string" && /^[a-z0-9][a-z0-9_-]{0,79}$/i.test(value) ? value.toLowerCase() : null;
 }
 
-function xmlFilePath(slug, filename) {
-  if (!safeXmlName(slug, /^[a-z0-9][a-z0-9_-]{0,79}$/i) || !safeXmlName(filename, /^[a-z0-9][a-z0-9_-]{0,79}\.xml$/i)) {
-    throw new Error("Nome de feed XML inválido");
-  }
-  return path.join(getLocalAssetsRoot(), "xmls", slug, filename);
+function accountAssetsRoot(accountSlug) {
+  const slug = safeAccountSlug(accountSlug);
+  if (!slug) throw new Error("Invalid account slug");
+  return path.join(getLocalAssetsRoot(), slug);
+}
+
+function safeXmlName(value) {
+  return typeof value === "string" && /^[a-z0-9][a-z0-9_-]{0,79}\.xml$/i.test(value);
+}
+
+function xmlFilePath(accountSlug, filename) {
+  if (!safeXmlName(filename)) throw new Error("Invalid XML filename");
+  return path.join(accountAssetsRoot(accountSlug), "xmls", filename);
 }
 
 function imageCategory(sourceUrl, hint = "") {
   const value = `${sourceUrl} ${hint}`.toLowerCase();
+  const pathname = (() => { try { return new URL(sourceUrl).pathname.toLowerCase(); } catch { return ""; } })();
   if (/apresentador|locutor|speaker|host/.test(value)) return "apresentadores";
   if (/banner/.test(value)) return "banners";
   if (/fundo|background|wallpaper/.test(value)) return "fundos";
-  if (/programa|capa|cover|album/.test(value)) return "programas";
+  if (/capa|album|cover|artwork/.test(value) || /\/images\/cover\//.test(pathname)) return "capas";
+  if (/\/images\/artist\//.test(pathname) || /deezer.{0,20}(artista|artist)|(artista|artist).{0,20}deezer/.test(value)) return "deezer";
   if (/logo|patrocin|sponsor|anunciante/.test(value)) return "logos";
   return "geral";
 }
 
-function cachedImagePath(relativePath) {
-  if (typeof relativePath !== "string" || !/^imagens\/(apresentadores|banners|fundos|programas|logos|geral)\/[a-f0-9]{64}\.(?:png|jpe?g|webp|gif|avif|svg)$/i.test(relativePath)) {
-    throw new Error("Caminho de imagem local invÃ¡lido");
+function cachedImagePath(accountSlug, relativePath) {
+  if (typeof relativePath !== "string" || !/^imagens\/(apresentadores|banners|fundos|capas|deezer|logos|geral)\/[a-f0-9]{64}\.(?:png|jpe?g|webp|gif|avif|svg)$/i.test(relativePath)) {
+    throw new Error("Invalid local image path");
   }
-  const root = path.resolve(getLocalAssetsRoot(), "imagens");
-  const target = path.resolve(getLocalAssetsRoot(), relativePath);
+  const root = path.resolve(accountAssetsRoot(accountSlug), "imagens");
+  const target = path.resolve(accountAssetsRoot(accountSlug), relativePath);
   const relative = path.relative(root, target);
-  if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) throw new Error("Caminho de imagem local invÃ¡lido");
+  if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) throw new Error("Invalid local image path");
   return target;
 }
 
-async function cacheRemoteImage(sourceUrl, hint) {
+function legacyCachedImagePath(relativePath) {
+  if (typeof relativePath !== "string" || !/^imagens\/(apresentadores|banners|fundos|programas|logos|geral)\/[a-f0-9]{64}\.(?:png|jpe?g|webp|gif|avif|svg)$/i.test(relativePath)) return null;
+  const root = path.resolve(getLocalAssetsRoot(), "imagens");
+  const target = path.resolve(getLocalAssetsRoot(), relativePath);
+  const relative = path.relative(root, target);
+  return !relative || relative.startsWith("..") || path.isAbsolute(relative) ? null : target;
+}
+
+function localImageUrl(accountSlug, relativePath) {
+  return `housemix-local://asset/${safeAccountSlug(accountSlug)}/${relativePath}`;
+}
+
+async function cacheRemoteImage(sourceUrl, hint, accountSlug, forceRefresh = false) {
+  const safeSlug = safeAccountSlug(accountSlug);
+  if (!safeSlug) return null;
   let parsed;
   try { parsed = new URL(sourceUrl); } catch { return null; }
   if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
@@ -78,10 +102,40 @@ async function cacheRemoteImage(sourceUrl, hint) {
   const category = imageCategory(sourceUrl, hint);
   const key = crypto.createHash("sha256").update(sourceUrl).digest("hex");
   const extensions = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif", "image/avif": "avif", "image/svg+xml": "svg" };
+  let existingRelative = null;
   for (const extension of Object.values(extensions)) {
     const relativePath = `imagens/${category}/${key}.${extension}`;
-    if (fs.existsSync(cachedImagePath(relativePath))) return `housemix-local://asset/${relativePath}`;
+    if (fs.existsSync(cachedImagePath(safeSlug, relativePath))) {
+      existingRelative = relativePath;
+      if (!forceRefresh) return localImageUrl(safeSlug, relativePath);
+      break;
+    }
   }
+
+  const legacyCategory = (() => {
+    const value = `${sourceUrl} ${hint}`.toLowerCase();
+    if (/apresentador|locutor|speaker|host/.test(value)) return "apresentadores";
+    if (/banner/.test(value)) return "banners";
+    if (/fundo|background|wallpaper/.test(value)) return "fundos";
+    if (/programa|capa|album|cover/.test(value)) return "programas";
+    if (/logo|patrocin|sponsor|anunciante/.test(value)) return "logos";
+    return "geral";
+  })();
+  let legacyPath = null;
+  for (const extension of Object.values(extensions)) {
+    const candidate = legacyCachedImagePath(`imagens/${legacyCategory}/${key}.${extension}`);
+    if (candidate && fs.existsSync(candidate)) { legacyPath = candidate; break; }
+  }
+  if (!existingRelative && legacyPath) {
+    const extension = path.extname(legacyPath).slice(1);
+    existingRelative = `imagens/${category}/${key}.${extension}`;
+    const target = cachedImagePath(safeSlug, existingRelative);
+    await fs.promises.mkdir(path.dirname(target), { recursive: true });
+    try { await fs.promises.copyFile(legacyPath, target, fs.constants.COPYFILE_EXCL); }
+    catch (error) { if (error.code !== "EEXIST") throw error; }
+    if (!forceRefresh) return localImageUrl(safeSlug, existingRelative);
+  }
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
   try {
@@ -91,38 +145,58 @@ async function cacheRemoteImage(sourceUrl, hint) {
       finalHost === "deezer.com" || finalHost.endsWith(".deezer.com") || finalHost.endsWith(".dzcdn.net") ||
       finalHost.endsWith(".wikimedia.org") || finalHost === "itunes.apple.com" || finalHost.endsWith(".mzstatic.com") ||
       finalHost.endsWith(".scdn.co") || finalHost.endsWith(".spotifycdn.com");
-    if (!finalHostAllowed) return null;
+    if (!finalHostAllowed) return existingRelative ? localImageUrl(safeSlug, existingRelative) : null;
     const contentType = response.headers.get("content-type")?.split(";")[0].toLowerCase() || "";
-    if (!response.ok || !contentType.startsWith("image/")) return null;
+    if (!response.ok || !contentType.startsWith("image/")) return existingRelative ? localImageUrl(safeSlug, existingRelative) : null;
     const extension = extensions[contentType];
-    if (!extension) return null;
+    if (!extension) return existingRelative ? localImageUrl(safeSlug, existingRelative) : null;
     const length = Number(response.headers.get("content-length") || 0);
-    if (length > 20 * 1024 * 1024) return null;
+    if (length > 20 * 1024 * 1024) return existingRelative ? localImageUrl(safeSlug, existingRelative) : null;
     const bytes = Buffer.from(await response.arrayBuffer());
-    if (!bytes.length || bytes.length > 20 * 1024 * 1024) return null;
+    if (!bytes.length || bytes.length > 20 * 1024 * 1024) return existingRelative ? localImageUrl(safeSlug, existingRelative) : null;
     const relativePath = `imagens/${category}/${key}.${extension}`;
-    const target = cachedImagePath(relativePath);
+    const target = cachedImagePath(safeSlug, relativePath);
     await fs.promises.mkdir(path.dirname(target), { recursive: true });
-    if (!fs.existsSync(target)) {
-      const temporary = `${target}.${process.pid}.${crypto.randomUUID()}.tmp`;
-      await fs.promises.writeFile(temporary, bytes, { flag: "wx" });
-      try { await fs.promises.rename(temporary, target); }
-      catch (error) { await fs.promises.rm(temporary, { force: true }); if (!fs.existsSync(target)) throw error; }
+    const temporary = `${target}.${process.pid}.${crypto.randomUUID()}.tmp`;
+    await fs.promises.writeFile(temporary, bytes, { flag: "wx" });
+    try { await fs.promises.rename(temporary, target); }
+    catch (error) {
+      await fs.promises.rm(temporary, { force: true });
+      if (!fs.existsSync(target)) throw error;
     }
-    return `housemix-local://asset/${relativePath}`;
+    return localImageUrl(safeSlug, relativePath);
   } catch {
-    return null;
+    return existingRelative ? localImageUrl(safeSlug, existingRelative) : null;
   } finally {
     clearTimeout(timeout);
   }
 }
 
-async function initializeLocalAssetFolders() {
-  const root = getLocalAssetsRoot();
+async function saveLocalImage(accountSlug, input, contentType, hint = "") {
+  const safeSlug = safeAccountSlug(accountSlug);
+  const bytes = input instanceof ArrayBuffer ? Buffer.from(input) : (Buffer.isBuffer(input) || input instanceof Uint8Array ? Buffer.from(input) : null);
+  const extension = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif", "image/avif": "avif" }[String(contentType || "").split(";")[0].toLowerCase()];
+  if (!safeSlug || !bytes || !bytes.length || bytes.length > 20 * 1024 * 1024 || !extension) throw new Error("Invalid local image payload");
+  const category = imageCategory("", hint);
+  const key = crypto.createHash("sha256").update(bytes).digest("hex");
+  const relativePath = `imagens/${category}/${key}.${extension}`;
+  const target = cachedImagePath(safeSlug, relativePath);
+  await fs.promises.mkdir(path.dirname(target), { recursive: true });
+  if (!fs.existsSync(target)) await fs.promises.writeFile(target, bytes, { flag: "wx" });
+  return localImageUrl(safeSlug, relativePath);
+}
+
+async function ensureAccountLocalAssetFolders(accountSlug) {
+  const root = accountAssetsRoot(accountSlug);
   await Promise.all([
     "xmls", "imagens/apresentadores", "imagens/banners", "imagens/fundos",
-    "imagens/programas", "imagens/logos", "imagens/geral"
+    "imagens/capas", "imagens/deezer", "imagens/logos", "imagens/geral"
   ].map((folder) => fs.promises.mkdir(path.join(root, folder), { recursive: true })));
+  return root;
+}
+
+async function initializeLocalAssetFolders() {
+  await fs.promises.mkdir(getLocalAssetsRoot(), { recursive: true });
 }
 
 function configureDesktopIpc() {
@@ -141,19 +215,29 @@ function configureDesktopIpc() {
     desktopAutoUpdater.quitAndInstall();
     return true;
   });
+  ipcMain.handle("housemix:assets-init", (_event, slug) => ensureAccountLocalAssetFolders(slug));
   ipcMain.handle("housemix:xml-path", (_event, slug, filename) => xmlFilePath(slug, filename));
   ipcMain.handle("housemix:xml-save", async (_event, slug, filename, content) => {
     if (typeof content !== "string" || content.length > 5_000_000 || !content.trim().startsWith("<")) {
-      throw new Error("Conteúdo XML inválido");
+      throw new Error("Invalid XML content");
     }
+    await ensureAccountLocalAssetFolders(slug);
     const target = xmlFilePath(slug, filename);
-    await fs.promises.mkdir(path.dirname(target), { recursive: true });
     const temporary = `${target}.${process.pid}.${crypto.randomUUID()}.tmp`;
     await fs.promises.writeFile(temporary, content, "utf8");
     await fs.promises.rename(temporary, target);
     return target;
   });
-  ipcMain.handle("housemix:image-cache", (_event, sourceUrl, hint) => cacheRemoteImage(sourceUrl, hint));
+  ipcMain.handle("housemix:xml-read", async (_event, slug, filename) => {
+    const target = xmlFilePath(slug, filename);
+    try {
+      const stat = await fs.promises.stat(target);
+      if (!stat.isFile() || stat.size > 5_000_000) return null;
+      return await fs.promises.readFile(target, "utf8");
+    } catch { return null; }
+  });
+  ipcMain.handle("housemix:image-cache", (_event, sourceUrl, hint, slug, refresh) => cacheRemoteImage(sourceUrl, hint, slug, refresh === true));
+  ipcMain.handle("housemix:image-save-local", (_event, slug, bytes, contentType, hint) => saveLocalImage(slug, bytes, contentType, hint));
   ipcMain.handle("housemix:window-fullscreen", (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (!win || !auxiliaryWindows.has(win)) return false;
@@ -166,7 +250,7 @@ function configureDesktopIpc() {
   });
 }
 
-const UPDATE_CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000;
+const UPDATE_CHECK_INTERVAL_MS = 15 * 60 * 1000;
 
 function configureAutoUpdater() {
   if (!app.isPackaged) return;
@@ -225,6 +309,8 @@ function scheduleDesktopUpdates() {
     void checkForDesktopUpdate();
   }, UPDATE_CHECK_INTERVAL_MS);
   updateCheckTimer.unref?.();
+  app.on("browser-window-focus", () => void checkForDesktopUpdate());
+  app.on("activate", () => void checkForDesktopUpdate());
 }
 
 async function registerRendererProtocol() {
@@ -248,7 +334,8 @@ async function registerRendererProtocol() {
     try {
       const parsed = new URL(request.url);
       if (parsed.hostname !== "asset") return new Response("Not found", { status: 404 });
-      const filePath = cachedImagePath(decodeURIComponent(parsed.pathname).replace(/^\//, ""));
+      const [accountSlug, ...segments] = decodeURIComponent(parsed.pathname).replace(/^\//, "").split("/");
+      const filePath = cachedImagePath(accountSlug, segments.join("/"));
       if (!fs.existsSync(filePath)) return new Response("Not found", { status: 404 });
       return net.fetch(pathToFileURL(filePath).toString());
     } catch {

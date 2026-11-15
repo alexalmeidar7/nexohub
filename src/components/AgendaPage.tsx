@@ -49,6 +49,7 @@ import GoogleCalendarSync from "@/components/GoogleCalendarSync";
 import AgendaPageSkeleton from "@/components/skeletons/AgendaPageSkeleton";
 
 import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
+import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
 import { Youtube, Image as ImageIcon, Upload, Download, Search, MessageCircle, Send, Sparkles } from "lucide-react";
 import { confirmDialog } from "@/lib/confirmDialog";
 import { getStoredMetadata, DEFAULT_AGENCY_CLIENTS } from "@/components/ClientesPage";
@@ -1652,7 +1653,8 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
         reader.readAsDataURL(file);
       });
       const path = `agenda/${user.id}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.webp`;
-      const url = await uploadImageToStorage(dataUrl, "empresa-assets", path);
+      const account = findClientAccountById(user.id) || findClientAccountByEmail(user.email);
+      const url = await uploadImageToStorage(dataUrl, "empresa-assets", path, 1920, 0.82, { slug: account?.slug || "", hint: "banners agenda" });
       setFormArtesUrls(prev => {
         if (typeof slotIdx === "number") {
           const next = [...prev];

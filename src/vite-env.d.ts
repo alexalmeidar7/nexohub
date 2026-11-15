@@ -22,9 +22,12 @@ interface Window {
     getUpdateStatus: () => Promise<HouseMixDesktopUpdateStatus>;
     onUpdateStatus: (callback: (status: HouseMixDesktopUpdateStatus) => void) => () => void;
     installUpdate: () => Promise<boolean>;
+    initializeLocalAssets: (slug: string) => Promise<string>;
     getXmlPath: (slug: string, filename: string) => Promise<string>;
     saveXml: (slug: string, filename: string, content: string) => Promise<string>;
-    cacheImage: (url: string, hint: string) => Promise<string | null>;
+    readXml: (slug: string, filename: string) => Promise<string | null>;
+    cacheImage: (url: string, hint: string, slug: string, refresh?: boolean) => Promise<string | null>;
+    saveLocalImage: (slug: string, bytes: ArrayBuffer, contentType: string, hint: string) => Promise<string>;
     getWindowState: () => Promise<{ auxiliary: boolean; fullscreen: boolean }>;
     toggleFullscreen: () => Promise<boolean>;
   };

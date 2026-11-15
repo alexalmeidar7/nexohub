@@ -423,13 +423,13 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
       let fotoUrl = showFoto ? foto : "";
       if (fotoUrl.startsWith("data:")) {
         const targetId = editingId || crypto.randomUUID();
-        fotoUrl = await uploadImageToStorage(fotoUrl, "empresa-assets", `${ownerId}/apresentadores/${targetId}.webp`);
+        fotoUrl = await uploadImageToStorage(fotoUrl, "empresa-assets", `${ownerId}/apresentadores/${targetId}.webp`, 1920, 0.82, { slug: ownerAccount?.slug || "", hint: "apresentadores" });
       }
 
       let finalBackgroundUrl = backgroundUrl;
       if (finalBackgroundUrl.startsWith("data:")) {
         const targetId = editingId || crypto.randomUUID();
-        finalBackgroundUrl = await uploadImageToStorage(finalBackgroundUrl, "empresa-assets", `${ownerId}/apresentadores/${targetId}-bg.webp`);
+        finalBackgroundUrl = await uploadImageToStorage(finalBackgroundUrl, "empresa-assets", `${ownerId}/apresentadores/${targetId}-bg.webp`, 1920, 0.82, { slug: ownerAccount?.slug || "", hint: "fundos apresentadores" });
       }
 
       const payload = {

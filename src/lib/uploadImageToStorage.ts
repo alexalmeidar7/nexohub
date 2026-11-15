@@ -15,7 +15,8 @@ export async function uploadImageToStorage(
   bucket: string,
   path: string,
   maxSize = 1920,
-  quality = 0.82
+  quality = 0.82,
+  local?: { slug: string; hint: string }
 ): Promise<string> {
   // Already a storage/http URL — keep as-is
   if (!dataUrl.startsWith("data:")) return dataUrl;
@@ -31,6 +32,12 @@ export async function uploadImageToStorage(
 
   const finalExt = compressed.type.includes("webp") ? "webp" : ext;
   const finalPath = path.replace(/\.[^.]+$/, `.${finalExt}`);
+
+  // HMD keeps the new image on this account's machine before attempting cloud sync.
+  if (window.houseMixDesktop && local?.slug) {
+    try { await window.houseMixDesktop.saveLocalImage(local.slug, await compressed.arrayBuffer(), compressed.type, local.hint); }
+    catch (error) { throw new Error("Não foi possível salvar a imagem localmente. O envio para a nuvem foi interrompido.", { cause: error }); }
+  }
 
   const { error } = await supabase.storage
     .from(bucket)

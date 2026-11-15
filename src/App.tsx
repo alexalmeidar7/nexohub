@@ -77,6 +77,7 @@ import Index from "./pages/Index";
 import ResetPassword from "./pages/ResetPassword";
 import InlineNotification from "@/components/InlineNotification";
 import LocalImageCache from "@/components/LocalImageCache";
+import DesktopLocalMediaSync from "@/components/DesktopLocalMediaSync";
 import { initGlobalNotifications } from "@/lib/notify";
 initGlobalNotifications();
 import NotFound from "./pages/NotFound";
@@ -302,6 +303,7 @@ const App = () => (
       <DailyUpdateGuard />
       
       <AuthProvider>
+        <DesktopLocalMediaSync />
         <LocalImageCache />
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <DesktopWindowControls />

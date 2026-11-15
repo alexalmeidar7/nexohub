@@ -12,9 +12,12 @@ contextBridge.exposeInMainWorld("houseMixDesktop", Object.freeze({
     return () => ipcRenderer.removeListener("housemix:update-status", listener);
   },
   installUpdate: () => ipcRenderer.invoke("housemix:install-update"),
+  initializeLocalAssets: (slug) => ipcRenderer.invoke("housemix:assets-init", slug),
   getXmlPath: (slug, filename) => ipcRenderer.invoke("housemix:xml-path", slug, filename),
   saveXml: (slug, filename, content) => ipcRenderer.invoke("housemix:xml-save", slug, filename, content),
-  cacheImage: (url, hint) => ipcRenderer.invoke("housemix:image-cache", url, hint),
+  readXml: (slug, filename) => ipcRenderer.invoke("housemix:xml-read", slug, filename),
+  cacheImage: (url, hint, slug, refresh = false) => ipcRenderer.invoke("housemix:image-cache", url, hint, slug, refresh),
+  saveLocalImage: (slug, bytes, contentType, hint) => ipcRenderer.invoke("housemix:image-save-local", slug, bytes, contentType, hint),
   getWindowState: () => ipcRenderer.invoke("housemix:window-state"),
   toggleFullscreen: () => ipcRenderer.invoke("housemix:window-fullscreen")
 }));
