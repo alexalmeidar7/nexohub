@@ -4,10 +4,10 @@ import { createPortal } from "react-dom";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useGlobalMusicSync } from "@/hooks/useGlobalMusicSync";
-import { usePreloadedImages, preloadImage } from "@/hooks/usePreloadImages";
 import { preloadLocutorImages } from "@/lib/locutorImageCache";
 import { useBgPalette } from "./useBgPalette";
 import { fetchArtistImageCached, getArtistImageSync } from "@/lib/artistImageCache";
+import { preloadImage } from "@/hooks/usePreloadImages";
 import { fetchPlayerListenerProfile } from "@/lib/playerListenerProfile";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +23,7 @@ import nexoPlayerLogo from "@/assets/nexo-player-logo.png.asset.json";
 import { resolveEffectiveOnAir } from "@/lib/onAirResolver";
 import { playerSignOut } from "@/lib/playerSignOut";
 import { fetchStationDatabaseData } from "@/lib/stationDatabaseService";
+import { getStationLogoFallback } from "@/lib/playerBranding";
 const MiniPlayerWidget = lazyRetry(() => import("@/components/player/MiniPlayerWidget"));
 const PlayerGradeDialog = lazyRetry(() => import("@/components/player/PlayerGradeDialog"));
 const CatalogDetailInline = lazyRetry(() => import("@/components/player/CatalogDetailInline"));
@@ -55,6 +56,7 @@ interface Programa {
   capa: string | null;
   thumb: string | null;
   descricao?: string | null;
+  tipo_programa?: string | null;
   classificacao_etaria?: string | null;
   apresentador_id?: string | null;
   apresentadores_ids?: string[] | null;
@@ -130,6 +132,7 @@ function TopNavBar({
   stationLogoUrl,
   paletteSource,
   onAvatarChange,
+  homeLayout = false,
 }: {
   items: { label: string; key: string; action: () => void }[];
   activeKey: string;
@@ -153,6 +156,7 @@ function TopNavBar({
   stationLogoUrl?: string | null;
   paletteSource?: string | null;
   onAvatarChange?: (url: string) => void;
+  homeLayout?: boolean;
 }) {
 
   const [profileOpen, setProfileOpen] = useState(false);
@@ -235,7 +239,8 @@ function TopNavBar({
   }, [searchFocused]);
 
   return (
-    <header className="absolute top-0 left-0 right-0 z-30 flex items-center flex-wrap px-4 sm:px-8 md:px-12 pt-4 sm:pt-8 pb-4 gap-3 sm:gap-6 md:gap-8">
+    <header className={`absolute top-0 left-0 right-0 z-30 flex items-center flex-wrap px-4 sm:px-8 md:px-12 pt-4 sm:pt-8 pb-4 gap-3 sm:gap-6 md:gap-8 ${homeLayout ? "player-home-header" : ""}`}>
+      {homeLayout && <style>{`.player-home-header{padding:4.8vh 6vw 0!important;gap:0!important;flex-wrap:nowrap!important}.player-home-header nav{margin-left:82px;gap:20px!important}.player-home-header nav button{font-size:clamp(16px,1.4vw,25px)!important}.player-home-header nav [data-tv-topnav]:focus-visible{transform:none!important;outline:none!important;outline-offset:0!important;box-shadow:none!important;border-radius:0!important;z-index:auto!important}.player-home-header .player-home-profile-wrap{position:absolute!important;left:6vw;top:6.7vh;width:56px;height:56px}.player-home-header [data-home-profile]{position:absolute;inset:0;width:56px;height:56px;border-radius:50%!important;background:linear-gradient(135deg,#f20d1b 0%,#c9000c 100%)!important;border:0!important;box-shadow:none!important}.player-home-header [data-home-profile] img{border-radius:50%}.player-home-header [data-home-profile] svg{display:block;color:white;width:25px;height:25px}.player-home-header .player-home-profile-wrap>div[class*="absolute"]{left:0!important;right:auto!important;top:calc(100% + 8px)!important}.player-home-header .player-home-search{display:block!important;margin-left:18px!important}.player-home-header .player-home-right{gap:20px!important}.player-home-header .player-home-logo{width:112px!important;height:92px!important}.player-home-tools{display:none!important}@media(max-width:700px){.player-home-header{padding:22px 20px 0!important}.player-home-header .player-home-profile-wrap{left:20px;top:66px;width:40px;height:40px}.player-home-header [data-home-profile]{width:40px;height:40px}.player-home-header nav{margin-left:50px;gap:12px!important}.player-home-header nav button{font-size:14px!important}.player-home-header .player-home-search{margin-left:10px!important}.player-home-header .player-home-logo{width:60px!important;height:54px!important}}`}</style>}
       {/* Nav links */}
       <nav className="flex items-center flex-wrap gap-3 sm:gap-6 md:gap-10">
         {items.map((item, idx) => {
@@ -279,7 +284,7 @@ function TopNavBar({
         return (
       <div
         ref={searchWrapRef}
-        className="relative transition-[flex,max-width,width] duration-300 ease-out"
+        className={`relative transition-[flex,max-width,width] duration-300 ease-out ${homeLayout ? "player-home-search" : ""}`}
         style={{
           flex: expanded ? "1 1 0%" : "0 0 40px",
           maxWidth: expanded ? 380 : 40,
@@ -287,12 +292,13 @@ function TopNavBar({
         }}
       >
         <div
-          className="flex items-center rounded-full overflow-hidden transition-all duration-300 ease-out"
+          className={`flex items-center transition-all duration-300 ease-out ${expanded ? "overflow-visible" : "rounded-full overflow-hidden"}`}
           style={{
             border: "1px solid rgba(255,255,255,0.35)",
             background: "rgba(255,255,255,0.02)",
             width: "100%",
             height: 40,
+            borderRadius: 9999,
             paddingLeft: expanded ? 16 : 0,
             paddingRight: expanded ? 12 : 0,
             gap: expanded ? 12 : 0,
@@ -332,8 +338,8 @@ function TopNavBar({
                 onFocus={() => setSearchFocused(true)}
                 placeholder="buscar"
                 data-tv-focusable
-                className="flex-1 min-w-0 bg-transparent text-tv-card-sub font-tv-medium placeholder:text-white/55 text-white outline-none lowercase focus:outline-none focus-visible:outline-none"
-                style={{ fontFamily: "'Lufga', system-ui, sans-serif" }}
+                className="player-home-search-input flex-1 min-w-0 bg-transparent text-tv-card-sub font-tv-medium placeholder:text-white/55 text-white outline-none lowercase focus:outline-none focus-visible:outline-none"
+                style={{ fontFamily: "'Lufga', system-ui, sans-serif", border: 0, outline: "none", boxShadow: "none", background: "transparent", appearance: "none" }}
                 onKeyDown={(e) => {
                   const el = e.currentTarget;
                   const atStart = el.selectionStart === 0 && el.selectionEnd === 0;
@@ -441,36 +447,37 @@ function TopNavBar({
       <div className="hidden md:block flex-1" />
 
       {/* Right: avatar (rounded square) + station logo */}
-      <div className="flex items-center gap-2 sm:gap-4 ml-auto">
+      <div className={`flex items-center gap-2 sm:gap-4 ml-auto ${homeLayout ? "player-home-right" : ""}`}>
         {/* Relógio + previsão do tempo (mesmo padrão do /player/watch) */}
         <PlayerClockWeather radioUserId={radioUserId} compact />
 
-        <div ref={profileRef} className="relative">
+        <div ref={profileRef} className={`relative ${homeLayout ? "player-home-profile-wrap" : ""}`}>
           <button
             onClick={() => setProfileOpen(v => !v)}
             data-tv-focusable
-            className="relative overflow-hidden cursor-pointer transition-all duration-500 ease-out hover:scale-[1.04] focus:outline-none focus-visible:outline-none focus:scale-[1.04] focus:ring-2 focus:ring-white/60 w-[48px] h-[48px] sm:w-[56px] sm:h-[56px] md:w-[68px] md:h-[68px]"
+          data-home-profile={homeLayout ? "true" : undefined}
+          className={`relative overflow-hidden cursor-pointer transition-all duration-500 ease-out hover:scale-[1.04] focus:outline-none focus-visible:outline-none focus:scale-[1.04] focus:ring-2 focus:ring-white/60 w-[48px] h-[48px] sm:w-[56px] sm:h-[56px] md:w-[68px] md:h-[68px] ${homeLayout ? "player-home-avatar" : ""}`}
             style={{
               borderRadius: "18px",
               border: "1px solid rgba(255,255,255,0.14)",
               boxShadow: "0 12px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.18)",
             }}
           >
-            {prevBgColors && (
+            {prevBgColors && !homeLayout && (
               <div
                 className="absolute inset-0 pointer-events-none"
                 style={{ background: `linear-gradient(145deg, ${prevBgColors[0]}, ${prevBgColors[1]})` }}
               />
             )}
-            <div
+            {!homeLayout && <div
               className="absolute inset-0 pointer-events-none"
               style={{
                 background: `linear-gradient(145deg, ${bgColors[0]}, ${bgColors[1]})`,
                 opacity: prevBgColors ? (fadeIn ? 1 : 0) : 1,
                 transition: "opacity 1400ms cubic-bezier(0.4, 0, 0.2, 1)",
               }}
-            />
-            {avatarUrl ? (
+            />}
+            {avatarUrl && !homeLayout ? (
               <img src={avatarUrl} alt={userName} className="relative w-full h-full object-cover" />
             ) : (
               <User className="relative icon icon-sm text-white m-auto" />
@@ -497,7 +504,7 @@ function TopNavBar({
             </Suspense>
           )}
           {profileOpen && !userId && (
-            <div className="absolute right-0 top-[calc(100%+8px)] z-50 animate-fade-in" style={{ minWidth: "200px" }}>
+            <div className={`absolute ${homeLayout ? "left-0 right-auto" : "right-0"} top-[calc(100%+8px)] z-50 animate-fade-in`} style={{ minWidth: "200px" }}>
               <div className="rounded-2xl px-4 py-3 flex flex-col gap-2" style={{ background: "rgba(10,10,10,0.95)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 16px rgba(0,0,0,0.4)" }}>
                 <span className="text-tv-card-title font-tv-bold text-white truncate">{userName}</span>
                 <div className="w-full h-px bg-white/10" />
@@ -511,7 +518,7 @@ function TopNavBar({
 
         {stationLogoUrl && (
           <div className="flex items-center justify-center flex-shrink-0 w-[52px] h-[52px] sm:w-[64px] sm:h-[64px] md:w-[76px] md:h-[76px]">
-            <img src={stationLogoUrl} alt="Emissora" className="w-full h-full object-contain" />
+            <img src={stationLogoUrl} alt="Emissora" className={`w-full h-full object-contain ${homeLayout ? "player-home-logo" : ""}`} />
           </div>
         )}
       </div>
@@ -568,12 +575,12 @@ function HeroBanner({
   currentProgram,
   nowPlaying,
   presenterFoto,
-  backgroundUrl,
   onOuvir,
   onAssistir,
   onPlaylist,
   cardsVisible = true,
   slugBadge,
+  homeLayout = true,
 }: {
   currentProgram?: Programa;
   nowPlaying?: { musica: string; artista: string; capa?: string } | null;
@@ -584,11 +591,17 @@ function HeroBanner({
   onPlaylist: () => void;
   cardsVisible?: boolean;
   slugBadge?: React.ReactNode;
+  homeLayout?: boolean;
 }) {
+  const isJournalisticProgram = String(currentProgram?.tipo_programa || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase() === "jornalistico";
   const cardBase: React.CSSProperties = {
-    borderRadius: "22px",
-    width: "clamp(180px, 26vw, 260px)",
-    height: "clamp(120px, 17vw, 160px)",
+    borderRadius: "40px",
+    width: "clamp(280px, 19.2vw, 368px)",
+    height: "clamp(168px, 10.95vw, 210px)",
     fontFamily: "'Lufga', system-ui, sans-serif",
   };
 
@@ -596,10 +609,12 @@ function HeroBanner({
   // the alternating background — never the album cover (which was showing before).
   // Cache compartilhado (memória + localStorage, 7 dias) para reduzir chamadas.
   const [artistImg, setArtistImg] = useState<string | null>(() => {
+    if (isJournalisticProgram) return null;
     const a = (nowPlaying?.artista || "").trim();
     return a ? getArtistImageSync(a) : null;
   });
   useEffect(() => {
+    if (isJournalisticProgram) { setArtistImg(null); return; }
     const artista = (nowPlaying?.artista || "").trim();
     const isBreak = ["break", "vinhetas", "hora certa", "desconhecido"].includes(artista.toLowerCase());
     if (!artista || isBreak) { setArtistImg(null); return; }
@@ -610,28 +625,15 @@ function HeroBanner({
       if (!cancelled) setArtistImg(url);
     });
     return () => { cancelled = true; };
-  }, [nowPlaying?.artista]);
+  }, [nowPlaying?.artista, isJournalisticProgram]);
 
-  // Alternating backgrounds: channel thumb + current artist image (Deezer)
-  const bgSources = usePreloadedImages([backgroundUrl, artistImg]);
-
+  const [showArtistBackground, setShowArtistBackground] = useState(true);
   useEffect(() => {
-    if (artistImg) preloadImage(artistImg);
-    if (backgroundUrl) preloadImage(backgroundUrl);
-  }, [backgroundUrl, artistImg]);
-
-  // Palette derived from the channel background thumb for the Ouvir card
-  const { bgColors: ouvirColors } = useBgPalette(backgroundUrl || undefined);
-  const ouvirGradient = `radial-gradient(ellipse at 20% 20%, ${ouvirColors[0]} 0%, transparent 60%), radial-gradient(ellipse at 85% 90%, ${ouvirColors[1]} 0%, transparent 65%), linear-gradient(135deg, ${ouvirColors[0]} 0%, ${ouvirColors[1]} 100%)`;
-
-
-  const [bgIdx, setBgIdx] = useState(0);
-  useEffect(() => { setBgIdx(0); }, [bgSources.join("|")]);
-  useEffect(() => {
-    if (bgSources.length <= 1) return;
-    const id = setInterval(() => setBgIdx(i => (i + 1) % bgSources.length), 8000);
+    setShowArtistBackground(true);
+    if (!artistImg) return;
+    const id = setInterval(() => setShowArtistBackground(show => !show), 6000);
     return () => clearInterval(id);
-  }, [bgSources.length]);
+  }, [artistImg]);
 
 
   return (
@@ -639,48 +641,29 @@ function HeroBanner({
       {/* Fullscreen background — mirror of WelcomeScreen (channel thumb ⇄ artist cover) */}
       <style>{`
         @keyframes ph-kenburns {
-          0%   { transform: scale(1.05) translateX(0%); }
-          100% { transform: scale(1.22) translateX(-6%); }
+          0%   { transform: scale(1.08) translateX(-2%); }
+          100% { transform: scale(1.08) translateX(2%); }
         }
-        .ph-kenburns { animation: ph-kenburns 30s ease-in-out infinite alternate; will-change: transform; }
-        .ph-bg-layer { transition: opacity 1.6s ease-in-out; }
+        .ph-kenburns { animation: ph-kenburns 26s ease-in-out infinite alternate; will-change: transform; }
+        .ph-bg-layer { transition: opacity 2s cubic-bezier(0.22, 1, 0.36, 1); }
       `}</style>
       {/* Camada de fundo ancorada à viewport: não acompanha o scroll do conteúdo
           (evitava o efeito de "pulo"/deslocamento ao navegar com teclado ou mouse) */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-      {bgSources.length > 0 ? (
-        <>
-          {bgSources.map((src, i) => {
-            const isArtist = i === 1; // index 0 = channel thumb, 1 = artist cover
-            return (
-              <img
-                key={src + i}
-                src={src}
-                alt=""
-                className="ph-kenburns ph-bg-layer absolute inset-0 w-full h-full object-cover"
-                style={{
-                  opacity: i === bgIdx ? 1 : 0,
-                  filter: isArtist
-                    ? "brightness(0.5) saturate(1.1) grayscale(0.15)"
-                    : "brightness(0.55) saturate(1.05)",
-                  animationDirection: isArtist ? "alternate-reverse" : "alternate",
-                }}
-                draggable={false}
-              />
-            );
-          })}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background:
-                "linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.15) 30%, rgba(0,0,0,0.55) 75%, rgba(0,0,0,0.9) 100%)",
-            }}
-          />
-        </>
-      ) : (
-        <div
-          className="absolute inset-0"
-          style={{ background: "radial-gradient(120% 80% at 30% 20%, #1e2430 0%, #131519 55%, #08090b 100%)" }}
+      <div
+        className="ph-bg-layer absolute inset-0"
+        style={{
+          opacity: showArtistBackground && artistImg && !isJournalisticProgram ? 0 : 1,
+          background: "linear-gradient(45deg, #111214 0%, #111214 38%, #f20d1b 100%)",
+        }}
+      />
+      {artistImg && !isJournalisticProgram && (
+        <img
+          src={artistImg}
+          alt=""
+          className="ph-kenburns ph-bg-layer absolute inset-0 w-full h-full object-cover object-top"
+          style={{ opacity: showArtistBackground ? 1 : 0, filter: "brightness(0.5) saturate(1.1) grayscale(0.15)" }}
+          draggable={false}
         />
       )}
       </div>
@@ -689,9 +672,10 @@ function HeroBanner({
 
 
       {/* Bottom-left cards row */}
+      {homeLayout && <style>{`[data-home-listen],[data-home-watch]{transition:background 220ms ease,border 220ms ease,transform 300ms ease}[data-home-listen]{background:linear-gradient(135deg,#29292b,#202023)!important;border:1px solid rgba(255,255,255,0.08)!important}[data-home-listen]:hover,[data-home-listen]:focus,[data-home-listen]:focus-visible,[data-home-watch]:hover,[data-home-watch]:focus,[data-home-watch]:focus-visible{background:linear-gradient(135deg,#f20d1b 0%,#c9000c 100%)!important;outline:3px solid rgba(255,255,255,0.96)!important;outline-offset:5px}[data-home-watch-bg]{transition:opacity 220ms ease}[data-home-watch]:hover [data-home-watch-bg],[data-home-watch]:focus [data-home-watch-bg],[data-home-watch]:focus-visible [data-home-watch-bg]{opacity:0!important}`}</style>}
       <div
         data-tv-row="0"
-        className="absolute bottom-6 sm:bottom-10 left-4 sm:left-8 md:left-12 right-4 sm:right-auto z-10 flex flex-wrap items-end gap-3 sm:gap-5"
+        className="absolute bottom-[4.25vh] left-[4.8vw] right-4 sm:right-auto z-10 flex flex-wrap items-end gap-8"
         style={{
           transform: cardsVisible ? "translateY(0)" : "translateY(-108%)",
           opacity: cardsVisible ? 1 : 0,
@@ -706,22 +690,24 @@ function HeroBanner({
         <button
           onClick={onOuvir}
           data-tv-focusable
+          data-home-listen={homeLayout ? "true" : undefined}
           className="relative overflow-hidden text-left group transition-transform duration-300 hover:scale-[1.03]"
           style={{
             ...cardBase,
-            background: ouvirGradient,
-            border: "1px solid rgba(255,255,255,0.08)",
+            background: homeLayout ? "linear-gradient(135deg,#29292b,#202023)" : "linear-gradient(135deg,#f20d1b 0%,#c9000c 100%)",
+            border: homeLayout ? "1px solid rgba(255,255,255,0.08)" : "3px solid rgba(255,255,255,0.96)",
+            boxShadow: "0 8px 30px rgba(0,0,0,.3)",
 
           }}
         >
           {/* Presenter photo pinned right */}
           {presenterFoto && (
-            <div className="absolute right-0 top-0 bottom-0 w-[45%] overflow-hidden">
-              <img src={presenterFoto} alt="" className="w-full h-full object-cover" style={{ maskImage: "linear-gradient(to right, transparent 0%, black 40%)", WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 40%)" }} />
+            <div className="absolute right-2 top-1 bottom-0 w-[43%] overflow-hidden pointer-events-none">
+              <img src={presenterFoto} alt="" className="w-full h-full object-contain object-right-bottom" style={{ maskImage: "linear-gradient(to right, transparent 0%, black 40%)", WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 40%)", transform: "translateY(10px) scale(1.08)", transformOrigin: "right bottom" }} />
             </div>
           )}
-          <div className="relative z-[1] p-4 flex flex-col h-full">
-            <span className="inline-flex self-start text-[11px] px-3 py-1 rounded-full bg-black/40 text-white/85 tracking-wide">ouvir</span>
+          <div className="relative z-[1] p-7 flex flex-col h-full">
+            <span className="inline-flex self-start text-[18px] font-bold text-white tracking-wide">ouvir</span>
             <div className="mt-auto">
               <p className="text-tv-card-sub text-slate-300 leading-none">no ar</p>
               <p className="text-tv-card-title font-tv-bold text-white leading-tight truncate max-w-[55%]">{currentProgram?.nome?.toLowerCase() || "—"}</p>
@@ -736,6 +722,7 @@ function HeroBanner({
         <button
           onClick={onAssistir}
           data-tv-focusable
+          data-home-watch={homeLayout ? "true" : undefined}
           className="relative overflow-hidden text-left group transition-transform duration-300 hover:scale-[1.03]"
           style={{
             ...cardBase,
@@ -743,22 +730,15 @@ function HeroBanner({
             border: "1px solid rgba(255,255,255,0.08)",
           }}
         >
-          {nowPlaying?.capa && (
-            <img
-              src={nowPlaying.capa}
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover"
-              style={{ filter: "grayscale(1) brightness(0.75)" }}
-            />
-          )}
-          <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.15) 100%)" }} />
-          <div className="relative z-[1] p-4 flex flex-col h-full">
-            <span className="inline-flex self-start text-[11px] px-3 py-1 rounded-full bg-black/50 text-white/85 tracking-wide">assistir</span>
+          <div data-home-watch-bg={homeLayout ? "true" : undefined} className="absolute inset-0" style={{ background: "linear-gradient(135deg,#29292b,#202023)" }} />
+          {presenterFoto && <div className="absolute right-2 top-1 bottom-0 w-[43%] overflow-hidden pointer-events-none"><img src={presenterFoto} alt="" className="w-full h-full object-contain object-right-bottom" style={{ maskImage: "linear-gradient(to right, transparent 0%, black 40%)", WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 40%)", transform: "translateY(10px) scale(1.08)", transformOrigin: "right bottom" }} /></div>}
+          <div className="relative z-[1] p-7 flex flex-col h-full">
+            <span className="inline-flex self-start text-[18px] font-bold text-white tracking-wide">assistir</span>
             <div className="mt-auto">
-              <p className="text-tv-card-sub text-slate-300 leading-none">tocando</p>
-              <p className="text-tv-card-title font-tv-bold text-white leading-tight truncate">{nowPlaying?.musica ? formatTrackText(nowPlaying.musica) : "—"}</p>
-              {nowPlaying?.artista && (
-                <p className="text-tv-card-sub text-slate-300 mt-0.5 truncate">{formatTrackText(nowPlaying.artista)}</p>
+              <p className="text-tv-card-sub text-slate-300 leading-none">no ar:</p>
+              <p className="text-tv-card-title font-tv-bold text-white leading-tight truncate max-w-[62%]">{currentProgram?.nome?.toLowerCase() || "—"}</p>
+              {currentProgram && (
+                <p className="text-tv-card-sub text-slate-300 mt-0.5">{currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}</p>
               )}
             </div>
           </div>
@@ -767,7 +747,7 @@ function HeroBanner({
       </div>
 
       {/* Bottom-right help + nexo logo */}
-      <div className="absolute bottom-4 sm:bottom-10 right-4 sm:right-10 z-10 flex items-center gap-3 sm:gap-4">
+        <div className={`absolute bottom-4 sm:bottom-10 right-4 sm:right-10 z-10 flex items-center gap-3 sm:gap-4 ${homeLayout ? "player-home-tools" : ""}`}>
         {slugBadge}
         <div className="relative group">
           <button
@@ -847,6 +827,7 @@ function HeroBanner({
           <img src={nexoPlayerLogo.url} alt="nexo player" className="h-8 object-contain" />
         </div>
       </div>
+      {homeLayout && <div className="absolute bottom-[4.3vh] right-[4.8vw] z-10 text-white/50 text-[13px]" style={{fontFamily:"'Lufga',sans-serif"}}>desenvolvido por : Nexo Brasil</div>}
     </div>
   );
 }
@@ -1751,7 +1732,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       const [chRes, empRes, progRes, histRes, shopRes, settingsRes, apresRes, profileRes] = await Promise.all([
         supabase.from("streaming_channels").select("*").eq("user_id", userId).eq("active", true).order("numero_canal"),
         supabase.from("empresa_config").select("logo, nome, timezone").eq("user_id", userId).single(),
-        supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, thumb, descricao, classificacao_etaria, apresentador_id, apresentadores_ids").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
+        supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, tipo_programa, capa, thumb, descricao, classificacao_etaria, apresentador_id, apresentadores_ids").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
         supabase.from("watch_history").select("id, channel_name, channel_cover_url, channel_logo_url, channel_type, watched_at, channel_id").eq("user_id", userId).eq("radio_user_id", userId).order("watched_at", { ascending: false }).limit(10),
         supabase.from("shopping_products").select("id, name, description, price, image_url, payment_url, stock").eq("user_id", userId).eq("active", true),
         supabase.from("user_settings").select("shopping_active").eq("user_id", userId).maybeSingle(),
@@ -2135,9 +2116,9 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
 
   const sidebarItems = [
-    { icon: Home, label: "tela home", key: "home", action: () => { setActiveCatalog(null); setActiveRow(0); handleSectionChange("home"); } },
-    { icon: Radio, label: "canais streamings ao vivo", key: "streaming", action: () => { setActiveCatalog(null); setActiveRow(0); handleSectionChange("streaming"); } },
-    { icon: Film, label: "canais on demand", key: "content", action: () => { setActiveCatalog(null); setActiveRow(1); handleSectionChange("content"); } },
+    { icon: Home, label: "Home", key: "home", action: () => { setActiveCatalog(null); setActiveRow(0); handleSectionChange("home"); } },
+    { icon: Radio, label: "Streamings", key: "streaming", action: () => { setActiveCatalog(null); setActiveRow(0); handleSectionChange("streaming"); } },
+    { icon: Film, label: "Ondemand", key: "content", action: () => { setActiveCatalog(null); setActiveRow(1); handleSectionChange("content"); } },
   ];
 
   const streamingChannelsRow = streamingChannels;
@@ -2249,7 +2230,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       currentProgram={currentProgram || undefined}
                       nowPlaying={nowPlaying}
                       presenterFoto={currentPresenterFoto}
-                      backgroundUrl={heroChannel?.logo_url || null}
+                      backgroundUrl={heroChannel?.background_url || heroChannel?.cover_url || heroChannel?.logo_url || null}
                       onOuvir={() => {
                         const audioChannels = streamingChannels.filter(c => c.type === "audio_live" || c.type === "audio");
                         let lastId: string | null = null;
@@ -2302,7 +2283,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       radioUserId={ownerUserId}
                       musicUserId={ownerUserId}
                       radioName={channelName}
-                      stationLogoUrl={logoUrl || heroChannel?.logo_url}
+                      stationLogoUrl={logoUrl || heroChannel?.logo_url || getStationLogoFallback(userSlug)}
+                      homeLayout
                       paletteSource={heroChannel?.logo_url || null}
                       onAvatarChange={(url) => setProfileAvatar(url)}
                     />

@@ -23,6 +23,7 @@ export default function FloatingNdiPreview({
   const [devices, setDevices] = useState<VideoDevice[]>([]);
   const [networkSources, setNetworkSources] = useState<NdiNetworkSource[]>([]);
   const [networkDiscoveryMessage, setNetworkDiscoveryMessage] = useState("");
+  const [loadingNetworkSources, setLoadingNetworkSources] = useState(false);
   const [selectedNetworkSource, setSelectedNetworkSource] = useState(() => { try { return window.localStorage.getItem("housemix:ndi-preview-network-source:v1") || ""; } catch { return ""; } });
   const storageKey = "housemix:ndi-preview-device:v1";
   const [selectedDevice, setSelectedDevice] = useState(() => {
@@ -33,8 +34,11 @@ export default function FloatingNdiPreview({
   const [loading, setLoading] = useState(false);
 
   const refreshNetworkSources = async () => {
+    setLoadingNetworkSources(true);
     try {
-      const response = await fetch("http://127.0.0.1:8765/ndi/sources", { cache: "no-store" });
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 5000);
+      const response = await fetch("http://127.0.0.1:8765/ndi/sources", { cache: "no-store", signal: controller.signal }).finally(() => window.clearTimeout(timeout));
       const payload = await response.json();
       if (!response.ok || !payload.available) {
         setNetworkSources([]);
@@ -52,6 +56,8 @@ export default function FloatingNdiPreview({
     } catch {
       setNetworkSources([]);
       setNetworkDiscoveryMessage("Abra o Nexo Bridge neste computador para descobrir todas as fontes NDI visíveis na rede.");
+    } finally {
+      setLoadingNetworkSources(false);
     }
   };
 
@@ -64,6 +70,7 @@ export default function FloatingNdiPreview({
   };
 
   const refreshDevices = async () => {
+    void refreshNetworkSources();
     if (!navigator.mediaDevices?.getUserMedia || !navigator.mediaDevices?.enumerateDevices) {
       setError("Este navegador não permite acesso à câmera. Abra o House Mix no Chrome ou Edge atualizado, usando HTTPS.");
       return;
@@ -194,7 +201,17 @@ export default function FloatingNdiPreview({
         <button type="button" onClick={() => setVisible(false)} title="Ocultar preview" className="rounded p-1 text-slate-300 hover:bg-white/10"><X size={13} /></button>
       </header>
       <div className="p-2">
-        {setupOpen && (
+        {setupOpen && <>
+          <div className="mb-2 flex flex-col gap-1.5">
+            <div className="flex gap-1.5">
+              <select value={selectedNetworkSource} onChange={(event) => handleNetworkSourceChange(event.target.value)} className="h-8 min-w-0 flex-1 rounded-md border px-2 text-[10px] text-white outline-none" style={{ background: "#0c1525", borderColor: "#314766" }} aria-label="Fonte NDI disponivel na rede">
+                <option value="">{loadingNetworkSources ? "Buscando fontes NDI na rede..." : "Selecione uma fonte NDI da rede..."}</option>
+                {networkSources.map((source) => <option key={`${source.name}-${source.address}`} value={source.name}>{source.name}{source.address ? ` - ${source.address}` : ""}</option>)}
+              </select>
+              <button type="button" onClick={() => void refreshNetworkSources()} disabled={loadingNetworkSources} title="Atualizar fontes NDI da rede" className="shrink-0 rounded-md border border-white/20 px-2 text-[9px] font-bold text-white hover:bg-white/10 disabled:opacity-50">{loadingNetworkSources ? "..." : "NDI"}</button>
+            </div>
+            {networkDiscoveryMessage && <p className="px-1 text-[9px] leading-snug text-slate-400">{networkDiscoveryMessage}</p>}
+          </div>
           <div className="mb-2 flex gap-1.5">
             <select value={selectedDevice} onChange={(event) => handleDeviceChange(event.target.value)} className="h-8 min-w-0 flex-1 rounded-md border px-2 text-[10px] text-white outline-none" style={{ background: "#0c1525", borderColor: "#314766" }}>
               <option value="">Selecione a câmera NDI…</option>
@@ -202,7 +219,7 @@ export default function FloatingNdiPreview({
             </select>
             <button type="button" onClick={() => void refreshDevices()} disabled={loading} className="shrink-0 rounded-md border border-white/20 px-2 text-[9px] font-bold text-white hover:bg-white/10 disabled:opacity-50">{loading ? "…" : "Listar"}</button>
           </div>
-        )}
+        </>}
         <div className="relative aspect-video overflow-hidden rounded-md" style={{ background: "#05080e", border: "1px solid #25344b" }}>
           {stream ? (
             <VideoStream stream={stream} label={selectedLabel} />

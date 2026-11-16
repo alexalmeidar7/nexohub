@@ -10,6 +10,8 @@ internal static class NdiNetworkDiscovery
     private const string NdiLibrary = "Processing.NDI.Lib.x64.dll";
     private static readonly string[] AllowedOrigins =
     [
+        // House Mix Desktop uses Electron's secure custom scheme instead of HTTPS.
+        "housemix://desktop",
         "https://housemix.nexobrasil.net",
         "http://localhost:5173",
         "http://127.0.0.1:5173"
@@ -106,6 +108,8 @@ internal static class NdiNetworkDiscovery
             context.Response.Headers["Vary"] = "Origin";
             context.Response.Headers["Access-Control-Allow-Methods"] = "GET, OPTIONS";
             context.Response.Headers["Access-Control-Allow-Headers"] = "Content-Type";
+            if (IsAllowedOrigin(origin) && context.Request.Headers["Access-Control-Request-Private-Network"] == "true")
+                context.Response.Headers["Access-Control-Allow-Private-Network"] = "true";
             context.Response.Headers["Cache-Control"] = "no-store";
 
             if (context.Request.HttpMethod == "OPTIONS")

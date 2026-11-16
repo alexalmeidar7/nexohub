@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { Check, Copy, Download, ExternalLink, RefreshCw, FileCode } from "lucide-react";
 import { CLIENT_ACCOUNTS } from "@/lib/clientAuthAccounts";
+import { localizeXmlImageUrls } from "@/lib/desktopLocalXml";
 const envSupabase = import.meta.env.VITE_SUPABASE_URL || "";
 const SUPABASE_BASE = envSupabase || (typeof window !== "undefined" ? window.location.origin : "");
 
@@ -107,12 +108,14 @@ export default function XmlPublicEndpoint() {
       if (!liveXml.includes("<") || liveXml.includes("<error>") || liveXml.includes("<!DOCTYPE html>")) {
         throw new Error("Feed XML retornou conteúdo inválido");
       }
+      let outputXml = liveXml.trim();
       if (window.houseMixDesktop && cleanSlug) {
-        const savedPath = await window.houseMixDesktop.saveXml(cleanSlug, filename, liveXml.trim());
+        outputXml = await localizeXmlImageUrls(outputXml, cleanSlug, window.houseMixDesktop);
+        const savedPath = await window.houseMixDesktop.saveXml(cleanSlug, filename, outputXml);
         setLocalXmlPath(savedPath);
       }
       if (isMounted) {
-        setXmlContent(liveXml.trim());
+        setXmlContent(outputXml);
         setLoading(false);
         setError(null);
       }
@@ -120,7 +123,9 @@ export default function XmlPublicEndpoint() {
       if (window.houseMixDesktop && cleanSlug) {
         const localXml = await window.houseMixDesktop.readXml(cleanSlug, filename).catch(() => null);
         if (localXml && isMounted) {
-          setXmlContent(localXml);
+          const outputXml = await localizeXmlImageUrls(localXml, cleanSlug, window.houseMixDesktop, true).catch(() => localXml);
+          if (outputXml !== localXml) await window.houseMixDesktop.saveXml(cleanSlug, filename, outputXml).catch(() => "");
+          setXmlContent(outputXml);
           setError(null);
           setLoading(false);
           return;

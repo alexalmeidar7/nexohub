@@ -127,7 +127,7 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
     try {
       await supabase
         .from("batalhas_agendadas")
-        .update({ [field]: url })
+        .update(which === 1 ? { artista1_imagem: url } : { artista2_imagem: url })
         .eq("id", editingIdRef.current);
     } catch {}
     toast.success("Imagem atualizada");

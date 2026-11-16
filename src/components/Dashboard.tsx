@@ -607,6 +607,8 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
   const currentClientAccount = findClientAccountByEmail(user?.email) || findClientAccountById(user?.id);
   const targetStationUserId = effectiveUserId || currentClientAccount?.parentUserId || currentClientAccount?.id || user?.id;
   const [initialLoading, setInitialLoading] = useState(true);
+  const autoOpenMusicHandledRef = useRef(false);
+  const [desktopStartupEnabled, setDesktopStartupEnabled] = useState(false);
   const [onAirThumb, setOnAirThumb] = useState<string | null>(null);
   const [onAirLocutorFoto, setOnAirLocutorFoto] = useState<string | null>(null);
   const [onAirPair, setOnAirPair] = useState<{ primary: string; secondary: string } | null>(null);
@@ -615,6 +617,21 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
   const onAirFotoSrc = onAirLocutorFoto
     ? `${onAirLocutorFoto}${onAirLocutorFoto.includes("?") ? "&" : "?"}v=${onAirFotoVersion}`
     : null;
+
+  useEffect(() => {
+    if (!window.houseMixDesktop || !user || initialLoading || autoOpenMusicHandledRef.current) return;
+    autoOpenMusicHandledRef.current = true;
+    let cancelled = false;
+    void window.houseMixDesktop.getStartWithWindows().then(({ enabled }) => {
+      if (!cancelled) {
+        setDesktopStartupEnabled(enabled);
+        if (enabled) setCurrentPage("musica");
+      }
+    }).catch((error) => {
+      console.error("Não foi possível restaurar o módulo Música no Ar na inicialização:", error);
+    });
+    return () => { cancelled = true; };
+  }, [user?.id, initialLoading, setCurrentPage]);
   // Gradiente dinâmico do box "no ar" a partir da foto do locutor
   useEffect(() => {
     let cancelled = false;
@@ -1597,7 +1614,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
               {isAdmin && (currentPage === "musica" || (minimizedModules.includes("musica") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "musica" ? "block" : "none" }}>
                   <Suspense fallback={<ModulePageSkeleton variant="musica" />}>
-                    <MusicaNoAr effectiveUserId={effectiveUserId} />
+                    <MusicaNoAr effectiveUserId={effectiveUserId} autoStartReader={desktopStartupEnabled} />
                   </Suspense>
                 </div>
               )}
@@ -2095,7 +2112,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
             }}
           >
             <Suspense fallback={<ModulePageSkeleton variant="musica" />}>
-              <MusicaNoAr effectiveUserId={effectiveUserId} />
+              <MusicaNoAr effectiveUserId={effectiveUserId} autoStartReader={desktopStartupEnabled} />
             </Suspense>
           </HouseMixWindow>
         )}

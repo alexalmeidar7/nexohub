@@ -95,14 +95,37 @@ serve(async (req) => {
           const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
           const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
           const res = await fetch(
-            `${supabaseUrl}/rest/v1/user_settings?user_id=eq.${body.user_id}&select=weather_lat,weather_lon&limit=1`,
+            `${supabaseUrl}/rest/v1/user_settings?user_id=eq.${body.user_id}&select=weather_city,weather_lat,weather_lon&limit=1`,
             { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` } },
           );
           const rows = await res.json();
           const row = Array.isArray(rows) ? rows[0] : null;
+          let city = String(row?.weather_city || "").trim();
           if (row && row.weather_lat != null && row.weather_lon != null) {
             lat = row.weather_lat;
             lon = row.weather_lon;
+          } else {
+            if (!city) {
+              const profileRes = await fetch(
+                `${supabaseUrl}/rest/v1/profiles?user_id=eq.${body.user_id}&select=cidade,estado&limit=1`,
+                { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` } },
+              );
+              const profiles = await profileRes.json();
+              const profile = Array.isArray(profiles) ? profiles[0] : null;
+              city = [profile?.cidade, profile?.estado].filter(Boolean).join(", ");
+            }
+            if (city) {
+              const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=pt&format=json`;
+              const geoRes = await fetch(geoUrl, { signal: AbortSignal.timeout(6000) });
+              if (geoRes.ok) {
+                const geo = await geoRes.json();
+                const location = geo?.results?.[0];
+                if (typeof location?.latitude === "number" && typeof location?.longitude === "number") {
+                  lat = location.latitude;
+                  lon = location.longitude;
+                }
+              }
+            }
           }
         } catch (err) {
           console.error("fetch-weather coords lookup failed:", err);

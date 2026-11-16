@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserSlug } from "@/hooks/useUserSlug";
 import { findClientAccountById } from "@/lib/clientAuthAccounts";
+import { localizeXmlImageUrls } from "@/lib/desktopLocalXml";
 
 const XML_FEEDS = [
   ["geral.xml", "serve-xml-geral"], ["tempo.xml", "serve-xml-tempo"],
@@ -53,8 +54,20 @@ export default function DesktopLocalMediaSync() {
         if (!supabaseBase) return;
 
         const syncXml = async () => {
+          let networkUnavailable = !navigator.onLine;
           for (const [filename, fn, extra] of XML_FEEDS) {
             if (stopped) return;
+            const localizeCachedFeed = async () => {
+              const cachedXml = await desktop.readXml(slug, filename).catch(() => null);
+              if (cachedXml) {
+                const localXml = await localizeXmlImageUrls(cachedXml, slug, desktop, true).catch(() => cachedXml);
+                if (localXml !== cachedXml) await desktop.saveXml(slug, filename, localXml).catch(() => "");
+              }
+            };
+            if (networkUnavailable) {
+              await localizeCachedFeed();
+              continue;
+            }
             const params = new URLSearchParams({ user_id: ownerId });
             if (fn === "serve-xml-geral" || fn === "serve-xml-enquete" || fn === "serve-xml-quiz") params.set("slug", slug);
             if (fn === "serve-xml-cenarios-estudio") { params.delete("user_id"); params.set("uid", ownerId); }
@@ -64,12 +77,20 @@ export default function DesktopLocalMediaSync() {
               const response = await fetch(`${supabaseBase}/functions/v1/${fn}?${params}`, { cache: "no-store", signal: AbortSignal.timeout(12000) });
               if (!response.ok) continue;
               const xml = (await response.text()).trim();
-              if (xml.startsWith("<") && !xml.includes("<!DOCTYPE html>") && !xml.includes("<error>")) await desktop.saveXml(slug, filename, xml);
-            } catch { /* Preserve the most recent local XML while offline. */ }
+              if (xml.startsWith("<") && !xml.includes("<!DOCTYPE html>") && !xml.includes("<error>")) {
+                const localXml = await localizeXmlImageUrls(xml, slug, desktop);
+                await desktop.saveXml(slug, filename, localXml);
+              }
+            } catch {
+              // After one feed fails, treat the host as unavailable for the remaining local feeds.
+              networkUnavailable = true;
+              await localizeCachedFeed();
+            }
           }
         };
 
         const syncImages = async () => {
+          if (!navigator.onLine) return;
           const urls = new Map<string, string>();
           for (const [table, mappedFields] of IMAGE_FIELDS) {
             if (stopped) return;

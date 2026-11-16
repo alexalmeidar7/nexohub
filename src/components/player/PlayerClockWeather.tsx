@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -26,7 +25,6 @@ export default function PlayerClockWeather({
   }), [now]);
 
   const [weather, setWeather] = useState<{ temp: number; code: number } | null>(null);
-  const [weatherLoading, setWeatherLoading] = useState(false);
 
   useEffect(() => {
     if (!radioUserId) return;
@@ -34,18 +32,15 @@ export default function PlayerClockWeather({
     let intervalId: number | undefined;
 
     const fetchWeather = async (lat?: number | null, lon?: number | null) => {
-      setWeatherLoading(true);
       try {
         const { data } = await supabase.functions.invoke("fetch-weather", {
           body: { action: "forecast", lat: lat ?? null, lon: lon ?? null, user_id: radioUserId, forecast_days: 1 },
         });
-        const c = (data as any)?.data?.current;
+        const c = (data as any)?.data?.current ?? (data as any)?.current;
         if (!cancelled && c && typeof c.temperature_2m === "number") {
           setWeather({ temp: Math.round(c.temperature_2m), code: Number(c.weather_code) || 0 });
         }
-      } catch {} finally {
-        if (!cancelled) setWeatherLoading(false);
-      }
+      } catch {}
     };
 
     (async () => {
@@ -54,11 +49,22 @@ export default function PlayerClockWeather({
       try {
         const { data: settings } = await supabase
           .from("user_settings")
-          .select("weather_lat, weather_lon")
+          .select("weather_city, weather_lat, weather_lon")
           .eq("user_id", radioUserId)
           .maybeSingle();
         if (typeof (settings as any)?.weather_lat === "number") lat = (settings as any).weather_lat;
         if (typeof (settings as any)?.weather_lon === "number") lon = (settings as any).weather_lon;
+        const city = String((settings as any)?.weather_city || "").trim();
+        if ((lat == null || lon == null) && city) {
+          const { data: geoData } = await supabase.functions.invoke("fetch-weather", {
+            body: { action: "geocode", query: city, count: 1 },
+          });
+          const location = (geoData as any)?.results?.[0];
+          if (typeof location?.latitude === "number" && typeof location?.longitude === "number") {
+            lat = location.latitude;
+            lon = location.longitude;
+          }
+        }
       } catch {}
       fetchWeather(lat, lon);
       intervalId = window.setInterval(() => fetchWeather(lat, lon), 5 * 60 * 1000);
@@ -75,40 +81,38 @@ export default function PlayerClockWeather({
 
   return (
     <div className="flex items-center gap-2 sm:gap-3">
-      {weather && (
+      {(weather || compact) && (
         <div
-          className={`hidden sm:flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl transition-opacity ${weatherLoading ? "opacity-60" : "opacity-100"}`}
+          className={`${compact ? "flex" : "hidden sm:flex"} items-center gap-2`}
           title="Tempo agora"
         >
-          <WeatherIcon code={weather.code} size={compact ? 26 : 34} />
-          {weatherLoading ? (
-            <Loader2 size={18} className="animate-spin text-white/80" />
-          ) : (
-            <span className="text-white font-semibold text-[16px] sm:text-[18px] leading-none tabular-nums">
-              {weather.temp}°
-            </span>
-          )}
+          <WeatherIcon code={weather?.code ?? 0} size={compact ? 26 : 34} />
+          <span className="text-white font-semibold text-[16px] sm:text-[18px] leading-none tabular-nums">
+            {weather ? `${weather.temp}°` : "--°"}
+          </span>
         </div>
       )}
 
+      {(weather || compact) && <span aria-hidden="true" className="text-white/70 text-lg leading-none">|</span>}
+
       <div
-        className="flex items-baseline gap-1 px-3 sm:px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl"
+        className="flex items-baseline gap-1"
         aria-label="Horário atual"
       >
         <span
           className="text-white font-light tabular-nums tracking-[0.02em] leading-none"
-          style={{ fontFamily: '"Sora", system-ui, sans-serif', fontSize: clockSize, fontVariantNumeric: "tabular-nums" }}
+          style={{ fontFamily: '"Sora", system-ui, sans-serif', fontSize: clockSize, fontVariantNumeric: "tabular-nums", width: "5ch", textAlign: "center" }}
         >
           {clockTime.hh}
           <span className="opacity-60 mx-[2px]">:</span>
           {clockTime.mm}
         </span>
-        <span
+        {!compact && <span
           className="text-white/60 font-light tabular-nums leading-none"
           style={{ fontFamily: '"Sora", system-ui, sans-serif', fontSize: secSize }}
         >
           {clockTime.ss}
-        </span>
+        </span>}
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ import {
   CheckCircle, Settings, Tv, ImageIcon, Palette, Link2, ShieldCheck, Code2,
   Building2, MapPin, Phone, Smartphone, Globe, Lock, Mail, Radio, CheckCircle2,
   Search, QrCode, Copy, FileText, FolderArchive, FileSpreadsheet, File, ExternalLink,
-  Download, Film, Music
+  Download, Film, Music, Power
 } from "lucide-react";
 import { Suspense } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
@@ -244,7 +244,37 @@ export default function ConfiguracoesPage({
   }, [config]);
 
   const [loading, setLoading] = useState(true);
+  const isWindowsDesktop = typeof window !== "undefined" && window.houseMixDesktop?.platform === "win32";
+  const [startWithWindows, setStartWithWindows] = useState(true);
+  const [loadingStartupPreference, setLoadingStartupPreference] = useState(false);
+  const [savingStartupPreference, setSavingStartupPreference] = useState(false);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!isWindowsDesktop || !window.houseMixDesktop) return;
+    let active = true;
+    setLoadingStartupPreference(true);
+    void window.houseMixDesktop.getStartWithWindows()
+      .then(({ enabled }) => { if (active) setStartWithWindows(enabled); })
+      .catch(() => { if (active) toast.error("Não foi possível carregar a preferência de inicialização."); })
+      .finally(() => { if (active) setLoadingStartupPreference(false); });
+    return () => { active = false; };
+  }, [isWindowsDesktop]);
+
+  const updateStartWithWindows = async (enabled: boolean) => {
+    if (!window.houseMixDesktop) return;
+    setSavingStartupPreference(true);
+    try {
+      const result = await window.houseMixDesktop.setStartWithWindows(enabled);
+      if (!result.supported) throw new Error("Recurso disponível apenas no Windows.");
+      setStartWithWindows(result.enabled);
+      toast.success(result.enabled ? "House Mix iniciará com o Windows." : "Inicialização automática desativada.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível salvar a preferência.");
+    } finally {
+      setSavingStartupPreference(false);
+    }
+  };
 
   // Credentials
   const [newPassword, setNewPassword] = useState("");
@@ -2562,6 +2592,27 @@ export default function ConfiguracoesPage({
       {(section === "all" || section === "empresa") && <CollapsibleBox title="XMLs" icon={<Code2 size={16} style={{ opacity: 0.8 }} />}>
         <XmlsConfigSection targetUid={targetUid} user={user} />
       </CollapsibleBox>}
+
+      {isWindowsDesktop && (section === "all" || section === "empresa") && (
+        <CollapsibleBox title="Inicialização do Windows" icon={<Power size={16} style={{ opacity: 0.8 }} />}>
+          <label className="flex items-center justify-between gap-6 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 cursor-pointer">
+            <span className="min-w-0">
+              <span className="block text-sm font-bold text-slate-800">Iniciar com Windows</span>
+              <span className="mt-1 block text-xs leading-relaxed text-slate-500">
+                Ao iniciar o computador, abre o House Mix Desktop. Após restaurar sua sessão, o app abre Música no Ar e retoma a leitura da origem XML configurada.
+              </span>
+            </span>
+            <input
+              type="checkbox"
+              checked={startWithWindows}
+              disabled={loadingStartupPreference || savingStartupPreference}
+              onChange={(event) => void updateStartWithWindows(event.target.checked)}
+              className="h-5 w-5 shrink-0 cursor-pointer accent-[#0055ff] disabled:cursor-wait"
+              aria-label="Iniciar com Windows"
+            />
+          </label>
+        </CollapsibleBox>
+      )}
         </div>
       </div>
 

@@ -29,7 +29,7 @@ interface OnAirDisplayState {
 type AnimPhase = "idle" | "exiting" | "entering-prep";
 
 const PHOTO_TRANSITION_MS = 700;
-const PRESENTER_INTERVAL_MS = 4000;
+const PRESENTER_INTERVAL_MS = 5000;
 const REFRESH_INTERVAL_MS = 15000;
 const MAX_REFRESH_BACKOFF_MS = 120000;
 
@@ -111,6 +111,7 @@ export default function FloatingOnAirPresenter({
   const [slideDirection, setSlideDirection] = useState<"forward" | "backward">("forward");
   const [photoSlide, setPhotoSlide] = useState<{ key: number; from: string; to: string; direction: "forward" | "backward" } | null>(null);
   const photoSlideTimerRef = useRef<number | null>(null);
+  const presenterSwitchTimerRef = useRef<number | null>(null);
 
   const [timezone, setTimezone] = useState<string | null>(null);
   const [animPhase, setAnimPhase] = useState<AnimPhase>("idle");
@@ -118,7 +119,7 @@ export default function FloatingOnAirPresenter({
   const animTimerRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
   const [presenterIndex, setPresenterIndex] = useState(0);
-  const [photoExiting, setPhotoExiting] = useState(false);
+  const [presenterSlideDirection, setPresenterSlideDirection] = useState<"forward" | "backward">("forward");
   const [photoFailed, setPhotoFailed] = useState(false);
   const refreshInFlightRef = useRef(false);
   const mountedRef = useRef(false);
@@ -288,6 +289,7 @@ export default function FloatingOnAirPresenter({
       if (animTimerRef.current) clearTimeout(animTimerRef.current);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       if (photoSlideTimerRef.current) clearTimeout(photoSlideTimerRef.current);
+      if (presenterSwitchTimerRef.current) clearTimeout(presenterSwitchTimerRef.current);
     };
   }, []);
 
@@ -301,26 +303,39 @@ export default function FloatingOnAirPresenter({
   const presenterKey = JSON.stringify([displayedInfo.programaKey, displayedInfo.locutores?.map(p => p.id)]);
   useEffect(() => {
     setPresenterIndex(0);
-    setPhotoExiting(false);
+    setPresenterSlideDirection("forward");
   }, [presenterKey]);
 
   const presenterCount = displayedInfo.locutores?.length || 0;
-  useEffect(() => {
-    if (presenterCount < 2) return;
-    const exitTimer = window.setTimeout(() => setPhotoExiting(true), PRESENTER_INTERVAL_MS - PHOTO_TRANSITION_MS);
-    const nextTimer = window.setTimeout(() => {
-      setPresenterIndex(index => (index + 1) % presenterCount);
-      setPhotoExiting(false);
-    }, PRESENTER_INTERVAL_MS);
-    return () => {
-      clearTimeout(exitTimer);
-      clearTimeout(nextTimer);
-    };
-  }, [presenterKey, presenterCount, presenterIndex]);
-
   const currentPresenter = displayedInfo.locutores?.[presenterIndex] || displayedInfo.locutores?.[0];
   const currentName = currentPresenter?.nome || displayedInfo.locutorNome;
   const currentPhoto = currentPresenter ? currentPresenter.foto : displayedInfo.locutorFoto;
+  useEffect(() => {
+    if (presenterCount < 2) return;
+    const exitTimer = window.setTimeout(() => {
+      const nextIndex = (presenterIndex + 1) % presenterCount;
+      const nextPhoto = displayedInfo.locutores?.[nextIndex]?.foto || "";
+      setPhotoSlide({
+        key: Date.now(),
+        from: currentPhoto || displayedInfo.locutorFoto || "",
+        to: nextPhoto,
+        direction: presenterSlideDirection,
+      });
+      presenterSwitchTimerRef.current = window.setTimeout(() => {
+        setPresenterIndex(nextIndex);
+        setPresenterSlideDirection((direction) => direction === "forward" ? "backward" : "forward");
+        setPhotoSlide(null);
+        presenterSwitchTimerRef.current = null;
+      }, PHOTO_TRANSITION_MS + 40);
+    }, Math.max(0, PRESENTER_INTERVAL_MS - PHOTO_TRANSITION_MS));
+    return () => {
+      clearTimeout(exitTimer);
+      if (presenterSwitchTimerRef.current) {
+        clearTimeout(presenterSwitchTimerRef.current);
+        presenterSwitchTimerRef.current = null;
+      }
+    };
+  }, [presenterKey, presenterCount, presenterIndex, currentPhoto, displayedInfo.locutorFoto, displayedInfo.locutores, presenterSlideDirection]);
   useEffect(() => setPhotoFailed(false), [currentPhoto]);
   // 3. Dynamic colors extracted from the locutor's photo
   const locutorColors = useAlbumColors(currentPhoto || null);
@@ -430,11 +445,12 @@ export default function FloatingOnAirPresenter({
           <CardGradient primary={primaryColor} secondary={secondaryColor} />
           <div
             style={{
-              width: 72,
-              height: 72,
+              width: 88,
+              height: 88,
               overflow: "visible",
               position: "relative",
               flexShrink: 0,
+              alignSelf: "flex-end",
               zIndex: 2,
             }}
           >
@@ -457,13 +473,13 @@ export default function FloatingOnAirPresenter({
             <div key={photoSlide.key} style={{ position: "absolute", inset: 0, zIndex: 1, overflow: "hidden", pointerEvents: "none" }}>
               {photoSlide.from && (
                 <img src={photoSlide.from} alt="" aria-hidden="true" style={{
-                  position: "absolute", top: "calc(50% - 36px)", left: "calc(50% - 138px)", width: 72, height: 72, objectFit: "cover", objectPosition: "top center",
+                  position: "absolute", bottom: 0, left: 34, width: 88, height: 88, objectFit: "cover", objectPosition: "top center",
                   animation: `fmp-photo-exit-${photoSlide.direction} ${PHOTO_TRANSITION_MS}ms cubic-bezier(0.16, 1, 0.3, 1) forwards`,
                 }} />
               )}
               {photoSlide.to && (
                 <img key={`${photoSlide.key}-incoming`} src={photoSlide.to} alt="" aria-hidden="true" style={{
-                  position: "absolute", top: "calc(50% - 36px)", left: "calc(50% - 138px)", width: 72, height: 72, objectFit: "cover", objectPosition: "top center",
+                  position: "absolute", bottom: 0, left: 34, width: 88, height: 88, objectFit: "cover", objectPosition: "top center",
                   animation: `fmp-photo-enter-${photoSlide.direction} ${PHOTO_TRANSITION_MS}ms cubic-bezier(0.16, 1, 0.3, 1) forwards`,
                 }} />
               )}
@@ -630,20 +646,20 @@ export default function FloatingOnAirPresenter({
           50% { opacity: 0.45; transform: scale(0.8); }
         }
         @keyframes fmp-photo-enter-forward {
-          from { left: calc(100% - 82px); opacity: 1; }
-          to { left: 0; opacity: 1; }
+          from { transform: translateX(96px); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
         }
         @keyframes fmp-photo-enter-backward {
-          from { left: -82px; opacity: 1; }
-          to { left: 0; opacity: 1; }
+          from { transform: translateX(-96px); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
         }
         @keyframes fmp-photo-exit-forward {
-          from { left: 0; opacity: 1; }
-          to { left: -82px; opacity: 1; }
+          from { transform: translateX(0); opacity: 1; }
+          to { transform: translateX(-96px); opacity: 0; }
         }
         @keyframes fmp-photo-exit-backward {
-          from { left: 0; opacity: 1; }
-          to { left: calc(100% - 82px); opacity: 1; }
+          from { transform: translateX(0); opacity: 1; }
+          to { transform: translateX(96px); opacity: 0; }
         }
       `}</style>
     </div>

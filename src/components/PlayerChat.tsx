@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Send, Smile, X } from "lucide-react";
+import { Send, Smile } from "lucide-react";
 import { PlayerBackButton } from "./player/PlayerBackButton";
 import EmojiPicker, { Theme } from "emoji-picker-react";
 
@@ -274,16 +275,23 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
 
   // Login popup
   if (!joined) {
-    return (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center animate-fade-in" style={{ background: "transparent" }}>
+    return createPortal(
+      <div className="fixed inset-0 z-[9999] flex items-center justify-end p-8 pointer-events-none animate-in fade-in duration-300">
         <div
-          className="w-[360px] flex flex-col gap-6 animate-scale-in"
+          aria-hidden="true"
+          className="absolute inset-y-0 right-0 z-0 w-[min(760px,65vw)] pointer-events-none"
+          style={{ background: "linear-gradient(to left, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.38) 40%, rgba(0,0,0,0) 100%)" }}
+        />
+        <div
+          className="relative z-10 w-[min(360px,calc(100vw-48px))] flex flex-col gap-6 pointer-events-auto animate-scale-in"
           style={{
             padding: "28px 26px 24px",
             borderRadius: 32,
             background: "rgba(35,35,38,0.95)",
             border: "1px solid rgba(255,255,255,0.06)",
             boxShadow: "0 40px 100px -20px rgba(0,0,0,0.95)",
+            marginBottom: "140px",
+            marginRight: "20px",
           }}
         >
           <div className="flex items-center justify-between">
@@ -291,12 +299,12 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
               <span className="text-[10px] uppercase tracking-[0.24em] font-bold text-white/50">chat ao vivo</span>
               <h3 className="text-white font-bold text-xl tracking-tight">Entrar no chat</h3>
             </div>
-            <button
+            <PlayerBackButton
               onClick={onClose}
-              className="w-9 h-9 rounded-full flex items-center justify-center border border-white/10 hover:bg-white/15 hover:border-white/25 transition-all group"
-            >
-              <X size={16} className="text-white/60 group-hover:text-white" />
-            </button>
+              className="w-8 h-8"
+              iconSize={14}
+              aria-label="Voltar"
+            />
           </div>
           <div className="flex flex-col gap-3">
             <div className="space-y-1">
@@ -305,7 +313,7 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
                 placeholder="Seu nome"
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
-                className="w-full rounded-2xl text-white px-5 py-4 text-sm placeholder:text-white/25 focus:outline-none transition-all"
+                className="player-chat-entry-input w-full rounded-2xl text-white px-5 py-4 text-sm placeholder:text-white/25 focus:outline-none transition-all"
                 style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}
                 autoFocus
               />
@@ -317,7 +325,7 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
                 value={cidade}
                 onChange={(e) => setCidade(e.target.value)}
                 onFocus={() => cidade.length >= 3 && setShowSuggestions(true)}
-                className="w-full rounded-2xl text-white px-5 py-4 text-sm placeholder:text-white/25 focus:outline-none transition-all"
+                className="player-chat-entry-input w-full rounded-2xl text-white px-5 py-4 text-sm placeholder:text-white/25 focus:outline-none transition-all"
                 style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}
               />
               {showSuggestions && suggestions.length > 0 && (
@@ -356,24 +364,22 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
             Participar da conversa
           </button>
         </div>
-      </div>
+      </div>,
+      document.body,
     );
   }
 
-  return (
-    <div
-      className="absolute z-[55] animate-in fade-in slide-in-from-bottom-4 duration-500 pointer-events-none"
-      style={{ bottom: "170px", right: "20px", width: "360px", height: "clamp(320px, calc(100vh - 335px), 520px)" }}
-    >
-      {/* Background Gradient Shadow */}
-      <div 
-        className="fixed inset-y-0 right-0 w-[500px] pointer-events-none transition-opacity duration-700 ease-in-out"
-        style={{
-          background: "linear-gradient(to left, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%)",
-          zIndex: -1,
-          opacity: 1
-        }}
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-end p-8 pointer-events-none animate-in fade-in duration-300">
+      <div
+        aria-hidden="true"
+        className="absolute inset-y-0 right-0 z-0 w-[min(760px,65vw)] pointer-events-none"
+        style={{ background: "linear-gradient(to left, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.38) 40%, rgba(0,0,0,0) 100%)" }}
       />
+      <div
+        className="relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-500 pointer-events-none"
+        style={{ width: "360px", height: "clamp(320px, calc(100vh - 335px), 520px)", marginBottom: "140px", marginRight: "20px" }}
+      >
 
       <div className="w-full h-full flex flex-col pointer-events-auto">
         {/* Header */}
@@ -475,6 +481,8 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </div>,
+    document.body,
   );
 }

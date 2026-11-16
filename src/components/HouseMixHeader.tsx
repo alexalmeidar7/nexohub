@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, Suspense, lazy, Fragment } from "react";
-import logoNxo from "@/assets/logo-nxo.png";
+import HouseMixBrandLogo from "@/components/HouseMixBrandLogo";
 import {
   Bell, Settings, Calendar as CalendarIcon, ChevronDown, ChevronLeft, ChevronRight, Radio, Users,
   Music, Layers, LogOut, Check, ArrowRight,
@@ -496,14 +496,7 @@ export default function HouseMixHeader({
               className="flex items-center gap-2.5 outline-none focus:opacity-80 transition-opacity cursor-pointer group shrink-0"
               title="House Mix"
             >
-              <img
-                src={logoNxo}
-                alt="nx."
-                className="h-8 w-auto object-contain shrink-0"
-              />
-              <span className="text-black text-[11px] xl:text-xs font-semibold tracking-tight select-none whitespace-nowrap">
-                house mix
-              </span>
+              <HouseMixBrandLogo variant="dark" className="h-8 w-auto max-w-[120px] object-contain shrink-0" />
             </button>
             {window.houseMixDesktop && desktopVersion && (
               <span className="px-2 py-1 rounded-md border border-slate-300 bg-white/75 text-[10px] font-bold text-slate-700 whitespace-nowrap" title="Versão instalada do House Mix Desktop">

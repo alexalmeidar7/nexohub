@@ -113,6 +113,7 @@ interface Programa {
   estudio: string | null;
   variavel: boolean;
   data_variavel: string | null;
+  tipo_programa?: string | null;
   capa: string | null;
   thumb: string | null;
   descricao: string | null;
@@ -1074,7 +1075,7 @@ export default function PlayerPage() {
           isWatchRoute && !prerollDone
             ? supabase.from("comercial_preroll").select("*").eq("user_id", userId).eq("active", true).lte("horario_inicio", currentTime).gte("horario_fim", currentTime).order("priority", { ascending: true })
             : Promise.resolve({ data: null, error: null } as const),
-          supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, thumb, descricao, apresentador_id, apresentadores_ids").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
+          supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, tipo_programa, capa, thumb, descricao, apresentador_id, apresentadores_ids").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
           supabase.from("apresentadores").select("id, nome, foto, instagram").eq("user_id", userId).eq("ativo", true),
           supabase.from("empresa_config").select("telefone_participacao, logo, nome").eq("user_id", userId).maybeSingle(),
         ]);

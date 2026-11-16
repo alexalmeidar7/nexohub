@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ArrowRight, Loader2, CheckCircle, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import logoNexoSolucoes from "@/assets/logo-nexo-solucoes-visuais.png";
+import HouseMixBrandLogo from "@/components/HouseMixBrandLogo";
 
 const AUTH_TIMEOUT_MS = 12000;
 const MAX_RETRIES = 3;
@@ -260,7 +260,7 @@ export default function LoginScreen() {
         >
           {/* Cabeçalho alinhado ao login do vMix Control */}
           <div className="flex flex-col items-center gap-3 mb-1 text-center">
-            <div className="text-[27px] font-extrabold leading-none tracking-[-1.6px] text-white">nexo <span className="font-light tracking-[-1px] text-slate-300">HOUSE MIX</span></div>
+            <HouseMixBrandLogo className="h-[42px] w-auto max-w-full object-contain" />
             <p className="mt-3 text-[8px] font-extrabold uppercase tracking-[1.6px]" style={{ color: "#9AAAC4" }}>Faça login para acessar o controle</p>
           </div>
 

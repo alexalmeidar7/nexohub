@@ -510,8 +510,15 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
   const updateSelectedField = async (index: number, field: keyof SelectedNews, value: string) => {
     const item = selectedNews[index];
     if (!item?.id) return;
-    const dbField = field === "imageUrl" ? "image_url" : field;
-    await supabase.from("selected_news").update({ [dbField]: value }).eq("id", item.id);
+    if (field === "imageUrl") {
+      await supabase.from("selected_news").update({ image_url: value }).eq("id", item.id);
+    } else if (field === "portal") {
+      await supabase.from("selected_news").update({ portal: value }).eq("id", item.id);
+    } else if (field === "title") {
+      await supabase.from("selected_news").update({ title: value }).eq("id", item.id);
+    } else if (field === "resumo") {
+      await supabase.from("selected_news").update({ resumo: value }).eq("id", item.id);
+    }
     setSelectedNews(prev => prev.map((n, i) => i === index ? { ...n, [field]: value } : n));
   };
 

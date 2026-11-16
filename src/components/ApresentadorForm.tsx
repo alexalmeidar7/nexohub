@@ -346,7 +346,7 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
       return;
     }
     const { data, error } = await supabase.from("apresentadores")
-      .update({ [field]: value }).eq("id", id).eq("user_id", ownerId).select("id");
+      .update({ [field]: value } as any).eq("id", id).eq("user_id", ownerId).select("id");
     if (error || !data?.length) {
       toast.error(error?.message || "O banco não confirmou a atualização do participante.");
       return;

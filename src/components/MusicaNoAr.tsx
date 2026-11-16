@@ -368,7 +368,7 @@ async function addUploadLogToDb(
   return loadUploadHistoryFromDb(userId);
 }
 
-export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: string | null }) {
+export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }: { effectiveUserId?: string | null; autoStartReader?: boolean }) {
   const { user } = useAuth();
   const clientAcc = user ? (findClientAccountByEmail(user.email || "") || findClientAccountById(user.id)) : null;
 
@@ -725,6 +725,20 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       void setSourceMode(normalizedMode);
     }
   }, [hasValidOnlineUrl, hasValidLocalSource, isLocalSelected, isOnlineSelected, sourceMode, sourceModeLoaded]);
+
+  useEffect(() => {
+    if (!autoStartReader || !sourceModeLoaded || sourceMode !== "none") return;
+    const modeToResume: SourceMode | null = hasValidLocalSource
+      ? "pasta"
+      : hasValidOnlineUrl
+        ? "online"
+        : null;
+    if (!modeToResume) return;
+    // At startup, resume the configured reader locally without overwriting
+    // the station's saved source preference in user_settings.
+    setSourceModeState(modeToResume);
+    try { localStorage.setItem(SOURCE_MODE_KEY, modeToResume); } catch { /* noop */ }
+  }, [autoStartReader, sourceModeLoaded, sourceMode, hasValidLocalSource, hasValidOnlineUrl]);
 
   // Delay detection: warn if a source hasn't responded successfully
   useEffect(() => {

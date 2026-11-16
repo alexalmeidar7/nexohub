@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback, Suspense } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { createPortal } from "react-dom";
-import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2, Sparkles, BarChart3, X, Check, Maximize2, Minimize2, Loader2, Settings } from "lucide-react";
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2, Sparkles, BarChart3, X, Check, Maximize2, Minimize2, Loader2, Settings, Home, User } from "lucide-react";
 import { PlayerBackButton } from "@/components/player/PlayerBackButton";
 import { supabase } from "@/integrations/supabase/client";
 import nexoPlayerLogo from "@/assets/nexo-player-logo.png.asset.json";
@@ -21,6 +21,7 @@ import PlayerSlugBadge from "@/components/player/PlayerSlugBadge";
 import DjModeLayer from "@/components/player/DjModeLayer";
 import { toast } from "sonner";
 import { playerSignOut } from "@/lib/playerSignOut";
+import { getStationLogoFallback } from "@/lib/playerBranding";
 
 const PlayerChat = lazyRetry(() => import("@/components/PlayerChat"));
 const PlayerGradeDialog = lazyRetry(() => import("@/components/player/PlayerGradeDialog"));
@@ -188,6 +189,51 @@ function hhmm(dateOrTime: string | Date | undefined) {
   return m ? `${m[1]}:${m[2]}` : s.slice(0, 5);
 }
 
+function AnimatedNowPlayingInfo({ cover, title, artist }: { cover: string | null; title: string; artist: string }) {
+  const trackKey = `${title}\u001f${artist}`;
+  const activeKeyRef = useRef(trackKey);
+  const [displayed, setDisplayed] = useState({ cover, title, artist, phase: "enter" as "enter" | "exit" });
+
+  useEffect(() => {
+    if (activeKeyRef.current === trackKey) {
+      setDisplayed((current) => ({ ...current, cover, title, artist }));
+      return;
+    }
+
+    setDisplayed((current) => ({ ...current, phase: "exit" }));
+    const timer = window.setTimeout(() => {
+      activeKeyRef.current = trackKey;
+      setDisplayed({ cover, title, artist, phase: "enter" });
+    }, 260);
+    return () => window.clearTimeout(timer);
+  }, [trackKey, cover, title, artist]);
+
+  const animation = displayed.phase === "exit"
+    ? "watch-now-playing-exit 260ms cubic-bezier(0.4,0,0.7,0.2) both"
+    : "watch-now-playing-enter 480ms cubic-bezier(0.22,1,0.36,1) both";
+
+  return (
+    <div className="flex items-center gap-5 max-w-[560px]">
+      {displayed.cover && (
+        <img
+          src={displayed.cover}
+          alt=""
+          className="h-40 w-40 rounded-[24px] object-cover shadow-xl shrink-0"
+          style={{ animation }}
+        />
+      )}
+      <div
+        className="min-w-0 text-white drop-shadow-lg"
+        style={{ animation, animationDelay: displayed.phase === "enter" ? "55ms" : "0ms" }}
+      >
+        <div className="text-base opacity-80">tocando agora:</div>
+        <div className="text-2xl font-semibold truncate">{displayed.title || "Rádio ao vivo"}</div>
+        <div className="text-lg opacity-80 truncate">{displayed.artist}</div>
+      </div>
+    </div>
+  );
+}
+
 export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const {
     audioRef, videoRef, canal, liveChannels, navigateChannel,
@@ -210,7 +256,51 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
   const isYoutube = canal?.type === "video_youtube" || canal?.type === "youtube";
   const selectedVideoId = isCatalog ? (new URLSearchParams(window.location.search).get("vid")) : null;
-  const isTvExperience = new URLSearchParams(window.location.search).get("tv") === "1";
+  const isTvExperience = new URLSearchParams(window.location.search).get("tv") === "1"
+    || /\/player\/app\/?$/.test(window.location.pathname);
+  const channelNumber = String(Math.max(0, liveChannels.findIndex((item) => item.id === canal?.id)) + 1).padStart(3, "0");
+  const logoCandidates = useMemo(() => [empresaLogo, canal?.logo_url, getStationLogoFallback(userSlug), nexoPlayerLogo.url]
+    .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+    .map((value) => /^(https?:|data:|blob:)/i.test(value) ? value : new URL(value, window.location.origin).toString())
+    .filter((value, index, values) => values.indexOf(value) === index), [empresaLogo, canal?.logo_url, userSlug]);
+  const [logoCandidateIndex, setLogoCandidateIndex] = useState(0);
+  useEffect(() => setLogoCandidateIndex(0), [logoCandidates.join("|")]);
+  const watchLogo = logoCandidates[Math.min(logoCandidateIndex, Math.max(0, logoCandidates.length - 1))];
+  const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
+  const [scheduleSlidePhase, setScheduleSlidePhase] = useState<"idle" | "exit" | "enter">("idle");
+  const [scheduleSlideDirection, setScheduleSlideDirection] = useState<-1 | 1>(1);
+  const scheduleSlideTimerRef = useRef<number | null>(null);
+  const todayShort = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"][new Date().getDay()] || "";
+  const todayFull = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][new Date().getDay()] || "";
+  const schedulePrograms = useMemo(() => {
+    const sameStudio = canal?.estudio ? programas.filter((program) => program.estudio === canal.estudio) : programas;
+    const active = sameStudio.filter((program) => program.ativo !== false);
+    const today = active.filter((program) => {
+      const days = Array.isArray(program.dias_semana) ? program.dias_semana : [];
+      return days.length === 0 || days.includes(todayShort) || days.includes(todayFull);
+    });
+    return [...(today.length ? today : active)].sort((a, b) => String(a.horario_inicio || "").localeCompare(String(b.horario_inicio || "")));
+  }, [programas, canal?.estudio, todayShort, todayFull]);
+  useEffect(() => setSelectedScheduleId(null), [canal?.id, currentProg?.id]);
+  const currentScheduleIndex = Math.max(0, schedulePrograms.findIndex((program) => program.id === currentProg?.id));
+  const selectedScheduleIndex = selectedScheduleId
+    ? Math.max(0, schedulePrograms.findIndex((program) => program.id === selectedScheduleId))
+    : currentScheduleIndex;
+  const scheduleProgram = schedulePrograms[selectedScheduleIndex] || currentProg;
+  const moveSchedule = (direction: -1 | 1) => {
+    if (schedulePrograms.length < 2 || scheduleSlidePhase !== "idle") return;
+    const nextIndex = (selectedScheduleIndex + direction + schedulePrograms.length) % schedulePrograms.length;
+    setScheduleSlideDirection(direction);
+    setScheduleSlidePhase("exit");
+    scheduleSlideTimerRef.current = window.setTimeout(() => {
+      setSelectedScheduleId(String(schedulePrograms[nextIndex].id));
+      setScheduleSlidePhase("enter");
+      scheduleSlideTimerRef.current = window.setTimeout(() => setScheduleSlidePhase("idle"), 440);
+    }, 220);
+  };
+  useEffect(() => () => {
+    if (scheduleSlideTimerRef.current != null) window.clearTimeout(scheduleSlideTimerRef.current);
+  }, []);
 
   // ---- Pré-roll comercial para o streaming de áudio ----
   // Campanhas de áudio são independentes dos anúncios de vídeo e precisam ser
@@ -250,15 +340,16 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const [programLiked, setProgramLiked] = useState<boolean>(false);
   const [playedListOpen, setPlayedListOpen] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
-  // Auto-hide controls (video channel): fade out after 3s of inactivity
+  // Auto-hide controls (video channel): fade out after 4s of inactivity
   const [controlsVisible, setControlsVisible] = useState<boolean>(() => !isTvExperience || isVideoChannel);
+  const [watchInfoVisible, setWatchInfoVisible] = useState(true);
   useEffect(() => {
     if (!isVideoChannel) { setControlsVisible(!isTvExperience); return; }
     let t: number | undefined;
     const show = () => {
       setControlsVisible(true);
       if (t) window.clearTimeout(t);
-      t = window.setTimeout(() => setControlsVisible(false), 3000);
+      t = window.setTimeout(() => setControlsVisible(false), 4000);
     };
     show();
     const evs: (keyof WindowEventMap)[] = ["mousemove", "mousedown", "keydown", "wheel", "touchstart", "pointermove"];
@@ -268,6 +359,21 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       evs.forEach(e => window.removeEventListener(e, show));
     };
   }, [isVideoChannel, isTvExperience]);
+
+  // On video channels, let the controls and other overlays fade first; then hide
+  // the program and now-playing cards. Any interaction brings them back with controls.
+  useEffect(() => {
+    if (!isVideoChannel) {
+      setWatchInfoVisible(true);
+      return;
+    }
+    if (controlsVisible) {
+      setWatchInfoVisible(true);
+      return;
+    }
+    const timer = window.setTimeout(() => setWatchInfoVisible(false), 600);
+    return () => window.clearTimeout(timer);
+  }, [controlsVisible, isVideoChannel]);
 
   useEffect(() => {
     if (!isTvExperience) return;
@@ -328,11 +434,22 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       try {
         const { data: settings } = await supabase
           .from("user_settings")
-          .select("weather_lat, weather_lon")
+          .select("weather_city, weather_lat, weather_lon")
           .eq("user_id", radioUserId)
           .maybeSingle();
         if (typeof (settings as any)?.weather_lat === "number") lat = (settings as any).weather_lat;
         if (typeof (settings as any)?.weather_lon === "number") lon = (settings as any).weather_lon;
+        const city = String((settings as any)?.weather_city || "").trim();
+        if ((lat == null || lon == null) && city) {
+          const { data: geoData } = await supabase.functions.invoke("fetch-weather", {
+            body: { action: "geocode", query: city, count: 1 },
+          });
+          const location = (geoData as any)?.results?.[0];
+          if (typeof location?.latitude === "number" && typeof location?.longitude === "number") {
+            lat = location.latitude;
+            lon = location.longitude;
+          }
+        }
       } catch {}
       // Mesmo sem coordenadas locais (ouvinte sem permissão de leitura),
       // a edge function resolve as coordenadas da rádio pelo user_id.
@@ -529,6 +646,11 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     } catch {}
   }, [djHudEnabled]);
   const djModeActive = !isVideoChannel && djModeOn;
+  const isJournalisticProgram = String(currentProg?.tipo_programa || currentProg?.tipoPrograma || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase() === "jornalistico";
 
 
   const [resolvedMusicCover, setResolvedMusicCover] = useState<string>(musicData?.capa || "");
@@ -585,6 +707,10 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   // ---- Imagem do artista (Deezer) intercalada com o gradiente a cada 15s ----
   const [artistBgImage, setArtistBgImage] = useState<string>("");
   useEffect(() => {
+    if (isJournalisticProgram) {
+      setArtistBgImage("");
+      return;
+    }
     // A imagem cadastrada na exceção tem prioridade sobre a busca automática.
     if (musicExceptionArtist) {
       setArtistBgImage(musicExceptionArtist);
@@ -600,16 +726,13 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       if (!cancelled) setArtistBgImage(url || "");
     }).catch(() => {});
     return () => { cancelled = true; };
-  }, [musicData?.artista, musicExceptionArtist]);
+  }, [musicData?.artista, musicExceptionArtist, isJournalisticProgram]);
 
   const [showArtistBg, setShowArtistBg] = useState(false);
   useEffect(() => {
     if (!artistBgImage) { setShowArtistBg(false); return; }
-    if (isTvExperience) { setShowArtistBg(true); return; }
-    setShowArtistBg(false);
-    const id = setInterval(() => setShowArtistBg((v) => !v), 15000);
-    return () => clearInterval(id);
-  }, [artistBgImage, isTvExperience]);
+    setShowArtistBg(true);
+  }, [artistBgImage]);
 
   // ---- Progresso do programa no ar ----
   const [progPct, setProgPct] = useState(0);
@@ -1346,14 +1469,14 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       {/* Background dinâmico da capa da música (crossfade elegante entre trocas) */}
       <div
         className="absolute inset-0 pointer-events-none overflow-hidden"
-        style={{ opacity: (djModeActive || isCatalog) ? 0 : 1, transition: "opacity 300ms ease-out" }}
+        style={{ opacity: (djModeActive || isCatalog || isVideoChannel) ? 0 : 1, transition: "opacity 300ms ease-out" }}
       >
         {bgLayers.map((l, idx) => (
           <BgFadeLayer key={l.id} gradient={l.g} initialOpacity={idx === 0 ? 1 : 0} />
         ))}
       </div>
       {/* Imagem do artista (Deezer) intercalada a cada 15s com movimento lento (Ken Burns) */}
-      {artistBgImage && !djModeActive && !isCatalog && (
+      {artistBgImage && !isJournalisticProgram && !djModeActive && !isCatalog && !isVideoChannel && (
         <div
           className="absolute inset-0 pointer-events-none overflow-hidden"
           style={{ opacity: showArtistBg ? 1 : 0, transition: "opacity 1600ms ease-in-out" }}
@@ -1409,34 +1532,36 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         />
       )}
       <header
-        className={`absolute top-0 left-0 right-0 z-30 flex items-start justify-between px-8 pt-6 ${isTvExperience && !isVideoChannel ? "hidden" : ""}`}
+        className={`watch-layout-header absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-[6vw] pt-[6vh] ${isTvExperience && !isVideoChannel ? "hidden" : ""}`}
         style={isVideoChannel ? controlsStyle : undefined}
       >
+        {!isTvExperience && <style>{`.watch-layout-header>div:first-of-type{margin-left:0}.watch-layout-header .watch-channel-logo{display:none}.watch-layout-header .watch-profile{position:absolute;left:1vw;top:5.6vh}.watch-layout-header .watch-profile>button{width:56px;height:56px;padding:0;border:0;background:linear-gradient(135deg,#e00012,#b9000e);border-radius:50%;justify-content:center}.watch-layout-header .watch-profile>button>span:nth-child(2),.watch-layout-header .watch-profile>button>svg{display:none}.watch-layout-header .watch-profile>button>span:first-child{width:100%;height:100%;padding:0;background:transparent!important}.watch-layout-header .watch-profile>button>span:first-child>span:first-child{display:none}.watch-layout-header .watch-profile>button>span:first-child>span:last-child{background:transparent}.watch-layout-header .watch-profile>button img{border-radius:50%}@media(max-width:700px){.watch-layout-header{padding:24px 20px 0}.watch-layout-header>div:first-of-type{margin-left:0}.watch-layout-header .watch-profile{left:8px;top:20px}.watch-layout-header .watch-profile>button{width:40px;height:40px}}`}</style>}
         {/* Channel switcher */}
-        <div className="flex items-center gap-4">
-          <div className="flex flex-col gap-1">
+        <div className="watch-channel-switcher flex items-center gap-4" style={{ marginLeft: "clamp(44px, 5vw, 80px)" }}>
+          <div className="flex shrink-0 flex-col items-center justify-center -space-y-1 text-white">
             <button
               onClick={() => navigateChannel(-1)}
-              className={`${isTvExperience ? "hidden" : ""} w-9 h-6 rounded-md flex items-center justify-center bg-white/10 hover:bg-white/20 transition`}
+              className={`${isTvExperience ? "hidden" : ""} h-6 w-8 rounded-full flex items-center justify-center hover:bg-black/20 transition`}
               aria-label="Canal anterior"
               data-focusable
             >
-              <ChevronUp size={16} />
+              <ChevronUp size={20} fill="white" />
             </button>
+            <span className="font-bold tabular-nums text-[15px] sm:text-[17px]">{channelNumber}</span>
             <button
               onClick={() => navigateChannel(1)}
-              className={`${isTvExperience ? "hidden" : ""} w-9 h-6 rounded-md flex items-center justify-center bg-white/10 hover:bg-white/20 transition`}
+              className={`${isTvExperience ? "hidden" : ""} h-6 w-8 rounded-full flex items-center justify-center hover:bg-black/20 transition`}
               aria-label="Próximo canal"
               data-focusable
             >
-              <ChevronDown size={16} />
+              <ChevronDown size={20} fill="white" />
             </button>
           </div>
 
           <div className="flex items-center gap-3">
             {/* Logo do canal — agora à esquerda do nome do canal */}
             {(canal?.background_url || canal?.logo_url) && (
-              <div key={`logo-${canal.id}`} className="animate-slide-up-down">
+              <div key={`logo-${canal.id}`} className="watch-channel-logo animate-slide-up-down">
                 <img
                   src={empresaLogo || canal.background_url || canal.logo_url}
                   alt=""
@@ -1445,56 +1570,19 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               </div>
             )}
 
-            <div className="leading-tight">
-              <div className="text-[11px] uppercase tracking-widest text-white/50">canal</div>
-              <div key={`name-${canal?.id}`} className="text-[1.2rem] font-semibold animate-slide-up-down">
-                {canal?.name || "—"}
-              </div>
-              {currentProg && (
-                <div key={`prog-${currentProg.id}`} className="text-[10px] text-white/60 mt-0.5 font-medium flex items-center gap-1.5 uppercase tracking-[0.05em] animate-slide-up-down">
-                  <span className="text-white/80">{currentProg.nome}</span>
-                  <span className="w-1 h-1 rounded-full bg-white/20" />
-                  <span className="tabular-nums">
-                    {hhmm(currentProg.horario_inicio)} — {hhmm(currentProg.horario_fim)}
-                  </span>
-                </div>
-              )}
-              {nextProg && (
-                <div key={`next-prog-${nextProg.id}`} className="text-[9px] text-white/40 mt-0.5 font-medium flex items-center gap-1.5 uppercase tracking-[0.05em] animate-slide-up-down">
-                  <span className="text-white/30 italic">A seguir:</span>
-                  <span className="text-white/60">{nextProg.nome}</span>
-                  <span className="w-0.5 h-0.5 rounded-full bg-white/10" />
-                  <span className="tabular-nums opacity-80">
-                    {hhmm(nextProg.horario_inicio)} — {hhmm(nextProg.horario_fim)}
-                  </span>
-                </div>
-              )}
+            <div className="leading-tight flex items-center gap-2.5 text-white">
+              <span className="text-[15px] sm:text-[18px] font-light uppercase tracking-wide">
+                Canal de {isVideoChannel ? "vídeo" : "áudio"} – {empresaNome || canal?.name || "Player"}
+              </span>
             </div>
           </div>
         </div>
 
         {/* Área direita: clima + relógio + perfil */}
-        <div className="flex items-center gap-4">
-          {/* Clima (temperatura + ícone) */}
-          {weather && (
-            <div
-              className={`flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl transition-opacity ${weatherLoading ? "opacity-60" : "opacity-100"}`}
-              title="Tempo agora"
-            >
-              <WeatherIcon code={weather.code} size={34} />
-              {weatherLoading ? (
-                <Loader2 size={20} className="animate-spin text-white/80" />
-              ) : (
-                <span className="text-white font-semibold text-[18px] leading-none tabular-nums">
-                  {weather.temp}°
-                </span>
-              )}
-            </div>
-          )}
-
+        <div className="flex items-center gap-5 sm:gap-8">
           {/* Relógio elegante com segundos */}
           <div
-            className="flex items-baseline gap-1 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl"
+            className="flex items-baseline gap-1"
             aria-label="Horário atual"
           >
             <span
@@ -1505,18 +1593,25 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               <span className="opacity-60 mx-[2px]">:</span>
               {clockTime.mm}
             </span>
-            <span
+            {isTvExperience && <span
               className="text-white/60 font-light tabular-nums leading-none"
               style={{ fontFamily: '"Sora", system-ui, sans-serif', fontSize: 16 }}
             >
               {clockTime.ss}
-            </span>
+            </span>}
+          </div>
+
+          {/* Temperatura atual e condição do tempo */}
+          <div className="flex items-center gap-2" title="Tempo agora" aria-busy={weatherLoading}>
+            <span className="text-white/80 text-lg">|</span>
+            <span className="text-white font-medium text-[15px] sm:text-[18px] tabular-nums">{weather ? `${weather.temp}°C` : "--°C"}</span>
+            <WeatherIcon code={weather?.code ?? 0} size={26} />
           </div>
 
 
           {/* Avatar do usuário — abre o mesmo popup do Home Player */}
           {user && (
-            <div className="relative">
+            <div className="watch-profile relative" style={{ left: "6vw" }}>
               <button
                 onClick={() => setWatchProfileOpen(!watchProfileOpen)}
                 className="group relative flex items-center gap-2 pl-1 pr-3 py-1 rounded-full bg-white/5 hover:bg-white/12 border border-white/15 hover:border-white/35 backdrop-blur-xl transition-all duration-300 hover:scale-[1.03] shadow-[0_4px_16px_rgba(0,0,0,0.35)]"
@@ -1525,22 +1620,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 aria-expanded={watchProfileOpen}
                 title={userDisplayName || "Perfil"}
               >
-                <span
-                  className="relative w-10 h-10 rounded-full p-[2px]"
-                  style={{
-                    background: "conic-gradient(from 140deg, #ffffff, rgba(255,255,255,0.25), #ffffff)",
-                  }}
-                >
-                  <span className="absolute inset-0 rounded-full opacity-60 blur-md" style={{ background: "conic-gradient(from 140deg, rgba(255,255,255,0.8), rgba(255,255,255,0.05))" }} />
-                  <span className="relative block w-full h-full rounded-full overflow-hidden bg-black">
-                    {profileAvatar ? (
-                      <img src={profileAvatar} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="w-full h-full flex items-center justify-center text-white/90 text-[13px] font-semibold uppercase">
-                        {(userDisplayName || "U").trim().charAt(0)}
-                      </span>
-                    )}
-                  </span>
+                <span className="watch-profile-icon relative flex w-full h-full items-center justify-center rounded-full">
+                  <User size={25} strokeWidth={2} className="text-white" />
                 </span>
                 <span className="hidden md:flex flex-col items-start leading-tight max-w-[140px]">
                   <span className="text-[9px] uppercase tracking-[0.18em] text-white/55">perfil</span>
@@ -1559,6 +1640,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     avatarUrl={profileAvatar}
                     radioUserId={radioUserId}
                     radioName={empresaNome || undefined}
+                    openToRight
                     onClose={() => setWatchProfileOpen(false)}
                     onEditProfile={onEditProfile}
                     onSwitchProfile={onSwitchProfile}
@@ -1573,14 +1655,53 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               )}
             </div>
           )}
+          {watchLogo && (
+            <img src={watchLogo} alt={empresaNome || "Emissora"} className="h-14 max-w-[12vw] object-contain drop-shadow-lg" onError={() => setLogoCandidateIndex((index) => Math.min(index + 1, logoCandidates.length - 1))} />
+          )}
         </div>
       </header>
 
+      {!isCatalog && (
+        <section
+          className="absolute inset-0 z-[3] pointer-events-none"
+          aria-label="Player de áudio"
+          style={{
+            opacity: isVideoChannel && !watchInfoVisible ? 0 : 1,
+            visibility: isVideoChannel && !watchInfoVisible ? "hidden" : "visible",
+            transition: "opacity 450ms ease, visibility 450ms ease",
+          }}
+        >
+          <div className="absolute left-[6vw] top-[28.6vh] w-[min(18.5vw,354px)] h-[30.6vh] min-h-[240px] overflow-hidden rounded-[36px] shadow-2xl">
+            <ProgramShowcaseCard program={scheduleProgram} apresentadores={apresentadores} variant={scheduleProgram?.id === currentProg?.id ? "live" : "upcoming"} isFirst={scheduleProgram?.id !== currentProg?.id} radius={36} fallbackTitle={canal?.name} hideBadge watchLayout watchPhase={scheduleSlidePhase} watchDirection={scheduleSlideDirection} />
+            <div className="absolute inset-x-2 top-1/2 z-20 flex -translate-y-1/2 items-center justify-between pointer-events-auto">
+              <button onClick={() => moveSchedule(-1)} aria-label="Programa anterior" className="h-9 w-9 rounded-full flex items-center justify-center text-white hover:bg-black/25 transition" data-focusable><ChevronLeft size={24} fill="white" /></button>
+              <button onClick={() => moveSchedule(1)} aria-label="Próximo programa" className="h-9 w-9 rounded-full flex items-center justify-center text-white hover:bg-black/25 transition" data-focusable><ChevronRight size={24} fill="white" /></button>
+            </div>
+          </div>
+          <style>{`
+            @keyframes watch-now-playing-enter {
+              from { opacity: 0; transform: translateX(36px); filter: blur(4px); }
+              to { opacity: 1; transform: translateX(0); filter: blur(0); }
+            }
+            @keyframes watch-now-playing-exit {
+              from { opacity: 1; transform: translateX(0); filter: blur(0); }
+              to { opacity: 0; transform: translateX(-36px); filter: blur(4px); }
+            }
+          `}</style>
+          <div className="absolute left-[6vw] bottom-[21vh]">
+            <AnimatedNowPlayingInfo
+              cover={musicCover}
+              title={musicData?.titulo || "Rádio ao vivo"}
+              artist={musicData?.artista || empresaNome || ""}
+            />
+          </div>
+        </section>
+      )}
       {/* ============== VIDEO FULLSCREEN BACKGROUND ============== */}
       {isVideoChannel && (
         <video
           ref={videoRef}
-          className="absolute inset-0 w-full h-full object-contain z-0 bg-black"
+          className="absolute inset-0 w-full h-full object-cover z-0 bg-black"
           style={{ objectPosition: "center center" }}
           muted={muted}
           playsInline
@@ -1589,7 +1710,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       )}
 
       {/* ============== CENTER STAGE ============== */}
-      <main className={`absolute inset-0 flex items-center justify-center pt-28 pb-40 ${isVideoChannel ? "pointer-events-none z-[2]" : ""}`}>
+      <main style={{ display: !isVideoChannel && !isTvExperience ? "none" : undefined }} className={`absolute inset-0 flex items-center justify-center pt-28 pb-40 ${isVideoChannel ? "pointer-events-none z-[2]" : (!isTvExperience ? "hidden" : "")}`}>
         {isVideoChannel ? null : isTvExperience ? null : (
         <div className="relative flex items-center gap-8 max-w-[1400px] w-full px-8">
 
@@ -2100,8 +2221,80 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           }}
         />
       )}
+      {!isTvExperience && !isCatalog && (
+        <footer className="absolute left-[6vw] right-[4vw] bottom-[6vh] z-30 flex items-end gap-4 sm:gap-6" style={isVideoChannel ? controlsStyle : undefined}>
+          <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+            <button onClick={handleBackHome} aria-label="Voltar para Home" title="Home" className="h-16 w-16 rounded-full flex items-center justify-center bg-[#202124] hover:bg-[#d90012] transition" data-focusable>
+              <Home size={24} fill="white" />
+            </button>
+            <div className="relative flex items-center" onMouseEnter={() => setVolHover(true)} onMouseLeave={() => setVolHover(false)}>
+              <div className="flex items-center rounded-full transition-all duration-300" style={{ background: volHover ? "rgba(32,33,36,.96)" : "transparent", paddingRight: volHover ? 14 : 0, boxShadow: volHover ? "0 8px 24px rgba(0,0,0,.35)" : "none" }}>
+                <button onClick={() => onSetMuted(!muted)} aria-label={muted ? "Ativar som" : "Silenciar"} title={muted ? "Ativar som" : "Volume"} className="h-16 w-16 rounded-full flex items-center justify-center bg-[#202124] hover:bg-[#303136] transition shrink-0" data-focusable>
+                  {muted || volume === 0 ? <VolumeX size={24} /> : <Volume2 size={24} />}
+                </button>
+                <div className="overflow-hidden transition-all duration-300 ease-out" style={{ width: volHover ? 132 : 0, opacity: volHover ? 1 : 0 }}>
+                  <div className="pl-1"><SmoothVolumeSlider value={muted ? 0 : volume} onChange={(value) => { onSetVolume(value); if (value > 0 && muted) onSetMuted(false); }} /></div>
+                </div>
+              </div>
+            </div>
+            <div className="relative">
+              <button onClick={() => setPlayedListOpen((open) => !open)} aria-label="Músicas tocadas" title="Músicas tocadas" aria-expanded={playedListOpen} className={`h-16 w-16 rounded-full flex items-center justify-center transition ${playedListOpen ? "bg-white/25" : "bg-[#202124] hover:bg-[#303136]"}`} data-focusable>
+                <ListMusic size={24} />
+              </button>
+              {playedListOpen && (
+                <div className="absolute bottom-[calc(100%+14px)] left-0 z-[70] w-[min(420px,82vw)] max-h-[55vh] overflow-hidden rounded-[28px] border border-white/[0.08] bg-[#202022]/95 p-5 shadow-[0_24px_70px_rgba(0,0,0,.55)] backdrop-blur-2xl">
+                  <div className="mr-1 max-h-[calc(55vh-2.5rem)] overflow-x-hidden overflow-y-auto pr-2">
+                  <div className="mb-3 flex items-center justify-between border-b border-white/[0.08] pb-3">
+                    <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.2em] text-white/50"><Music2 size={13} />Músicas tocadas</div>
+                    <PlayerBackButton
+                      onClick={() => setPlayedListOpen(false)}
+                      className="h-8 w-8"
+                      iconSize={14}
+                      aria-label="Voltar"
+                    />
+                  </div>
+                  {history.slice(0, HIST_MAX).map((track, index) => <div key={`${track.horario}-${index}`} className="flex items-center gap-3 rounded-xl border-b border-white/[0.07] px-2 py-2.5 transition-colors duration-200 hover:bg-white/[0.08] last:border-0">
+                    {track.capa ? <img src={track.capa} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" /> : <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/[0.06]"><Disc3 size={16} className="text-white/45" /></div>}
+                    <div className="min-w-0 flex-1"><div className="truncate text-[13px] font-semibold uppercase leading-tight text-white">{track.musica}</div><div className="mt-0.5 truncate text-[11px] uppercase tracking-wide text-white/50">{track.artista}</div></div>
+                    <span className="ml-auto shrink-0 pl-2 text-[11px] font-semibold tabular-nums text-white/55">{(track.horario || "").slice(0, 5)}</span>
+                  </div>)}
+                  {history.length === 0 && <div className="py-8 text-center text-sm text-white/45">Nenhuma música registrada ainda.</div>}
+                  </div>
+                </div>
+              )}
+            </div>
+            <InteractivityMenu
+              userId={effectiveUserId}
+              chatOpen={chatOpen}
+              onToggleChat={() => setChatOpen(!chatOpen)}
+              karaokeEnabled={karaokeEnabled}
+              onToggleKaraoke={() => setKaraokeEnabled(!karaokeEnabled)}
+              showKaraoke
+              isVideoChannel={isVideoChannel}
+              controlsVisible={controlsVisible}
+              isCatalog={isCatalog}
+            />
+            <button onClick={onTogglePlay} aria-label={playing ? "Pausar" : "Reproduzir"} title={playing ? "Pausar" : "Reproduzir"} className="h-16 w-16 rounded-full flex items-center justify-center bg-[#d90012] hover:bg-red-600 transition" data-focusable>
+              {buffering ? <Loader2 size={24} className="animate-spin" /> : playing ? <Pause size={26} fill="white" /> : <Play size={26} fill="white" />}
+            </button>
+          </div>
+
+          <div className="relative flex-1 pb-7 min-w-[100px]">
+            <div className="absolute -top-1 right-0 -translate-y-full rounded-full bg-black/60 px-3 py-1 text-[12px] text-white">ao vivo</div>
+            <div className="relative h-3 rounded-full bg-white/15 overflow-visible">
+              <div className="absolute inset-y-0 left-0 rounded-full bg-[#e00012]" style={{ width: `${Math.max(0, Math.min(100, (1 - (dragVal != null ? (TIMESHIFT_WINDOW - dragVal) : ts.offset) / TIMESHIFT_WINDOW) * 100))}%` }} />
+              <input type="range" min={0} max={TIMESHIFT_WINDOW} step={1} value={dragVal ?? Math.round(TIMESHIFT_WINDOW - ts.offset)} onChange={(event) => setDragVal(snapToMarkers(Number(event.target.value)))} onMouseUp={commitDrag} onTouchEnd={commitDrag} onPointerUp={commitDrag} className="absolute -inset-y-3 left-0 z-10 h-9 w-full cursor-pointer opacity-0" aria-label="Voltar na transmissão" data-focusable />
+            </div>
+          </div>
+
+          <button type="button" onClick={toggleFullscreen} aria-label={isFullscreen ? "Sair fullscreen" : "Tela cheia"} title="Tela cheia" className="h-16 w-16 shrink-0 rounded-full flex items-center justify-center bg-[#202124] hover:bg-[#303136] transition" data-focusable>
+            {isFullscreen ? <Minimize2 size={25} /> : <Maximize2 size={25} />}
+          </button>
+        </footer>
+      )}
+
       <footer
-        className={`absolute bottom-0 left-0 right-0 z-30 px-8 pb-6 ${isTvExperience ? "transition-opacity duration-300" : ""}`}
+        className={`absolute bottom-0 left-0 right-0 z-30 px-8 pb-6 ${!isTvExperience ? "hidden" : ""} ${isTvExperience ? "transition-opacity duration-300" : ""}`}
         style={isTvExperience || isVideoChannel ? controlsStyle : undefined}
       >
         {/* Timeshift — barra intuitiva de "voltar no tempo" (áudio + vídeo) */}
@@ -2452,9 +2645,10 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     onClick={() => setPlayedListOpen(false)}
                   />
                   <div
-                    className="absolute right-0 bottom-[calc(100%+10px)] z-[61] w-[420px] max-h-[70vh] overflow-y-auto rounded-2xl border border-white/10 bg-black/85 backdrop-blur-2xl shadow-[0_24px_80px_rgba(0,0,0,0.8)] p-1.5"
+                    className="absolute right-0 bottom-[calc(100%+10px)] z-[61] w-[420px] max-h-[70vh] overflow-hidden rounded-2xl border border-white/10 bg-black/85 backdrop-blur-2xl shadow-[0_24px_80px_rgba(0,0,0,0.8)] p-1.5"
                     onClick={(e) => e.stopPropagation()}
                   >
+                    <div className="mr-1 max-h-[calc(70vh-0.75rem)] overflow-x-hidden overflow-y-auto pr-2">
                     <div className="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-white/10 mb-1 sticky top-0 bg-black/85 backdrop-blur-xl z-10">
                       <div className="h-7 w-7 rounded-full bg-white/10 flex items-center justify-center">
                         <ListMusic size={14} className="text-white/70" />
@@ -2464,7 +2658,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       </div>
                       <PlayerBackButton
                         onClick={() => setPlayedListOpen(false)}
-                        className="h-7 w-7"
+                        className="h-8 w-8"
                         iconSize={14}
                         aria-label="Voltar"
                       />
@@ -2475,19 +2669,11 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       </div>
                     ) : (
                       <div className="space-y-1">
-                        {history.map((t, i) => (
+                        {history.slice(0, HIST_MAX).map((t, i) => (
                           <div
                             key={`${t.horario}-${i}`}
-                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-transparent hover:border-white/20 hover:bg-white/[0.06] transition-all group"
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-transparent hover:border-white/20 hover:bg-white/[0.08] transition-all group"
                           >
-                            <div className="flex flex-col items-center w-11 shrink-0">
-                              <div className="text-[11px] font-semibold tabular-nums text-white/70">
-                                {(t.horario || "").slice(0, 5)}
-                              </div>
-                              {i === 0 && (
-                                <div className="mt-1 h-1.5 w-1.5 rounded-full bg-white/80 animate-pulse" />
-                              )}
-                            </div>
                             <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-white/8 border border-white/10 group-hover:border-white/25 transition">
                               {t.capa ? (
                                 <img
@@ -2516,10 +2702,15 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                                 </div>
                               )}
                             </div>
+                            <div className="ml-auto flex shrink-0 items-center gap-2 pl-2">
+                              {i === 0 && <div className="h-1.5 w-1.5 rounded-full bg-white/80 animate-pulse" />}
+                              <span className="text-[11px] font-semibold tabular-nums text-white/65">{(t.horario || "").slice(0, 5)}</span>
+                            </div>
                           </div>
                         ))}
                       </div>
                     )}
+                    </div>
                   </div>
                 </>
               )}
@@ -2647,6 +2838,9 @@ export function ProgramShowcaseCard({
   onToggleLike,
   onImageLoad,
   hideBadge = false,
+  watchLayout = false,
+  watchPhase = "idle",
+  watchDirection = 1,
 }: {
   program: any;
   apresentadores: any[];
@@ -2660,27 +2854,55 @@ export function ProgramShowcaseCard({
   onToggleLike?: () => void;
   onImageLoad?: (url: string) => void;
   hideBadge?: boolean;
+  watchLayout?: boolean;
+  watchPhase?: "idle" | "exit" | "enter";
+  watchDirection?: -1 | 1;
 }) {
   const isLive = variant === "live";
-
-  const apresentador = useMemo(() => {
-    if (!program) return null;
+  const presenterList = useMemo(() => {
+    if (!program) return [];
     const ids: string[] = Array.isArray(program.apresentadores_ids) && program.apresentadores_ids.length
       ? program.apresentadores_ids
       : program.apresentador_id
         ? [program.apresentador_id]
         : [];
-    for (const id of ids) {
-      const a = apresentadores?.find((x) => x.id === id);
-      if (a?.foto) return a;
-    }
-    // fallback: primeiro apresentador encontrado, mesmo sem foto
-    for (const id of ids) {
-      const a = apresentadores?.find((x) => x.id === id);
-      if (a) return a;
-    }
-    return null;
+    return ids
+      .map((id) => apresentadores?.find((item) => item.id === id))
+      .filter((item): item is NonNullable<typeof item> => !!item);
   }, [program, apresentadores]);
+  const rotatingPresenters = useMemo(
+    () => presenterList.filter((item) => typeof item.foto === "string" && item.foto.trim()),
+    [presenterList],
+  );
+  const canRotatePresenter = (isLive || watchLayout) && rotatingPresenters.length > 1;
+  const presenterRotationKey = rotatingPresenters.map((item) => `${item.id}:${item.foto}`).join("|");
+  const [presenterIndex, setPresenterIndex] = useState(0);
+  const [presenterPhase, setPresenterPhase] = useState<"enter" | "exit">("enter");
+  const [presenterDirection, setPresenterDirection] = useState<1 | -1>(1);
+
+  useEffect(() => {
+    setPresenterIndex(0);
+    setPresenterDirection(1);
+    setPresenterPhase("enter");
+    if (!canRotatePresenter) return;
+
+    let switchTimeout: number | undefined;
+    const interval = window.setInterval(() => {
+      setPresenterPhase("exit");
+      switchTimeout = window.setTimeout(() => {
+        setPresenterIndex((index) => (index + 1) % rotatingPresenters.length);
+        setPresenterDirection((direction) => direction === 1 ? -1 : 1);
+        setPresenterPhase("enter");
+      }, 320);
+    }, 5000);
+
+    return () => {
+      window.clearInterval(interval);
+      if (switchTimeout !== undefined) window.clearTimeout(switchTimeout);
+    };
+  }, [program?.id, presenterRotationKey, canRotatePresenter, rotatingPresenters.length]);
+
+  const apresentador = rotatingPresenters[presenterIndex] || presenterList.find((item) => item.foto) || presenterList[0] || null;
 
   const foto: string | null =
     (apresentador?.foto && String(apresentador.foto).trim()) ||
@@ -2690,7 +2912,9 @@ export function ProgramShowcaseCard({
 
   const palette = useCoverPalette(foto);
   const contrast = getPaletteContrast(palette);
-  const gradient = palette
+  const gradient = watchLayout || isLive
+    ? "linear-gradient(135deg, #b9000e 0%, #e00012 100%)"
+    : palette
     ? `linear-gradient(135deg, ${palette.primary} 0%, ${palette.secondary} 100%)`
     : "linear-gradient(135deg, #1f2937 0%, #0b0f1a 100%)";
 
@@ -2721,26 +2945,35 @@ export function ProgramShowcaseCard({
 
   const avatarSize = isLive ? 96 : 64;
   const avatarPt = isLive ? 56 : 32;
-  const titleClass = isLive
+  const titleClass = watchLayout
+    ? "mt-0.5 text-[clamp(16px,1.25vw,22px)] font-bold leading-[1.12] line-clamp-2"
+    : isLive
     ? "text-2xl font-bold leading-tight"
     : "text-sm font-bold leading-tight truncate";
   const subtitleClass = isLive ? "text-[12px] opacity-80 mt-0.5" : "text-[10px] uppercase tracking-widest text-white/80";
   const badgeLabel = isLive ? "no ar" : "a seguir";
   const showBadge = !hideBadge && (isLive || isFirst);
 
-  const textColor = isLive ? (contrast?.textColor || "#fff") : "#fff";
+  const textColor = "#fff";
   const textShadow = isLive ? contrast?.textShadow : "0 2px 8px rgba(0,0,0,0.6)";
 
   return (
+    <>
+    {(watchLayout || canRotatePresenter) && <style>{`@keyframes watchCardContentOut{to{opacity:0;transform:translateX(var(--watch-slide))}}@keyframes watchCardContentIn{from{opacity:0;transform:translateX(calc(var(--watch-slide)*-1))}to{opacity:1;transform:translateX(0)}}[data-watch-card][data-watch-phase="exit"] [data-watch-moving]{animation:watchCardContentOut 220ms cubic-bezier(.55,0,.8,.45) both}[data-watch-card][data-watch-phase="enter"] [data-watch-moving]{animation:watchCardContentIn 440ms cubic-bezier(.22,1,.36,1) both}@keyframes presenterPhotoOut{to{opacity:0;transform:translateX(var(--presenter-exit-slide));filter:blur(3px)}}@keyframes presenterPhotoIn{from{opacity:0;transform:translateX(var(--presenter-enter-slide));filter:blur(3px)}to{opacity:.95;transform:translateX(0);filter:blur(0)}}[data-presenter-phase="exit"] [data-presenter-moving]{animation:presenterPhotoOut 320ms cubic-bezier(.45,0,.75,.4) both}[data-presenter-phase="enter"] [data-presenter-moving]{animation:presenterPhotoIn 560ms cubic-bezier(.22,1,.36,1) both}`}</style>}
     <div
       className="relative w-full h-full overflow-hidden"
-      style={{ borderRadius: radius, background: gradient, boxShadow }}
+      style={{ borderRadius: radius, background: gradient, boxShadow, ...(watchLayout ? { "--watch-slide": watchDirection > 0 ? "-36px" : "36px" } as React.CSSProperties : {}), ...(canRotatePresenter ? { "--presenter-exit-slide": presenterDirection > 0 ? "-42px" : "42px", "--presenter-enter-slide": presenterDirection > 0 ? "42px" : "-42px" } as React.CSSProperties : {}) }}
       data-focusable={isLive || undefined}
+      data-watch-card={watchLayout ? "true" : undefined}
+      data-watch-phase={watchLayout ? watchPhase : undefined}
+      data-presenter-phase={canRotatePresenter ? presenterPhase : undefined}
     >
       {/* foto locutor */}
       {foto && imgState !== "error" ? (
         <>
           <img
+            data-watch-moving={watchLayout ? "photo" : undefined}
+            data-presenter-moving={canRotatePresenter ? "photo" : undefined}
             src={foto}
             alt={apresentador?.nome || program?.nome || ""}
             ref={(node) => {
@@ -2756,11 +2989,12 @@ export function ProgramShowcaseCard({
               if (foto) onImageLoad?.(foto);
             }}
             onError={() => setImgState("error")}
-            className="absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-500"
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${isLive || watchLayout ? "object-right" : "object-top"}`}
             style={{
-              maskImage: "linear-gradient(180deg, #000 55%, transparent 100%)",
-              WebkitMaskImage: "linear-gradient(180deg, #000 55%, transparent 100%)",
-              opacity: imgState === "loaded" ? 0.95 : 0,
+              objectPosition: isLive || watchLayout ? "right top" : "center top",
+              maskImage: isLive || watchLayout ? "linear-gradient(90deg, transparent 0%, #000 42%, #000 100%)" : "linear-gradient(180deg, #000 55%, transparent 100%)",
+              WebkitMaskImage: isLive || watchLayout ? "linear-gradient(90deg, transparent 0%, #000 42%, #000 100%)" : "linear-gradient(180deg, #000 55%, transparent 100%)",
+              opacity: watchLayout || imgState === "loaded" ? 0.95 : 0,
             }}
           />
           {imgState === "loading" && (
@@ -2777,6 +3011,7 @@ export function ProgramShowcaseCard({
         </>
       ) : (
         <div
+          data-watch-moving={watchLayout ? "photo" : undefined}
           className="absolute inset-0 flex flex-col items-center justify-start pointer-events-none gap-3"
           style={{ paddingTop: avatarPt }}
         >
@@ -2799,7 +3034,7 @@ export function ProgramShowcaseCard({
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: isLive
+          background: isLive || watchLayout
             ? "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 40%, rgba(0,0,0,0.55) 100%)"
             : "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 40%, rgba(0,0,0,0.65) 100%)",
         }}
@@ -2819,7 +3054,7 @@ export function ProgramShowcaseCard({
       )}
 
       {/* horário no canto (upcoming) */}
-      {!isLive && (
+      {!isLive && !watchLayout && (
         <div className="absolute top-3 right-3 text-[11px] px-2 py-0.5 rounded-md bg-black/60 text-white/85">
           {hhmm(program?.horario_inicio)}
         </div>
@@ -2841,19 +3076,25 @@ export function ProgramShowcaseCard({
 
       {/* rodapé — infos do programa */}
       <div
-        className={isLive ? "absolute bottom-4 left-5 right-5" : "absolute bottom-3 left-3 right-3"}
+        className={watchLayout ? "absolute bottom-4 left-5 right-5" : isLive ? "absolute bottom-4 left-5 right-5" : "absolute bottom-3 left-3 right-3"}
         style={{ color: textColor, textShadow }}
+        data-watch-moving={watchLayout ? "info" : undefined}
       >
-        {isLive && <div className="text-[11px] uppercase tracking-widest opacity-80">no ar</div>}
-        <div className={titleClass}>{program?.nome || fallbackTitle || "—"}</div>
-        {isLive ? (
-          <div className={subtitleClass}>
-            {program ? `${hhmm(program.horario_inicio)}/${hhmm(program.horario_fim)}` : ""}
-          </div>
+        {watchLayout ? (
+          <>
+            <div className="text-[11px] font-semibold tabular-nums text-white/90">{hhmm(program?.horario_inicio)}/{hhmm(program?.horario_fim)}</div>
+            <div className={titleClass}>{program?.nome || fallbackTitle || "—"}</div>
+          </>
         ) : (
-          <div className={subtitleClass}>
-            {hhmm(program?.horario_inicio)}/{hhmm(program?.horario_fim)}
-          </div>
+          <>
+            {isLive && <div className="text-[11px] uppercase tracking-widest opacity-80">no ar</div>}
+            <div className={titleClass}>{program?.nome || fallbackTitle || "—"}</div>
+            {isLive ? (
+              <div className={subtitleClass}>{program ? `${hhmm(program.horario_inicio)}/${hhmm(program.horario_fim)}` : ""}</div>
+            ) : (
+              <div className={subtitleClass}>{hhmm(program?.horario_inicio)}/{hhmm(program?.horario_fim)}</div>
+            )}
+          </>
         )}
         {isLive && typeof progressPct === "number" && (
           <div className="mt-3 h-[3px] w-full rounded-full bg-white/20 overflow-hidden">
@@ -2865,6 +3106,7 @@ export function ProgramShowcaseCard({
         )}
       </div>
     </div>
+    </>
   );
 }
 
@@ -3290,25 +3532,20 @@ function InteractivityMenu({
           data-focusable
           data-active={open || undefined}
           className="relative h-16 w-16 rounded-full flex items-center justify-center outline-none group overflow-hidden z-20"
-          style={{ padding: 2 }}
+          style={{ padding: 4 }}
         >
           {/* borda animada (conic gradient girando) */}
           <span
             aria-hidden
             className="absolute inset-0 rounded-full"
-            style={{
-              background: "conic-gradient(from 0deg, #ff3355, #ffb63b, #7bd3ff, #b76bff, #ff3355)",
-              animation: "interactSpin 3.6s linear infinite",
-              filter: "saturate(1.15)",
-            }}
+            style={{ background: "#d90012" }}
           />
           {/* halo suave */}
           <span
             aria-hidden
             className={`absolute -inset-[3px] rounded-full blur-[6px] transition-opacity duration-300 ${open ? "opacity-100" : "opacity-70"}`}
             style={{
-              background: "conic-gradient(from 0deg, rgba(255,51,85,.5), rgba(255,182,59,.5), rgba(123,211,255,.5), rgba(183,107,255,.5), rgba(255,51,85,.5))",
-              animation: "interactSpin 3.6s linear infinite",
+              background: "rgba(217,0,18,.42)",
             }}
           />
           {/* núcleo */}
@@ -3390,6 +3627,10 @@ function InteractivityMenu({
             } catch { return null; }
           })()}
           onClose={() => setPollOpen(false)}
+          onChangeVote={() => {
+            localStorage.removeItem(`nexo:poll:voted:${activePoll.id}`);
+            setAlreadyVoted(false);
+          }}
           onVoted={(optionIndex) => {
             localStorage.setItem(`nexo:poll:voted:${activePoll.id}`, String(optionIndex));
             setAlreadyVoted(true);
@@ -3444,16 +3685,18 @@ function MenuItem({
 }
 
 function PollDialog({
-  poll, alreadyVoted, previousVote, onClose, onVoted,
+  poll, alreadyVoted, previousVote, onClose, onVoted, onChangeVote,
 }: {
   poll: ActivePoll;
   alreadyVoted: boolean;
   previousVote?: number | null;
   onClose: () => void;
   onVoted: (optionIndex: number) => void;
+  onChangeVote: () => void;
 }) {
   const [selected, setSelected] = useState<number | null>(previousVote ?? null);
   const [submitted, setSubmitted] = useState(alreadyVoted);
+  const [highlightedOption, setHighlightedOption] = useState(0);
   const [visible, setVisible] = useState(false);
   const [closing, setClosing] = useState(false);
 
@@ -3461,6 +3704,15 @@ function PollDialog({
     const id = requestAnimationFrame(() => setVisible(true));
     return () => cancelAnimationFrame(id);
   }, []);
+
+  useEffect(() => {
+    if (submitted || poll.respostas.length < 1) return;
+    setHighlightedOption(0);
+    const id = window.setInterval(() => {
+      setHighlightedOption((current) => (current + 1) % poll.respostas.length);
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [submitted, poll.id, poll.respostas.length]);
 
   const requestClose = useCallback(() => {
     if (closing) return;
@@ -3490,32 +3742,44 @@ function PollDialog({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-8 pointer-events-none"
+      className="fixed inset-0 z-[9999] flex items-center justify-end p-8 pointer-events-none"
       style={{
-        background: visible ? "rgba(0,0,0,0.5)" : "transparent",
-        transition: "background 300ms ease",
         opacity: visible ? 1 : 0,
+        transition: "opacity 300ms ease",
       }}
     >
       <div
+        aria-hidden="true"
+        className="absolute inset-y-0 right-0 z-0 w-[min(760px,65vw)] pointer-events-none"
+        style={{ background: "linear-gradient(to left, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.38) 40%, rgba(0,0,0,0) 100%)" }}
+      />
+      <div
         role="dialog"
         aria-modal="true"
-        className="w-[420px] flex flex-col gap-6 pointer-events-auto animate-in fade-in zoom-in-95 duration-300"
+        className="relative z-10 w-[min(380px,calc(100vw-48px))] max-h-[72vh] overflow-y-auto flex flex-col gap-4 pointer-events-auto animate-in fade-in zoom-in-95 duration-300"
         style={{
-          padding: "32px",
+          padding: "24px",
           borderRadius: 40,
           background: "rgba(35,35,38,0.95)",
           backdropFilter: "blur(20px)",
           WebkitBackdropFilter: "blur(20px)",
           border: "1px solid rgba(255,255,255,0.08)",
           boxShadow: "0 40px 100px -20px rgba(0,0,0,0.95)",
+          position: "relative",
+          marginBottom: "20px",
+          marginRight: "20px",
           opacity: visible ? 1 : 0,
           transform: visible ? "scale(1)" : "scale(0.95)",
           transition: "opacity 300ms ease-out, transform 300ms cubic-bezier(0.22, 1, 0.36, 1)",
         }}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col gap-1">
+        <PlayerBackButton
+          onClick={requestClose}
+          className="absolute right-4 top-4 z-10 w-8 h-8"
+          iconSize={14}
+          aria-label="Voltar"
+        />
+        <div className="flex flex-col gap-1 pr-10">
             <div className="flex items-center gap-2">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white/60 opacity-60"></span>
@@ -3523,36 +3787,36 @@ function PollDialog({
               </span>
               <span className="text-[10px] uppercase tracking-[0.24em] font-bold text-white/50">Participar da conversa</span>
             </div>
-            <h3 className="text-white font-bold text-2xl leading-tight tracking-tight pr-4">
+            <h3 className="text-white font-bold text-xl leading-tight tracking-tight pr-4">
               {poll.pergunta}
             </h3>
           </div>
-          <button
-            onClick={requestClose}
-            className="w-10 h-10 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors"
-            aria-label="Fechar"
-          >
-            <X size={20} className="text-white" />
-          </button>
-        </div>
-
         <div className="flex flex-col gap-3">
           {poll.respostas.map((opt, i) => {
             const isSelected = selected === i;
+            const isHighlighted = !submitted && highlightedOption === i;
             return (
               <button
                 key={i}
                 onClick={() => submit(i)}
                 disabled={submitted}
-                className="w-full relative py-4 px-6 rounded-2xl text-left transition-all overflow-hidden group"
+                className="w-full relative py-3 px-5 rounded-2xl text-left transition-all overflow-hidden group"
                 style={{
                   background: isSelected
                     ? "rgba(255,255,255,1)"
                     : "rgba(255,255,255,0.06)",
                   border: isSelected
                     ? "1px solid rgba(255,255,255,1)"
-                    : "1px solid rgba(255,255,255,0.08)",
-                  boxShadow: isSelected ? "0 8px 24px -6px rgba(255,255,255,0.3)" : "none",
+                    : isHighlighted
+                      ? "2px solid hsl(var(--player-accent, 0 72% 51%))"
+                      : "1px solid rgba(255,255,255,0.08)",
+                  ...(isHighlighted ? {
+                    borderColor: "hsl(from hsl(var(--player-accent, 0 72% 51%)) h 100% 60%)",
+                  } : {}),
+                  boxShadow: isSelected
+                    ? "0 8px 24px -6px rgba(255,255,255,0.3)"
+                    : "none",
+                  transition: "border-color 220ms ease, box-shadow 220ms ease, background-color 220ms ease",
                 }}
                 data-focusable
               >
@@ -3576,10 +3840,20 @@ function PollDialog({
             );
           })}
         </div>
-
-        <p className="text-[12px] text-white/40 text-center leading-relaxed font-medium">
-          {submitted ? "Obrigado por participar!" : "Exibir informações do programa em tempo real ao lado do player quando eu selecionar um canal."}
-        </p>
+        {submitted && (
+          <button
+            type="button"
+            onClick={() => {
+              setSelected(null);
+              setSubmitted(false);
+              onChangeVote();
+            }}
+            className="w-full rounded-full border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+            data-focusable
+          >
+            Mudei de idéia
+          </button>
+        )}
       </div>
     </div>,
     document.body

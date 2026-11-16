@@ -927,7 +927,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
 
   // Atualiza o registro real no banco: tenta pelo id; se não achar (id de cache/XML/snapshot),
   // localiza pelo dono + arquivo da imagem (+ programa). Garante sessão válida antes.
-  const updateLogoRecord = async (item: Logo | undefined, id: string, patch: Record<string, any>, ownerFallback: string) => {
+  const updateLogoRecord = async (item: Logo | undefined, id: string, patch: { excluido?: boolean; excluido_at?: string | null; ativo?: boolean; programa_id?: string | null; data_final?: string | null }, ownerFallback: string) => {
     const { data: sess } = await supabase.auth.getSession();
     if (!sess?.session) {
       const { data: ref } = await supabase.auth.refreshSession();

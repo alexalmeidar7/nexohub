@@ -102,6 +102,7 @@ async function cacheRemoteImage(sourceUrl, hint, accountSlug, forceRefresh = fal
   const hostname = parsed.hostname.toLowerCase();
   const allowed = hostname.endsWith(".supabase.co") || hostname === "supabase.co" ||
     hostname === "deezer.com" || hostname.endsWith(".deezer.com") || hostname.endsWith(".dzcdn.net") ||
+    hostname === "img.icons8.com" ||
     hostname.endsWith(".wikimedia.org") || hostname === "itunes.apple.com" || hostname.endsWith(".mzstatic.com") ||
     hostname.endsWith(".scdn.co") || hostname.endsWith(".spotifycdn.com");
   if (!allowed) return null;
@@ -169,6 +170,7 @@ async function cacheRemoteImage(sourceUrl, hint, accountSlug, forceRefresh = fal
     const finalHost = new URL(response.url).hostname.toLowerCase();
     const finalHostAllowed = finalHost.endsWith(".supabase.co") || finalHost === "supabase.co" ||
       finalHost === "deezer.com" || finalHost.endsWith(".deezer.com") || finalHost.endsWith(".dzcdn.net") ||
+      finalHost === "img.icons8.com" ||
       finalHost.endsWith(".wikimedia.org") || finalHost === "itunes.apple.com" || finalHost.endsWith(".mzstatic.com") ||
       finalHost.endsWith(".scdn.co") || finalHost.endsWith(".spotifycdn.com");
     if (!finalHostAllowed) return existingRelative ? localImageUrl(safeSlug, existingRelative) : null;
@@ -212,6 +214,62 @@ async function saveLocalImage(accountSlug, input, contentType, hint = "") {
   return localImageUrl(safeSlug, relativePath);
 }
 
+async function cacheImageFileUrl(sourceUrl, hint, accountSlug) {
+  const slug = safeAccountSlug(accountSlug);
+  if (!slug || typeof sourceUrl !== "string") return null;
+  let localUrl = sourceUrl;
+  if (!sourceUrl.startsWith("housemix-local://")) {
+    localUrl = await cacheRemoteImage(sourceUrl, hint, slug);
+  }
+  if (!localUrl) return null;
+  return localImageFileUrl(localUrl, slug);
+}
+
+function localImageFileUrl(localUrl, slug) {
+  try {
+    const parsed = new URL(localUrl);
+    if (parsed.protocol !== "housemix-local:" || parsed.hostname !== "asset") return null;
+    const [assetSlug, ...segments] = decodeURIComponent(parsed.pathname).replace(/^\//, "").split("/");
+    if (assetSlug !== slug || segments.length === 0) return null;
+    const imagePath = cachedImagePath(assetSlug, segments.join("/"));
+    return fs.existsSync(imagePath) ? pathToFileURL(imagePath).href : null;
+  } catch {
+    return null;
+  }
+}
+
+function getCachedImageFileUrl(sourceUrl, hint, accountSlug) {
+  const slug = safeAccountSlug(accountSlug);
+  if (!slug || typeof sourceUrl !== "string") return null;
+  if (sourceUrl.startsWith("housemix-local://")) return localImageFileUrl(sourceUrl, slug);
+
+  let parsed;
+  try { parsed = new URL(sourceUrl); } catch { return null; }
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
+  const candidates = [sourceUrl];
+  if (parsed.searchParams.has("v")) {
+    parsed.searchParams.delete("v");
+    const unversioned = parsed.toString();
+    if (unversioned !== sourceUrl) candidates.push(unversioned);
+  }
+  const categories = [...new Set([
+    imageCategory(sourceUrl, hint), "apresentadores", "banners", "fundos", "capas", "selos",
+    "deezer", "logos", "diversas", "geral", "player/logo-canal", "player/capa-canal",
+    "player/thumb-canal", "player/capas-videos", "player/thumb-videos"
+  ])];
+  const extensions = ["png", "jpg", "jpeg", "webp", "gif", "avif", "svg", "bmp", "tif", "tiff"];
+
+  for (const candidate of candidates) {
+    const key = crypto.createHash("sha256").update(candidate).digest("hex");
+    for (const category of categories) for (const extension of extensions) {
+      const relativePath = `imagens/${category}/${key}.${extension}`;
+      const imagePath = cachedImagePath(slug, relativePath);
+      if (fs.existsSync(imagePath)) return pathToFileURL(imagePath).href;
+    }
+  }
+  return null;
+}
+
 async function ensureAccountLocalAssetFolders(accountSlug) {
   const root = accountAssetsRoot(accountSlug);
   const oldGeneral = path.join(root, "imagens", "geral");
@@ -236,6 +294,18 @@ async function initializeLocalAssetFolders() {
 
 function configureDesktopIpc() {
   ipcMain.handle("housemix:app-version", () => app.getVersion());
+  ipcMain.handle("housemix:get-start-with-windows", () => {
+    const preferences = readDesktopPreferences();
+    const supported = applyStartWithWindows(preferences.startWithWindows);
+    return { enabled: preferences.startWithWindows, supported };
+  });
+  ipcMain.handle("housemix:set-start-with-windows", (_event, enabled) => {
+    if (typeof enabled !== "boolean") throw new Error("Invalid startup preference");
+    const supported = applyStartWithWindows(enabled);
+    if (!supported) return { enabled: false, supported };
+    saveDesktopPreferences({ ...readDesktopPreferences(), startWithWindows: enabled });
+    return { enabled, supported };
+  });
   ipcMain.handle("housemix:update-status", () => latestUpdateStatus);
   ipcMain.handle("housemix:download-update", async () => {
     if (!desktopAutoUpdater || latestUpdateStatus.status !== "available") return false;
@@ -283,6 +353,8 @@ function configureDesktopIpc() {
     } catch { return null; }
   });
   ipcMain.handle("housemix:image-cache", (_event, sourceUrl, hint, slug, refresh) => cacheRemoteImage(sourceUrl, hint, slug, refresh === true));
+  ipcMain.handle("housemix:image-cache-file-url", (_event, sourceUrl, hint, slug) => cacheImageFileUrl(sourceUrl, hint, slug));
+  ipcMain.handle("housemix:image-cached-file-url", (_event, sourceUrl, hint, slug) => getCachedImageFileUrl(sourceUrl, hint, slug));
   ipcMain.handle("housemix:image-save-local", (_event, slug, bytes, contentType, hint) => saveLocalImage(slug, bytes, contentType, hint));
   ipcMain.handle("housemix:window-fullscreen", (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
@@ -294,6 +366,35 @@ function configureDesktopIpc() {
     const win = BrowserWindow.fromWebContents(event.sender);
     return { auxiliary: !!win && auxiliaryWindows.has(win), fullscreen: !!win?.isFullScreen() };
   });
+}
+
+function desktopPreferencesPath() {
+  return path.join(app.getPath("userData"), "desktop-preferences.json");
+}
+
+function readDesktopPreferences() {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(desktopPreferencesPath(), "utf8"));
+    return { startWithWindows: parsed.startWithWindows !== false };
+  } catch {
+    return { startWithWindows: true };
+  }
+}
+
+function saveDesktopPreferences(preferences) {
+  fs.mkdirSync(path.dirname(desktopPreferencesPath()), { recursive: true });
+  fs.writeFileSync(desktopPreferencesPath(), JSON.stringify(preferences, null, 2), "utf8");
+}
+
+function applyStartWithWindows(enabled) {
+  if (process.platform !== "win32") return false;
+  app.setLoginItemSettings({ openAtLogin: enabled, path: process.execPath });
+  return true;
+}
+
+function configureDesktopStartup() {
+  if (process.platform !== "win32") return;
+  applyStartWithWindows(readDesktopPreferences().startWithWindows);
 }
 
 const UPDATE_CHECK_INTERVAL_MS = 15 * 60 * 1000;
@@ -462,6 +563,7 @@ app.whenReady().then(async () => {
   try {
     configureAutoUpdater();
     configureDesktopIpc();
+    configureDesktopStartup();
     await registerRendererProtocol();
     await initializeLocalAssetFolders();
     await startLocalRuntime();

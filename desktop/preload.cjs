@@ -5,6 +5,8 @@ contextBridge.exposeInMainWorld("houseMixDesktop", Object.freeze({
   platform: process.platform,
   version: process.env.npm_package_version || "0.0.0",
   getAppVersion: () => ipcRenderer.invoke("housemix:app-version"),
+  getStartWithWindows: () => ipcRenderer.invoke("housemix:get-start-with-windows"),
+  setStartWithWindows: (enabled) => ipcRenderer.invoke("housemix:set-start-with-windows", enabled),
   getUpdateStatus: () => ipcRenderer.invoke("housemix:update-status"),
   downloadUpdate: () => ipcRenderer.invoke("housemix:download-update"),
   onUpdateStatus: (callback) => {
@@ -18,6 +20,8 @@ contextBridge.exposeInMainWorld("houseMixDesktop", Object.freeze({
   saveXml: (slug, filename, content) => ipcRenderer.invoke("housemix:xml-save", slug, filename, content),
   readXml: (slug, filename) => ipcRenderer.invoke("housemix:xml-read", slug, filename),
   cacheImage: (url, hint, slug, refresh = false) => ipcRenderer.invoke("housemix:image-cache", url, hint, slug, refresh),
+  cacheImageFileUrl: (url, hint, slug) => ipcRenderer.invoke("housemix:image-cache-file-url", url, hint, slug),
+  getCachedImageFileUrl: (url, hint, slug) => ipcRenderer.invoke("housemix:image-cached-file-url", url, hint, slug),
   saveLocalImage: (slug, bytes, contentType, hint) => ipcRenderer.invoke("housemix:image-save-local", slug, bytes, contentType, hint),
   getWindowState: () => ipcRenderer.invoke("housemix:window-state"),
   toggleFullscreen: () => ipcRenderer.invoke("housemix:window-fullscreen")

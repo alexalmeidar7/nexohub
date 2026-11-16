@@ -13,6 +13,7 @@ import AccessScreen from "./AccessScreen";
 import WelcomeScreen from "./WelcomeScreen";
 import PlayerHome from "./PlayerHome";
 import { resolveEffectiveOnAir } from "@/lib/onAirResolver";
+import { getStationLogoFallback } from "@/lib/playerBranding";
 
 // Injects <link rel="preload" as="image"> for the LCP background so the
 // browser starts downloading the program cover in the highest-priority queue,
@@ -69,6 +70,8 @@ export default function PlayerHub() {
   }, [searchParams, setSearchParams, skipToHome, storageKey]);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [channelBg, setChannelBg] = useState<string | null>(null);
+  const [loginBackground, setLoginBackground] = useState<string | null>(null);
+  const [loginMusic, setLoginMusic] = useState<{ title: string; artist: string; cover: string | null } | null>(null);
   const [channelName, setChannelName] = useState("");
   const [fadeOut, setFadeOut] = useState(false);
   const [pendingStep, setPendingStep] = useState<Step | null>(null);
@@ -153,7 +156,7 @@ export default function PlayerHub() {
         if (progRes.error) console.warn("[WelcomeBG:auth] erro ao buscar programas:", progRes.error);
         const tz: string | null = (empRes.data as any)?.timezone || null;
         if (empRes.data) {
-          setLogoUrl(empRes.data.logo);
+          setLogoUrl(empRes.data.logo || chRes.data?.find((c: any) => c?.logo_url)?.logo_url || getStationLogoFallback(userSlug));
           setChannelName(empRes.data.nome || "");
         }
         const programThumb = pickCurrentProgramThumb(progRes.data as any[] | null, "auth", tz);
@@ -183,8 +186,10 @@ export default function PlayerHub() {
           setLoadProgress(75);
           if (!error && data && !data.error) {
             if (data.userId) setPublicUserId(data.userId);
-            if (data.empresa?.logo) setLogoUrl(data.empresa.logo);
+            setLogoUrl(data.empresa?.logo || data.empresa?.logo_url || data.channels?.find((c: any) => c?.active && c?.logo_url)?.logo_url || getStationLogoFallback(userSlug));
             if (data.empresa?.nome) setChannelName(data.empresa.nome);
+            setLoginBackground(data.musicDeezerArtistImg || null);
+            setLoginMusic({ title: String(data.musicData?.titulo || ""), artist: String(data.musicData?.artista || ""), cover: data.musicData?.capa || data.musicDeezerArtistImg || null });
             if (!data.programas) {
               console.warn("[WelcomeBG:public] Edge Function public-player-data não retornou a lista de programas — verifique se a função está atualizada.");
             }
@@ -286,6 +291,8 @@ export default function PlayerHub() {
       <div className={wrapperClass}>
         <AccessScreen
           logoUrl={logoUrl}
+          backgroundUrl={loginBackground}
+          music={loginMusic}
           onLoginSuccess={onLoginSuccess}
         />
       </div>

@@ -2264,6 +2264,25 @@ select:disabled {
   border-color: #d6dce5 !important;
 }
 
+/* Keep the player search input borderless inside its rounded outer control. */
+.player-home-search input.player-home-search-input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="hidden"]),
+.player-home-search input.player-home-search-input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="hidden"]):focus,
+.player-home-search input.player-home-search-input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="hidden"]):active {
+  border: 0 !important;
+  border-width: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+}
+
+input.player-chat-entry-input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="hidden"]):focus,
+input.player-chat-entry-input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="hidden"]):focus-visible {
+  border-color: hsl(var(--player-accent, 354 90% 50%)) !important;
+  box-shadow: 0 0 0 2px hsla(var(--player-accent, 354 90% 50%) / 0.2) !important;
+  outline: none !important;
+}
+
 /* Lovable sync checkpoint: PR #72 integrated on 2026-10-19. */
 
 /* Lovable sync checkpoint: PR #73 integrated on 2026-10-18. */

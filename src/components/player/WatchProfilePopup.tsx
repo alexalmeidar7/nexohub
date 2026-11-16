@@ -30,6 +30,7 @@ interface WatchProfilePopupProps {
   avatarUrl: string | null;
   radioName?: string;
   radioUserId?: string | null;
+  openToRight?: boolean;
   onClose: () => void;
   onEditProfile?: () => void;
   onSwitchProfile?: () => void;
@@ -64,6 +65,7 @@ export default function WatchProfilePopup({
   avatarUrl,
   radioName,
   radioUserId,
+  openToRight = false,
   onClose,
   onEditProfile,
   onSwitchProfile,
@@ -216,7 +218,7 @@ export default function WatchProfilePopup({
   return (
     <div
       ref={ref}
-      className="absolute right-0 top-[calc(100%+8px)] z-[60] animate-fade-in"
+      className={`absolute ${openToRight ? "left-0 right-auto" : "right-0"} top-[calc(100%+8px)] z-[60] animate-fade-in`}
       style={{ width: "320px", maxHeight: "80vh" }}
     >
       <div
