@@ -35,6 +35,7 @@ import logoMixControl from "@/assets/logo-mixcontrol.png"; // Keeping reference 
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import PresetCommandEditor from "./PresetCommandEditor";
 import { useProgramGridSync } from "@/hooks/useProgramGridSync";
+import { useVmixRemoteControl } from "@/hooks/useVmixRemoteControl";
 import CustomVmixButtonEditor from "./CustomVmixButtonEditor";
 
 /* ── Escopo de estúdio (validação central) ─────────────────────────────── */
@@ -510,6 +511,15 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
 
   const [vmixConnections, setVmixConnections] = useState<any[]>([]);
   const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
+  const remote = useVmixRemoteControl(selectedConnectionId, user?.id);
+  const [remoteMode, setRemoteMode] = useState(false);
+  const remoteModeRef = useRef(false);
+  const [remoteAction, setRemoteAction] = useState("");
+  useEffect(() => {
+    remoteModeRef.current = false;
+    setRemoteMode(false);
+    setRemoteAction("");
+  }, [selectedConnectionId, savedUrl]);
   const [directTesting, setDirectTesting] = useState(false);
   const [directTestResult, setDirectTestResult] = useState<{ ok: boolean; message: string } | null>(null);
   
@@ -520,6 +530,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       return;
     }
 
+    let cancelled = false;
     const checkLan = async () => {
       setLanStatus("checking");
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -529,20 +540,18 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
         const controller = new AbortController();
         timeoutId = setTimeout(() => controller.abort(), 2000);
         
-        const candidates = Array.from(new Set([
-          normalizeVmixBaseUrl(savedUrl),
-          ...(isPrivateIp(savedUrl) && !isLoopbackUrl(savedUrl) ? buildLoopbackFallbackUrls(savedUrl) : []),
-        ]));
+        const candidates = [normalizeVmixBaseUrl(savedUrl)];
 
         let reached = false;
         for (const baseUrl of candidates) {
           if (isMixedContentBlockedByPage(baseUrl + "/api/")) continue;
           try {
-            await fetch(baseUrl + "/api/", {
-              mode: 'no-cors',
-              cache: "no-store",
-              signal: controller.signal
-            });
+            const native = window.houseMixDesktop?.fetchVmixApi;
+            const xml = native ? await native(baseUrl, "/api/", vmixUser, vmixPass) : await (await fetch(baseUrl + "/api/", {
+              mode: "cors", cache: "no-store", signal: controller.signal,
+              headers: vmixUser ? { Authorization: `Basic ${btoa(`${vmixUser}:${vmixPass}`)}` } : {},
+            })).text();
+            if (!xml.includes("<vmix>")) throw new Error("API vMix não identificada");
             reached = true;
             break;
           } catch {
@@ -552,16 +561,17 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
 
         if (!reached) throw new Error("LAN not reachable");
 
-        setLanStatus("same_lan");
+        if (!cancelled) setLanStatus("same_lan");
       } catch (err) {
-        setLanStatus("different_network");
+        if (!cancelled) setLanStatus("different_network");
       } finally {
         if (timeoutId) clearTimeout(timeoutId);
       }
     };
 
     checkLan();
-  }, [savedUrl]);
+    return () => { cancelled = true; };
+  }, [savedUrl, vmixUser, vmixPass]);
 
   // Network Interface Detection (Wi-Fi/Ethernet)
   useEffect(() => {
@@ -1170,6 +1180,9 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
   }, [user]);
 
   const handleSelectConnection = (conn: any) => {
+    remoteModeRef.current = false;
+    setRemoteMode(false);
+    setLanStatus("checking");
     setSelectedConnectionId(conn.id);
     setVmixUrl(conn.url);
     setSavedUrl(conn.url);
@@ -1185,7 +1198,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
     setConnected(false);
     persistActiveConnection(conn.id);
     // Auto connect when switching
-    setTimeout(() => connectToVmix(), 300);
+    setTimeout(() => connectToVmixRef.current?.(), 300);
   };
 
   // Persist connection mode
@@ -1250,6 +1263,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
 
       setSavedUrl(trimmed);
       await loadConnections();
+      window.dispatchEvent(new Event("vmix-connections-updated"));
 
       if (isPrivateIp(trimmed) && connectionMode === "proxy") {
         setConnectionMode("direct");
@@ -1300,11 +1314,13 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
   // Direct fetch to vMix (browser → vMix, no edge function)
   const vmixDirectFetch = useCallback(async (path: string): Promise<string> => {
     if (!savedUrl) throw new Error("URL não configurada");
+    if (window.houseMixDesktop?.fetchVmixApi && isPrivateIp(savedUrl)) {
+      return window.houseMixDesktop.fetchVmixApi(normalizeVmixBaseUrl(savedUrl), path, vmixUser, vmixPass);
+    }
     const configuredBaseUrl = normalizeVmixBaseUrl(savedUrl);
     const candidateBaseUrls = Array.from(new Set([
       directBaseUrlRef.current,
       configuredBaseUrl,
-      ...(isPrivateIp(savedUrl) && !isLoopbackUrl(savedUrl) ? buildLoopbackFallbackUrls(savedUrl) : []),
     ].filter(Boolean) as string[]));
 
     const headers: Record<string, string> = {
@@ -1316,12 +1332,13 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
 
     // Client-side retry loop instead of a single long AbortSignal — network hiccups
     // and vMix not-yet-ready both surface as short failures, not a 10s hang.
-    const MAX_ATTEMPTS = 3;
-    const PER_ATTEMPT_MS = 6000;
+    const MAX_ATTEMPTS = path === "/api/" && !isPrivateIp(savedUrl) ? 3 : 1;
+    const PER_ATTEMPT_MS = isPrivateIp(savedUrl) ? 2000 : 6000;
     let lastErr: unknown = null;
     let skippedMixedContent = false;
 
     for (const baseUrl of candidateBaseUrls) {
+      if (path !== "/api/" && baseUrl !== candidateBaseUrls[0]) break;
       const targetUrl = baseUrl + path;
 
       // HTTPS pages cannot fetch HTTP LAN IPs. Loopback is tried as an automatic
@@ -1427,13 +1444,28 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
 
   // Unified fetch that uses the selected mode (or an explicit override)
   const vmixFetch = useCallback(async (path: string, modeOverride?: "direct" | "proxy"): Promise<string> => {
-    const effectiveMode = modeOverride ?? connectionMode;
+    if (remoteModeRef.current) return remote.request([path]);
+    if (path === "/api/" && lanStatus === "different_network" && selectedConnectionId && isPrivateIp(savedUrl)) {
+      remoteModeRef.current = true;
+      setRemoteMode(true);
+      return remote.request([path]);
+    }
+    const effectiveMode = isPrivateIp(savedUrl) ? "direct" : modeOverride ?? connectionMode;
     try {
       if (effectiveMode === "direct") {
         return await vmixDirectFetch(path);
       }
       return await vmixProxyFetch(path);
     } catch (err) {
+      // Detect transport using a read only. Never resend an action through a
+      // second transport: the first attempt may have reached the live mixer.
+      if (path === "/api/" && selectedConnectionId && isPrivateIp(savedUrl)) {
+        remoteModeRef.current = true;
+        setRemoteMode(true);
+        setLanStatus("different_network");
+        return remote.request([path]);
+      }
+      if (path !== "/api/") throw err;
       // Auto-fallback: If proxy fails and it's a local IP, try direct (might work if user is in same LAN)
       if (effectiveMode === "proxy" && savedUrl && isPrivateIp(savedUrl)) {
         console.log("Proxy failed for local IP, trying direct fallback...");
@@ -1446,7 +1478,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       }
       throw err;
     }
-  }, [connectionMode, vmixDirectFetch, vmixProxyFetch, savedUrl]);
+  }, [connectionMode, vmixDirectFetch, vmixProxyFetch, savedUrl, selectedConnectionId, remote.request, lanStatus]);
 
    // ── Input type visual placeholders (SnapshotInput removed — it saves to disk on vMix!) ──
   const inputTypeColors: Record<string, string> = {
@@ -1561,22 +1593,11 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
 
     // In the embedded preview iframe, mixed content blocks HTTP to local IPs.
     // Open a real tab so the user can connect there — it will land straight on the Nexo Control panel.
-    if (isEmbeddedPreview && isLocal) {
+    if (isEmbeddedPreview && isLocal && !selectedConnectionId) {
       window.open("/vmix-control", "_blank", "noopener,noreferrer");
       toast({
         title: "Abrindo em nova aba",
         description: "O preview interno bloqueia HTTP local. A conexão será feita na nova aba e você já cai direto no painel do Nexo Control.",
-      });
-      return;
-    }
-
-    if (effectiveMode === "proxy" && isLocal) {
-      setConnected(false);
-      setConnectionMode("direct");
-      toast({
-        title: "IP Local detectado",
-        description: "IP local não é acessível pelo proxy em nuvem. Mudamos para o modo Direto automaticamente.",
-        variant: "destructive",
       });
       return;
     }
@@ -1600,7 +1621,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch {}
       const inputCount = parsedInputs.length;
       if (!isAutoConnect) {
-        toast({ title: "Conectado!", description: `${inputCount} inputs detectados no vMix.` });
+        toast({ title: remoteModeRef.current ? "Operando remoto" : "Conectado!", description: `${inputCount} inputs detectados no vMix.${remoteModeRef.current ? " Comandos confirmados pelo HMD da rádio." : ""}` });
       }
 
       // Auto-reload inputs + NDI sources with retry/fallback
@@ -1654,6 +1675,17 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       }
     }
   }, [savedUrl, vmixFetch, applyVmixState, persistVmixSnapshot, setConnected]);
+
+  useEffect(() => {
+    if (!remoteMode) return;
+    if (!remote.available) { setConnected(false); return; }
+    if (!remote.xml) return;
+    try {
+      const state = parseVmixXml(remote.xml);
+      applyVmixState(state);
+      setConnected(true);
+    } catch { setConnected(false); }
+  }, [remoteMode, remote.available, remote.xml, applyVmixState]);
 
   // Update input mapping whenever inputs change
   useEffect(() => {
@@ -1754,13 +1786,13 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       
       const forceMode: "direct" | "proxy" | undefined = isPrivateIp(savedUrl) ? "direct" : undefined;
       await vmixFetch(path, forceMode);
-      addLog(cmdLabel, "ok", "Enviado com sucesso", "local");
+      addLog(cmdLabel, "ok", remoteModeRef.current ? "Execução confirmada pelo HMD da rádio" : "Enviado com sucesso", remoteModeRef.current ? "server" : "local");
       
       // Refresh state after command
       setTimeout(() => silentRefresh(), 300);
       return true;
     } catch (err: any) {
-      addLog(cmdLabel, "error", err?.message || "Falha ao enviar", "local");
+      addLog(cmdLabel, "error", err?.message || "Falha ao enviar", remoteModeRef.current ? "server" : "local");
       if (!silent) toast({ title: "Erro", description: "Falha ao enviar comando.", variant: "destructive" });
       return false;
     }
@@ -1788,6 +1820,30 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
     if (!normalized.length) return false;
 
     const batchLabel = `[${label}] ${normalized.length} cmd(s)`;
+
+    if (remoteModeRef.current) {
+      // Scheduled automation belongs to the studio HMD; remote operators send
+      // only intentional clicks, avoiding a second scheduler on another PC.
+      if (/^(Preset agendado:|Agenda AO VIVO:|Gatilho de|Preset NO AR:)/.test(label)) return false;
+      try {
+        addLog(batchLabel, "pending", "Enviando ao HMD da rádio...", "server");
+        const paths = normalized.map(cmd => {
+          const query = new URLSearchParams({ Function: cmd.fn });
+          if (cmd.input) query.set("Input", cmd.input);
+          if (cmd.value) query.set("Value", cmd.value);
+          return `/api/?${query}`;
+        });
+        await remote.request(paths, label);
+        addLog(batchLabel, "ok", "Execução confirmada pelo HMD da rádio", "server");
+        if (!silent) toast({ title: label, description: "Executado remotamente no estúdio." });
+        return true;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Sem confirmação do estúdio.";
+        addLog(batchLabel, "error", message, "server");
+        if (!silent) toast({ title: "Comando remoto sem confirmação", description: message, variant: "destructive" });
+        return false;
+      }
+    }
 
     // For private/local IPs, skip server attempt — the cloud cannot reach LAN.
     // Send directly from the browser to vMix.
@@ -1841,7 +1897,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       }
       return allSucceeded;
     }
-  }, [normalizeCommands, sendCommand, toast, addLog, savedUrl, selectedConnectionId, silentRefresh]);
+  }, [normalizeCommands, sendCommand, toast, addLog, savedUrl, selectedConnectionId, silentRefresh, remote.request]);
 
   const runScene = async (scene: VmixScene) => {
     setRunningScene(scene.id);
@@ -1866,7 +1922,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
   const schedulerRefreshInFlightRef = useRef(false);
 
   useEffect(() => {
-    if (!connected || !savedUrl || !user) return;
+    if (remoteMode || !connected || !savedUrl || !user) return;
 
     const DAY_MAP: Record<string, number> = {
       domingo: 0, segunda: 1, "terça": 2, terca: 2,
@@ -2012,7 +2068,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       window.clearInterval(refreshId);
       window.clearInterval(scheduleId);
     };
-  }, [connected, savedUrl, user, sendCommand, runCommandsUnified, studioName, addLog]);
+  }, [connected, savedUrl, user, sendCommand, runCommandsUnified, studioName, addLog, remoteMode]);
 
   // Extract machine names from existing NDI inputs to suggest common sources
   const detectedMachines = useMemo(() => extractNdiMachinesFromInputs(inputs), [inputs]);
@@ -2190,6 +2246,18 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
   // Atalhos dos botões personalizados
   const customButtonsRef = useRef<any[]>(customButtons);
   customButtonsRef.current = customButtons;
+  useEffect(() => {
+    const onRemoteAction = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      if (detail?.connectionId !== selectedConnectionId) return;
+      setRemoteAction(String(detail.label || "Comando remoto"));
+      const name = String(detail.label || "").replace(/^Efeito:\s*/, "");
+      const button = customButtonsRef.current.find(b => b.nome === name);
+      if (button) setActiveCustomButton(button.id);
+    };
+    window.addEventListener("vmix-remote-executed", onRemoteAction);
+    return () => window.removeEventListener("vmix-remote-executed", onRemoteAction);
+  }, [selectedConnectionId]);
   const studioNameRef = useRef(studioName);
   studioNameRef.current = studioName;
   const runCommandsRef = useRef(runCommandsUnified);
@@ -2534,10 +2602,20 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
     );
   };
 
+  const operationStatus = selectedConnectionId ? (
+    <div role="status" className={`mx-auto mb-4 flex w-fit max-w-full flex-wrap items-center justify-center gap-2 rounded-xl border px-4 py-2 text-xs font-bold ${remoteMode ? "border-amber-300/35 bg-amber-400/10 text-amber-100" : "border-blue-300/25 bg-blue-500/10 text-blue-100"}`}>
+      {remoteMode ? <Network size={15} /> : <Wifi size={15} />}
+      <span>{remoteMode ? remote.available ? `Operando remoto · ${remote.studioName || studioName} · HMD da rádio online` : "Operando remoto · aguardando o HMD da rádio" : connecting || lanStatus === "checking" ? "Verificando acesso ao estúdio…" : "Operação local · acesso direto ao vMix"}</span>
+      {remoteMode && !remote.available && <span className="font-normal">{remote.error || "Mantenha o HMD da rádio aberto, com internet e acesso ao vMix."}</span>}
+      {remoteAction && !remoteMode && <span className="font-normal">Última ação remota: {remoteAction}</span>}
+    </div>
+  ) : null;
+
   // ── Not connected ──
   if (!effectiveConnected) {
     return (
       <div className={`w-full max-w-none mx-0 py-12 px-6 min-h-[90vh] flex flex-col items-center justify-center ${cleanLayout ? "vmix-clean-layout" : ""}`}>
+        {operationStatus}
         <div className="flex flex-col items-center gap-16 w-full">
           
 
@@ -2760,11 +2838,13 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
   }
 
   return (
+    <>
+    {operationStatus}
     <SwitcherUI
       inputs={inputs}
       activeInput={activeInput}
       previewInput={previewInput}
-      connectionMode={connectionMode}
+      connectionMode={remoteMode ? "remote" : connectionMode}
       savedUrl={savedUrl}
       vmixFetch={vmixFetch}
       vmixUser={vmixUser}
@@ -2865,6 +2945,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       inputMapping={inputMapping}
       navigate={navigate}
     />
+    </>
   );
 }
 
@@ -4107,7 +4188,7 @@ function SwitcherUI({
     { key: "scenes" as const, label: "Automação", icon: <Wand2 size={13} /> },
   ];
 
-  const connectionRouteLabel = connectionMode === "direct" ? "Direto LAN" : "Proxy Web";
+  const connectionRouteLabel = connectionMode === "remote" ? "Remoto via HMD da rádio" : connectionMode === "direct" ? "Direto LAN" : "Proxy Web";
   const activeTitle = activeInputObj?.title || "Sem programa";
   const previewTitle = previewInputObj?.title || "Sem preview";
 

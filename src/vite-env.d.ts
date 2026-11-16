@@ -16,6 +16,7 @@ interface Window {
   showOpenFilePicker?: (options?: any) => Promise<FileSystemFileHandle[]>;
   houseMixDesktop?: {
     isDesktop: true;
+    fetchVmixApi?: (base: string, path: string, username?: string, password?: string) => Promise<string>;
     platform: string;
     version: string;
     openExternal: (url: string) => Promise<boolean>;

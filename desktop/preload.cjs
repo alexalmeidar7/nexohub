@@ -2,6 +2,7 @@ const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("houseMixDesktop", Object.freeze({
   isDesktop: true,
+  fetchVmixApi: (base, apiPath, username, password) => ipcRenderer.invoke("housemix:vmix-api", base, apiPath, username, password),
   platform: process.platform,
   version: process.env.npm_package_version || "0.0.0",
   openExternal: (url) => ipcRenderer.invoke("housemix:open-external", url),

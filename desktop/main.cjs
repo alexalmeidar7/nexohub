@@ -6,6 +6,7 @@ const { app, BrowserWindow, dialog, shell, protocol, net, Notification, ipcMain 
 const { spawn } = require("node:child_process");
 const { createWindowOptions, isAllowedExternalUrl, resolveRendererRequestPath } = require("./runtime.cjs");
 const { startLocalApiHost } = require("./local-api-host.cjs");
+const { fetchVmixApi } = require("./vmix-api.cjs");
 
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 if (!hasSingleInstanceLock) app.quit();
@@ -371,6 +372,7 @@ function configureDesktopIpc() {
     return true;
   });
   ipcMain.handle("housemix:assets-init", (_event, slug) => ensureAccountLocalAssetFolders(slug));
+  ipcMain.handle("housemix:vmix-api", (_event, base, apiPath, username, password) => fetchVmixApi(base, apiPath, username, password));
   ipcMain.handle("housemix:xml-path", (_event, slug, filename) => xmlFilePath(slug, filename));
   ipcMain.handle("housemix:xml-save", async (_event, slug, filename, content) => {
     if (typeof content !== "string" || content.length > 5_000_000 || !content.trim().startsWith("<")) {

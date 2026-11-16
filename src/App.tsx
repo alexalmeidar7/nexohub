@@ -79,6 +79,7 @@ import ResetPassword from "./pages/ResetPassword";
 import InlineNotification from "@/components/InlineNotification";
 import LocalImageCache from "@/components/LocalImageCache";
 import DesktopLocalMediaSync from "@/components/DesktopLocalMediaSync";
+import DesktopVmixHost from "@/components/DesktopVmixHost";
 import { initGlobalNotifications } from "@/lib/notify";
 initGlobalNotifications();
 import NotFound from "./pages/NotFound";
@@ -306,6 +307,7 @@ const App = () => (
       
       <AuthProvider>
         <DesktopLocalMediaSync />
+        <DesktopVmixHost />
         <LocalImageCache />
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <DesktopWindowControls />
