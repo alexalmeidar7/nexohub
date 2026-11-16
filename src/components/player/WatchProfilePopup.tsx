@@ -1,21 +1,8 @@
 import { useEffect, useState, useRef } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Heart, Music, Film, MessageSquare, Clock, Star, LogOut, User, Users, X, Camera, Check } from "lucide-react";
-import { toast } from "sonner";
-import { emitProfileChanged, onProfileChanged } from "@/lib/profileSync";
-import { fetchPlayerListenerProfile, upsertPlayerListenerProfile } from "@/lib/playerListenerProfile";
-
-const AVATARS = [
-  "/avatars/usr-default.png",
-  "/avatars/usr-1.png",
-  "/avatars/usr-2.png",
-  "/avatars/usr-3.png",
-  "/avatars/usr-4.png",
-  "/avatars/usr-5.png",
-  "/avatars/usr-6.png",
-  "/avatars/usr-7.png",
-  "/avatars/usr-8.png",
-];
+import { playerSupabase } from "@/integrations/supabase/playerClient";
+import { Heart, Music, Film, MessageSquare, Clock, Star, LogOut, User, Users, X } from "lucide-react";
+import { onProfileChanged } from "@/lib/profileSync";
+import { fetchPlayerListenerProfile } from "@/lib/playerListenerProfile";
 
 interface LikedSong {
   titulo: string;
@@ -35,7 +22,6 @@ interface WatchProfilePopupProps {
   onEditProfile?: () => void;
   onSwitchProfile?: () => void;
   onLogout?: () => void;
-  onAvatarChange?: (url: string) => void;
 }
 
 function computeFanRating(likes: number, hours: number, messages: number, vodCount: number): number {
@@ -70,7 +56,6 @@ export default function WatchProfilePopup({
   onEditProfile,
   onSwitchProfile,
   onLogout,
-  onAvatarChange,
 }: WatchProfilePopupProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [likedSongs, setLikedSongs] = useState<LikedSong[]>([]);
@@ -78,9 +63,6 @@ export default function WatchProfilePopup({
   const [totalHours, setTotalHours] = useState(0);
   const [chatCount, setChatCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [currentAvatar, setCurrentAvatar] = useState<string | null>(avatarUrl);
-  const [savingAvatar, setSavingAvatar] = useState<string | null>(null);
   // Contador que força refetch quando o perfil ou avatar mudam externamente.
   const [refreshTick, setRefreshTick] = useState(0);
   // Cópias locais reativas dos campos exibidos — permitem atualização instantânea
@@ -88,7 +70,6 @@ export default function WatchProfilePopup({
   const [displayName, setDisplayName] = useState(userName);
   const [displayEmail, setDisplayEmail] = useState<string | null | undefined>(userEmail);
 
-  useEffect(() => { setCurrentAvatar(avatarUrl); }, [avatarUrl]);
   useEffect(() => { setDisplayName(userName); }, [userName]);
   useEffect(() => { setDisplayEmail(userEmail); }, [userEmail]);
 
@@ -100,35 +81,10 @@ export default function WatchProfilePopup({
     const off = onProfileChanged((detail) => {
       if (detail.nome != null) setDisplayName(detail.nome);
       if (detail.email !== undefined) setDisplayEmail(detail.email);
-      if (detail.avatar_url != null) setCurrentAvatar(detail.avatar_url);
       setRefreshTick(t => t + 1);
     });
     return off;
   }, []);
-
-  const handlePickAvatar = async (url: string) => {
-    if (!userId || savingAvatar) return;
-    setSavingAvatar(url);
-    try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ avatar_url: url })
-        .eq("user_id", userId);
-      if (radioUserId) {
-        const { error: scopedError } = await upsertPlayerListenerProfile(userId, radioUserId, { avatar_url: url });
-        if (scopedError) throw scopedError;
-      } else if (error) throw error;
-      setCurrentAvatar(url);
-      onAvatarChange?.(url);
-      emitProfileChanged({ userId, radioUserId, avatar_url: url, reason: "avatar" });
-      toast.success("Avatar atualizado");
-      setPickerOpen(false);
-    } catch (err: any) {
-      toast.error("Não foi possível atualizar o avatar");
-    } finally {
-      setSavingAvatar(null);
-    }
-  };
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -143,7 +99,7 @@ export default function WatchProfilePopup({
 
     const fetchAll = async () => {
       // Liked songs — last 10
-      let likesP: any = supabase
+      let likesP: any = playerSupabase
         .from("music_likes")
         .select("titulo, artista, capa")
         .eq("user_id", userId);
@@ -153,7 +109,7 @@ export default function WatchProfilePopup({
         .limit(10);
 
       // Last VOD watched
-      let vodP: any = supabase
+      let vodP: any = playerSupabase
         .from("watch_history")
         .select("channel_name, channel_logo_url")
         .eq("user_id", userId);
@@ -163,7 +119,7 @@ export default function WatchProfilePopup({
         .limit(1);
 
       // Total watch history entries (estimate hours — 1 entry ≈ 30 min)
-      let hoursP: any = supabase
+      let hoursP: any = playerSupabase
         .from("watch_history")
         .select("id", { count: "exact", head: true })
         .eq("user_id", userId);
@@ -173,7 +129,7 @@ export default function WatchProfilePopup({
       // player_chat_messages doesn't have user_id, uses nome — approximate by profile name
       const profileP = radioUserId
         ? fetchPlayerListenerProfile({ id: userId } as any, radioUserId)
-        : supabase.from("profiles").select("nome, avatar_url").eq("user_id", userId).maybeSingle().then(({ data }) => data || null);
+        : playerSupabase.from("profiles").select("nome, avatar_url").eq("user_id", userId).maybeSingle().then(({ data }) => data || null);
 
       const [likesRes, vodRes, hoursRes, profileRes] = await Promise.all([likesP, vodP, hoursP, profileP]);
 
@@ -194,18 +150,14 @@ export default function WatchProfilePopup({
 
       // Mantém nome/avatar exibidos sincronizados com o que está no banco,
       // caso tenham mudado em outra aba/tela.
-      if ((profileRes as any)?.nome) {
-        setDisplayName((profileRes as any).nome);
-        const chatRes = await supabase
+      const savedName = String((profileRes as any)?.nome || "").trim();
+      if (savedName) {
+        const chatRes = await playerSupabase
           .from("player_chat_messages")
           .select("id", { count: "exact", head: true })
-          .eq("nome", (profileRes as any).nome);
+          .eq("nome", savedName);
         setChatCount(chatRes.count ?? 0);
       }
-      if ((profileRes as any)?.avatar_url) {
-        setCurrentAvatar((profileRes as any).avatar_url);
-      }
-
       setLoading(false);
     };
 
@@ -219,111 +171,40 @@ export default function WatchProfilePopup({
     <div
       ref={ref}
       className={`absolute ${openToRight ? "left-0 right-auto" : "right-0"} top-[calc(100%+8px)] z-[60] animate-fade-in`}
-      style={{ width: "320px", maxHeight: "80vh" }}
+      style={{ width: "min(356px, calc(100vw - 24px))", maxHeight: "80vh" }}
     >
       <div
         className="rounded-2xl flex flex-col overflow-hidden"
         style={{
-          background: "rgba(10,10,10,0.96)",
-          border: "1px solid rgba(255,255,255,0.08)",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
+          background: "#24262b",
+          border: "1px solid rgba(255,255,255,0.12)",
+          boxShadow: "0 16px 48px rgba(0,0,0,0.42)",
+          color: "#fff",
         }}
       >
         {/* Header */}
-        <div className="px-4 pt-4 pb-3 flex items-center gap-3">
+        <div className="relative px-5 pt-5 pb-4 pr-14">
           <button
             type="button"
-            onClick={() => setPickerOpen(v => !v)}
-            className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 group"
-            style={{ border: "2px solid #ffffff" }}
-            aria-label="Alterar avatar"
-            title="Alterar avatar"
+            onClick={onClose}
+            aria-label="Fechar perfil"
+            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] text-white/75 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
           >
-            <img
-              src={currentAvatar || avatarUrl || "/avatars/usr-default.png"}
-              alt={displayName}
-              className="w-full h-full object-cover"
-            />
-            <span
-              className="absolute inset-0 flex items-center justify-center bg-black/55 opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <Camera size={14} className="text-white" />
-            </span>
+            <X size={16} />
           </button>
-          <div className="flex flex-col min-w-0 flex-1">
-            <span className="text-sm font-bold text-white truncate">{displayName}</span>
-            {displayEmail && (
-              <span className="text-[10px] text-white/50 truncate">{displayEmail}</span>
-            )}
-            {/* Fan rating — mesmo estilo da WelcomeScreen (estrelas brancas) */}
-            <div className="flex items-center gap-0.5 mt-1">
+          <div className="min-w-0">
+            <span className="block truncate text-base font-bold leading-tight text-white">{displayName}</span>
+            {displayEmail && <span className="mt-1 block truncate text-[11px] text-white/65">{displayEmail}</span>}
+            <div className="mt-2 flex items-center gap-1" aria-label={`${stars} de 5 estrelas, ${label}`}>
               {Array.from({ length: 5 }).map((_, i) => (
-                <Star
-                  key={i}
-                  size={13}
-                  fill={i < stars ? "#ffffff" : "transparent"}
-                  style={{ color: i < stars ? "#ffffff" : "rgba(255,255,255,0.25)" }}
-                />
+                <Star key={i} size={13} fill={i < stars ? "#ffffff" : "transparent"} style={{ color: i < stars ? "#ffffff" : "rgba(255,255,255,0.3)" }} />
               ))}
             </div>
           </div>
-          <button onClick={onClose} className="text-white/40 hover:text-white p-1">
-            <X size={16} />
-          </button>
         </div>
 
-        <div className="w-full h-px bg-white/8" />
-
-        {/* Avatar picker */}
-        {pickerOpen && (
-          <div className="px-4 py-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-wide text-white/60">Escolher avatar</span>
-              <button
-                onClick={() => setPickerOpen(false)}
-                className="text-white/40 hover:text-white text-[10px]"
-              >
-                cancelar
-              </button>
-            </div>
-            <div className="grid grid-cols-5 gap-2">
-              {AVATARS.map((av) => {
-                const active = (currentAvatar || avatarUrl) === av;
-                const saving = savingAvatar === av;
-                return (
-                  <button
-                    key={av}
-                    onClick={() => handlePickAvatar(av)}
-                    disabled={!!savingAvatar}
-                    className="relative aspect-square rounded-full overflow-hidden transition-transform hover:scale-105 disabled:opacity-60"
-                    style={{
-                      border: active ? "2px solid #ffffff" : "2px solid rgba(255,255,255,0.15)",
-                    }}
-                    title="Selecionar avatar"
-                  >
-                    <img src={av} alt="" className="w-full h-full object-cover" />
-                    {active && (
-                      <span className="absolute inset-0 flex items-center justify-center bg-black/40">
-                        <Check size={12} className="text-white" />
-                      </span>
-                    )}
-                    {saving && (
-                      <span className="absolute inset-0 flex items-center justify-center bg-black/60 text-[9px] text-white">
-                        ...
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {pickerOpen && <div className="w-full h-px bg-white/8" />}
-
-
         {/* Stats row */}
-        <div className="grid grid-cols-3 gap-1 px-4 py-3">
+        <div className="mx-4 grid grid-cols-3 divide-x divide-white/10 rounded-xl border border-white/10 bg-black/10 px-1 py-3">
           <div className="flex flex-col items-center gap-0.5">
             <Clock size={14} className="text-white/40" />
             <span className="text-xs font-bold text-white">{totalHours}h</span>
@@ -341,12 +222,12 @@ export default function WatchProfilePopup({
           </div>
         </div>
 
-        <div className="w-full h-px bg-white/8" />
+        <div className="mx-4 h-px bg-white/10" />
 
         {/* Last VOD */}
         {lastVod && (
           <>
-            <div className="px-4 py-2.5 flex items-center gap-2">
+            <div className="px-5 py-3 flex items-center gap-2">
               <Film size={13} className="text-white/40 shrink-0" />
               <span className="text-[10px] text-white/50">Último on demand:</span>
               {lastVod.logo && (
@@ -354,12 +235,12 @@ export default function WatchProfilePopup({
               )}
               <span className="text-[11px] font-semibold text-white truncate">{lastVod.name}</span>
             </div>
-            <div className="w-full h-px bg-white/8" />
+            <div className="mx-4 h-px bg-white/10" />
           </>
         )}
 
         {/* Liked songs */}
-        <div className="px-4 py-2.5">
+        <div className="px-5 py-4">
           <div className="flex items-center gap-1.5 mb-2">
             <Heart size={12} fill="#ffffff" style={{ color: "#ffffff" }} />
             <span className="text-[10px] font-bold uppercase tracking-wide text-white/60">Últimas Curtidas</span>
@@ -399,14 +280,14 @@ export default function WatchProfilePopup({
           )}
         </div>
 
-        <div className="w-full h-px bg-white/8" />
+        <div className="mx-4 h-px bg-white/10" />
 
         {/* Actions */}
-        <div className="px-4 py-2.5 flex flex-col gap-1">
+        <div className="px-4 py-3 flex flex-col gap-1">
           {onEditProfile && (
             <button
               onClick={() => { onClose(); onEditProfile(); }}
-              className="flex items-center gap-2 text-white/60 text-[11px] hover:text-white transition-colors rounded-lg px-2 py-1.5 hover:bg-white/5"
+              className="flex min-h-9 items-center gap-3 text-white/75 text-xs hover:text-white transition-colors rounded-lg px-3 py-2 hover:bg-white/10"
             >
               <User size={13} /> Editar perfil
             </button>
@@ -414,7 +295,7 @@ export default function WatchProfilePopup({
           {onSwitchProfile && (
             <button
               onClick={() => { onClose(); onSwitchProfile(); }}
-              className="flex items-center gap-2 text-white/60 text-[11px] hover:text-white transition-colors rounded-lg px-2 py-1.5 hover:bg-white/5"
+              className="flex min-h-9 items-center gap-3 text-white/75 text-xs hover:text-white transition-colors rounded-lg px-3 py-2 hover:bg-white/10"
             >
               <Users size={13} /> Trocar de perfil
             </button>
@@ -422,7 +303,7 @@ export default function WatchProfilePopup({
           {onLogout && (
             <button
               onClick={() => { onClose(); onLogout(); }}
-              className="flex items-center gap-2 text-white/40 text-[11px] hover:text-red-400 transition-colors rounded-lg px-2 py-1.5 hover:bg-white/5"
+              className="flex min-h-9 items-center gap-3 text-white/65 text-xs hover:text-white transition-colors rounded-lg px-3 py-2 hover:bg-white/10"
             >
               <LogOut size={13} /> Sair
             </button>

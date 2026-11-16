@@ -1,8 +1,8 @@
-import { useEffect, useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useEffect, useLayoutEffect, useState, useCallback } from "react";
+import { playerSupabase } from "@/integrations/supabase/playerClient";
+import { usePlayerAuth } from "@/hooks/usePlayerAuth";
 import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
-import { defaultPlayerColors, type PlayerColors, type ScreenBgConfig, buildBgStyle, defaultScreenBg } from "@/components/PlayerLayoutCustomizer";
+import { defaultPlayerColors, resolvePlayerColors, type PlayerColors, type ScreenBgConfig, buildBgStyle, defaultScreenBg } from "@/components/PlayerLayoutCustomizer";
 
 type ScreenTab = "loading" | "login" | "home" | "live" | "catalog";
 type ScreenBgConfigs = Record<ScreenTab, ScreenBgConfig>;
@@ -43,10 +43,11 @@ function hexToHsl(hex: string): string | null {
  * Loads saved player colors + bg configs from user_settings.dashboard_items
  * and applies them as CSS custom properties on :root so all player screens pick them up.
  */
-export function usePlayerColors(externalUserId?: string | null) {
-  const { user } = useAuth();
+export function usePlayerColors(externalUserId?: string | null, publicSlug?: string | null) {
+  const { user } = usePlayerAuth();
   const [colors, setColors] = useState<PlayerColors>(defaultPlayerColors);
   const [bgConfigs, setBgConfigs] = useState<ScreenBgConfigs>(defaultBgConfigs);
+  const [colorsReady, setColorsReady] = useState(false);
 
   // If an explicit externalUserId is provided (public/slug mode), it takes priority
   // over the logged-in user to prevent cross-user color contamination.
@@ -55,9 +56,29 @@ export function usePlayerColors(externalUserId?: string | null) {
   const effectiveUserId = rawTargetId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawTargetId) ? rawTargetId : null;
 
   const fetchColors = useCallback(async () => {
+    if (publicSlug) {
+      const { data, error } = await playerSupabase.functions.invoke("public-player-data", {
+        body: { slug: publicSlug },
+      });
+      if (!error && data && !data.error) {
+        let receivedPlayerConfig = false;
+        if (data.playerColors && typeof data.playerColors === "object") {
+          setColors(resolvePlayerColors(data.playerColors));
+          receivedPlayerConfig = true;
+        }
+        if (data.playerBgConfigs && typeof data.playerBgConfigs === "object") {
+          setBgConfigs({ ...defaultBgConfigs, ...data.playerBgConfigs });
+          receivedPlayerConfig = true;
+        }
+        // Older deployed versions of public-player-data omit these fields.
+        // In that case, keep going so an authenticated/local fallback can load them.
+        if (receivedPlayerConfig || !effectiveUserId) return;
+      }
+    }
+
     if (!effectiveUserId) return;
 
-    const { data } = await supabase
+    const { data } = await playerSupabase
       .from("user_settings")
       .select("dashboard_items")
       .eq("user_id", effectiveUserId)
@@ -66,26 +87,34 @@ export function usePlayerColors(externalUserId?: string | null) {
     if (data?.dashboard_items && typeof data.dashboard_items === "object") {
       const di = data.dashboard_items as any;
       if (di.player_colors) {
-        setColors({ ...defaultPlayerColors, ...di.player_colors });
+        setColors(resolvePlayerColors(di.player_colors));
       }
       if (di.player_bg_configs) {
         setBgConfigs({ ...defaultBgConfigs, ...di.player_bg_configs });
       }
     }
-  }, [effectiveUserId]);
+  }, [effectiveUserId, publicSlug]);
 
   useEffect(() => {
-    fetchColors();
+    let active = true;
+    setColorsReady(false);
+    fetchColors().finally(() => {
+      if (active) setColorsReady(true);
+    });
+    return () => { active = false; };
   }, [fetchColors]);
 
   useEffect(() => {
-    const handler = () => fetchColors();
+    const handler = () => {
+      setColorsReady(false);
+      fetchColors().finally(() => setColorsReady(true));
+    };
     window.addEventListener("player-colors-updated", handler);
     return () => window.removeEventListener("player-colors-updated", handler);
   }, [fetchColors]);
 
   // Apply CSS custom properties
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = document.documentElement;
     const inheritedWatchAccent =
       colors.liveAccent && colors.liveAccent !== defaultPlayerColors.liveAccent
@@ -110,8 +139,11 @@ export function usePlayerColors(externalUserId?: string | null) {
         : inheritedWatchAccent;
 
     // Map player colors to CSS variables
-    const accentHsl = hexToHsl(colors.homeAccent);
-    const accentHoverHsl = hexToHsl(colors.homeAccent);
+    // Do not paint the default station red while the saved brand color is
+    // still loading. This avoids a red flash behind the user's chosen color.
+    const dominantColor = colorsReady ? (colors.dominantColor || colors.homeAccent) : "#111214";
+    const accentHsl = hexToHsl(dominantColor);
+    const accentHoverHsl = hexToHsl(dominantColor);
     const bgHsl = hexToHsl(colors.homeBg);
     const fgHsl = hexToHsl(colors.homeText);
 
@@ -121,6 +153,9 @@ export function usePlayerColors(externalUserId?: string | null) {
       root.style.setProperty("--player-accent", accentHsl);
       root.style.setProperty("--player-accent-soft", accentHsl);
     }
+    // Preserve the exact saved brand color for screens that need a CSS color
+    // value (including /watch); never fall back to a hard-coded station red.
+    root.style.setProperty("--player-dominant-color", dominantColor);
     if (accentHoverHsl) root.style.setProperty("--player-accent-hover", accentHoverHsl);
 
     // Muted colors derived from foreground
@@ -136,30 +171,30 @@ export function usePlayerColors(externalUserId?: string | null) {
 
     // Loading screen specific
     root.style.setProperty("--player-loading-bg", colors.loadingBg);
-    root.style.setProperty("--player-loading-spinner", colors.loadingSpinner);
+    root.style.setProperty("--player-loading-spinner", colorsReady ? colors.loadingSpinner : dominantColor);
     root.style.setProperty("--player-loading-text", colors.loadingText);
 
     // Login screen specific
     root.style.setProperty("--player-login-bg", colors.loginBg);
     root.style.setProperty("--player-login-card-bg", colors.loginCardBg);
-    root.style.setProperty("--player-login-button-bg", colors.loginButtonBg);
+    root.style.setProperty("--player-login-button-bg", colorsReady ? colors.loginButtonBg : dominantColor);
     root.style.setProperty("--player-login-button-text", colors.loginButtonText);
     root.style.setProperty("--player-login-text", colors.loginText);
     root.style.setProperty("--player-login-subtext", colors.loginSubtext);
 
     // Live screen specific
-    root.style.setProperty("--player-live-accent", colors.liveAccent);
-    root.style.setProperty("--player-live-badge-bg", colors.liveBadgeBg);
+    root.style.setProperty("--player-live-accent", colorsReady ? colors.liveAccent : dominantColor);
+    root.style.setProperty("--player-live-badge-bg", colorsReady ? colors.liveBadgeBg : dominantColor);
     root.style.setProperty("--player-live-badge-text", colors.liveBadgeText);
     root.style.setProperty("--player-live-control-bg", colors.liveControlBg);
     root.style.setProperty("--player-live-control-text", colors.liveControlText);
 
     // Audio channel settings
     root.style.setProperty("--player-live-audio-bg-mode", colors.liveAudioBgMode || "cover");
-    root.style.setProperty("--player-spectrum-color", colors.spectrumColor || "#dc2626");
+    root.style.setProperty("--player-spectrum-color", colorsReady ? (colors.spectrumColor || dominantColor) : dominantColor);
 
     // Audio gradient settings
-    root.style.setProperty("--player-audio-gradient-color1", String(colors.liveAudioGradientColor1 || "#dc2626"));
+    root.style.setProperty("--player-audio-gradient-color1", String(colorsReady ? (colors.liveAudioGradientColor1 || dominantColor) : dominantColor));
     root.style.setProperty("--player-audio-gradient-color2", String(colors.liveAudioGradientColor2 || "#000000"));
     root.style.setProperty("--player-audio-gradient-type", String(colors.liveAudioGradientType || "radial"));
     root.style.setProperty("--player-audio-gradient-position", String(colors.liveAudioGradientPosition || "bottom"));
@@ -169,18 +204,18 @@ export function usePlayerColors(externalUserId?: string | null) {
     // Watch controls
     root.style.setProperty("--player-watch-topbar-bg", colors.watchTopBarBg || "#000000cc");
     root.style.setProperty("--player-watch-topbar-text", colors.watchTopBarText || "#ffffff");
-    root.style.setProperty("--player-watch-topbar-accent", resolvedWatchTopBarAccent);
+    root.style.setProperty("--player-watch-topbar-accent", colorsReady ? resolvedWatchTopBarAccent : dominantColor);
     root.style.setProperty("--player-watch-bottombar-bg", colors.watchBottomBarBg || "#000000cc");
     root.style.setProperty("--player-watch-bottombar-text", colors.watchBottomBarText || "#ffffff");
-    root.style.setProperty("--player-watch-scrubber", resolvedWatchScrubber);
+    root.style.setProperty("--player-watch-scrubber", colorsReady ? resolvedWatchScrubber : dominantColor);
     root.style.setProperty("--player-watch-music-bg", colors.watchMusicBg || "#000000ee");
     root.style.setProperty("--player-watch-music-text", colors.watchMusicText || "#ffffff");
     root.style.setProperty("--player-watch-music-title-color", colors.watchMusicTitleColor || colors.watchMusicText || "#ffffff");
     root.style.setProperty("--player-watch-music-artist-color", colors.watchMusicArtistColor || "color-mix(in srgb, " + (colors.watchMusicText || "#ffffff") + " 85%, transparent)");
-    root.style.setProperty("--player-watch-music-accent", resolvedWatchMusicAccent);
+    root.style.setProperty("--player-watch-music-accent", colorsReady ? resolvedWatchMusicAccent : dominantColor);
 
     // Glow gradient from accent + bg
-    const glowGradient = `radial-gradient(ellipse at 50% 100%, ${colors.homeAccent}55 0%, ${colors.homeBg} 50%, ${colors.homeBg} 100%)`;
+    const glowGradient = `radial-gradient(ellipse at 50% 100%, ${dominantColor}55 0%, ${colors.homeBg} 50%, ${colors.homeBg} 100%)`;
     root.style.setProperty("--player-glow", glowGradient);
     root.style.setProperty("--player-glow-corner", glowGradient);
 
@@ -189,7 +224,7 @@ export function usePlayerColors(externalUserId?: string | null) {
     if (loadingBgStyle.background) root.style.setProperty("--player-loading-background", loadingBgStyle.background as string);
     else if (loadingBgStyle.backgroundColor) root.style.setProperty("--player-loading-background", loadingBgStyle.backgroundColor as string);
 
-  }, [colors, bgConfigs]);
+  }, [colors, bgConfigs, colorsReady]);
 
   return { colors, bgConfigs };
 }

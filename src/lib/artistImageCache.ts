@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
  *  6) Supabase Edge Function `fetch-artist-image` (como tentativa paralela com timeout).
  */
 
-const LS_PREFIX = "nexo:artistImg:v2:";
+const LS_PREFIX = "nexo:artistImg:v3:";
 const TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 dias para imagens encontradas
 const NEG_TTL_MS = 5 * 60 * 1000; // 5 minutos para falha (permite retentativas rápidas)
 const LS_MAX = 150;
@@ -29,6 +29,15 @@ const inflight = new Map<string, Promise<string | null>>();
 const candidatePools = new Map<string, { list: string[]; ts: number }>();
 
 const norm = (a: string, skip = 0) => `${a.trim().toLowerCase()}${skip ? `::${skip}` : ""}`;
+
+/** Promote known Deezer/iTunes thumbnail URL variants before using them as full-screen art. */
+export function upgradeArtistImageResolution(url?: string | null): string | null {
+  if (!url || typeof url !== "string") return null;
+  return url
+    .replace(/\/(?:56|250|500|1000)x(?:56|250|500|1000)(?=-)/gi, "/1000x1000")
+    .replace(/\/(?:56|250|500|1000)x(?:56|250|500|1000)(?=\.)/gi, "/1000x1000")
+    .replace(/\/100x100(bb)?\.jpg(?=\?|$)/i, "/600x600$1.jpg");
+}
 
 function isCleanImageUrl(url?: string | null): url is string {
   if (!url || typeof url !== "string") return false;
@@ -120,7 +129,7 @@ async function fetchDeezerCandidates(artist: string): Promise<string[]> {
         const list = data?.data || [];
         if (Array.isArray(list)) {
           for (const item of list) {
-            const img = item.picture_xl || item.picture_big || item.picture_medium;
+            const img = upgradeArtistImageResolution(item.picture_xl || item.picture_big || item.picture_medium);
             if (isCleanImageUrl(img) && !results.includes(img)) {
               results.push(img);
             }
@@ -142,7 +151,7 @@ async function fetchDeezerCandidates(artist: string): Promise<string[]> {
     const data = await res.json();
     const results: string[] = [];
     for (const item of (data?.data || [])) {
-      const img = item.picture_xl || item.picture_big || item.picture_medium;
+      const img = upgradeArtistImageResolution(item.picture_xl || item.picture_big || item.picture_medium);
       if (isCleanImageUrl(img) && !results.includes(img)) {
         results.push(img);
       }
@@ -247,7 +256,8 @@ export async function fetchArtistImageCandidates(artist: string): Promise<string
   const pool: string[] = [];
 
   // 1. Imagem oficial do Deezer ou da Edge Function
-  if (isCleanImageUrl(edgeUrl) && !pool.includes(edgeUrl)) pool.push(edgeUrl);
+  const highResEdgeUrl = upgradeArtistImageResolution(edgeUrl);
+  if (isCleanImageUrl(highResEdgeUrl) && !pool.includes(highResEdgeUrl)) pool.push(highResEdgeUrl);
   if (deezerImgs[0] && !pool.includes(deezerImgs[0])) pool.push(deezerImgs[0]);
 
   // 2. Foto de retrato verificada da Wikipedia

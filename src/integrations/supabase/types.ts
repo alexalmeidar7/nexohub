@@ -1511,6 +1511,7 @@ export type Database = {
       }
       player_chat_messages: {
         Row: {
+          avatar_url: string | null
           channel_id: string
           cidade: string
           created_at: string
@@ -1519,6 +1520,7 @@ export type Database = {
           nome: string
         }
         Insert: {
+          avatar_url?: string | null
           channel_id: string
           cidade: string
           created_at?: string
@@ -1527,6 +1529,7 @@ export type Database = {
           nome: string
         }
         Update: {
+          avatar_url?: string | null
           channel_id?: string
           cidade?: string
           created_at?: string

@@ -18,6 +18,8 @@ interface Window {
     isDesktop: true;
     platform: string;
     version: string;
+    openExternal: (url: string) => Promise<boolean>;
+    onPlayerOAuthCallback: (callback: (url: string) => void) => () => void;
     getAppVersion: () => Promise<string>;
     getStartWithWindows: () => Promise<{ enabled: boolean; supported: boolean }>;
     setStartWithWindows: (enabled: boolean) => Promise<{ enabled: boolean; supported: boolean }>;

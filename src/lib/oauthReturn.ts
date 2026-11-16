@@ -32,6 +32,11 @@ export function consumeOAuthReturnPath() {
   }
 }
 
+export function clearOAuthReturnPath() {
+  if (typeof window === "undefined") return;
+  try { window.localStorage.removeItem(OAUTH_RETURN_KEY); } catch { /* ignore */ }
+}
+
 export function getManagedOAuthRedirectUri() {
   if (typeof window === "undefined") return undefined;
   // Use apenas o origin: o fluxo managed (web_message/popup) postará os tokens

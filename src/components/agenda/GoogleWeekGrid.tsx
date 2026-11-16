@@ -106,11 +106,23 @@ function GoogleWeekGridComponent<T>({
     [weekDays, toGridEvent],
   );
 
+  const firstEventStartMin = useMemo(() => {
+    const focusDate = selectedDate ?? now;
+    const focusedDay = laidOut.find((day) => isSameDay(day.date, focusDate));
+    const firstEvent = focusedDay?.items.reduce<GridEvent | null>(
+      (earliest, item) => !earliest || item.ev.startMin < earliest.startMin ? item.ev : earliest,
+      null,
+    );
+    return firstEvent?.startMin ?? null;
+  }, [laidOut, selectedDate, now]);
+
   useEffect(() => {
-    if (didScroll.current || !scrollRef.current) return;
+    if (didScroll.current || !scrollRef.current || firstEventStartMin === null) return;
     didScroll.current = true;
-    scrollRef.current.scrollTop = Math.max(0, (8 - START_HOUR) * HOUR_H - 16);
-  }, []);
+    const eventTop = ((firstEventStartMin - START_HOUR * 60) / 60) * HOUR_H;
+    // Deixa o primeiro evento inteiro visível logo abaixo do cabeçalho fixo.
+    scrollRef.current.scrollTop = Math.max(0, eventTop - 12);
+  }, [firstEventStartMin]);
 
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const nowTop = ((nowMin - START_HOUR * 60) / 60) * HOUR_H;

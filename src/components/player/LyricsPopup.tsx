@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Music2, ArrowLeft } from "lucide-react";
+import { Music2, ArrowLeft, Loader2 } from "lucide-react";
 import { PlayerBackButton } from "./PlayerBackButton";
 
-import { supabase } from "@/integrations/supabase/client";
+import { playerSupabase } from "@/integrations/supabase/playerClient";
 
 interface Props {
   open: boolean;
   artist?: string | null;
   title?: string | null;
   duration?: number;
+  chatOpen?: boolean;
   onClose?: () => void;
 }
 
@@ -20,7 +21,7 @@ function stripLrcTags(text: string): string[] {
     .filter((l, i, arr) => !(l === "" && arr[i - 1] === ""));
 }
 
-export default function LyricsPopup({ open, artist, title, duration, onClose }: Props) {
+export default function LyricsPopup({ open, artist, title, duration, chatOpen = false, onClose }: Props) {
   const [lines, setLines] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -40,7 +41,7 @@ export default function LyricsPopup({ open, artist, title, duration, onClose }: 
     setLines([]); setNotFound(false); setLoading(true);
     let cancelled = false;
 
-    supabase.functions
+    playerSupabase.functions
       .invoke("fetch-lyrics", {
         body: { artist, title, duration: duration ? Math.round(duration) : undefined },
       })
@@ -85,18 +86,11 @@ export default function LyricsPopup({ open, artist, title, duration, onClose }: 
       onClick={onClose}
     >
       <div
-        aria-hidden="true"
-        className="absolute inset-y-0 right-0 w-[min(760px,65vw)] z-0 pointer-events-none transition-opacity duration-700 ease-in-out"
-        style={{
-          background: "linear-gradient(to left, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.38) 40%, rgba(0,0,0,0) 100%)",
-          opacity: 1,
-        }}
-      />
-
-      <div
         onClick={(e) => e.stopPropagation()}
-        className="relative z-10 w-[min(360px,calc(100vw-48px))] pointer-events-auto animate-in fade-in slide-in-from-bottom-8 duration-300"
+        className="relative z-10 pointer-events-auto animate-in fade-in slide-in-from-bottom-8 duration-300"
         style={{
+          width: chatOpen ? "min(360px, calc((100vw - 104px) / 2))" : "min(360px, calc(100vw - 48px))",
+          marginRight: chatOpen ? "calc(40px + min(360px, calc((100vw - 104px) / 2)))" : "20px",
           padding: "22px 24px 18px",
           borderRadius: 32,
           background: "rgba(35,35,38,0.85)",
@@ -105,7 +99,6 @@ export default function LyricsPopup({ open, artist, title, duration, onClose }: 
           border: "1px solid rgba(255,255,255,0.06)",
           boxShadow: "0 40px 100px -20px rgba(0,0,0,0.95)",
           marginBottom: "140px",
-          marginRight: "20px",
         }}
       >
         <div className="flex items-start justify-between gap-3 mb-3">
@@ -135,7 +128,10 @@ export default function LyricsPopup({ open, artist, title, duration, onClose }: 
           tabIndex={0}
         >
           {loading && (
-            <div className="py-10 text-center text-[12px] text-white/60 italic">buscando letra…</div>
+            <div className="py-10 flex flex-col items-center justify-center gap-2 text-[12px] text-white/60 italic">
+              <Loader2 size={22} className="animate-spin" style={{ color: "#737982" }} aria-label="Carregando letra" />
+              <span>buscando letra…</span>
+            </div>
           )}
           {!loading && notFound && (
             <div className="py-10 text-center text-[13px] text-white/75 italic leading-snug">

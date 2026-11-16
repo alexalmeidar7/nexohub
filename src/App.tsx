@@ -36,6 +36,7 @@ function OAuthReturnHandler() {
   const location = useLocation();
 
   useEffect(() => {
+    if (location.pathname === "/auth/popup-callback") return;
     const target = consumeOAuthReturnPath();
     if (!target) return;
     if (target === `${location.pathname}${location.search}${location.hash}`) return;
@@ -97,6 +98,7 @@ const PlayerTvWelcome = lazyRetry(() => import("./pages/player/PlayerTvWelcome")
 const PairPage = lazyRetry(() => import("./pages/PairPage"));
 const EntregaPremio = lazyRetry(() => import("./pages/EntregaPremio"));
 const GoogleCheckPage = lazyRetry(() => import("./pages/GoogleCheckPage"));
+const OAuthPopupCallback = lazyRetry(() => import("./pages/OAuthPopupCallback"));
 const TvPairingEventsPage = lazyRetry(() => import("./pages/TvPairingEventsPage"));
 const PlayerApp = lazyRetry(() => import("./pages/PlayerApp"));
 const PromocoesKiosk = lazyRetry(() => import("./pages/Promocoes"));
@@ -314,6 +316,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/auth/callback" element={<OAuthCallbackRedirect />} />
+            <Route path="/auth/popup-callback" element={<OAuthPopupCallback />} />
             <Route path="/~oauth/callback" element={<OAuthCallbackRedirect />} />
 
             {/* Main routes */}

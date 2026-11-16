@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Mic, Minus, Plus, RotateCcw, X, Zap } from "lucide-react";
+import { Loader2, Mic, Minus, Plus, RotateCcw, X, Zap } from "lucide-react";
 
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { playerSupabase } from "@/integrations/supabase/playerClient";
+import { usePlayerAuth } from "@/hooks/usePlayerAuth";
 import { musicStartKey } from "@/lib/musicStorageKeys";
 
 interface LrcLine { time: number; text: string; }
@@ -52,7 +52,7 @@ function pushOffsetHistory(value: number) {
 
 export default function InlineKaraoke({ enabled, artist, title, duration, audioElement, onClose }: Props) {
 
-  const { user } = useAuth();
+  const { user } = usePlayerAuth();
   const MUSIC_START_KEY = musicStartKey(user?.id) || "masterview_music_start::__none__";
 
   const [lines, setLines] = useState<LrcLine[]>([]);
@@ -145,7 +145,7 @@ export default function InlineKaraoke({ enabled, artist, title, duration, audioE
     setLines([]); setIdx(-1); setNotFound(false); setLoading(true);
     let cancelled = false;
 
-    supabase.functions.invoke("fetch-lyrics", {
+    playerSupabase.functions.invoke("fetch-lyrics", {
       body: { artist, title, duration: duration ? Math.round(duration) : undefined },
     }).then(({ data, error }) => {
       if (cancelled || lastKeyRef.current !== key) return;
@@ -293,8 +293,9 @@ export default function InlineKaraoke({ enabled, artist, title, duration, audioE
 
 
       {loading && (
-        <div className="text-center text-[12px] text-white/60 italic" style={{ height: CONTAINER_H, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          buscando letra…
+        <div className="text-center text-[12px] text-white/60 italic" style={{ height: CONTAINER_H, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
+          <Loader2 size={20} className="animate-spin" style={{ color: "#737982" }} aria-label="Carregando letra" />
+          <span>buscando letra…</span>
         </div>
       )}
 

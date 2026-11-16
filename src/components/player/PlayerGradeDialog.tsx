@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { X, Clock, Radio, MapPin, Calendar, Tag, Shield, Sparkles, Loader2, ArrowLeft } from "lucide-react";
 import { PlayerBackButton } from "./PlayerBackButton";
 import { format, addDays, startOfWeek } from "date-fns";
-import { supabase } from "@/integrations/supabase/client";
+import { playerSupabase } from "@/integrations/supabase/playerClient";
 
 interface Programa {
   id: string;

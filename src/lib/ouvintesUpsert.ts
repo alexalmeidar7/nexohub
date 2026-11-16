@@ -13,7 +13,7 @@
  *  - "chatbot"     — legado (mantido)
  */
 
-import { supabase } from "@/integrations/supabase/client";
+import { playerSupabase } from "@/integrations/supabase/playerClient";
 
 export type OuvinteOrigem = "manual" | "player_site" | "app" | "chatbot";
 
@@ -95,7 +95,7 @@ export async function getPontuacaoRulesCadastro(radioUserId: string | null | und
   // 2) user_settings.dashboard_items (compartilhado — funciona no player/app)
   if (radioUserId) {
     try {
-      const { data } = await supabase
+      const { data } = await playerSupabase
         .from("user_settings")
         .select("dashboard_items")
         .eq("user_id", radioUserId)
@@ -181,7 +181,7 @@ export async function upsertOuvinteRecord(input: UpsertOuvinteInput): Promise<{ 
     if (telefone) identifierFilters.push({ col: "telefone", val: telefone });
 
     for (const f of identifierFilters) {
-      const { data } = await (supabase as any)
+      const { data } = await (playerSupabase as any)
         .from("ouvintes")
         .select("*")
         .eq("user_id", radioUserId)
@@ -285,13 +285,13 @@ export async function upsertOuvinteRecord(input: UpsertOuvinteInput): Promise<{ 
     } catch { /* ignore local save errors */ }
 
     if (existing) {
-      const { error } = await (supabase as any).from("ouvintes").update(payload).eq("id", existing.id);
+      const { error } = await (playerSupabase as any).from("ouvintes").update(payload).eq("id", existing.id);
       if (error) {
         console.warn("Supabase ouvinte update warning:", error.message);
       }
       return { ok: true, id: existing.id as string };
     } else {
-      const { data, error } = await (supabase as any).from("ouvintes").insert(payload).select("id").maybeSingle();
+      const { data, error } = await (playerSupabase as any).from("ouvintes").insert(payload).select("id").maybeSingle();
       if (error) {
         console.warn("Supabase ouvinte insert warning (saved locally):", error.message);
       }
@@ -314,7 +314,7 @@ export async function isOuvinteBanido(
   const id = (identifier || "").trim();
   if (!radioUserId || !id) return false;
   try {
-    const { data } = await (supabase as any).rpc("is_ouvinte_banido", {
+    const { data } = await (playerSupabase as any).rpc("is_ouvinte_banido", {
       _radio_user_id: radioUserId,
       _identifier: id,
     });

@@ -7,6 +7,9 @@ const { spawn } = require("node:child_process");
 const { createWindowOptions, isAllowedExternalUrl, resolveRendererRequestPath } = require("./runtime.cjs");
 const { startLocalApiHost } = require("./local-api-host.cjs");
 
+const hasSingleInstanceLock = app.requestSingleInstanceLock();
+if (!hasSingleInstanceLock) app.quit();
+
 // A standard custom scheme gives BrowserRouter a real "/" origin in Electron.
 // Register privileges before app readiness, as required by Electron.
 protocol.registerSchemesAsPrivileged([{
@@ -25,7 +28,35 @@ let updateCheckInFlight = false;
 let updateDownloaded = false;
 let updateCheckTimer = null;
 let latestUpdateStatus = { status: "idle" };
+let pendingPlayerOAuthCallback = null;
 const auxiliaryWindows = new WeakSet();
+
+function forwardPlayerOAuthCallback(rawUrl) {
+  try {
+    const callbackUrl = new URL(rawUrl);
+    if (callbackUrl.protocol !== "housemix:" || callbackUrl.hostname !== "desktop" || callbackUrl.pathname !== "/oauth-callback" || !callbackUrl.searchParams.has("code")) return;
+    pendingPlayerOAuthCallback = callbackUrl.toString();
+    if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents.isLoading() === false) {
+      mainWindow.webContents.send("housemix:player-oauth-callback", pendingPlayerOAuthCallback);
+      pendingPlayerOAuthCallback = null;
+    }
+  } catch { /* Ignore malformed external protocol URLs. */ }
+}
+
+if (hasSingleInstanceLock) {
+  app.on("second-instance", (_event, commandLine) => {
+    const callbackUrl = commandLine.find((arg) => arg.startsWith("housemix://desktop/oauth-callback"));
+    if (callbackUrl) forwardPlayerOAuthCallback(callbackUrl);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
+  app.on("open-url", (event, callbackUrl) => {
+    event.preventDefault();
+    forwardPlayerOAuthCallback(callbackUrl);
+  });
+}
 
 function getLocalAssetsRoot() {
   const programFiles = process.env.ProgramFiles || "C:\\Program Files";
@@ -293,6 +324,14 @@ async function initializeLocalAssetFolders() {
 }
 
 function configureDesktopIpc() {
+  ipcMain.handle("housemix:open-external", async (_event, rawUrl) => {
+    try {
+      const url = new URL(rawUrl);
+      if (url.protocol !== "https:" || !isAllowedExternalUrl(url.toString())) return false;
+      await shell.openExternal(url.toString());
+      return true;
+    } catch { return false; }
+  });
   ipcMain.handle("housemix:app-version", () => app.getVersion());
   ipcMain.handle("housemix:get-start-with-windows", () => {
     const preferences = readDesktopPreferences();
@@ -491,10 +530,23 @@ async function registerRendererProtocol() {
   });
 }
 
+function registerDesktopOAuthProtocol() {
+  if (process.defaultApp && process.argv[1]) {
+    app.setAsDefaultProtocolClient("housemix", process.execPath, [path.resolve(process.argv[1])]);
+  } else {
+    app.setAsDefaultProtocolClient("housemix");
+  }
+}
+
 function createMainWindow() {
   const windowOptions = createWindowOptions(path.join(__dirname, "preload.cjs"));
   windowOptions.icon = path.join(__dirname, "assets", "house-mix.ico");
   mainWindow = new BrowserWindow(windowOptions);
+  mainWindow.webContents.on("did-finish-load", () => {
+    if (!pendingPlayerOAuthCallback) return;
+    mainWindow.webContents.send("housemix:player-oauth-callback", pendingPlayerOAuthCallback);
+    pendingPlayerOAuthCallback = null;
+  });
   mainWindow.once("ready-to-show", () => { mainWindow.maximize(); mainWindow.show(); });
   mainWindow.on("closed", () => { mainWindow = null; });
 
@@ -564,10 +616,13 @@ app.whenReady().then(async () => {
     configureAutoUpdater();
     configureDesktopIpc();
     configureDesktopStartup();
+    registerDesktopOAuthProtocol();
     await registerRendererProtocol();
     await initializeLocalAssetFolders();
     await startLocalRuntime();
     createMainWindow();
+    const startupOAuthCallback = process.argv.find((arg) => arg.startsWith("housemix://desktop/oauth-callback"));
+    if (startupOAuthCallback) forwardPlayerOAuthCallback(startupOAuthCallback);
     scheduleDesktopUpdates();
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) createMainWindow();

@@ -12,7 +12,6 @@ export default function SplashScreen({
   onFinish,
   ready = true,
   maxDurationMs = 3000,
-  progress = 0,
 }: SplashScreenProps) {
   const [fadeOut, setFadeOut] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -49,18 +48,15 @@ export default function SplashScreen({
         pointerEvents: fadeOut ? "none" : "auto",
       }}
     >
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="text-center text-white">
-          <div className="text-4xl font-bold tracking-tight">nexo</div>
-          <div className="text-2xl font-extrabold tracking-[0.22em]">PLAYER</div>
-        </div>
-      </div>
-      <div className="absolute inset-x-0 bottom-0 flex items-end justify-center pb-[7vh]">
-        <div className="flex flex-col items-center gap-3">
-          <ElegantLoader size={42} progress={progress} />
-          <p className="text-white/45 text-[10px] uppercase tracking-widest font-tv-medium">
-            {progress < 100 ? `sincronizando ${Math.round(progress)}%` : "pronto"}
-          </p>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <img
+          src="/images/player-ott-seal-white.png"
+          alt="Nexo OTT Player"
+          className="w-[clamp(108px,12vw,154px)] h-auto object-contain opacity-90"
+          draggable={false}
+        />
+        <div className="mt-10 flex items-center justify-center">
+          <ElegantLoader size={42} />
         </div>
       </div>
     </div>

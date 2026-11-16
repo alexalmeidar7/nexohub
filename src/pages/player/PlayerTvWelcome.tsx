@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
-import { supabase } from "@/integrations/supabase/client";
+import { playerSupabase } from "@/integrations/supabase/playerClient";
 
 import { AlertTriangle, CheckCircle2, Loader2, RefreshCw } from "lucide-react";
 import { extractDominantPair } from "@/lib/dominantColors";
 import { getStationLogoFallback } from "@/lib/playerBranding";
+import { upgradeArtistImageResolution } from "@/lib/artistImageCache";
+import PlayerBrandCorner from "@/components/player/PlayerBrandCorner";
 
 const CANONICAL_PAIR_ORIGIN = "https://nexobrasil.net";
 
@@ -39,6 +41,7 @@ export default function PlayerTvWelcome() {
   const [error, setError] = useState<string | null>(null);
   const [radioName, setRadioName] = useState<string>("");
   const [radioLogo, setRadioLogo] = useState<string>("");
+  const [radioUserId, setRadioUserId] = useState<string | null>(null);
   const [artistImg, setArtistImg] = useState<string | null>(null);
   const [musicCover, setMusicCover] = useState<string | null>(null);
   const [musicTitle, setMusicTitle] = useState<string>("");
@@ -115,7 +118,7 @@ export default function PlayerTvWelcome() {
 
     const load = async () => {
       try {
-        const { data } = await supabase.functions.invoke("public-player-data", {
+        const { data } = await playerSupabase.functions.invoke("public-player-data", {
           body: { slug: userSlug },
         });
         if (cancelled) return;
@@ -123,11 +126,12 @@ export default function PlayerTvWelcome() {
         const emp = d.empresa || {};
         const nome = emp.nome_empresa || emp.nome || userSlug;
         const logo = emp.logo_url || emp.logo || (Array.isArray(d.channels) ? d.channels.find((c: any) => c?.active && c?.logo_url)?.logo_url : "") || getStationLogoFallback(userSlug) || "";
+        setRadioUserId(d.userId || null);
         setRadioName(String(nome).toUpperCase());
         setRadioLogo(String(logo || ""));
 
         // Apenas a imagem do artista via Deezer — NÃO usar capa do CD como fallback.
-        const deezer: string | null = d.musicDeezerArtistImg || null;
+        const deezer: string | null = upgradeArtistImageResolution(d.musicDeezerArtistImg) || d.musicDeezerArtistImg || null;
         setArtistImg(deezer);
         setMusicCover(String(d.musicData?.capa || deezer || "").trim() || null);
         setMusicTitle(String(d.musicData?.titulo || "").trim());
@@ -222,7 +226,7 @@ export default function PlayerTvWelcome() {
     setCode(null);
     setDisplayCode(null);
     setExpiresAt(null);
-    const { data, error: fnErr } = await supabase.functions.invoke("tv-pair-create", {
+    const { data, error: fnErr } = await playerSupabase.functions.invoke("tv-pair-create", {
       body: { userSlug, tvSessionId },
     });
     if (fnErr || !data?.ok) {
@@ -246,7 +250,7 @@ export default function PlayerTvWelcome() {
   // Escuta Realtime aguardando o claim.
   useEffect(() => {
     if (!code) return;
-    const channel = supabase
+    const channel = playerSupabase
       .channel(`tv-pair-${code}`)
       .on(
         "postgres_changes",
@@ -258,7 +262,7 @@ export default function PlayerTvWelcome() {
         }
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => { playerSupabase.removeChannel(channel); };
   }, [code, handleClaimedRow]);
 
   // Fallback para TVs/navegadores que não recebem Realtime: consulta o status
@@ -268,7 +272,7 @@ export default function PlayerTvWelcome() {
     let cancelled = false;
     const poll = async () => {
       if (claimedRef.current) return;
-      const { data } = await supabase.functions.invoke("tv-pair-status", {
+      const { data } = await playerSupabase.functions.invoke("tv-pair-status", {
         body: { code, tvSessionId },
       });
       if (!cancelled) handleClaimedRow(data?.ok ? data.row : null);
@@ -293,7 +297,7 @@ export default function PlayerTvWelcome() {
         setExpired(true);
         if (!firedExpired && code) {
           firedExpired = true;
-          supabase.functions.invoke("tv-pair-track", {
+          playerSupabase.functions.invoke("tv-pair-track", {
             body: { event: "expired", code, userSlug, tvSessionId, reason: "countdown_reached_zero" },
           }).catch(() => { /* fire-and-forget */ });
         }
@@ -323,7 +327,7 @@ export default function PlayerTvWelcome() {
     let cancelled = false;
     (async () => {
       try {
-        const { data } = await supabase.functions.invoke("shorten-url", { body: { url: pairUrl } });
+        const { data } = await playerSupabase.functions.invoke("shorten-url", { body: { url: pairUrl } });
         if (!cancelled && (data as any)?.ok && (data as any)?.short) {
           setShortUrl((data as any).short as string);
         }
@@ -410,7 +414,7 @@ export default function PlayerTvWelcome() {
         <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/20" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/20" />
       </div>
-      {radioLogo && <img src={radioLogo} alt={radioName} className="absolute right-[4.5vw] top-[3vh] z-10 max-h-[22vh] w-auto max-w-[18vw] object-contain drop-shadow-xl" />}
+      <PlayerBrandCorner radioUserId={radioUserId} logoUrl={radioLogo} logoAlt={radioName || "Emissora"} className="absolute right-[4.5vw] top-[3vh] z-10" />
       <section className="absolute left-[6vw] top-[9.3vh] z-10 flex min-h-[50vh] max-h-[62vh] w-[min(320px,38vw)] flex-col overflow-hidden rounded-[30px] bg-white px-[30px] pb-[30px] pt-[34px] text-black shadow-2xl">
         <div className="mx-auto flex w-full max-w-[250px] items-center justify-center bg-white">
           {code ? <div className={expired ? "relative opacity-35 grayscale" : "relative"}>

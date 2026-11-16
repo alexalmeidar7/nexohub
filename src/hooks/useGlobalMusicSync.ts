@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { usePlayerAuth } from "@/hooks/usePlayerAuth";
+import { playerSupabase } from "@/integrations/supabase/playerClient";
 import { normalizeMusicText } from "@/lib/textEncoding";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
 import {
@@ -136,8 +138,11 @@ function getCurrentProgram(
   return "";
 }
 
-export function useGlobalMusicSync(overrideUserId?: string | null, enabled: boolean = true) {
-  const { user } = useAuth();
+export function useGlobalMusicSync(overrideUserId?: string | null, enabled: boolean = true, playerMode: boolean = false) {
+  const dashboardAuth = useAuth();
+  const playerAuth = usePlayerAuth();
+  const user = playerMode ? playerAuth.user : dashboardAuth.user;
+  const db = playerMode ? playerSupabase : supabase;
   const acc = (overrideUserId && findClientAccountById(overrideUserId)) || (user?.id && findClientAccountById(user.id)) || (user?.email && findClientAccountByEmail(user?.email));
   const stationUserId = overrideUserId || acc?.parentUserId || acc?.id || user?.id;
   const userSlug = acc?.slug || (user as any)?.user_metadata?.slug || (acc?.email ? acc.email.split("@")[0].toLowerCase() : "");
@@ -190,7 +195,7 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
         return standbyPresenterRef.current.photo;
       }
       try {
-        const { data } = await supabase
+        const { data } = await db
           .from("programas")
           .select("horario_inicio, horario_fim, dias_semana, ativo, variavel, data_variavel, apresentadores(foto)")
           .eq("user_id", targetId)
@@ -279,7 +284,7 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
       if (lastRecordedRef.current === key) return;
 
       try {
-        const { data: programas } = await supabase
+        const { data: programas } = await db
           .from("programas")
           .select("nome, horario_inicio, horario_fim, dias_semana, variavel, data_variavel, ativo")
           .eq("user_id", targetId)
@@ -287,7 +292,7 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
 
         const programa = getCurrentProgram(programas || []);
 
-        const { error } = await supabase.from("musicas_tocadas").upsert({
+        const { error } = await db.from("musicas_tocadas").upsert({
           user_id: targetId,
           dia: day,
           horario: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`,
@@ -372,7 +377,7 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
               data,
               merge: mergeUserDashboardItems,
               fetchCuriosity: async () => {
-                const { data: curData } = await supabase.functions.invoke("get-music-curiosity", {
+                const { data: curData } = await db.functions.invoke("get-music-curiosity", {
                   body: {
                     artista: data.artista,
                     musica: data.titulo,
@@ -502,7 +507,7 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
       }
 
       try {
-        const { data: rssData, error: rssError } = await supabase.functions.invoke("fetch-rss", {
+        const { data: rssData, error: rssError } = await db.functions.invoke("fetch-rss", {
           body: { url },
         });
         if (!rssError && rssData?.content) return rssData.content;
@@ -518,12 +523,12 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
 
       if (!settingsFetchedRef.current || Date.now() - settingsReadAt >= 60_000) {
         const [settingsRes, exceptionsRes] = await Promise.all([
-          supabase
+          db
             .from("user_settings")
             .select("music_xml_url, music_source_mode, dashboard_items, infomusic_excecoes_capa_url, infomusic_excecoes_artista_url")
             .eq("user_id", targetId)
             .maybeSingle(),
-          supabase
+          db
             .from("infomusic_excecoes")
             .select("id, termo, capa_url, artista_url, background_url")
             .eq("user_id", targetId)
@@ -577,7 +582,7 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
         ].filter(Boolean) as string[];
         for (const filePath of candidates) {
           try {
-            const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(filePath);
+            const { data: urlData } = db.storage.from("xml-files").getPublicUrl(filePath);
             if (!urlData?.publicUrl) continue;
             const res = await fetch(`${urlData.publicUrl}?t=${Date.now()}`, {
               signal: AbortSignal.timeout(4000),
@@ -686,7 +691,7 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
 
           // 3a. Verificar primeiro user_settings (dashboard_items) que armazena a faixa ativa em tempo real com capa
           for (const targetUid of targetUids) {
-            const { data: settings, error: settingsError } = await supabase
+            const { data: settings, error: settingsError } = await db
               .from("user_settings")
               .select("dashboard_items")
               .eq("user_id", targetUid)
@@ -731,7 +736,7 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
           let foundTrack: { titulo: string; artista: string; created_at?: string } | null = null;
 
           for (const targetUid of targetUids) {
-            const { data: lastPlayed, error: historyError } = await supabase
+            const { data: lastPlayed, error: historyError } = await db
               .from("musicas_tocadas")
               .select("musica, artista, horario, dia, created_at")
               .eq("user_id", targetUid)
@@ -846,7 +851,7 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
 
 
     // Instant live sync via Supabase Realtime broadcast across all computers/browsers
-    const liveSyncChannel = supabase
+    const liveSyncChannel = db
       .channel(`music-live-sync:${targetId}`)
       .on("broadcast", { event: "track_change" }, (payload: any) => {
         const d = payload.payload || payload;
@@ -876,7 +881,7 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
       polling.stop();
       window.removeEventListener("online", resume);
       document.removeEventListener("visibilitychange", resume);
-      void supabase.removeChannel(liveSyncChannel).catch(() => {});
+      void db.removeChannel(liveSyncChannel).catch(() => {});
     };
   }, [user?.id, stationUserId, userSlug, enabled]);
 }

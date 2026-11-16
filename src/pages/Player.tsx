@@ -2,9 +2,10 @@ import { useEffect, useRef, useState, useCallback, useMemo, Suspense } from "rea
 import { lazyRetry } from "@/lib/lazyRetry";
 import { toast } from "sonner";
 import type HlsType from "hls.js";
-import { supabase } from "@/integrations/supabase/client";
+import { playerSupabase } from "@/integrations/supabase/playerClient";
 import { fetchStationDatabaseData } from "@/lib/stationDatabaseService";
-import { useAuth } from "@/hooks/useAuth";
+import { usePlayerAuth } from "@/hooks/usePlayerAuth";
+import { playerSignOut } from "@/lib/playerSignOut";
 import { usePageTitle, usePublicHead } from "@/hooks/usePageTitle";
 import { useLayoutColors } from "@/hooks/useLayoutColors";
 import { usePlayerColors } from "@/hooks/usePlayerColors";
@@ -373,9 +374,9 @@ function MarqueeText({ text, className }: { text: string; className?: string }) 
 export default function PlayerPage() {
   usePageTitle("Player");
   useLayoutColors();
-  const [playerColorUserId, setPlayerColorUserId] = useState<string | null>(null);
-  usePlayerColors(playerColorUserId);
   const { userSlug } = useParams<{ userSlug?: string }>();
+  const [playerColorUserId, setPlayerColorUserId] = useState<string | null>(null);
+  usePlayerColors(playerColorUserId, userSlug);
   const [searchParams] = useSearchParams();
   const requestedChannelId = searchParams.get("ch");
   const requestedVideoId = searchParams.get("vid");
@@ -400,8 +401,28 @@ export default function PlayerPage() {
     emitProfileChanged({ reason: "switch" });
     navigate(playerWelcomePath);
   }, [clearHomeSkipFlag, navigate, playerWelcomePath]);
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading: authLoading } = usePlayerAuth();
   const userId = user?.id ?? null;
+  const hadPlayerSessionRef = useRef(false);
+
+  // Se uma sessão ativa expirar ou for encerrada enquanto o ouvinte está no
+  // player/watch, volte ao acesso do Player em vez de continuar como visitante.
+  useEffect(() => {
+    if (authLoading) return;
+    if (user) {
+      hadPlayerSessionRef.current = true;
+      return;
+    }
+    if (!hadPlayerSessionRef.current) return;
+    hadPlayerSessionRef.current = false;
+    clearHomeSkipFlag();
+    const slug = userSlug && !userSlug.startsWith(":") ? userSlug : null;
+    const isTvPairingFlow = searchParams.get("tv") === "1";
+    const destination = isTvPairingFlow
+      ? (slug ? `/${slug}/player/tv` : "/player/tv")
+      : `${playerWelcomePath}`;
+    navigate(destination, { replace: true });
+  }, [authLoading, user, userSlug, searchParams, clearHomeSkipFlag, playerWelcomePath, navigate]);
 
   // Top 10 playlist from navigation state
   const top10Playlist = (location.state as any)?.top10Playlist as { videoId: string; title: string; thumbnail: string; artist: string }[] | undefined;
@@ -523,7 +544,7 @@ export default function PlayerPage() {
   useEffect(() => {
     const effectiveId = isPublicMode ? publicUserId : (user?.id || publicUserId);
     if (!effectiveId) return;
-    supabase.from("user_settings").select("dashboard_items, shopping_active").eq("user_id", effectiveId).maybeSingle().then(({ data }) => {
+    playerSupabase.from("user_settings").select("dashboard_items, shopping_active").eq("user_id", effectiveId).maybeSingle().then(({ data }) => {
       const items = (data?.dashboard_items as any) || {};
       if (items.spectrum_style) {
         setSpectrumStyle(items.spectrum_style);
@@ -589,7 +610,7 @@ export default function PlayerPage() {
       try {
         const ctrl = new AbortController();
         const timeout = setTimeout(() => ctrl.abort(), 4000);
-        const { data, error } = await supabase.functions.invoke("fetch-artist-image", {
+        const { data, error } = await playerSupabase.functions.invoke("fetch-artist-image", {
           body: { artist },
         }).finally(() => clearTimeout(timeout));
         if (cancelled) return;
@@ -640,7 +661,7 @@ export default function PlayerPage() {
 
     
     const recordHistory = async () => {
-      const { error } = await supabase.from("watch_history").insert({
+      const { error } = await playerSupabase.from("watch_history").insert({
         user_id: userId,
         channel_id: canal.id,
         channel_name: canal.name,
@@ -815,7 +836,7 @@ export default function PlayerPage() {
     if (!playlistOpen || !playlistOwnerId) return;
     (async () => {
       const [{ data }, { getMusicExceptions, filterOutMusicExceptions }] = await Promise.all([
-        supabase.from("musicas_tocadas").select("musica, artista, horario, programa").eq("user_id", playlistOwnerId)
+        playerSupabase.from("musicas_tocadas").select("musica, artista, horario, programa").eq("user_id", playlistOwnerId)
           .order("created_at", { ascending: false }).limit(40),
         import("@/lib/musicExceptions"),
       ]);
@@ -930,7 +951,7 @@ export default function PlayerPage() {
 
   const toggleLike = useCallback(async () => {
     if (!user || !profileRadioUserId || !musicData?.titulo || !musicData?.artista || liked) return;
-    await supabase.from("music_likes").insert({ user_id: user.id, radio_user_id: profileRadioUserId, titulo: musicData.titulo, artista: musicData.artista, capa: musicData.capa || "" });
+    await playerSupabase.from("music_likes").insert({ user_id: user.id, radio_user_id: profileRadioUserId, titulo: musicData.titulo, artista: musicData.artista, capa: musicData.capa || "" });
     setLiked(true);
     setLikeAnimating(true);
     setTimeout(() => setLikeAnimating(false), 600);
@@ -940,9 +961,9 @@ export default function PlayerPage() {
 
     // Fire-and-forget: pre-cache YouTube search for this song
     const query = `${musicData.artista} ${musicData.titulo}`;
-    supabase.functions.invoke("youtube-search", { body: { queries: [query] } }).then(({ data }) => {
+    playerSupabase.functions.invoke("youtube-search", { body: { queries: [query] } }).then(({ data }) => {
       if (data?.results?.[0]?.videoId) {
-        supabase.from("music_likes_youtube_cache" as any).upsert({
+        playerSupabase.from("music_likes_youtube_cache" as any).upsert({
           user_id: user.id,
           artista: musicData.artista,
           titulo: musicData.titulo,
@@ -977,7 +998,7 @@ export default function PlayerPage() {
       setLoading(true);
       setLoadingStatus("Carregando canais...");
 
-      supabase.functions.invoke("public-player-data", { body: { slug } })
+      playerSupabase.functions.invoke("public-player-data", { body: { slug } })
         .then(({ data, error }) => {
           if (cancelled) return;
           publicBootstrapRef.current = { slug, loaded: true };
@@ -1071,13 +1092,13 @@ export default function PlayerPage() {
       try {
         // STAGE 1 — Critical: all data in a single parallel burst for faster hydration
         const [channelsRes, prerollRes, programasRes, apresentadoresRes, empresaRes] = await Promise.all([
-          supabase.from("streaming_channels").select("*").eq("user_id", userId).eq("active", true).order("numero_canal"),
+          playerSupabase.from("streaming_channels").select("*").eq("user_id", userId).eq("active", true).order("numero_canal"),
           isWatchRoute && !prerollDone
-            ? supabase.from("comercial_preroll").select("*").eq("user_id", userId).eq("active", true).lte("horario_inicio", currentTime).gte("horario_fim", currentTime).order("priority", { ascending: true })
+            ? playerSupabase.from("comercial_preroll").select("*").eq("user_id", userId).eq("active", true).lte("horario_inicio", currentTime).gte("horario_fim", currentTime).order("priority", { ascending: true })
             : Promise.resolve({ data: null, error: null } as const),
-          supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, tipo_programa, capa, thumb, descricao, apresentador_id, apresentadores_ids").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
-          supabase.from("apresentadores").select("id, nome, foto, instagram").eq("user_id", userId).eq("ativo", true),
-          supabase.from("empresa_config").select("telefone_participacao, logo, nome").eq("user_id", userId).maybeSingle(),
+          playerSupabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, tipo_programa, capa, thumb, descricao, apresentador_id, apresentadores_ids").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
+          playerSupabase.from("apresentadores").select("id, nome, foto, instagram").eq("user_id", userId).eq("ativo", true),
+          playerSupabase.from("empresa_config").select("telefone_participacao, logo, nome").eq("user_id", userId).maybeSingle(),
         ]);
 
         if (cancelled) return;
@@ -1132,7 +1153,7 @@ export default function PlayerPage() {
 
         // STAGE 2 — Deferred: shop products
         const currentProg = getCurrentProgram(fetchedProgramas);
-        let shopQuery = supabase.from("shopping_products").select("id, name, description, image_url, price, stock, program_id, payment_url").eq("user_id", userId).eq("active", true).gt("stock", 0);
+        let shopQuery = playerSupabase.from("shopping_products").select("id, name, description, image_url, price, stock, program_id, payment_url").eq("user_id", userId).eq("active", true).gt("stock", 0);
         if (currentProg) {
           shopQuery = shopQuery.or(`program_id.eq.${currentProg.id},program_id.is.null`);
         } else {
@@ -1235,7 +1256,7 @@ export default function PlayerPage() {
     if (!ownerId || programas.length === 0) return;
     const fetchShop = async () => {
       const currentProg = getCurrentProgram(programas);
-      let query = supabase.from("shopping_products").select("id, name, description, image_url, price, stock, program_id, payment_url").eq("user_id", ownerId).eq("active", true).gt("stock", 0);
+      let query = playerSupabase.from("shopping_products").select("id, name, description, image_url, price, stock, program_id, payment_url").eq("user_id", ownerId).eq("active", true).gt("stock", 0);
       if (currentProg) query = query.or(`program_id.eq.${currentProg.id},program_id.is.null`);
       else query = query.is("program_id", null);
       const { data } = await query;
@@ -1261,7 +1282,7 @@ export default function PlayerPage() {
     const playlistId = canal.url.match(/[?&]list=([a-zA-Z0-9_-]+)/)?.[1] || null;
 
     if (playlistId) {
-      supabase.functions.invoke("youtube-playlist", { body: { playlistId } }).then(({ data }) => {
+      playerSupabase.functions.invoke("youtube-playlist", { body: { playlistId } }).then(({ data }) => {
         if (!data?.videos) return;
 
         const sorted = [...data.videos]
@@ -1372,7 +1393,7 @@ export default function PlayerPage() {
       };
 
       // FIX (capa travada): protege o polling contra deadlocks silenciosos.
-      // Antes: se `supabase.functions.invoke` travasse por rede lenta ou por erro
+      // Antes: se `playerSupabase.functions.invoke` travasse por rede lenta ou por erro
       // sem rejeitar, `inFlight` ficava `true` para sempre e nenhuma nova música
       // era buscada — o player ficava com a mesma capa "tocando agora" por horas.
       // Agora usamos AbortController+timeout, um watchdog global e forçamos
@@ -1390,7 +1411,7 @@ export default function PlayerPage() {
         const controller = new AbortController();
         const timeoutId = window.setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
         try {
-          const { data, error } = await supabase.functions.invoke("public-player-data", {
+          const { data, error } = await playerSupabase.functions.invoke("public-player-data", {
             body: { slug: userSlug, section: "now_playing" },
           });
           // Aborta manualmente se o timeout disparou
@@ -1437,9 +1458,9 @@ export default function PlayerPage() {
       window.addEventListener("online", onOnline);
 
       // Realtime subscription on user_settings for instant music updates
-      let realtimeChannel: ReturnType<typeof supabase.channel> | null = null;
+      let realtimeChannel: ReturnType<typeof playerSupabase.channel> | null = null;
       if (publicUserId) {
-        realtimeChannel = supabase
+        realtimeChannel = playerSupabase
           .channel(`public-music-${publicUserId}`)
           .on(
             "postgres_changes",
@@ -1465,7 +1486,7 @@ export default function PlayerPage() {
         document.removeEventListener("visibilitychange", onVisibility);
         window.removeEventListener("focus", onFocus);
         window.removeEventListener("online", onOnline);
-        if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+        if (realtimeChannel) playerSupabase.removeChannel(realtimeChannel);
       };
     }
 
@@ -1546,7 +1567,7 @@ export default function PlayerPage() {
       lockStartedAt = nowMs;
       try {
         if (!cachedXmlUrl || xmlFetchFails > 3) {
-          const { data: settings } = await supabase.from("user_settings").select("music_xml_url").eq("user_id", effectiveUserId).maybeSingle();
+          const { data: settings } = await playerSupabase.from("user_settings").select("music_xml_url").eq("user_id", effectiveUserId).maybeSingle();
           cachedXmlUrl = settings?.music_xml_url || null;
           if (cachedXmlUrl) xmlFetchFails = 0;
         }
@@ -1574,7 +1595,7 @@ export default function PlayerPage() {
 
         if (!text) {
           try {
-            const { data: rssData, error: rssError } = await supabase.functions.invoke("fetch-rss", {
+            const { data: rssData, error: rssError } = await playerSupabase.functions.invoke("fetch-rss", {
               body: { url: cachedXmlUrl },
             });
             if (rssError || !rssData?.content) { xmlFetchFails++; return; }
@@ -2171,7 +2192,7 @@ export default function PlayerPage() {
     const now = new Date();
     const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
-    const { data } = await supabase.from("comercial_preroll").select("*").eq("user_id", user.id).eq("active", true).lte("horario_inicio", currentTime).gte("horario_fim", currentTime).order("priority", { ascending: true });
+    const { data } = await playerSupabase.from("comercial_preroll").select("*").eq("user_id", user.id).eq("active", true).lte("horario_inicio", currentTime).gte("horario_fim", currentTime).order("priority", { ascending: true });
 
     if (data && data.length > 0) {
       const matching = filterCampaignsByType(data, now, false, isAudio);
@@ -2833,8 +2854,8 @@ export default function PlayerPage() {
           const now = new Date();
           const ct = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
           const { data } = isPublicMode && validSlug
-            ? await supabase.functions.invoke("public-player-data", { body: { slug: validSlug, section: "active_midrolls" } })
-            : await supabase.from("comercial_preroll").select("*").eq("user_id", ownerId).eq("active", true).lte("horario_inicio", ct).gte("horario_fim", ct).order("priority", { ascending: true });
+            ? await playerSupabase.functions.invoke("public-player-data", { body: { slug: validSlug, section: "active_midrolls" } })
+            : await playerSupabase.from("comercial_preroll").select("*").eq("user_id", ownerId).eq("active", true).lte("horario_inicio", ct).gte("horario_fim", ct).order("priority", { ascending: true });
           const campaigns = isPublicMode && validSlug ? (data?.prerolls || []) : data;
           if (campaigns && campaigns.length > 0) {
             const pool = filterCampaignsByType(campaigns, now, true);
@@ -2899,7 +2920,7 @@ export default function PlayerPage() {
             if (!user) return;
             const now = new Date();
             const ct = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-            const { data } = await supabase.from("comercial_preroll").select("*").eq("user_id", user.id).eq("active", true).lte("horario_inicio", ct).gte("horario_fim", ct).order("priority", { ascending: true });
+            const { data } = await playerSupabase.from("comercial_preroll").select("*").eq("user_id", user.id).eq("active", true).lte("horario_inicio", ct).gte("horario_fim", ct).order("priority", { ascending: true });
             if (data && data.length > 0) {
               const pool = filterCampaignsByType(data, now, true);
               if (pool.length > 0) {
@@ -3048,7 +3069,6 @@ export default function PlayerPage() {
           profileAvatar={profileAvatar}
           userDisplayName={userDisplayName}
           userEmail={user?.email ?? null}
-          signOut={signOut}
           effectiveUserId={effectiveUserId}
           isPublicMode={isPublicMode}
           userSlug={userSlug}
@@ -3769,9 +3789,8 @@ export default function PlayerPage() {
                     onSwitchProfile={handleSwitchProfile}
                     onAvatarChange={(url) => { setProfileAvatar(url); emitProfileChanged({ userId: user?.id ?? null, radioUserId: profileRadioUserId, avatar_url: url, reason: "avatar" }); }}
                     onLogout={async () => {
-                      await signOut();
                       const dest = userSlug && !userSlug.startsWith(":") ? `/${userSlug}/player` : "/player";
-                      navigate(dest);
+                      await playerSignOut(dest);
                     }}
 
                   />

@@ -2,15 +2,15 @@ import { useEffect, useState, useRef, useCallback, useMemo, Suspense } from "rea
 import { lazyRetry } from "@/lib/lazyRetry";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { usePlayerAuth } from "@/hooks/usePlayerAuth";
 import { useGlobalMusicSync } from "@/hooks/useGlobalMusicSync";
 import { preloadLocutorImages } from "@/lib/locutorImageCache";
 import { useBgPalette } from "./useBgPalette";
-import { fetchArtistImageCached, getArtistImageSync } from "@/lib/artistImageCache";
+import { fetchArtistImageCached, getArtistImageSync, upgradeArtistImageResolution } from "@/lib/artistImageCache";
 import { preloadImage } from "@/hooks/usePreloadImages";
 import { fetchPlayerListenerProfile } from "@/lib/playerListenerProfile";
 
-import { supabase } from "@/integrations/supabase/client";
+import { playerSupabase } from "@/integrations/supabase/playerClient";
 import { Home, Radio, Film, ShoppingBag, LogOut, Clock, Music, ChevronLeft, ChevronRight, Play, LayoutGrid, Flame, TrendingUp, Tag, Shield, Search, Bell, User, Mic, Disc, Plus, Maximize, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import ElegantLoader from "@/components/player/ElegantLoader";
@@ -185,7 +185,7 @@ function TopNavBar({
     if (!q || !scopedMusicUserId) { setMusicResults([]); return; }
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
+      const { data } = await playerSupabase
         .from("musicas_tocadas")
         .select("musica, artista")
         .eq("user_id", scopedMusicUserId)
@@ -240,7 +240,7 @@ function TopNavBar({
 
   return (
     <header className={`absolute top-0 left-0 right-0 z-30 flex items-center flex-wrap px-4 sm:px-8 md:px-12 pt-4 sm:pt-8 pb-4 gap-3 sm:gap-6 md:gap-8 ${homeLayout ? "player-home-header" : ""}`}>
-      {homeLayout && <style>{`.player-home-header{padding:4.8vh 6vw 0!important;gap:0!important;flex-wrap:nowrap!important}.player-home-header nav{margin-left:82px;gap:20px!important}.player-home-header nav button{font-size:clamp(16px,1.4vw,25px)!important}.player-home-header nav [data-tv-topnav]:focus-visible{transform:none!important;outline:none!important;outline-offset:0!important;box-shadow:none!important;border-radius:0!important;z-index:auto!important}.player-home-header .player-home-profile-wrap{position:absolute!important;left:6vw;top:6.7vh;width:56px;height:56px}.player-home-header [data-home-profile]{position:absolute;inset:0;width:56px;height:56px;border-radius:50%!important;background:linear-gradient(135deg,#f20d1b 0%,#c9000c 100%)!important;border:0!important;box-shadow:none!important}.player-home-header [data-home-profile] img{border-radius:50%}.player-home-header [data-home-profile] svg{display:block;color:white;width:25px;height:25px}.player-home-header .player-home-profile-wrap>div[class*="absolute"]{left:0!important;right:auto!important;top:calc(100% + 8px)!important}.player-home-header .player-home-search{display:block!important;margin-left:18px!important}.player-home-header .player-home-right{gap:20px!important}.player-home-header .player-home-logo{width:112px!important;height:92px!important}.player-home-tools{display:none!important}@media(max-width:700px){.player-home-header{padding:22px 20px 0!important}.player-home-header .player-home-profile-wrap{left:20px;top:66px;width:40px;height:40px}.player-home-header [data-home-profile]{width:40px;height:40px}.player-home-header nav{margin-left:50px;gap:12px!important}.player-home-header nav button{font-size:14px!important}.player-home-header .player-home-search{margin-left:10px!important}.player-home-header .player-home-logo{width:60px!important;height:54px!important}}`}</style>}
+      {homeLayout && <style>{`.player-home-header{padding:4.8vh 6vw 0!important;gap:0!important;flex-wrap:nowrap!important}.player-home-header nav{margin-left:82px;gap:20px!important}.player-home-header nav button{font-size:clamp(16px,1.4vw,25px)!important}.player-home-header nav [data-tv-topnav]:focus-visible{transform:none!important;outline:none!important;outline-offset:0!important;box-shadow:none!important;border-radius:0!important;z-index:auto!important}.player-home-header .player-home-profile-wrap{position:absolute!important;left:6vw;top:6.7vh;width:56px;height:56px}.player-home-header [data-home-profile]{position:absolute;inset:0;width:56px;height:56px;border-radius:50%!important;background:linear-gradient(135deg,var(--player-dominant-color,#111214) 0%,color-mix(in srgb,var(--player-dominant-color,#111214) 68%,#111214) 100%)!important;border:0!important;box-shadow:none!important}.player-home-header [data-home-profile] img{border-radius:50%}.player-home-header [data-home-profile] svg{display:block;color:white;width:25px;height:25px}.player-home-header .player-home-profile-wrap>div[class*="absolute"]{left:0!important;right:auto!important;top:calc(100% + 8px)!important}.player-home-header .player-home-search{display:block!important;margin-left:18px!important}.player-home-header .player-home-right{gap:20px!important}.player-home-header .player-home-logo{width:112px!important;height:92px!important}.player-home-tools{display:none!important}@media(max-width:700px){.player-home-header{padding:22px 20px 0!important}.player-home-header .player-home-profile-wrap{left:20px;top:66px;width:40px;height:40px}.player-home-header [data-home-profile]{width:40px;height:40px}.player-home-header nav{margin-left:50px;gap:12px!important}.player-home-header nav button{font-size:14px!important}.player-home-header .player-home-search{margin-left:10px!important}.player-home-header .player-home-logo{width:60px!important;height:54px!important}}`}</style>}
       {/* Nav links */}
       <nav className="flex items-center flex-wrap gap-3 sm:gap-6 md:gap-10">
         {items.map((item, idx) => {
@@ -294,8 +294,11 @@ function TopNavBar({
         <div
           className={`flex items-center transition-all duration-300 ease-out ${expanded ? "overflow-visible" : "rounded-full overflow-hidden"}`}
           style={{
-            border: "1px solid rgba(255,255,255,0.35)",
-            background: "rgba(255,255,255,0.02)",
+            border: "1px solid rgba(255,255,255,0.22)",
+            background: "rgba(255,255,255,0.10)",
+            backdropFilter: "blur(16px) saturate(140%)",
+            WebkitBackdropFilter: "blur(16px) saturate(140%)",
+            boxShadow: "0 8px 28px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.10)",
             width: "100%",
             height: 40,
             borderRadius: 9999,
@@ -323,7 +326,7 @@ function TopNavBar({
                 setSearchFocused(true);
                 requestAnimationFrame(() => searchInputRef.current?.focus());
               }}
-              className="w-10 h-10 flex items-center justify-center outline-none focus-visible:outline-none"
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-white/[0.08] backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] outline-none focus-visible:outline-none"
             >
               <Search className="w-4 h-4 text-white/80" />
             </button>
@@ -448,7 +451,6 @@ function TopNavBar({
 
       {/* Right: avatar (rounded square) + station logo */}
       <div className={`flex items-center gap-2 sm:gap-4 ml-auto ${homeLayout ? "player-home-right" : ""}`}>
-        {/* Relógio + previsão do tempo (mesmo padrão do /player/watch) */}
         <PlayerClockWeather radioUserId={radioUserId} compact />
 
         <div ref={profileRef} className={`relative ${homeLayout ? "player-home-profile-wrap" : ""}`}>
@@ -477,7 +479,7 @@ function TopNavBar({
                 transition: "opacity 1400ms cubic-bezier(0.4, 0, 0.2, 1)",
               }}
             />}
-            {avatarUrl && !homeLayout ? (
+            {avatarUrl && !avatarUrl.includes("usr-default") ? (
               <img src={avatarUrl} alt={userName} className="relative w-full h-full object-cover" />
             ) : (
               <User className="relative icon icon-sm text-white m-auto" />
@@ -499,7 +501,6 @@ function TopNavBar({
                 onEditProfile={onEditProfile}
                 onSwitchProfile={onSwitchProfile}
                 onLogout={showLogout ? onLogout : undefined}
-                onAvatarChange={onAvatarChange}
               />
             </Suspense>
           )}
@@ -611,7 +612,7 @@ function HeroBanner({
   const [artistImg, setArtistImg] = useState<string | null>(() => {
     if (isJournalisticProgram) return null;
     const a = (nowPlaying?.artista || "").trim();
-    return a ? getArtistImageSync(a) : null;
+    return a ? upgradeArtistImageResolution(getArtistImageSync(a)) : null;
   });
   useEffect(() => {
     if (isJournalisticProgram) { setArtistImg(null); return; }
@@ -619,10 +620,10 @@ function HeroBanner({
     const isBreak = ["break", "vinhetas", "hora certa", "desconhecido"].includes(artista.toLowerCase());
     if (!artista || isBreak) { setArtistImg(null); return; }
     const sync = getArtistImageSync(artista);
-    if (sync) { setArtistImg(sync); return; }
+    if (sync) { setArtistImg(upgradeArtistImageResolution(sync)); return; }
     let cancelled = false;
     fetchArtistImageCached(artista).then((url) => {
-      if (!cancelled) setArtistImg(url);
+      if (!cancelled) setArtistImg(upgradeArtistImageResolution(url));
     });
     return () => { cancelled = true; };
   }, [nowPlaying?.artista, isJournalisticProgram]);
@@ -654,7 +655,7 @@ function HeroBanner({
         className="ph-bg-layer absolute inset-0"
         style={{
           opacity: showArtistBackground && artistImg && !isJournalisticProgram ? 0 : 1,
-          background: "linear-gradient(45deg, #111214 0%, #111214 38%, #f20d1b 100%)",
+          background: "linear-gradient(45deg, #111214 0%, #111214 38%, var(--player-dominant-color, #111214) 100%)",
         }}
       />
       {artistImg && !isJournalisticProgram && (
@@ -672,7 +673,7 @@ function HeroBanner({
 
 
       {/* Bottom-left cards row */}
-      {homeLayout && <style>{`[data-home-listen],[data-home-watch]{transition:background 220ms ease,border 220ms ease,transform 300ms ease}[data-home-listen]{background:linear-gradient(135deg,#29292b,#202023)!important;border:1px solid rgba(255,255,255,0.08)!important}[data-home-listen]:hover,[data-home-listen]:focus,[data-home-listen]:focus-visible,[data-home-watch]:hover,[data-home-watch]:focus,[data-home-watch]:focus-visible{background:linear-gradient(135deg,#f20d1b 0%,#c9000c 100%)!important;outline:3px solid rgba(255,255,255,0.96)!important;outline-offset:5px}[data-home-watch-bg]{transition:opacity 220ms ease}[data-home-watch]:hover [data-home-watch-bg],[data-home-watch]:focus [data-home-watch-bg],[data-home-watch]:focus-visible [data-home-watch-bg]{opacity:0!important}`}</style>}
+      {homeLayout && <style>{`[data-home-listen],[data-home-watch]{transition:border 220ms ease,transform 300ms ease}[data-home-listen]{background:linear-gradient(135deg,#29292b,#202023)!important;border:1px solid rgba(255,255,255,0.08)!important}[data-home-listen]:hover,[data-home-listen]:focus,[data-home-listen]:focus-visible,[data-home-watch]:hover,[data-home-watch]:focus,[data-home-watch]:focus-visible{background:linear-gradient(135deg,var(--player-dominant-color,#111214) 0%,color-mix(in srgb,var(--player-dominant-color,#111214) 72%,#111214) 100%)!important;outline:3px solid rgba(255,255,255,0.96)!important;outline-offset:5px}[data-home-listen]:hover *,[data-home-listen]:focus *,[data-home-listen]:focus-visible *,[data-home-watch]:hover *,[data-home-watch]:focus *,[data-home-watch]:focus-visible *{color:#252525!important;text-shadow:none!important}[data-home-watch-bg]{transition:opacity 220ms ease}[data-home-watch]:hover [data-home-watch-bg],[data-home-watch]:focus [data-home-watch-bg],[data-home-watch]:focus-visible [data-home-watch-bg]{opacity:0!important}`}</style>}
       <div
         data-tv-row="0"
         className="absolute bottom-[4.25vh] left-[4.8vw] right-4 sm:right-auto z-10 flex flex-wrap items-end gap-8"
@@ -694,7 +695,7 @@ function HeroBanner({
           className="relative overflow-hidden text-left group transition-transform duration-300 hover:scale-[1.03]"
           style={{
             ...cardBase,
-            background: homeLayout ? "linear-gradient(135deg,#29292b,#202023)" : "linear-gradient(135deg,#f20d1b 0%,#c9000c 100%)",
+            background: homeLayout ? "linear-gradient(135deg,#29292b,#202023)" : "linear-gradient(135deg,var(--player-dominant-color,#111214) 0%,color-mix(in srgb,var(--player-dominant-color,#111214) 72%,#111214) 100%)",
             border: homeLayout ? "1px solid rgba(255,255,255,0.08)" : "3px solid rgba(255,255,255,0.96)",
             boxShadow: "0 8px 30px rgba(0,0,0,.3)",
 
@@ -731,7 +732,6 @@ function HeroBanner({
           }}
         >
           <div data-home-watch-bg={homeLayout ? "true" : undefined} className="absolute inset-0" style={{ background: "linear-gradient(135deg,#29292b,#202023)" }} />
-          {presenterFoto && <div className="absolute right-2 top-1 bottom-0 w-[43%] overflow-hidden pointer-events-none"><img src={presenterFoto} alt="" className="w-full h-full object-contain object-right-bottom" style={{ maskImage: "linear-gradient(to right, transparent 0%, black 40%)", WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 40%)", transform: "translateY(10px) scale(1.08)", transformOrigin: "right bottom" }} /></div>}
           <div className="relative z-[1] p-7 flex flex-col h-full">
             <span className="inline-flex self-start text-[18px] font-bold text-white tracking-wide">assistir</span>
             <div className="mt-auto">
@@ -743,6 +743,31 @@ function HeroBanner({
             </div>
           </div>
         </button>
+
+        {nowPlaying && (nowPlaying.musica || nowPlaying.artista) && (
+          <div className="flex min-w-0 max-w-[min(420px,38vw)] items-center gap-4 self-end text-white drop-shadow-lg">
+            {nowPlaying.capa ? (
+              <img
+                src={nowPlaying.capa}
+                alt="Capa do álbum"
+                className="h-[clamp(168px,10.95vw,210px)] w-[clamp(168px,10.95vw,210px)] shrink-0 rounded-[40px] object-cover shadow-xl"
+              />
+            ) : (
+              <div className="flex h-[clamp(168px,10.95vw,210px)] w-[clamp(168px,10.95vw,210px)] shrink-0 items-center justify-center rounded-[40px] bg-white/10 backdrop-blur-md">
+                <Music className="h-7 w-7 text-white/75" />
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="text-[clamp(14px,1.15vw,20px)] leading-tight text-white/75">tocando agora:</p>
+              <p className="mt-1 truncate text-[clamp(16px,1.35vw,24px)] font-bold leading-tight text-white">
+                {formatTrackText(nowPlaying.musica) || "—"}
+              </p>
+              <p className="mt-1 truncate text-[clamp(14px,1.1vw,20px)] leading-tight text-white/75">
+                {formatTrackText(nowPlaying.artista)}
+              </p>
+            </div>
+          </div>
+        )}
 
       </div>
 
@@ -1383,6 +1408,7 @@ function HistoryCard({ item, onClick }: { item: { channel_name: string; channel_
 
 interface PlayerHomeProps {
   onBackToAccess?: (openEdit?: boolean) => void;
+  tvGuestMode?: boolean;
 }
 
 /* ─── Local cache helpers ─── */
@@ -1405,9 +1431,9 @@ function writeCache(cacheId: string, data: Record<string, any>) {
   } catch {}
 }
 
-export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
-  const { user, signOut, loading: authLoading } = useAuth();
-  useGlobalMusicSync();
+export default function PlayerHome({ onBackToAccess, tvGuestMode = false }: PlayerHomeProps = {}) {
+  const { user, loading: authLoading } = usePlayerAuth();
+  useGlobalMusicSync(undefined, true, true);
 
   const [activeRow, setActiveRow] = useState(0);
   const ROW_COUNT = 2;
@@ -1671,7 +1697,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       // Nunca faz fallback para localStorage/DB do usuário logado (evita mistura entre rádios).
       if (isSlugMode) {
         try {
-          const { data } = await supabase.functions.invoke("public-player-data", { body: { slug: userSlug, section: "now_playing" } });
+          const { data } = await playerSupabase.functions.invoke("public-player-data", { body: { slug: userSlug, section: "now_playing" } });
           if (data?.musica) {
             setNowPlaying({ musica: formatTrackText(data.musica), artista: formatTrackText(data.artista || ""), capa: data.capa || "" });
           } else {
@@ -1696,7 +1722,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       } catch {}
 
       try {
-        const { data } = await supabase.from("musicas_tocadas").select("musica, artista").eq("user_id", userId).order("created_at", { ascending: false }).limit(5);
+        const { data } = await playerSupabase.from("musicas_tocadas").select("musica, artista").eq("user_id", userId).order("created_at", { ascending: false }).limit(5);
         if (data && data.length) {
           const { getMusicExceptions, filterOutMusicExceptions } = await import("@/lib/musicExceptions");
           const excs = await getMusicExceptions(userId);
@@ -1730,14 +1756,14 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       if (!userId || cancelled) return;
 
       const [chRes, empRes, progRes, histRes, shopRes, settingsRes, apresRes, profileRes] = await Promise.all([
-        supabase.from("streaming_channels").select("*").eq("user_id", userId).eq("active", true).order("numero_canal"),
-        supabase.from("empresa_config").select("logo, nome, timezone").eq("user_id", userId).single(),
-        supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, tipo_programa, capa, thumb, descricao, classificacao_etaria, apresentador_id, apresentadores_ids").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
-        supabase.from("watch_history").select("id, channel_name, channel_cover_url, channel_logo_url, channel_type, watched_at, channel_id").eq("user_id", userId).eq("radio_user_id", userId).order("watched_at", { ascending: false }).limit(10),
-        supabase.from("shopping_products").select("id, name, description, price, image_url, payment_url, stock").eq("user_id", userId).eq("active", true),
-        supabase.from("user_settings").select("shopping_active").eq("user_id", userId).maybeSingle(),
-        supabase.from("apresentadores").select("id, nome, foto").eq("user_id", userId).eq("ativo", true),
-        supabase.from("profiles").select("nome, avatar_url, email, cidade, estado").eq("user_id", userId).single(),
+        playerSupabase.from("streaming_channels").select("*").eq("user_id", userId).eq("active", true).order("numero_canal"),
+        playerSupabase.from("empresa_config").select("logo, nome, timezone").eq("user_id", userId).single(),
+        playerSupabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, tipo_programa, capa, thumb, descricao, classificacao_etaria, apresentador_id, apresentadores_ids").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
+        playerSupabase.from("watch_history").select("id, channel_name, channel_cover_url, channel_logo_url, channel_type, watched_at, channel_id").eq("user_id", userId).eq("radio_user_id", userId).order("watched_at", { ascending: false }).limit(10),
+        playerSupabase.from("shopping_products").select("id, name, description, price, image_url, payment_url, stock").eq("user_id", userId).eq("active", true),
+        playerSupabase.from("user_settings").select("shopping_active").eq("user_id", userId).maybeSingle(),
+        playerSupabase.from("apresentadores").select("id, nome, foto").eq("user_id", userId).eq("ativo", true),
+        playerSupabase.from("profiles").select("nome, avatar_url, email, cidade, estado").eq("user_id", userId).single(),
       ]);
       setLoadProgress(65);
 
@@ -1761,7 +1787,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         if (stationData?.channels && stationData.channels.length > 0) {
           channelsData = stationData.channels;
         } else {
-          const fallbackChRes = await supabase.from("streaming_channels").select("*").eq("active", true).order("numero_canal");
+          const fallbackChRes = await playerSupabase.from("streaming_channels").select("*").eq("active", true).order("numero_canal");
           if (!fallbackChRes.error && fallbackChRes.data) {
             const existingIds = new Set(channelsData.map((ch: any) => ch.id));
             const merged = [...channelsData, ...fallbackChRes.data.filter((ch: any) => !existingIds.has(ch.id))];
@@ -1810,7 +1836,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     const fetchPublicData = async (slug: string, attempt = 0) => {
       setLoadProgress(prev => Math.max(prev, 20));
       if (cancelled) return;
-      const { data, error } = await supabase.functions.invoke("public-player-data", { body: { slug } });
+      const { data, error } = await playerSupabase.functions.invoke("public-player-data", { body: { slug } });
       if (cancelled) return;
       if (Boolean(error || data?.error) && scheduleRetry(() => fetchPublicData(slug, attempt + 1), attempt)) return;
       setChannels((data?.channels ?? []) as any);
@@ -1970,7 +1996,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       if (entries.length === 0) return;
       const settled = await Promise.allSettled(
         entries.map(async (e) => {
-          const { data, error } = await supabase.functions.invoke("youtube-playlist", { body: { playlistId: e.playlistId } });
+          const { data, error } = await playerSupabase.functions.invoke("youtube-playlist", { body: { playlistId: e.playlistId } });
           if (!error && data?.videos) {
             const sorted = [...data.videos].sort((a: any, b: any) =>
               (a.published && b.published) ? new Date(b.published).getTime() - new Date(a.published).getTime() : 0
@@ -2110,8 +2136,16 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
 
   const handleSignOut = async () => {
-    const dest = userSlug && userSlug !== ":userSlug" ? `/${userSlug}/player` : "/player";
-    await playerSignOut(signOut, dest);
+    const slug = userSlug && userSlug !== ":userSlug" ? userSlug : null;
+    const homeKey = `player-step-home:${slug || "root"}`;
+    try {
+      localStorage.removeItem(homeKey);
+      if (slug) localStorage.removeItem(`nexohub_tv_guest_${slug}`);
+    } catch { /* ignore */ }
+    const dest = tvGuestMode
+      ? (slug ? `/${slug}/player/tv` : "/player/tv")
+      : (slug ? `/${slug}/player` : "/player");
+    await playerSignOut(dest);
   };
 
 
@@ -2267,7 +2301,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       items={sidebarItems.map(s => ({ label: s.label, key: s.key, action: s.action }))}
                       activeKey={activeSection}
                       avatarUrl={(profileAvatar && !profileAvatar.includes("usr-default")) ? profileAvatar : (googlePhoto || profileAvatar)}
-                      userName={googleName || userName || profileName}
+                      userName={googleName || (profileName && profileName !== "Visitante" ? profileName : null) || googleEmail?.split("@")[0] || userName}
                       userEmail={googleEmail}
                       googleAvatarUrl={googlePhoto}
                       showLogout={!!user}

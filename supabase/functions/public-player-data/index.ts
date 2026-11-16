@@ -382,6 +382,10 @@ Deno.serve(async (req) => {
         musicData: musicResult?.musicData || null,
         musicStartTime: musicResult?.musicStartTime || null,
         musicDeezerArtistImg: musicResult?.deezerArtistImg || deezerArtistImgFromDash || null,
+        // Public branding preferences are safe to expose with the station's
+        // public player payload; the backing user_settings row remains private.
+        playerColors: dashboardItems?.player_colors || null,
+        playerBgConfigs: dashboardItems?.player_bg_configs || null,
         currentProgram: currentProgram || null,
         currentPresenter: currentPresenter ? { id: currentPresenter.id, nome: currentPresenter.nome, foto: currentPresenter.foto } : null,
       }),

@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { playerSupabase } from "@/integrations/supabase/playerClient";
 import { Play, Film, Calendar, Clock, Plus, Minus, ArrowLeft } from "lucide-react";
 import { PlayerBackButton } from "./PlayerBackButton";
 import backArrowImg from "@/assets/back-arrow.png";
@@ -193,7 +193,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
   // Fetch channels for this catalog group
   useEffect(() => {
     const fetchChannels = async () => {
-      const { data } = await supabase
+      const { data } = await playerSupabase
         .from("streaming_channels")
         .select("id, name, cover_url, logo_url, background_url, type, url, catalog_name, classificacao_etaria, horario_inicio, horario_fim, descricao, is_hd, is_stereo")
         .eq("type", "catalog")
@@ -236,7 +236,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
         if (playlistId) {
           // Fetch from YouTube playlist
           try {
-            const { data, error } = await supabase.functions.invoke("youtube-playlist", { body: { playlistId } });
+            const { data, error } = await playerSupabase.functions.invoke("youtube-playlist", { body: { playlistId } });
             if (!error && data?.videos) {
               allVideos.push(...data.videos);
             }

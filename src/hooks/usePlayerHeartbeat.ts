@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { playerSupabase } from "@/integrations/supabase/playerClient";
 
 const SESSION_KEY = "nexo_player_session_id";
 const HEARTBEAT_MS = 20 * 1000; // 20s
@@ -37,7 +37,7 @@ export function usePlayerHeartbeat(userId?: string | null) {
       if (typeof document !== "undefined" && document.hidden) return;
       if (skipCycles > 0) { skipCycles -= 1; return; }
       try {
-        const { error } = await supabase.functions.invoke("player-heartbeat", {
+        const { error } = await playerSupabase.functions.invoke("player-heartbeat", {
           body: { userId, sessionId },
         });
         if (error) throw error;

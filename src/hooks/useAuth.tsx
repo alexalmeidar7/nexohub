@@ -11,7 +11,6 @@ const EXPLICIT_LOGOUT_KEY = "nexohub_explicit_logout";
 function hasExplicitSignOut() {
   try {
     return (
-      new URLSearchParams(window.location.search).get("signed_out") === "1" ||
       localStorage.getItem(SIGNED_OUT_FLAG) === "true" ||
       sessionStorage.getItem(SIGNED_OUT_FLAG) === "true" ||
       localStorage.getItem(EXPLICIT_LOGOUT_KEY) === "true"
@@ -95,6 +94,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+
+    // Player and dashboard have separate auth clients. Do not initialize the
+    // dashboard auth listener, restore its session, or run its logout cleanup
+    // anywhere in Player routes (including its Google OAuth callback popup).
+    const isPlayerRoute = typeof window !== "undefined" && (
+      /^\/(?:[^/]+\/)?player(?:\/|$)/.test(window.location.pathname) ||
+      window.location.pathname.endsWith("/auth/popup-callback")
+    );
+    if (isPlayerRoute) {
+      lastGoodSessionRef.current = null;
+      setUser(null);
+      setSession(null);
+      setRole(null);
+      finishLoading();
+      return () => { mounted = false; };
+    }
 
     // Se o usuário saiu explicitamente, não restauramos nada até um novo login.
     let signedOutIntentionally = hasExplicitSignOut();

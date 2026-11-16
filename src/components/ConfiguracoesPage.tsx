@@ -9,6 +9,7 @@ import {
   Download, Film, Music, Power
 } from "lucide-react";
 import { Suspense } from "react";
+import PlayerDominantColorField from "./PlayerDominantColorField";
 import { lazyRetry } from "@/lib/lazyRetry";
 const LayoutCustomizer = lazyRetry(() => import("./LayoutCustomizer"));
 const PlayerLayoutCustomizer = lazyRetry(() => import("./PlayerLayoutCustomizer"));
@@ -2077,9 +2078,12 @@ export default function ConfiguracoesPage({
               <p className="text-xs text-slate-500 font-medium">Gerencie canais ao vivo e catálogos de streaming</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-3">
+            <PlayerDominantColorField userId={targetUid || null} />
+            <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Player Config</span>
+            </div>
           </div>
         </section>
         <div className="space-y-6">

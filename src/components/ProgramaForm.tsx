@@ -1755,7 +1755,7 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
     const isSafe = isSafeImageUrl(img);
     return (
       <label
-        className="group relative flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all duration-200 rounded-2xl border-2 border-dashed border-slate-200 hover:border-[#0055ff] hover:bg-blue-50/20 bg-slate-50/80 shadow-xs"
+        className="group relative flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all duration-200 rounded-2xl border-2 border-dashed border-[#475569] bg-[#272b32] shadow-xs hover:border-[#64748b] hover:bg-[#303640]"
         style={{
           width: w,
           height: h,
@@ -1777,9 +1777,9 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
             </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center gap-1 p-1 text-slate-400 group-hover:text-[#0055ff] transition-colors">
-            <Upload size={15} className="text-slate-400 group-hover:text-[#0055ff] transition-colors" />
-            <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-500 group-hover:text-[#0055ff] transition-colors">
+          <div className="flex flex-col items-center justify-center gap-1 p-1 text-white group-hover:text-white transition-colors">
+            <Upload size={15} className="text-white transition-colors" />
+            <span className="text-[9px] font-extrabold uppercase tracking-wider text-white group-hover:text-white transition-colors">
               {labelName}
             </span>
           </div>

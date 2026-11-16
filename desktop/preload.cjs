@@ -4,6 +4,12 @@ contextBridge.exposeInMainWorld("houseMixDesktop", Object.freeze({
   isDesktop: true,
   platform: process.platform,
   version: process.env.npm_package_version || "0.0.0",
+  openExternal: (url) => ipcRenderer.invoke("housemix:open-external", url),
+  onPlayerOAuthCallback: (callback) => {
+    const listener = (_event, url) => callback(url);
+    ipcRenderer.on("housemix:player-oauth-callback", listener);
+    return () => ipcRenderer.removeListener("housemix:player-oauth-callback", listener);
+  },
   getAppVersion: () => ipcRenderer.invoke("housemix:app-version"),
   getStartWithWindows: () => ipcRenderer.invoke("housemix:get-start-with-windows"),
   setStartWithWindows: (enabled) => ipcRenderer.invoke("housemix:set-start-with-windows", enabled),

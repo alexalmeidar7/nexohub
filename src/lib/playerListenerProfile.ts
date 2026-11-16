@@ -1,5 +1,5 @@
 import type { User } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { playerSupabase } from "@/integrations/supabase/playerClient";
 
 export const PLAYER_DEFAULT_AVATAR = "/avatars/usr-default.png";
 
@@ -40,7 +40,7 @@ export async function fetchPlayerListenerProfile(
   const fallback = getGoogleProfileFallback(authUser, fallbackName);
   if (!authUser?.id || !radioUserId) return fallback;
 
-  const { data } = await supabase
+  const { data } = await playerSupabase
     .from("player_listener_profiles")
     .select("nome, email, cidade, estado, whatsapp, sexo, cpf, setor, data_nascimento, avatar_url, sub_profiles")
     .eq("auth_user_id", authUser.id)
@@ -48,7 +48,7 @@ export async function fetchPlayerListenerProfile(
     .maybeSingle();
 
   if (!data && authUser.id === radioUserId) {
-    const { data: ownerProfile } = await supabase
+    const { data: ownerProfile } = await playerSupabase
       .from("profiles")
       .select("nome, email, cidade, estado, whatsapp, sexo, cpf, setor, data_nascimento, avatar_url, sub_profiles")
       .eq("user_id", authUser.id)
@@ -93,7 +93,7 @@ export async function upsertPlayerListenerProfile(
   patch: Partial<PlayerListenerProfile>,
   origem: "player_site" | "app" = "player_site",
 ) {
-  const result = await supabase.from("player_listener_profiles").upsert({
+  const result = await playerSupabase.from("player_listener_profiles").upsert({
     auth_user_id: authUserId,
     radio_user_id: radioUserId,
     ...patch,

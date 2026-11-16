@@ -1,14 +1,12 @@
 import { DateInput } from "@/components/ui/date-input";
 import { useState, useEffect, useRef } from "react";
-import { clearSignOutFlag } from "@/hooks/useAuth";
-import { UserCircle, Pencil, LogIn, Star, Plus } from "lucide-react";
+import { Pencil, Star, Plus } from "lucide-react";
 
-import { useAuth } from "@/hooks/useAuth";
+import { usePlayerAuth } from "@/hooks/usePlayerAuth";
 import { useGlobalMusicSync } from "@/hooks/useGlobalMusicSync";
-import { supabase } from "@/integrations/supabase/client";
+import { playerSupabase } from "@/integrations/supabase/playerClient";
 import { getMusicData } from "@/lib/musicData";
 import { MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
-import { getCurrentReturnPath, getManagedOAuthRedirectUri, setOAuthReturnPath } from "@/lib/oauthReturn";
 import { fetchArtistImageCached, getArtistImageSync } from "@/lib/artistImageCache";
 import { emitProfileChanged } from "@/lib/profileSync";
 import {
@@ -24,6 +22,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { fetchPlayerListenerProfile, upsertPlayerListenerProfile } from "@/lib/playerListenerProfile";
 import { playerSignOut } from "@/lib/playerSignOut";
+import { startPlayerGoogleLogin } from "@/lib/playerGoogleLogin";
+import { markPlayerSession } from "@/lib/playerSession";
+import PlayerBrandCorner from "@/components/player/PlayerBrandCorner";
 import { ANIVERSARIOS_CIDADES } from "@/data/aniversariosCidades";
 
 
@@ -58,8 +59,10 @@ interface WelcomeScreenProps {
   backgroundUrl?: string | null;
   channelName?: string;
   logoUrl?: string | null;
+  avatarAccent?: string;
   onContinue: () => void;
   onLoginSuccess?: () => void;
+  onSignedOut?: () => void;
   initialEditOpen?: boolean;
   userSlug?: string | null;
   publicUserId?: string | null;
@@ -75,19 +78,21 @@ export default function WelcomeScreen({
   backgroundUrl,
   channelName,
   logoUrl,
+  avatarAccent = "#e00012",
   onContinue,
   onLoginSuccess,
+  onSignedOut,
   initialEditOpen = false,
   userSlug = null,
   publicUserId = null,
   guestMode = false,
 }: WelcomeScreenProps) {
 
-  const { user, signOut } = useAuth();
+  const { user } = usePlayerAuth();
   const radioUserId = publicUserId || user?.id || null;
   // Mantém a sincronização da "música no ar" ativa também na tela de boas-vindas,
   // para que a imagem do artista (Deezer) apareça sem depender do PlayerHome.
-  useGlobalMusicSync();
+  useGlobalMusicSync(undefined, true, true);
   const [editOpen, setEditOpen] = useState(initialEditOpen);
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
   const [addProfileOpen, setAddProfileOpen] = useState(false);
@@ -142,7 +147,7 @@ export default function WelcomeScreen({
 
     (async () => {
       try {
-        const { data } = await supabase.functions.invoke("check-listener-registration", {
+        const { data } = await playerSupabase.functions.invoke("check-listener-registration", {
           body: { email: user.email, radio_user_id: radioUserId },
         });
         if ((data as any)?.exists) {
@@ -178,28 +183,6 @@ export default function WelcomeScreen({
   const [signingIn, setSigningIn] = useState(false);
   const [interacted, setInteracted] = useState(false);
   const interactedRef = useRef(false);
-  const [points, setPoints] = useState(0);
-  const [displayedPoints, setDisplayedPoints] = useState(0);
-
-  // Count-up animation for points
-  useEffect(() => {
-    if (points <= 0) { setDisplayedPoints(0); return; }
-    const duration = 1200;
-    const start = performance.now();
-    const from = 0;
-    const to = points;
-    let raf = 0;
-    const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / duration);
-      // easeOutCubic
-      const eased = 1 - Math.pow(1 - t, 3);
-      setDisplayedPoints(Math.round(from + (to - from) * eased));
-      if (t < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [points]);
-
   // Spatial keyboard navigation (arrows) + Enter/Space to activate
   useEffect(() => {
     const getNodes = () =>
@@ -450,7 +433,7 @@ export default function WelcomeScreen({
       // Dados do CADASTRO DE OUVINTE (fonte oficial) via função pública
       let listener: any = null;
       try {
-        const { data: res } = await supabase.functions.invoke("check-listener-registration", {
+        const { data: res } = await playerSupabase.functions.invoke("check-listener-registration", {
           body: { email: user.email, radio_user_id: radioUserId },
         });
         if ((res as any)?.exists) listener = (res as any).listener;
@@ -470,12 +453,6 @@ export default function WelcomeScreen({
           ? (googlePhoto || d.avatar_url || "/avatars/usr-default.png")
           : d.avatar_url,
       });
-      // Pontuação oficial do cadastro de ouvinte + bônus de curtidas
-      const base = Number(listener?.pontuacao) || 0;
-      const { count } = await supabase.from("music_likes").select("id", { count: "exact", head: true })
-        .eq("user_id", user.id)
-        .eq("radio_user_id", radioUserId);
-      setPoints(base + ((count ?? 0) as number) * 4);
     });
 
   }, [user, userName, radioUserId]);
@@ -484,7 +461,7 @@ export default function WelcomeScreen({
   // === Background sequence: delayed reveal + intercalated artist image ===
   const [bgVisible, setBgVisible] = useState(false);
   const [artistImg, setArtistImg] = useState<string | null>(null);
-  const [nowPlaying, setNowPlaying] = useState<{ titulo: string; artista: string } | null>(null);
+  const [nowPlaying, setNowPlaying] = useState<{ titulo: string; artista: string; capa?: string } | null>(null);
   const [showArtistBg, setShowArtistBg] = useState(false);
   const artistImgCacheRef = useRef<Record<string, string>>({});
   const lastArtistRef = useRef<string | null>(null);
@@ -532,23 +509,23 @@ export default function WelcomeScreen({
       setShowArtistBg(true);
     };
 
-    const readCurrent = async (): Promise<{ titulo: string; artista: string } | null> => {
+    const readCurrent = async (): Promise<{ titulo: string; artista: string; capa?: string } | null> => {
       // Prefer public endpoint whenever we're on a tenant slug — the auth
       // user's local music data may belong to a different tenant.
       if (hasSlug) {
         try {
-          const { data } = await supabase.functions.invoke("public-player-data", {
+          const { data } = await playerSupabase.functions.invoke("public-player-data", {
             body: { slug: userSlug, section: "now_playing" },
           });
           if (data?.artista || data?.musica) {
-            return { titulo: String(data.musica || ""), artista: String(data.artista || "") };
+            return { titulo: String(data.musica || ""), artista: String(data.artista || ""), capa: String(data.capa || data.capa_url || "") };
           }
         } catch {}
         return null;
       }
       if (user?.id) {
         const d = getMusicData(user.id);
-        if (d?.music) return { titulo: d.music.titulo, artista: d.music.artista };
+        if (d?.music) return { titulo: d.music.titulo, artista: d.music.artista, capa: d.music.capa };
       }
       return null;
     };
@@ -563,7 +540,7 @@ export default function WelcomeScreen({
         }
         return;
       }
-      const { titulo, artista } = cur;
+      const { titulo, artista, capa } = cur;
       const isBreak = ["break", "vinhetas", "hora certa", "desconhecido"].includes((artista || "").toLowerCase());
       if (!artista || isBreak) {
         if (!cancelled) {
@@ -578,7 +555,7 @@ export default function WelcomeScreen({
       if (!cancelled) {
         setNowPlaying((prev) => {
           if (prev && prev.titulo === titulo && prev.artista === artista) return prev;
-          return { titulo, artista };
+          return { titulo, artista, capa };
         });
       }
       if (sameArtist) return;
@@ -593,13 +570,19 @@ export default function WelcomeScreen({
   }, [user?.id, userSlug, publicUserId]);
 
 
-  // Alternate channel bg <-> artist bg every 5s (only when artist image available)
+  // Alternate the artist image for 10s with the configured gradient for 7s.
   useEffect(() => {
-    if (alternateTimerRef.current) { clearInterval(alternateTimerRef.current); alternateTimerRef.current = null; }
+    if (alternateTimerRef.current) { clearTimeout(alternateTimerRef.current); alternateTimerRef.current = null; }
     if (!artistImg) { setShowArtistBg(false); return; }
-    alternateTimerRef.current = window.setInterval(() => setShowArtistBg((v) => !v), 5000);
+    let showArtist = true;
+    const cycle = () => {
+      setShowArtistBg(showArtist);
+      alternateTimerRef.current = window.setTimeout(cycle, showArtist ? 10000 : 7000);
+      showArtist = !showArtist;
+    };
+    cycle();
     return () => {
-      if (alternateTimerRef.current) { clearInterval(alternateTimerRef.current); alternateTimerRef.current = null; }
+      if (alternateTimerRef.current) { clearTimeout(alternateTimerRef.current); alternateTimerRef.current = null; }
     };
   }, [artistImg]);
 
@@ -680,7 +663,7 @@ export default function WelcomeScreen({
     // Atualiza a pontuação conforme as REGRAS DE PONTUAÇÃO do cadastro de ouvinte
     let novaPontuacao: number | null = null;
     try {
-      const { data: res } = await supabase.functions.invoke("sync-listener-points", {
+      const { data: res } = await playerSupabase.functions.invoke("sync-listener-points", {
         body: {
           radio_user_id: radioUserId || user.id,
           profile: {
@@ -693,7 +676,6 @@ export default function WelcomeScreen({
       });
       if ((res as any)?.ok && typeof (res as any).pontuacao === "number") {
         novaPontuacao = (res as any).pontuacao as number;
-        setPoints(novaPontuacao);
       }
     } catch { /* ignore */ }
 
@@ -716,11 +698,11 @@ export default function WelcomeScreen({
     setLoggingOut(true);
     try {
       // Player é um sistema à parte: deslogar SEM redirecionar para o /admin.
-      // Usa o signOut do contexto (marca manualSignOutRef para o listener não
-      // restaurar a sessão do backup) e permanece nesta tela de boas-vindas.
-      await playerSignOut(signOut);
+      // Encerra somente a sessão do Player; a autenticação do House Mix fica separada.
+      await playerSignOut();
       setAuthMode(null);
       setAuthError(null);
+      onSignedOut?.();
     } catch (e) {
       toast.error("Não foi possível sair. Tente novamente.");
     } finally {
@@ -730,16 +712,10 @@ export default function WelcomeScreen({
   };
 
 
-  // Watchdog para o fluxo do Google (timeout + retorno sem sessão)
-  const authWatchdogRef = useRef<{ timer?: number; onVis?: () => void; onFocus?: () => void }>({});
-  const signingInRef = useRef(false);
-  useEffect(() => { signingInRef.current = signingIn; }, [signingIn]);
-
+  const authWatchdogRef = useRef<number | undefined>(undefined);
   const clearAuthWatchdog = () => {
-    const w = authWatchdogRef.current;
-    if (w.timer) { clearTimeout(w.timer); w.timer = undefined; }
-    if (w.onVis) { document.removeEventListener("visibilitychange", w.onVis); w.onVis = undefined; }
-    if (w.onFocus) { window.removeEventListener("focus", w.onFocus); w.onFocus = undefined; }
+    if (authWatchdogRef.current) window.clearTimeout(authWatchdogRef.current);
+    authWatchdogRef.current = undefined;
   };
   const resetAuthUI = (msg?: string) => {
     clearAuthWatchdog();
@@ -752,62 +728,20 @@ export default function WelcomeScreen({
     clearAuthWatchdog();
     setSigningIn(true);
     setAuthError(null);
-
-    // Timeout de segurança: se não concluir em 90s, reabilita a UI
-    authWatchdogRef.current.timer = window.setTimeout(() => {
-      if (signingInRef.current) {
-        resetAuthUI("tempo esgotado ao conectar com o google. tente novamente.");
-        toast.error("Tempo esgotado no login Google");
-      }
-    }, 90_000) as unknown as number;
-
-
-    // Se o usuário fechar o popup / voltar para a aba sem sessão, libera a UI
-    const checkReturned = () => {
-      setTimeout(async () => {
-        if (!signingInRef.current) return;
-        try {
-          const { data } = await supabase.auth.getSession();
-          if (!data?.session && signingInRef.current) {
-            resetAuthUI("login cancelado ou não concluído. tente novamente.");
-          }
-        } catch {
-          if (signingInRef.current) resetAuthUI("falha ao verificar sessão. tente novamente.");
-        }
-      }, 1500);
-    };
-    const onVis = () => { if (document.visibilityState === "visible") checkReturned(); };
-    const onFocus = () => checkReturned();
-    authWatchdogRef.current.onVis = onVis;
-    authWatchdogRef.current.onFocus = onFocus;
-    document.addEventListener("visibilitychange", onVis);
-    window.addEventListener("focus", onFocus);
-
+    authWatchdogRef.current = window.setTimeout(() => {
+      resetAuthUI("tempo esgotado ao conectar com o google. tente novamente.");
+      toast.error("Tempo esgotado no login Google");
+    }, 120_000);
     try {
       try { sessionStorage.setItem("nexohub_player_signup_check", "1"); } catch { /* ignore */ }
-      setOAuthReturnPath(getCurrentReturnPath());
-
-      clearSignOutFlag();
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: getManagedOAuthRedirectUri(), queryParams: { prompt: "select_account" } },
-      });
-      if (error) {
-        const msg = error.message || "não foi possível conectar com o google. tente novamente.";
-        resetAuthUI(msg);
-        toast.error("Falha ao entrar com Google");
-        return;
-      }
-      if (data?.url) return; // navegação em curso; watchdog cuida do retorno
+      const userId = await startPlayerGoogleLogin();
+      markPlayerSession(userId);
       clearAuthWatchdog();
       setSigningIn(false);
       setAuthMode(null);
-      // Não avança para a home: o usuário fica na tela de perfis do player,
-      // onde o aviso de cadastro existente é exibido quando for o caso.
-
+      onLoginSuccess?.();
     } catch (e: any) {
-      const msg = e?.message || "erro inesperado ao conectar com o google.";
-      resetAuthUI(msg);
+      resetAuthUI(e?.message || "erro inesperado ao conectar com o google.");
       toast.error("Falha ao entrar com Google");
     }
   };
@@ -820,133 +754,80 @@ export default function WelcomeScreen({
       {/* Background: channel thumb intercalated with artist image (Ken Burns) */}
       <style>{`
         @keyframes ws-kenburns {
-          0%   { transform: scale(1.05) translateX(0%); }
-          100% { transform: scale(1.22) translateX(-6%); }
+          0%   { transform: scale(1.06) translate3d(-1.2%, 0, 0); }
+          100% { transform: scale(1.14) translate3d(1.2%, 0, 0); }
         }
-        .ws-kenburns { animation: ws-kenburns 30s ease-in-out infinite alternate; will-change: transform; }
+        .ws-kenburns { animation: ws-kenburns 36s ease-in-out infinite alternate; transform-origin: center top; will-change: transform; }
         .ws-bg-layer { transition: opacity 1.6s ease-in-out; }
       `}</style>
       <div className="absolute inset-0">
-        {backgroundUrl ? (
-          <>
-            {/* Channel thumb layer */}
-            <img
-              src={backgroundUrl}
-              alt=""
-              className={`ws-kenburns ws-bg-layer absolute inset-0 w-full h-full object-cover`}
-              style={{
-                filter: "brightness(0.55) saturate(1.05)",
-                opacity: bgVisible && !showArtistBg ? 1 : 0,
-              }}
-              draggable={false}
-            />
-            {/* Artist image layer */}
-            {artistImg && (
-              <img
-                src={artistImg}
-                alt=""
-                className={`ws-kenburns ws-bg-layer absolute inset-0 w-full h-full object-cover`}
-                style={{
-                  filter: "brightness(0.5) saturate(1.1) grayscale(0.15)",
-                  opacity: bgVisible && showArtistBg ? 1 : 0,
-                  animationDirection: "alternate-reverse",
-                }}
-                draggable={false}
-              />
-            )}
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.15) 30%, rgba(0,0,0,0.55) 75%, rgba(0,0,0,0.9) 100%)",
-              }}
-            />
-          </>
-        ) : (
-          <div
-            className="absolute inset-0"
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `linear-gradient(135deg, #171717 0%, #242424 24%, color-mix(in srgb, ${avatarAccent} 68%, #252525) 68%, ${avatarAccent} 100%)`,
+          }}
+        />
+        {artistImg && (
+          <img
+            src={artistImg}
+            alt=""
+            className="ws-kenburns ws-bg-layer absolute inset-0 w-full h-full object-cover"
             style={{
-              background:
-                "radial-gradient(120% 80% at 30% 20%, #1e2430 0%, #131519 55%, #08090b 100%)",
+              objectPosition: "center -200px",
+              filter: "brightness(0.5) saturate(1.1) grayscale(0.15)",
+              opacity: bgVisible && showArtistBg ? 1 : 0,
+              animationDirection: "alternate-reverse",
             }}
+            draggable={false}
           />
         )}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: "linear-gradient(180deg, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.12) 30%, rgba(0,0,0,0.5) 75%, rgba(0,0,0,0.84) 100%)",
+          }}
+        />
       </div>
 
-      {/* Bottom-left: now-playing overlay (visible while artist bg is showing) */}
+      {/* Bottom-left: now-playing overlay, independent of the rotating background */}
       {nowPlaying && (
-        <div
-          className="absolute bottom-8 left-8 z-20 ws-bg-layer"
-          style={{ opacity: showArtistBg && artistImg ? 1 : 0 }}
-        >
-          <div className="text-[11px] uppercase tracking-[0.28em] text-white/60 mb-1">
-            tocando agora
-          </div>
-          <div className="text-white text-lg font-medium leading-tight max-w-[520px] truncate">
-            {nowPlaying.titulo}
-          </div>
-          <div className="text-white/70 text-sm leading-tight max-w-[520px] truncate">
-            {nowPlaying.artista}
+        <div className="absolute bottom-24 sm:bottom-28 left-6 sm:left-[6vw] z-20 flex items-center gap-4 max-w-[min(520px,85vw)]">
+          {nowPlaying.capa && <img src={nowPlaying.capa} alt="Capa da música" className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl object-cover shadow-xl" draggable={false} />}
+          <div className="min-w-0">
+            <div className="text-xl sm:text-[28px] leading-tight text-white/90 mb-1">tocando agora:</div>
+            <div className="text-white text-lg sm:text-[28px] font-medium leading-tight truncate">{nowPlaying.titulo}</div>
+            <div className="text-white/80 text-base sm:text-[24px] leading-tight truncate">{nowPlaying.artista}</div>
           </div>
         </div>
       )}
 
 
-      {/* Top-right: Google identity pill */}
-      {user && (() => {
-        const meta: any = (user as any).user_metadata || {};
-        const googleName = meta.full_name || meta.name || displayName;
-        const googlePic = meta.avatar_url || meta.picture || displayAvatar;
-        return (
-          <div className="absolute top-10 sm:top-14 right-8 sm:right-14 z-20 animate-fade-in">
-            <div
-              className="flex items-center gap-3 pl-2 pr-4 py-2 rounded-full"
-              style={{
-                background: "rgba(0,0,0,0.35)",
-                border: "1px solid rgba(255,255,255,0.14)",
-                backdropFilter: "blur(14px)",
-                boxShadow: "0 8px 30px rgba(0,0,0,0.35)",
-              }}
-            >
-              <img
-                src={googlePic}
-                alt={googleName}
-                referrerPolicy="no-referrer"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).src = displayAvatar; }}
-                className="w-8 h-8 rounded-full object-cover"
-                style={{ border: "1px solid rgba(255,255,255,0.2)" }}
-                draggable={false}
-              />
-              <div className="flex flex-col leading-tight">
-                <span className="text-[13px] font-medium text-white">{googleName}</span>
-                {user.email && (
-                  <span className="text-[10px] text-white/55">{user.email}</span>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-      })()}
+      {/* Brand marks frame the welcome screen; background remains the live player artwork. */}
+      <PlayerBrandCorner radioUserId={radioUserId} logoUrl={logoUrl} logoAlt={channelName || "Logo da empresa"} className="absolute right-[4.5vw] top-[3vh] z-20" />
+      <div className="absolute bottom-5 left-6 sm:left-[6vw] z-20">
+        <img src="/images/player-seal.png" alt="Nexo OTT Player" className="w-16 sm:w-20 h-auto object-contain opacity-50" draggable={false} />
+      </div>
+      <div className="absolute bottom-6 right-6 sm:right-12 z-20 text-[10px] sm:text-xs text-white/90 opacity-50 drop-shadow-lg">desenvolvido por : Nexo Brasil</div>
 
       {/* Welcome layout — left when logged in, centered for guests */}
       <div
-        className={`absolute inset-0 z-10 flex flex-col ${user ? "justify-start px-8 sm:px-14 pt-10 sm:pt-14 items-start" : "justify-center items-center px-6 sm:px-10"} animate-fade-in`}
+        className={`absolute inset-0 z-10 flex flex-col ${user ? "justify-start px-[6vw] pt-[54px] sm:pt-[70px] items-start" : "justify-center items-center px-6 sm:px-10"} animate-fade-in`}
       >
         {/* Heading */}
         <h1
-          className="font-semibold leading-tight lowercase"
+          className={`font-semibold leading-tight ${user ? "" : "lowercase"}`}
           style={{
-            fontSize: "clamp(22px, 2.4vw, 34px)",
+            fontSize: user ? "clamp(18px, 1.6vw, 24px)" : "clamp(22px, 2.4vw, 34px)",
             letterSpacing: "-0.01em",
             textShadow: "0 2px 20px rgba(0,0,0,0.55)",
             textAlign: user ? "left" : "center",
           }}
         >
-          {user ? "tela de perfis" : "bem vindo"}
+          {user ? "BEM VINDO!" : "bem vindo"}
         </h1>
 
         {/* Avatar + info row (or centered login buttons for guests) */}
-        <div className={`mt-8 sm:mt-10 flex ${user ? "items-start gap-5" : "items-center justify-center w-full"}`}>
+        <div className={`mt-4 sm:mt-5 flex ${user ? "items-start gap-5" : "items-center justify-center w-full"}`}>
 
           {user ? (
             <>
@@ -954,54 +835,27 @@ export default function WelcomeScreen({
                 <div className="flex items-center gap-4 shrink-0">
                   <button
                     onClick={() => { cancelAutoAdvance(); onContinue(); }}
-                    className="group relative shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded-[28px]"
+                    className="group relative shrink-0 outline-none rounded-full after:pointer-events-none after:absolute after:-inset-[6px] after:rounded-full after:border-2 after:border-white after:opacity-0 after:transition-opacity hover:after:opacity-100 focus-visible:after:opacity-100"
                     aria-label="Entrar no player"
                     data-ws-focusable="true"
                     data-ws-profile-main="true"
                   >
                     <div
-                      className="relative rounded-[28px] overflow-hidden transition-all duration-500 ease-out group-hover:scale-[1.04]"
+                      className="relative rounded-full overflow-hidden transition-all duration-300 ease-out"
                       style={{
-                        width: "clamp(110px, 11vw, 150px)",
-                        height: "clamp(110px, 11vw, 150px)",
-                        border: "1px solid rgba(255,255,255,0.14)",
+                        width: "clamp(90px, 9vw, 114px)",
+                        height: "clamp(90px, 9vw, 114px)",
+                        background: `linear-gradient(145deg, color-mix(in srgb, ${avatarAccent} 55%, #ff1838), color-mix(in srgb, ${avatarAccent} 35%, #c9001b))`,
                         boxShadow: "0 18px 50px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.18)",
                       }}
                     >
-                      {prevBgColors && (
-                        <div
-                          className="absolute inset-0 pointer-events-none"
-                          style={{ background: `linear-gradient(145deg, ${prevBgColors[0]}, ${prevBgColors[1]})` }}
-                        />
-                      )}
-                      <div
-                        className="absolute inset-0 pointer-events-none"
-                        style={{
-                          background: `linear-gradient(145deg, ${bgColors[0]}, ${bgColors[1]})`,
-                          opacity: prevBgColors ? (fadeIn ? 1 : 0) : 1,
-                          transition: "opacity 1400ms cubic-bezier(0.4, 0, 0.2, 1)",
-                        }}
-                      />
                       <img
                         key={displayAvatar}
                         src={displayAvatar}
                         alt={displayName}
-                        className="relative w-full h-full object-cover animate-avatar-in"
+                        className="relative w-full h-full rounded-full object-cover animate-avatar-in"
                         draggable={false}
                       />
-                      <span
-                        onClick={(e) => { e.stopPropagation(); cancelAutoAdvance(); setEditOpen(true); }}
-                        className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                        style={{
-                          background: "rgba(0,0,0,0.35)",
-                          border: "1px solid rgba(255,255,255,0.12)",
-                          backdropFilter: "blur(6px)",
-                        }}
-                        aria-label="Editar perfil"
-                        role="button"
-                      >
-                        <Pencil className="w-3 h-3 text-white/75" strokeWidth={1.5} />
-                      </span>
                     </div>
                   </button>
 
@@ -1009,52 +863,38 @@ export default function WelcomeScreen({
                     <div
                       className="text-white font-semibold leading-tight truncate"
                       style={{
-                        fontSize: "clamp(20px, 1.9vw, 28px)",
+                        fontSize: "clamp(26px, 2.4vw, 38px)",
                         textShadow: "0 2px 20px rgba(0,0,0,0.55)",
                         maxWidth: "clamp(140px, 16vw, 240px)",
                       }}
                     >
                       {displayName}
                     </div>
-                    <div className="flex items-center gap-2 text-white/85">
-                      <div className="flex items-center gap-0.5">
-                        {Array.from({ length: 5 }).map((_, i) => {
-                          const rating = Math.min(5, Math.max(0, Math.round((points / 100) * 2) / 2));
-                          const filled = i < Math.floor(rating);
-                          const half = !filled && i < rating;
-                          return (
-                            <Star
-                              key={i}
-                              size={13}
-                              fill={filled ? "#ffffff" : half ? "url(#half-star)" : "transparent"}
-                              className="ws-star-pop"
-                              style={{
-                                color: filled || half ? "#ffffff" : "rgba(255,255,255,0.35)",
-                                animationDelay: `${i * 120}ms`,
-                              }}
-                            />
-                          );
-                        })}
-                      </div>
-                      <span className="text-xs text-white/70 tabular-nums">{displayedPoints} pts</span>
+                    <div className="mt-1 flex items-center gap-2">
+                      <button
+                        onClick={() => { cancelAutoAdvance(); setEditOpen(true); }}
+                        data-ws-focusable="true"
+                        className="text-sm lowercase px-2.5 py-1 rounded-md transition-colors"
+                        style={{ background: "rgba(0,0,0,0.38)", border: "1px solid rgba(255,255,255,0.12)" }}
+                      >editar perfil <Pencil className="inline w-3 h-3 ml-1" /></button>
+                      <button
+                        onClick={() => { cancelAutoAdvance(); setLogoutConfirmOpen(true); }}
+                        data-ws-focusable="true"
+                        disabled={loggingOut}
+                        aria-busy={loggingOut}
+                        className="self-start text-sm lowercase px-2.5 py-1 rounded-md transition-colors inline-flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+                        style={{
+                          background: "rgba(255,255,255,0.10)",
+                          border: "1px solid rgba(255,255,255,0.16)",
+                          backdropFilter: "blur(8px)",
+                        }}
+                      >
+                        {loggingOut && (
+                          <span className="inline-block w-3 h-3 rounded-full border-2 border-white/25 border-t-white animate-spin" aria-hidden />
+                        )}
+                        {loggingOut ? "saindo..." : "sair"}
+                      </button>
                     </div>
-                    <button
-                      onClick={() => { cancelAutoAdvance(); setLogoutConfirmOpen(true); }}
-                      data-ws-focusable="true"
-                      disabled={loggingOut}
-                      aria-busy={loggingOut}
-                      className="mt-1 self-start text-[11px] lowercase px-3 py-1 rounded-full transition-colors inline-flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
-                      style={{
-                        background: "rgba(255,255,255,0.10)",
-                        border: "1px solid rgba(255,255,255,0.16)",
-                        backdropFilter: "blur(8px)",
-                      }}
-                    >
-                      {loggingOut && (
-                        <span className="inline-block w-3 h-3 rounded-full border-2 border-white/25 border-t-white animate-spin" aria-hidden />
-                      )}
-                      {loggingOut ? "saindo..." : "sair"}
-                    </button>
                   </div>
                 </div>
 
@@ -1182,29 +1022,18 @@ export default function WelcomeScreen({
                   onClick={() => { cancelAutoAdvance(); setAddProfileOpen(true); }}
                   data-ws-focusable="true"
                   aria-label="Adicionar novo perfil"
-                  className="group relative shrink-0 outline-none rounded-[28px] overflow-hidden flex items-center justify-center transition-all duration-500 ease-out hover:scale-[1.04]"
+                  className="group relative shrink-0 outline-none rounded-full overflow-visible flex items-center justify-center transition-all duration-300 ease-out after:pointer-events-none after:absolute after:-inset-[6px] after:rounded-full after:border-2 after:border-white after:opacity-0 after:transition-opacity hover:after:opacity-100 focus-visible:after:opacity-100"
                   style={{
-                    width: "clamp(110px, 11vw, 150px)",
-                    height: "clamp(110px, 11vw, 150px)",
-                    border: "1px dashed rgba(255,255,255,0.22)",
-                    boxShadow: "0 18px 50px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.10)",
+                    width: "clamp(90px, 9vw, 114px)",
+                    height: "clamp(90px, 9vw, 114px)",
+                    background: "rgba(255,255,255,0.10)",
+                    border: "1px solid rgba(255,255,255,0.24)",
+                    backdropFilter: "blur(18px)",
+                    WebkitBackdropFilter: "blur(18px)",
+                    boxShadow: "0 18px 50px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.18)",
                   }}
                   title="Adicionar novo perfil"
                 >
-                  {prevBgColors && (
-                    <div
-                      className="absolute inset-0 pointer-events-none"
-                      style={{ background: `linear-gradient(145deg, ${prevBgColors[1]}, ${prevBgColors[0]})` }}
-                    />
-                  )}
-                  <div
-                    className="absolute inset-0 pointer-events-none"
-                    style={{
-                      background: `linear-gradient(145deg, ${bgColors[1]}, ${bgColors[0]})`,
-                      opacity: prevBgColors ? (fadeIn ? 1 : 0) : 1,
-                      transition: "opacity 1400ms cubic-bezier(0.4, 0, 0.2, 1)",
-                    }}
-                  />
                   <Plus className="relative w-8 h-8 text-white/85 transition-transform duration-300 group-hover:rotate-90" strokeWidth={1.5} />
                 </button>
               </div>
@@ -1347,8 +1176,9 @@ export default function WelcomeScreen({
       {/* Logout Confirmation */}
       <Dialog open={logoutConfirmOpen} onOpenChange={(v) => { if (!loggingOut) setLogoutConfirmOpen(v); }}>
         <DialogContent
-          className="max-w-sm p-0"
-          style={{ backgroundColor: "#1f1f1f", border: "1px solid #323431", color: "#d9d9d9" }}
+          hideCloseButton
+          className="top-1/2 max-h-[90vh] -translate-y-1/2 max-w-sm p-0"
+          style={{ top: "50%", maxHeight: "90vh", backgroundColor: "#1f1f1f", border: "1px solid #323431", color: "#d9d9d9" }}
         >
           <div className="px-6 pt-6 pb-4">
             <DialogHeader>

@@ -1,7 +1,7 @@
 import { Heart, Mic, Plus, Instagram, MessageCircle, X, Music } from "lucide-react";
 import { Suspense, useState, useRef, useEffect, useCallback } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
-import { supabase } from "@/integrations/supabase/client";
+import { playerSupabase } from "@/integrations/supabase/playerClient";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { SpectrumStyle } from "@/components/AudioSpectrum";
 const AudioSpectrum = lazyRetry(() => import("@/components/AudioSpectrum"));
@@ -77,7 +77,7 @@ export default function AudioDualCard({
   useEffect(() => {
     if (!historyOpen || !userId) return;
     (async () => {
-      const { data } = await supabase
+      const { data } = await playerSupabase
         .from("musicas_tocadas")
         .select("id, horario, programa, artista, musica")
         .eq("user_id", userId)

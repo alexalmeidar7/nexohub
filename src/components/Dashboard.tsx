@@ -1551,10 +1551,12 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
             }>
               {/* CustomizableDashboard stays mounted so audio player keeps streaming while user navigates */}
               <div style={{ display: (currentPage === "dashboard" || isWindowMode) ? "block" : "none", height: (currentPage === "dashboard" || isWindowMode) ? "auto" : 0, overflow: (currentPage === "dashboard" || isWindowMode) ? "visible" : "hidden" }}>
-                {/* Both mounted so the player audio keeps streaming while user switches to Chatbot */}
-                <div style={{ display: displayedPill === "Chatbot" ? "block" : "none" }} className={displayedPill === "Chatbot" ? pillAnimClass : ""}>
-                  <ChatbotHome />
-                </div>
+                {/* Avoid keeping a second ChatbotHome mounted while its window owns the Realtime channel. */}
+                {displayedPill === "Chatbot" && currentPage !== "chatbot" && (isAdmin || !minimizedModules.includes("chatbot")) && (
+                  <div className={pillAnimClass}>
+                    <ChatbotHome />
+                  </div>
+                )}
                 <div style={{ display: displayedPill === "Chatbot" ? "none" : "block" }} className={displayedPill !== "Chatbot" ? pillAnimClass : ""}>
                   {isAdmin ? <AdminClientsDashboard onNavigate={setCurrentPage} /> : <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} isActive={currentPage === "dashboard" || isWindowMode} />}
                 </div>

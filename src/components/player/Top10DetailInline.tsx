@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { playerSupabase } from "@/integrations/supabase/playerClient";
+import { usePlayerAuth } from "@/hooks/usePlayerAuth";
 import { Play, Heart, Music, Loader2, ArrowLeft, RefreshCw } from "lucide-react";
 import { PlayerBackButton } from "./PlayerBackButton";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,7 +28,7 @@ interface AggregatedSong {
 }
 
 export default function Top10DetailInline({ avatarUrl, onBack, onPlayVideo, radioUserId }: Top10DetailInlineProps) {
-  const { user } = useAuth();
+  const { user } = usePlayerAuth();
   const [videos, setVideos] = useState<PlaylistVideo[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchProgress, setSearchProgress] = useState({ done: 0, total: 0 });
@@ -46,7 +46,7 @@ export default function Top10DetailInline({ avatarUrl, onBack, onPlayVideo, radi
       setSearchProgress({ done: 0, total: 0 });
 
       // 1) Fetch ALL likes for user (scoped by radio if provided) — rank by count
-      let likesQuery: any = supabase
+      let likesQuery: any = playerSupabase
         .from("music_likes")
         .select("titulo, artista, capa")
         .eq("user_id", user.id);
@@ -85,7 +85,7 @@ export default function Top10DetailInline({ avatarUrl, onBack, onPlayVideo, radi
       if (cancelled) return;
 
       // 2) Check YouTube cache
-      const { data: cached } = await supabase
+      const { data: cached } = await playerSupabase
         .from("music_likes_youtube_cache" as any)
         .select("artista, titulo, video_id, thumbnail")
         .eq("user_id", user.id);
@@ -138,7 +138,7 @@ export default function Top10DetailInline({ avatarUrl, onBack, onPlayVideo, radi
 
       // 3) Search uncached in YouTube
       try {
-        const { data, error: fnErr } = await supabase.functions.invoke("youtube-search", {
+        const { data, error: fnErr } = await playerSupabase.functions.invoke("youtube-search", {
           body: { queries: uncachedQueries },
         });
         if (cancelled) return;
@@ -172,7 +172,7 @@ export default function Top10DetailInline({ avatarUrl, onBack, onPlayVideo, radi
         }
 
         if (upserts.length > 0) {
-          supabase.from("music_likes_youtube_cache" as any)
+          playerSupabase.from("music_likes_youtube_cache" as any)
             .upsert(upserts, { onConflict: "user_id,artista,titulo" })
             .then(() => {});
         }

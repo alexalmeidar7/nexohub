@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
-import { useParams, useSearchParams } from "react-router-dom";
+import { usePlayerAuth } from "@/hooks/usePlayerAuth";
+import { playerSupabase } from "@/integrations/supabase/playerClient";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { usePageTitle, usePublicHead } from "@/hooks/usePageTitle";
 import { useLayoutColors } from "@/hooks/useLayoutColors";
 import { usePlayerColors } from "@/hooks/usePlayerColors";
@@ -14,6 +14,7 @@ import WelcomeScreen from "./WelcomeScreen";
 import PlayerHome from "./PlayerHome";
 import { resolveEffectiveOnAir } from "@/lib/onAirResolver";
 import { getStationLogoFallback } from "@/lib/playerBranding";
+import { clearPlayerSession, getPlayerSessionUserId } from "@/lib/playerSession";
 
 // Injects <link rel="preload" as="image"> for the LCP background so the
 // browser starts downloading the program cover in the highest-priority queue,
@@ -42,11 +43,16 @@ type Step = "login" | "splash" | "welcome" | "home";
 export default function PlayerHub() {
   usePageTitle("Player");
   useLayoutColors();
-  const { user, loading } = useAuth();
+  const { user: authUser, loading } = usePlayerAuth();
   const { userSlug } = useParams();
+  const navigate = useNavigate();
   usePublicHead(userSlug && userSlug !== ":userSlug" ? userSlug : null, "Player");
   const [searchParams, setSearchParams] = useSearchParams();
   const tvGuestMode = searchParams.get("tvGuest") === "1";
+  // A sessão Supabase do House Mix Online não autentica automaticamente o Player.
+  // O vínculo é criado somente pelo login Google iniciado dentro desta tela/aba.
+  const playerSessionUserId = getPlayerSessionUserId();
+  const user = !tvGuestMode && authUser?.id === playerSessionUserId ? authUser : null;
   // Persistência: `?step=home` sobrevive a login/reload via localStorage por slug.
   const storageKey = `player-step-home:${userSlug || "root"}`;
   const skipToHome =
@@ -68,6 +74,27 @@ export default function PlayerHub() {
     // Limpa a flag ao voltar para welcome via botão "trocar de perfil".
     // Isso é feito em onBackToAccess abaixo.
   }, [searchParams, setSearchParams, skipToHome, storageKey]);
+
+  // A preferência de voltar direto à home só vale enquanto houver uma sessão
+  // web ativa. Se a sessão expirar ou o usuário sair, exige login novamente.
+  // A TV mantém seu fluxo próprio de pareamento via tvGuest.
+  useEffect(() => {
+    if (loading || user || tvGuestMode) return;
+    try { window.localStorage.removeItem(storageKey); } catch {}
+    setStep((current) => current === "login" ? current : "login");
+    if (searchParams.has("step")) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("step");
+      setSearchParams(next, { replace: true });
+    }
+  }, [loading, user, tvGuestMode, storageKey, searchParams, setSearchParams]);
+
+  useEffect(() => {
+    const { data: { subscription } } = playerSupabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") clearPlayerSession();
+    });
+    return () => subscription.unsubscribe();
+  }, []);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [channelBg, setChannelBg] = useState<string | null>(null);
   const [loginBackground, setLoginBackground] = useState<string | null>(null);
@@ -78,7 +105,7 @@ export default function PlayerHub() {
   const [publicUserId, setPublicUserId] = useState<string | null>(null);
   const [dataReady, setDataReady] = useState(false);
   const [loadProgress, setLoadProgress] = useState(0);
-  const { colors: playerColors, bgConfigs: playerBgConfigs } = usePlayerColors(publicUserId);
+  const { colors: playerColors, bgConfigs: playerBgConfigs } = usePlayerColors(publicUserId, userSlug);
 
   // Real-time "connected on player" heartbeat (20s ping).
   usePlayerHeartbeat(publicUserId || user?.id || null);
@@ -148,9 +175,9 @@ export default function PlayerHub() {
       if (userId) {
         setLoadProgress(25);
         const [empRes, chRes, progRes] = await Promise.all([
-          supabase.from("empresa_config").select("logo, nome, timezone").eq("user_id", userId).single(),
-          supabase.from("streaming_channels").select("logo_url, cover_url, background_url, type, active, numero_canal").eq("user_id", userId).eq("active", true).order("numero_canal"),
-          supabase.from("programas").select("nome, horario_inicio, horario_fim, dias_semana, thumb, capa, ativo, estudio").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%"),
+          playerSupabase.from("empresa_config").select("logo, nome, timezone").eq("user_id", userId).single(),
+          playerSupabase.from("streaming_channels").select("logo_url, cover_url, background_url, type, active, numero_canal").eq("user_id", userId).eq("active", true).order("numero_canal"),
+          playerSupabase.from("programas").select("nome, horario_inicio, horario_fim, dias_semana, thumb, capa, ativo, estudio").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%"),
         ]);
         setLoadProgress(60);
         if (progRes.error) console.warn("[WelcomeBG:auth] erro ao buscar programas:", progRes.error);
@@ -180,7 +207,7 @@ export default function PlayerHub() {
       if (userSlug && userSlug !== ":userSlug") {
         setLoadProgress(30);
         try {
-          const { data, error } = await supabase.functions.invoke("public-player-data", {
+          const { data, error } = await playerSupabase.functions.invoke("public-player-data", {
             body: { slug: userSlug },
           });
           setLoadProgress(75);
@@ -223,7 +250,6 @@ export default function PlayerHub() {
   }, [user, userSlug]);
 
 
-  const [splashDone, setSplashDone] = useState(skipToHome);
   const [welcomeEditOnMount, setWelcomeEditOnMount] = useState(
     searchParams.get("edit") === "1"
   );
@@ -264,7 +290,6 @@ export default function PlayerHub() {
   }, [transitionTo]);
 
   const onSplashFinish = useCallback(() => {
-    setSplashDone(true);
     // After Splash -> Profiles (Welcome)
     transitionTo("welcome");
   }, [transitionTo]);
@@ -286,15 +311,26 @@ export default function PlayerHub() {
   // which then collapse to the wrapper's 0px height and become invisible.
   const wrapperClass = `player-scope transition-opacity duration-700 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)] ${fadeOut ? "opacity-0" : "opacity-100"}`;
 
-  if (step === "login") {
+  if (step === "login" || (!loading && !user && !tvGuestMode)) {
     return (
       <div className={wrapperClass}>
         <AccessScreen
           logoUrl={logoUrl}
           backgroundUrl={loginBackground}
           music={loginMusic}
+          radioUserId={publicUserId || user?.id || null}
           onLoginSuccess={onLoginSuccess}
         />
+      </div>
+    );
+  }
+
+  // Não exiba uma home de visitante enquanto o Supabase ainda restaura a
+  // sessão salva. Isso evita um flash de visitante durante a inicialização.
+  if (loading && !tvGuestMode && step === "home" && !user) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black text-white" aria-busy="true">
+        <span className="h-9 w-9 animate-spin rounded-full border-2 border-white/25 border-t-white" />
       </div>
     );
   }
@@ -324,8 +360,22 @@ export default function PlayerHub() {
           backgroundUrl={channelBg}
           channelName={channelName}
           logoUrl={logoUrl}
+          avatarAccent={playerColors.homeAccent}
           onContinue={onWelcomeContinue}
           onLoginSuccess={onLoginSuccess}
+          onSignedOut={() => {
+            clearPlayerSession();
+            try { window.localStorage.removeItem(storageKey); } catch {}
+            if (tvGuestMode) {
+              navigate(userSlug ? `/${userSlug}/player/tv` : "/player/tv", { replace: true });
+              return;
+            }
+            const next = new URLSearchParams(searchParams);
+            next.delete("step");
+            next.delete("tvGuest");
+            setSearchParams(next, { replace: true });
+            transitionTo("login");
+          }}
           initialEditOpen={welcomeEditOnMount}
           userSlug={userSlug && userSlug !== ":userSlug" ? userSlug : null}
           publicUserId={publicUserId}
@@ -339,6 +389,7 @@ export default function PlayerHub() {
   return (
     <div className={wrapperClass}>
       <PlayerHome
+        tvGuestMode={tvGuestMode}
         onBackToAccess={(openEdit?: boolean) => {
           setWelcomeEditOnMount(!!openEdit);
           // "Trocar de perfil": limpa a persistência de step=home.

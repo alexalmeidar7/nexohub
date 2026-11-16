@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Save, User } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { playerSupabase } from "@/integrations/supabase/playerClient";
 import type { User as AuthUser } from "@supabase/supabase-js";
 import { upsertPlayerListenerProfile } from "@/lib/playerListenerProfile";
 
@@ -38,7 +38,7 @@ export default function ProfileDialog({
     if (radioUserId) {
       await upsertPlayerListenerProfile(user.id, radioUserId, { nome, email, cidade, estado, avatar_url: profileAvatar || "" });
     } else {
-      await supabase
+      await playerSupabase
         .from("profiles")
         .update({ nome, email, cidade, estado })
         .eq("user_id", user.id);

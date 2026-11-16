@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { usePlayerAuth } from "@/hooks/usePlayerAuth";
+import { playerSupabase } from "@/integrations/supabase/playerClient";
 import { ChevronLeft, ChevronRight, Play, Film, Home, Radio, ShoppingBag, Calendar, ArrowLeft } from "lucide-react";
 import { PlayerBackButton } from "@/components/player/PlayerBackButton";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,7 +28,7 @@ interface PlaylistVideo {
 }
 
 export default function PlayerCatalog() {
-  const { user, signOut } = useAuth();
+  const { user } = usePlayerAuth();
   const navigate = useNavigate();
   const { userSlug } = useParams();
   usePublicHead(userSlug && userSlug !== ":userSlug" ? userSlug : null, "Catálogo");
@@ -47,7 +47,7 @@ export default function PlayerCatalog() {
   // Fetch profile
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("nome, avatar_url").eq("user_id", user.id).single().then(({ data }) => {
+    playerSupabase.from("profiles").select("nome, avatar_url").eq("user_id", user.id).single().then(({ data }) => {
       if (data?.nome) setProfileName(data.nome);
       setProfileAvatar(data?.avatar_url && data.avatar_url.trim() !== '' ? data.avatar_url : '/avatars/usr-default.png');
     });
@@ -56,7 +56,7 @@ export default function PlayerCatalog() {
   // Fetch channels for this catalog group
   useEffect(() => {
     const fetchChannels = async () => {
-      const { data } = await supabase
+      const { data } = await playerSupabase
         .from("streaming_channels")
         .select("id, name, cover_url, logo_url, background_url, type, url, catalog_name")
         .eq("type", "catalog")
@@ -79,7 +79,7 @@ export default function PlayerCatalog() {
         const playlistId = plMatch?.[1];
         if (!playlistId) continue;
         try {
-          const { data, error } = await supabase.functions.invoke("youtube-playlist", { body: { playlistId } });
+          const { data, error } = await playerSupabase.functions.invoke("youtube-playlist", { body: { playlistId } });
           if (!error && data?.videos) {
             allVideos.push(...data.videos);
           }
@@ -119,7 +119,7 @@ export default function PlayerCatalog() {
 
   const handleSignOut = async () => {
     const dest = userSlug && userSlug !== ":userSlug" ? `/${userSlug}/player` : "/player";
-    await playerSignOut(signOut, dest);
+    await playerSignOut(dest);
   };
 
 

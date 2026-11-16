@@ -62,6 +62,8 @@ export function buildBgStyle(solidColor: string, bgCfg?: ScreenBgConfig): React.
 
 /* ── Player Color Schema ── */
 export interface PlayerColors {
+  // Global brand accent used as the source for the Player's red highlights.
+  dominantColor: string;
   // Loading Screen
   loadingBg: string;
   loadingSpinner: string;
@@ -129,6 +131,7 @@ export interface PlayerColors {
 }
 
 export const defaultPlayerColors: PlayerColors = {
+  dominantColor: "#dc2626",
   loadingBg: "#000000",
   loadingSpinner: "#dc2626",
   loadingText: "#ffffff",
@@ -187,6 +190,25 @@ export const defaultPlayerColors: PlayerColors = {
   catalogPlayBg: "#dc2626",
   catalogPlayText: "#ffffff",
 };
+
+const dominantColorKeys: (keyof PlayerColors)[] = [
+  "loadingSpinner", "loginButtonBg", "homeAccent", "homeBadgeBg", "liveAccent",
+  "liveBadgeBg", "spectrumColor", "liveAudioGradientColor1", "watchTopBarAccent",
+  "watchScrubber", "watchMusicAccent", "catalogAccent", "catalogBadgeBg", "catalogPlayBg",
+];
+
+/** Preserve explicit per-screen colors while letting defaults follow the brand color. */
+export function resolvePlayerColors(source?: Partial<PlayerColors> | null): PlayerColors {
+  const resolved: PlayerColors = { ...defaultPlayerColors, ...(source || {}) };
+  const dominant = source?.dominantColor || source?.homeAccent || defaultPlayerColors.dominantColor;
+  resolved.dominantColor = dominant;
+  for (const key of dominantColorKeys) {
+    if (!source?.[key] || source[key] === defaultPlayerColors[key]) {
+      (resolved as any)[key] = dominant;
+    }
+  }
+  return resolved;
+}
 
 type ScreenTab = "loading" | "login" | "home" | "live" | "catalog";
 
@@ -567,7 +589,7 @@ export default function PlayerLayoutCustomizer() {
       const di = data?.dashboard_items as any;
       if (di && typeof di === "object") {
         if (di.player_colors) {
-          const loaded = { ...defaultPlayerColors, ...di.player_colors };
+          const loaded = resolvePlayerColors(di.player_colors);
           setColors(loaded);
           originalRef.current = loaded;
         }

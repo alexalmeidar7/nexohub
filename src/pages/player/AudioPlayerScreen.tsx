@@ -3,13 +3,13 @@ import { lazyRetry } from "@/lib/lazyRetry";
 import { createPortal } from "react-dom";
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2, Sparkles, BarChart3, X, Check, Maximize2, Minimize2, Loader2, Settings, Home, User } from "lucide-react";
 import { PlayerBackButton } from "@/components/player/PlayerBackButton";
-import { supabase } from "@/integrations/supabase/client";
+import { playerSupabase } from "@/integrations/supabase/playerClient";
 import nexoPlayerLogo from "@/assets/nexo-player-logo.png.asset.json";
-import { WeatherIcon } from "@/components/WeatherIcons";
+import PlayerBrandCorner from "@/components/player/PlayerBrandCorner";
 import { getMusicExceptions, matchesMusicException } from "@/lib/musicExceptions";
 
 import { useCoverPalette, useCoverTriad, getPaletteContrast } from "@/lib/coverPalette";
-import { fetchArtistImageCached, getArtistImageSync } from "@/lib/artistImageCache";
+import { fetchArtistImageCached, getArtistImageSync, upgradeArtistImageResolution } from "@/lib/artistImageCache";
 import {
   isLocutorImageCached,
   markLocutorImageLoaded,
@@ -63,7 +63,6 @@ export interface AudioPlayerScreenProps {
   profileAvatar: string | null;
   userDisplayName: string;
   userEmail?: string | null;
-  signOut: () => Promise<void>;
   effectiveUserId: string | null;
   radioUserId?: string | null;
   isPublicMode: boolean;
@@ -189,7 +188,7 @@ function hhmm(dateOrTime: string | Date | undefined) {
   return m ? `${m[1]}:${m[2]}` : s.slice(0, 5);
 }
 
-function AnimatedNowPlayingInfo({ cover, title, artist }: { cover: string | null; title: string; artist: string }) {
+function AnimatedNowPlayingInfo({ cover, title, artist, liked, onToggleLike }: { cover: string | null; title: string; artist: string; liked: boolean; onToggleLike: () => void }) {
   const trackKey = `${title}\u001f${artist}`;
   const activeKeyRef = useRef(trackKey);
   const [displayed, setDisplayed] = useState({ cover, title, artist, phase: "enter" as "enter" | "exit" });
@@ -215,12 +214,19 @@ function AnimatedNowPlayingInfo({ cover, title, artist }: { cover: string | null
   return (
     <div className="flex items-center gap-5 max-w-[560px]">
       {displayed.cover && (
-        <img
-          src={displayed.cover}
-          alt=""
-          className="h-40 w-40 rounded-[24px] object-cover shadow-xl shrink-0"
-          style={{ animation }}
-        />
+        <div className="relative h-40 w-40 shrink-0 overflow-hidden rounded-[24px] shadow-xl" style={{ animation }}>
+          <img src={displayed.cover} alt="" className="h-full w-full object-cover" />
+          <button
+            type="button"
+            aria-label={liked ? "Descurtir música" : "Curtir música"}
+            aria-pressed={liked}
+            title={liked ? "Descurtir música" : "Curtir música"}
+            onClick={(event) => { event.stopPropagation(); onToggleLike(); }}
+            className="absolute right-2.5 top-2.5 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/45 text-white backdrop-blur-md transition hover:scale-105 hover:bg-black/65"
+          >
+            <Heart size={18} fill={liked ? "currentColor" : "none"} className={liked ? "text-rose-400" : "text-white"} />
+          </button>
+        </div>
       )}
       <div
         className="min-w-0 text-white drop-shadow-lg"
@@ -245,7 +251,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     karaokeEnabled, setKaraokeEnabled,
     watchProfileOpen, setWatchProfileOpen,
     empresaLogo, empresaNome,
-    user, profileAvatar, userDisplayName, userEmail, signOut,
+    user, profileAvatar, userDisplayName, userEmail,
     effectiveUserId, radioUserId,
     userSlug,
     onBackHome,
@@ -253,6 +259,23 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     isVideoChannel = false,
     isCatalog = false,
   } = props;
+  const lyricsBeforePollRef = useRef(false);
+  const handlePollVisibilityChange = useCallback((isOpen: boolean) => {
+    if (isOpen) {
+      lyricsBeforePollRef.current = karaokeEnabled;
+      if (karaokeEnabled) setKaraokeEnabled(false);
+      return;
+    }
+
+    if (lyricsBeforePollRef.current) {
+      lyricsBeforePollRef.current = false;
+      setKaraokeEnabled(true);
+    }
+  }, [karaokeEnabled, setKaraokeEnabled]);
+  const watchAvatar = profileAvatar
+    || user?.user_metadata?.avatar_url
+    || user?.user_metadata?.picture
+    || null;
 
   const isYoutube = canal?.type === "video_youtube" || canal?.type === "youtube";
   const selectedVideoId = isCatalog ? (new URLSearchParams(window.location.search).get("vid")) : null;
@@ -385,85 +408,6 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     window.addEventListener("nexo:tv-back", handleTvBack as EventListener);
     return () => window.removeEventListener("nexo:tv-back", handleTvBack as EventListener);
   }, [isTvExperience, controlsVisible, handleBackHome]);
-
-  // ---- Relógio (elegante, com segundos) ----
-  const [now, setNow] = useState<Date>(() => new Date());
-  useEffect(() => {
-    const t = window.setInterval(() => setNow(new Date()), 1000);
-    return () => window.clearInterval(t);
-  }, []);
-  const clockTime = useMemo(() => {
-    const hh = String(now.getHours()).padStart(2, "0");
-    const mm = String(now.getMinutes()).padStart(2, "0");
-    const ss = String(now.getSeconds()).padStart(2, "0");
-    return { hh, mm, ss };
-  }, [now]);
-
-  // ---- Clima (temp + código WMO) do rádio atual ----
-  const [weather, setWeather] = useState<{ temp: number; code: number } | null>(null);
-  const [weatherLoading, setWeatherLoading] = useState(false);
-  useEffect(() => {
-    if (!radioUserId) return;
-    let cancelled = false;
-    let intervalId: number | undefined;
-
-    const fetchWeather = async (lat?: number | null, lon?: number | null) => {
-      setWeatherLoading(true);
-      try {
-        const { data } = await supabase.functions.invoke("fetch-weather", {
-          body: {
-            action: "forecast",
-            lat: lat ?? null,
-            lon: lon ?? null,
-            user_id: radioUserId,
-            forecast_days: 1,
-          },
-        });
-        const c = (data as any)?.data?.current;
-        if (!cancelled && c && typeof c.temperature_2m === "number") {
-          setWeather({ temp: Math.round(c.temperature_2m), code: Number(c.weather_code) || 0 });
-        }
-      } catch {} finally {
-        setWeatherLoading(false);
-      }
-    };
-
-    (async () => {
-      let lat: number | null = null;
-      let lon: number | null = null;
-      try {
-        const { data: settings } = await supabase
-          .from("user_settings")
-          .select("weather_city, weather_lat, weather_lon")
-          .eq("user_id", radioUserId)
-          .maybeSingle();
-        if (typeof (settings as any)?.weather_lat === "number") lat = (settings as any).weather_lat;
-        if (typeof (settings as any)?.weather_lon === "number") lon = (settings as any).weather_lon;
-        const city = String((settings as any)?.weather_city || "").trim();
-        if ((lat == null || lon == null) && city) {
-          const { data: geoData } = await supabase.functions.invoke("fetch-weather", {
-            body: { action: "geocode", query: city, count: 1 },
-          });
-          const location = (geoData as any)?.results?.[0];
-          if (typeof location?.latitude === "number" && typeof location?.longitude === "number") {
-            lat = location.latitude;
-            lon = location.longitude;
-          }
-        }
-      } catch {}
-      // Mesmo sem coordenadas locais (ouvinte sem permissão de leitura),
-      // a edge function resolve as coordenadas da rádio pelo user_id.
-      fetchWeather(lat, lon);
-      intervalId = window.setInterval(() => fetchWeather(lat, lon), 5 * 60 * 1000);
-    })();
-
-
-    return () => {
-      cancelled = true;
-      if (intervalId) window.clearInterval(intervalId);
-    };
-  }, [radioUserId]);
-
 
   const controlsStyle: React.CSSProperties = {
     opacity: controlsVisible ? 1 : 0,
@@ -713,17 +657,17 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     }
     // A imagem cadastrada na exceção tem prioridade sobre a busca automática.
     if (musicExceptionArtist) {
-      setArtistBgImage(musicExceptionArtist);
+      setArtistBgImage(upgradeArtistImageResolution(musicExceptionArtist) || musicExceptionArtist);
       return;
     }
 
     const artista = String(musicData?.artista || "").trim();
     if (!artista) { setArtistBgImage(""); return; }
     const sync = getArtistImageSync(artista);
-    if (sync) { setArtistBgImage(sync); return; }
+    if (sync) { setArtistBgImage(upgradeArtistImageResolution(sync) || sync); return; }
     let cancelled = false;
     fetchArtistImageCached(artista).then((url) => {
-      if (!cancelled) setArtistBgImage(url || "");
+      if (!cancelled) setArtistBgImage(upgradeArtistImageResolution(url) || url || "");
     }).catch(() => {});
     return () => { cancelled = true; };
   }, [musicData?.artista, musicExceptionArtist, isJournalisticProgram]);
@@ -938,7 +882,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     const id = setInterval(load, 30000);
 
     // Realtime: atualiza instantaneamente ao inserir/atualizar/deletar no histórico do usuário
-    const channel = supabase
+    const channel = playerSupabase
       .channel(`musicas_tocadas:${effectiveUserId}`)
       .on(
         "postgres_changes",
@@ -955,7 +899,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       cancelled = true;
       clearInterval(id);
       document.removeEventListener("visibilitychange", onVis);
-      try { supabase.removeChannel(channel); } catch {}
+      try { playerSupabase.removeChannel(channel); } catch {}
     };
     // Depende SOMENTE de effectiveUserId — antes reagia a cada troca de música, o que derrubava e recriava
     // a subscription do realtime (janela em que INSERTs podiam ser perdidos) e permitia que um load()
@@ -1154,11 +1098,15 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   // ---- Curtidas do histórico (heart por card) ----
   const [historyLikes, setHistoryLikes] = useState<Set<string>>(new Set());
   const likeKey = (artista: string, musica: string) => `${(artista || "").toLowerCase()}||${(musica || "").toLowerCase()}`;
+  const currentTrackForLike = currentHistoryTrack(musicCover || undefined);
   useEffect(() => {
     let cancelled = false;
-    if (!user?.id || history.length === 0) return;
+    if (!user?.id) {
+      setHistoryLikes(new Set());
+      return;
+    }
     (async () => {
-      let likesQuery: any = supabase
+      let likesQuery: any = playerSupabase
         .from("music_likes")
         .select("artista,titulo")
         .eq("user_id", user.id);
@@ -1182,12 +1130,12 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       return next;
     });
     if (already) {
-      let deleteQuery: any = supabase.from("music_likes").delete()
+      let deleteQuery: any = playerSupabase.from("music_likes").delete()
         .eq("user_id", user.id).eq("artista", t.artista).eq("titulo", t.musica);
       deleteQuery = radioUserId ? deleteQuery.eq("radio_user_id", radioUserId) : deleteQuery.is("radio_user_id", null);
       await deleteQuery;
     } else {
-      await supabase.from("music_likes").insert({
+      await playerSupabase.from("music_likes").insert({
         user_id: user.id, radio_user_id: radioUserId || null, artista: t.artista, titulo: t.musica, capa: t.capa || "",
       });
     }
@@ -1535,7 +1483,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         className={`watch-layout-header absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-[6vw] pt-[6vh] ${isTvExperience && !isVideoChannel ? "hidden" : ""}`}
         style={isVideoChannel ? controlsStyle : undefined}
       >
-        {!isTvExperience && <style>{`.watch-layout-header>div:first-of-type{margin-left:0}.watch-layout-header .watch-channel-logo{display:none}.watch-layout-header .watch-profile{position:absolute;left:1vw;top:5.6vh}.watch-layout-header .watch-profile>button{width:56px;height:56px;padding:0;border:0;background:linear-gradient(135deg,#e00012,#b9000e);border-radius:50%;justify-content:center}.watch-layout-header .watch-profile>button>span:nth-child(2),.watch-layout-header .watch-profile>button>svg{display:none}.watch-layout-header .watch-profile>button>span:first-child{width:100%;height:100%;padding:0;background:transparent!important}.watch-layout-header .watch-profile>button>span:first-child>span:first-child{display:none}.watch-layout-header .watch-profile>button>span:first-child>span:last-child{background:transparent}.watch-layout-header .watch-profile>button img{border-radius:50%}@media(max-width:700px){.watch-layout-header{padding:24px 20px 0}.watch-layout-header>div:first-of-type{margin-left:0}.watch-layout-header .watch-profile{left:8px;top:20px}.watch-layout-header .watch-profile>button{width:40px;height:40px}}`}</style>}
+      {!isTvExperience && <style>{`.watch-layout-header>div:first-of-type{margin-left:0}.watch-layout-header .watch-channel-logo{display:none}.watch-layout-header .watch-profile{position:absolute;left:1vw;top:calc(5.6vh + 10px)}.watch-layout-header .watch-profile>button{width:56px;height:56px;padding:0;border:0;background:linear-gradient(135deg,var(--player-dominant-color,#111214),color-mix(in srgb,var(--player-dominant-color,#111214) 72%,#111214));border-radius:50%;justify-content:center}.watch-layout-header .watch-profile.has-avatar>button{background:transparent;border:0;padding:0;box-shadow:none}.watch-layout-header .watch-profile>button>span:nth-child(2),.watch-layout-header .watch-profile>button>svg{display:none}.watch-layout-header .watch-profile>button>span:first-child{width:100%;height:100%;padding:0;background:transparent!important}.watch-layout-header .watch-profile>button>span:first-child>span:first-child{display:none}.watch-layout-header .watch-profile>button>span:first-child>span:last-child{background:transparent}.watch-layout-header .watch-profile>button img{display:block;width:100%;height:100%;object-fit:cover;border-radius:50%}@media(max-width:700px){.watch-layout-header{padding:24px 20px 0}.watch-layout-header>div:first-of-type{margin-left:0}.watch-layout-header .watch-profile{left:8px;top:30px}.watch-layout-header .watch-profile>button{width:40px;height:40px}}[data-player-home-control]:hover,[data-player-home-control]:focus-visible{color:#252525!important;background:var(--player-dominant-color,#111214)!important}[data-player-home-control]:hover svg,[data-player-home-control]:focus-visible svg{color:#252525!important;fill:#252525!important}[data-player-brand-control]:hover,[data-player-brand-control]:focus-visible{color:#252525!important}[data-player-brand-control]:hover svg,[data-player-brand-control]:focus-visible svg{color:#252525!important;fill:#252525!important;stroke:#252525!important}`}</style>}
         {/* Channel switcher */}
         <div className="watch-channel-switcher flex items-center gap-4" style={{ marginLeft: "clamp(44px, 5vw, 80px)" }}>
           <div className="flex shrink-0 flex-col items-center justify-center -space-y-1 text-white">
@@ -1578,40 +1526,17 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           </div>
         </div>
 
-        {/* Área direita: clima + relógio + perfil */}
-        <div className="flex items-center gap-5 sm:gap-8">
-          {/* Relógio elegante com segundos */}
-          <div
-            className="flex items-baseline gap-1"
-            aria-label="Horário atual"
-          >
-            <span
-              className="text-white font-light tabular-nums tracking-[0.02em] leading-none"
-              style={{ fontFamily: '"Sora", system-ui, sans-serif', fontSize: 28, fontVariantNumeric: "tabular-nums" }}
-            >
-              {clockTime.hh}
-              <span className="opacity-60 mx-[2px]">:</span>
-              {clockTime.mm}
-            </span>
-            {isTvExperience && <span
-              className="text-white/60 font-light tabular-nums leading-none"
-              style={{ fontFamily: '"Sora", system-ui, sans-serif', fontSize: 16 }}
-            >
-              {clockTime.ss}
-            </span>}
-          </div>
-
-          {/* Temperatura atual e condição do tempo */}
-          <div className="flex items-center gap-2" title="Tempo agora" aria-busy={weatherLoading}>
-            <span className="text-white/80 text-lg">|</span>
-            <span className="text-white font-medium text-[15px] sm:text-[18px] tabular-nums">{weather ? `${weather.temp}°C` : "--°C"}</span>
-            <WeatherIcon code={weather?.code ?? 0} size={26} />
-          </div>
-
-
+        {/* Área direita: mesma composição de previsão + relógio + logo da home */}
+        <PlayerBrandCorner
+          radioUserId={radioUserId}
+          logoUrl={watchLogo}
+          logoAlt={empresaNome || "Emissora"}
+          onLogoError={() => setLogoCandidateIndex((index) => Math.min(index + 1, logoCandidates.length - 1))}
+          className="gap-2 sm:gap-4"
+        >
           {/* Avatar do usuário — abre o mesmo popup do Home Player */}
           {user && (
-            <div className="watch-profile relative" style={{ left: "6vw" }}>
+            <div className={`watch-profile relative ${watchAvatar ? "has-avatar" : ""}`} style={{ left: "6vw" }}>
               <button
                 onClick={() => setWatchProfileOpen(!watchProfileOpen)}
                 className="group relative flex items-center gap-2 pl-1 pr-3 py-1 rounded-full bg-white/5 hover:bg-white/12 border border-white/15 hover:border-white/35 backdrop-blur-xl transition-all duration-300 hover:scale-[1.03] shadow-[0_4px_16px_rgba(0,0,0,0.35)]"
@@ -1620,8 +1545,12 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 aria-expanded={watchProfileOpen}
                 title={userDisplayName || "Perfil"}
               >
-                <span className="watch-profile-icon relative flex w-full h-full items-center justify-center rounded-full">
-                  <User size={25} strokeWidth={2} className="text-white" />
+                <span className="watch-profile-icon relative flex w-full h-full items-center justify-center rounded-full overflow-hidden">
+                  {watchAvatar ? (
+                    <img src={watchAvatar} alt="" className="w-full h-full object-cover rounded-full" />
+                  ) : (
+                    <User size={25} strokeWidth={2} className="text-white" />
+                  )}
                 </span>
                 <span className="hidden md:flex flex-col items-start leading-tight max-w-[140px]">
                   <span className="text-[9px] uppercase tracking-[0.18em] text-white/55">perfil</span>
@@ -1637,17 +1566,19 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     userId={user.id}
                     userName={userDisplayName}
                     userEmail={userEmail ?? user?.email ?? null}
-                    avatarUrl={profileAvatar}
+                    avatarUrl={watchAvatar}
                     radioUserId={radioUserId}
                     radioName={empresaNome || undefined}
                     openToRight
                     onClose={() => setWatchProfileOpen(false)}
                     onEditProfile={onEditProfile}
                     onSwitchProfile={onSwitchProfile}
-                    onAvatarChange={onAvatarChange}
-                    onLogout={async () => {
-                      const dest = userSlug && !String(userSlug).startsWith(":") ? `/${userSlug}/player` : "/player";
-                      await playerSignOut(signOut, dest);
+                        onLogout={async () => {
+                      const slug = userSlug && !String(userSlug).startsWith(":") ? String(userSlug) : null;
+                      const dest = isTvExperience
+                        ? (slug ? `/${slug}/player/tv` : "/player/tv")
+                        : (slug ? `/${slug}/player` : "/player");
+                      await playerSignOut(dest);
                     }}
 
                   />
@@ -1655,10 +1586,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               )}
             </div>
           )}
-          {watchLogo && (
-            <img src={watchLogo} alt={empresaNome || "Emissora"} className="h-14 max-w-[12vw] object-contain drop-shadow-lg" onError={() => setLogoCandidateIndex((index) => Math.min(index + 1, logoCandidates.length - 1))} />
-          )}
-        </div>
+        </PlayerBrandCorner>
       </header>
 
       {!isCatalog && (
@@ -1691,6 +1619,15 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           <div className="absolute left-[6vw] bottom-[21vh]">
             <AnimatedNowPlayingInfo
               cover={musicCover}
+              liked={!!currentTrackForLike && historyLikes.has(likeKey(currentTrackForLike.artista, currentTrackForLike.musica))}
+              onToggleLike={() => {
+                if (!currentTrackForLike) return;
+                if (!user?.id) {
+                  toast.info("Entre na sua conta para curtir músicas.");
+                  return;
+                }
+                void toggleHistoryLike(currentTrackForLike);
+              }}
               title={musicData?.titulo || "Rádio ao vivo"}
               artist={musicData?.artista || empresaNome || ""}
             />
@@ -2224,7 +2161,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       {!isTvExperience && !isCatalog && (
         <footer className="absolute left-[6vw] right-[4vw] bottom-[6vh] z-30 flex items-end gap-4 sm:gap-6" style={isVideoChannel ? controlsStyle : undefined}>
           <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-            <button onClick={handleBackHome} aria-label="Voltar para Home" title="Home" className="h-16 w-16 rounded-full flex items-center justify-center bg-[#202124] hover:bg-[#d90012] transition" data-focusable>
+            <button onClick={handleBackHome} aria-label="Voltar para Home" title="Home" className="h-16 w-16 rounded-full flex items-center justify-center bg-[#202124] transition" data-focusable data-player-home-control>
               <Home size={24} fill="white" />
             </button>
             <div className="relative flex items-center" onMouseEnter={() => setVolHover(true)} onMouseLeave={() => setVolHover(false)}>
@@ -2269,20 +2206,21 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               onToggleChat={() => setChatOpen(!chatOpen)}
               karaokeEnabled={karaokeEnabled}
               onToggleKaraoke={() => setKaraokeEnabled(!karaokeEnabled)}
+              onPollVisibilityChange={handlePollVisibilityChange}
               showKaraoke
               isVideoChannel={isVideoChannel}
               controlsVisible={controlsVisible}
               isCatalog={isCatalog}
             />
-            <button onClick={onTogglePlay} aria-label={playing ? "Pausar" : "Reproduzir"} title={playing ? "Pausar" : "Reproduzir"} className="h-16 w-16 rounded-full flex items-center justify-center bg-[#d90012] hover:bg-red-600 transition" data-focusable>
-              {buffering ? <Loader2 size={24} className="animate-spin" /> : playing ? <Pause size={26} fill="white" /> : <Play size={26} fill="white" />}
+            <button onClick={onTogglePlay} aria-label={playing ? "Pausar" : "Reproduzir"} title={playing ? "Pausar" : "Reproduzir"} className="h-16 w-16 rounded-full flex items-center justify-center transition" style={{ background: "var(--player-dominant-color, #111214)", color: "#252525" }} data-focusable data-player-brand-control>
+              {buffering ? <Loader2 size={24} className="animate-spin" /> : playing ? <Pause size={26} fill="currentColor" /> : <Play size={26} fill="currentColor" />}
             </button>
           </div>
 
           <div className="relative flex-1 pb-7 min-w-[100px]">
             <div className="absolute -top-1 right-0 -translate-y-full rounded-full bg-black/60 px-3 py-1 text-[12px] text-white">ao vivo</div>
             <div className="relative h-3 rounded-full bg-white/15 overflow-visible">
-              <div className="absolute inset-y-0 left-0 rounded-full bg-[#e00012]" style={{ width: `${Math.max(0, Math.min(100, (1 - (dragVal != null ? (TIMESHIFT_WINDOW - dragVal) : ts.offset) / TIMESHIFT_WINDOW) * 100))}%` }} />
+              <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${Math.max(0, Math.min(100, (1 - (dragVal != null ? (TIMESHIFT_WINDOW - dragVal) : ts.offset) / TIMESHIFT_WINDOW) * 100))}%`, background: "var(--player-dominant-color, #111214)" }} />
               <input type="range" min={0} max={TIMESHIFT_WINDOW} step={1} value={dragVal ?? Math.round(TIMESHIFT_WINDOW - ts.offset)} onChange={(event) => setDragVal(snapToMarkers(Number(event.target.value)))} onMouseUp={commitDrag} onTouchEnd={commitDrag} onPointerUp={commitDrag} className="absolute -inset-y-3 left-0 z-10 h-9 w-full cursor-pointer opacity-0" aria-label="Voltar na transmissão" data-focusable />
             </div>
           </div>
@@ -2722,6 +2660,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 onToggleChat={() => setChatOpen(!chatOpen)}
                 karaokeEnabled={karaokeEnabled}
                 onToggleKaraoke={() => setKaraokeEnabled(!karaokeEnabled)}
+                onPollVisibilityChange={handlePollVisibilityChange}
                 showKaraoke={true}
                 isVideoChannel={isVideoChannel}
                 controlsVisible={controlsVisible}
@@ -2735,7 +2674,14 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       {/* Chat side panel */}
       {chatOpen && (
         <Suspense fallback={null}>
-          <PlayerChat channelId={canal?.id || "default"} radioUserId={radioUserId} onClose={() => setChatOpen(false)} shopOpen={false} />
+          <PlayerChat
+            // Keep one conversation per radio, independent of the selected stream channel.
+            channelId={radioUserId ? `radio-${radioUserId}` : canal?.id || "default"}
+            radioUserId={radioUserId}
+            onClose={() => setChatOpen(false)}
+            shopOpen={false}
+            sideBySide={karaokeEnabled}
+          />
         </Suspense>
       )}
 
@@ -2747,6 +2693,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             artist={musicData?.artista}
             title={musicData?.titulo}
             duration={musicData?.duracao}
+            chatOpen={chatOpen}
             onClose={() => setKaraokeEnabled(false)}
           />
         </Suspense>
@@ -2913,7 +2860,7 @@ export function ProgramShowcaseCard({
   const palette = useCoverPalette(foto);
   const contrast = getPaletteContrast(palette);
   const gradient = watchLayout || isLive
-    ? "linear-gradient(135deg, #b9000e 0%, #e00012 100%)"
+    ? "linear-gradient(135deg, var(--player-dominant-color, #111214) 0%, color-mix(in srgb, var(--player-dominant-color, #111214) 72%, #111214) 100%)"
     : palette
     ? `linear-gradient(135deg, ${palette.primary} 0%, ${palette.secondary} 100%)`
     : "linear-gradient(135deg, #1f2937 0%, #0b0f1a 100%)";
@@ -3325,6 +3272,7 @@ function InteractivityMenu({
   onToggleChat,
   karaokeEnabled,
   onToggleKaraoke,
+  onPollVisibilityChange,
   showKaraoke = true,
   isVideoChannel = false,
   controlsVisible = true,
@@ -3335,6 +3283,7 @@ function InteractivityMenu({
   onToggleChat: () => void;
   karaokeEnabled: boolean;
   onToggleKaraoke: () => void;
+  onPollVisibilityChange?: (isOpen: boolean) => void;
   showKaraoke?: boolean;
   isVideoChannel?: boolean;
   controlsVisible?: boolean;
@@ -3384,7 +3333,7 @@ function InteractivityMenu({
 
     const fetchActive = async () => {
       try {
-        const { data: fnData } = await supabase.functions.invoke("public-enquete-ativa", {
+        const { data: fnData } = await playerSupabase.functions.invoke("public-enquete-ativa", {
           body: { user_id: userId },
         });
         if (cancelled) return;
@@ -3409,7 +3358,7 @@ function InteractivityMenu({
         const today = new Date().toISOString().slice(0, 10);
         const now = new Date();
         const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-        const { data, error } = await supabase
+        const { data, error } = await playerSupabase
           .from("enquetes_agendadas")
           .select("id,pergunta,resposta1,resposta2,resposta3,resposta4,horario_inicio,horario_fim")
           .eq("user_id", userId)
@@ -3538,14 +3487,14 @@ function InteractivityMenu({
           <span
             aria-hidden
             className="absolute inset-0 rounded-full"
-            style={{ background: "#d90012" }}
+            style={{ background: "var(--player-dominant-color, #111214)" }}
           />
           {/* halo suave */}
           <span
             aria-hidden
             className={`absolute -inset-[3px] rounded-full blur-[6px] transition-opacity duration-300 ${open ? "opacity-100" : "opacity-70"}`}
             style={{
-              background: "rgba(217,0,18,.42)",
+              background: "color-mix(in srgb, var(--player-dominant-color, #111214) 42%, transparent)",
             }}
           />
           {/* núcleo */}
@@ -3578,7 +3527,11 @@ function InteractivityMenu({
           }`}
         >
           <button
-            onClick={() => { setPollOpen(true); setOpen(false); }}
+            onClick={() => {
+              setPollOpen(true);
+              onPollVisibilityChange?.(true);
+              setOpen(false);
+            }}
             disabled={!activePoll}
             className={`w-16 h-16 rounded-full flex items-center justify-center bg-black/80 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20 transition-all hover:scale-110 active:scale-95 ${!activePoll ? "opacity-40 grayscale" : ""}`}
             title="Enquete"
@@ -3626,7 +3579,10 @@ function InteractivityMenu({
               return Number.isFinite(n) && n >= 0 ? n : null;
             } catch { return null; }
           })()}
-          onClose={() => setPollOpen(false)}
+          onClose={() => {
+            setPollOpen(false);
+            onPollVisibilityChange?.(false);
+          }}
           onChangeVote={() => {
             localStorage.removeItem(`nexo:poll:voted:${activePoll.id}`);
             setAlreadyVoted(false);
@@ -3748,11 +3704,6 @@ function PollDialog({
         transition: "opacity 300ms ease",
       }}
     >
-      <div
-        aria-hidden="true"
-        className="absolute inset-y-0 right-0 z-0 w-[min(760px,65vw)] pointer-events-none"
-        style={{ background: "linear-gradient(to left, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.38) 40%, rgba(0,0,0,0) 100%)" }}
-      />
       <div
         role="dialog"
         aria-modal="true"
