@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import XmlXPathDialog from "./XmlXPathDialog";
 import type { InteractiveXmlFeed } from "@/lib/interactiveXmlSchema";
+import { localizeXmlImageUrls } from "@/lib/desktopLocalXml";
+import { saveDesktopXml } from "@/lib/desktopPromotionBanners";
 
 interface XmlLinkRowProps {
   label: string;
@@ -107,20 +109,24 @@ export default function XmlLinkRow({
     const parts = new URL(externalUrl).pathname.split("/").filter(Boolean);
     const slug = decodeURIComponent(parts.at(-2) || "");
     const filename = decodeURIComponent(parts.at(-1) || "");
+    let timer: ReturnType<typeof setTimeout>;
     const sync = async () => {
       try {
         const response = await fetch(supabaseUrl, { cache: "no-store", signal: AbortSignal.timeout(12000) });
         if (!response.ok) return;
         const xml = (await response.text()).trim();
         if (active && xml.startsWith("<") && !xml.includes("<!DOCTYPE html>") && !xml.includes("<error>")) {
-          const saved = await window.houseMixDesktop?.saveXml(slug, filename, xml);
+          const desktop = window.houseMixDesktop!;
+          const localXml = await localizeXmlImageUrls(xml, slug, desktop);
+          if (!active) return;
+          const saved = await saveDesktopXml(desktop, slug, filename, localXml);
           if (active && saved) setUrl(saved);
         }
       } catch { /* keep the last good local XML when offline */ }
+      finally { if (active) timer = setTimeout(() => void sync(), 30000); }
     };
     void sync();
-    const timer = window.setInterval(() => void sync(), 30000);
-    return () => { active = false; window.clearInterval(timer); };
+    return () => { active = false; clearTimeout(timer); };
   }, [externalUrl, supabaseUrl]);
 
   useEffect(() => {

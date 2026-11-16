@@ -54,7 +54,8 @@ function createWindowOptions(preloadPath) {
       nodeIntegration: false,
       sandbox: true,
       webSecurity: true,
-      allowRunningInsecureContent: false
+      allowRunningInsecureContent: false,
+      backgroundThrottling: false
     }
   };
 }

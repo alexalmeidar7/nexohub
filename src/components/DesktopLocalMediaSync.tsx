@@ -4,6 +4,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserSlug } from "@/hooks/useUserSlug";
 import { findClientAccountById } from "@/lib/clientAuthAccounts";
 import { localizeXmlImageUrls } from "@/lib/desktopLocalXml";
+import { cachePromotionBanners, rotateDesktopBanner, saveDesktopXml, BANNER_DURATION_MS, type PromotionBanner } from "@/lib/desktopPromotionBanners";
+import { createOwnedRealtimeChannel } from "@/lib/ownedRealtimeChannel";
+import { toast } from "sonner";
 
 const XML_FEEDS = [
   ["geral.xml", "serve-xml-geral"], ["tempo.xml", "serve-xml-tempo"],
@@ -44,6 +47,83 @@ export default function DesktopLocalMediaSync() {
     if (!desktop || loading || !ownerId || !slug) return;
     let stopped = false;
     let running = false;
+    let pending = false;
+    let delay = 60_000;
+    let refreshTimer: ReturnType<typeof setTimeout>;
+    let rotationTimer: ReturnType<typeof setTimeout>;
+    let lastWarning = "";
+    const rotate = async () => {
+      try {
+        await Promise.all(["broadcast.xml", "geral.xml"].map(file => rotateDesktopBanner(desktop, slug, file).catch(() => {})));
+      } finally {
+        if (!stopped) rotationTimer = setTimeout(() => void rotate(), BANNER_DURATION_MS - Date.now() % BANNER_DURATION_MS);
+      }
+    };
+    const refresh = async () => {
+      if (stopped) return;
+      if (running) { pending = true; return; }
+      clearTimeout(refreshTimer);
+      running = true;
+      try {
+        let promotions: PromotionBanner[];
+        if (!navigator.onLine) {
+          const cached = localStorage.getItem(`nexohub_promocoes_${ownerId}`);
+          if (!cached) return;
+          promotions = JSON.parse(cached);
+        } else {
+          const { data, error } = await supabase.from("promocoes")
+            .select("id,user_id,nome,imagem_url,banner_l_url,data_inicio,data_fim").eq("user_id", ownerId).order("id");
+          if (error) {
+            const fallback = await supabase.functions.invoke("public-promo-data", { body: { slug: ownerId } });
+            if (fallback.error || !Array.isArray(fallback.data?.promocoes)) throw fallback.error || error;
+            promotions = fallback.data.promocoes;
+          } else promotions = data || [];
+        }
+        if (stopped || !Array.isArray(promotions)) return;
+        await desktop.initializeLocalAssets(slug);
+        const result = await cachePromotionBanners(promotions, ownerId, slug, desktop);
+        if (stopped) return;
+        const warning = result.failed.join(", ");
+        if (warning && warning !== lastWarning) toast.warning("Alguns banners L precisam de atenção", {
+          description: `Arquivo indisponível na origem: ${warning}. Os demais continuam em rodízio.`, duration: 12000,
+        });
+        lastWarning = warning;
+        delay = result.failed.length ? Math.min(delay * 2, 300_000) : 60_000;
+        await Promise.all(["broadcast.xml", "geral.xml"].map(file => rotateDesktopBanner(desktop, slug, file).catch(() => {})));
+      } catch (error) {
+        delay = Math.min(delay * 2, 300_000);
+        console.warn("Falha ao sincronizar banners de promoções", error);
+      } finally {
+        running = false;
+        if (!stopped) {
+          refreshTimer = setTimeout(() => void refresh(), pending ? 0 : delay);
+          pending = false;
+        }
+      }
+    };
+    const onChange = () => void refresh();
+    const channel = createOwnedRealtimeChannel(supabase.realtime, `desktop-promo-banners-${ownerId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "promocoes", filter: `user_id=eq.${ownerId}` }, onChange)
+      .subscribe();
+    window.addEventListener("online", onChange);
+    window.addEventListener("promocoes:updated", onChange);
+    void refresh();
+    void rotate();
+    return () => {
+      stopped = true;
+      clearTimeout(refreshTimer);
+      clearTimeout(rotationTimer);
+      window.removeEventListener("online", onChange);
+      window.removeEventListener("promocoes:updated", onChange);
+      void supabase.removeChannel(channel);
+    };
+  }, [loading, ownerId, slug]);
+
+  useEffect(() => {
+    const desktop = window.houseMixDesktop;
+    if (!desktop || loading || !ownerId || !slug) return;
+    let stopped = false;
+    let running = false;
 
     const sync = async () => {
       if (running || stopped) return;
@@ -61,7 +141,7 @@ export default function DesktopLocalMediaSync() {
               const cachedXml = await desktop.readXml(slug, filename).catch(() => null);
               if (cachedXml) {
                 const localXml = await localizeXmlImageUrls(cachedXml, slug, desktop, true).catch(() => cachedXml);
-                if (localXml !== cachedXml) await desktop.saveXml(slug, filename, localXml).catch(() => "");
+                if (localXml !== cachedXml) await saveDesktopXml(desktop, slug, filename, localXml).catch(() => "");
               }
             };
             if (networkUnavailable) {
@@ -79,7 +159,7 @@ export default function DesktopLocalMediaSync() {
               const xml = (await response.text()).trim();
               if (xml.startsWith("<") && !xml.includes("<!DOCTYPE html>") && !xml.includes("<error>")) {
                 const localXml = await localizeXmlImageUrls(xml, slug, desktop);
-                await desktop.saveXml(slug, filename, localXml);
+                await saveDesktopXml(desktop, slug, filename, localXml);
               }
             } catch {
               // After one feed fails, treat the host as unavailable for the remaining local feeds.

@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from "react-router-dom";
 import { Check, Copy, Download, ExternalLink, RefreshCw, FileCode } from "lucide-react";
 import { CLIENT_ACCOUNTS } from "@/lib/clientAuthAccounts";
 import { localizeXmlImageUrls } from "@/lib/desktopLocalXml";
+import { saveDesktopXml, applyLocalPromotionBanner } from "@/lib/desktopPromotionBanners";
 const envSupabase = import.meta.env.VITE_SUPABASE_URL || "";
 const SUPABASE_BASE = envSupabase || (typeof window !== "undefined" ? window.location.origin : "");
 
@@ -111,7 +112,8 @@ export default function XmlPublicEndpoint() {
       let outputXml = liveXml.trim();
       if (window.houseMixDesktop && cleanSlug) {
         outputXml = await localizeXmlImageUrls(outputXml, cleanSlug, window.houseMixDesktop);
-        const savedPath = await window.houseMixDesktop.saveXml(cleanSlug, filename, outputXml);
+        outputXml = applyLocalPromotionBanner(outputXml, cleanSlug);
+        const savedPath = await saveDesktopXml(window.houseMixDesktop, cleanSlug, filename, outputXml);
         setLocalXmlPath(savedPath);
       }
       if (isMounted) {
@@ -124,7 +126,7 @@ export default function XmlPublicEndpoint() {
         const localXml = await window.houseMixDesktop.readXml(cleanSlug, filename).catch(() => null);
         if (localXml && isMounted) {
           const outputXml = await localizeXmlImageUrls(localXml, cleanSlug, window.houseMixDesktop, true).catch(() => localXml);
-          if (outputXml !== localXml) await window.houseMixDesktop.saveXml(cleanSlug, filename, outputXml).catch(() => "");
+          if (outputXml !== localXml) await saveDesktopXml(window.houseMixDesktop, cleanSlug, filename, outputXml).catch(() => "");
           setXmlContent(outputXml);
           setError(null);
           setLoading(false);

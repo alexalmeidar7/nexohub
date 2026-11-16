@@ -292,6 +292,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       const updatedList = editingId ? items.map(p => p.id === editingId ? saved : p) : [saved, ...items];
       setItems(updatedList);
       saveStoredPromos(ownerId, updatedList);
+      window.dispatchEvent(new Event("promocoes:updated"));
       toast({ title: editingId ? "Promoção atualizada com sucesso" : "Promoção cadastrada com sucesso" });
       reset();
     } catch (err: any) {

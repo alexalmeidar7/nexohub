@@ -27,7 +27,7 @@ jobs:
         run: bunx --bun -p @typescript/native-preview tsgo -p tsconfig.app.json --noEmit
 
       - name: Testar resolução de imagens do Desktop
-        run: bunx vitest run src/lib/programImageResolver.test.ts
+        run: bunx vitest run src/lib/programImageResolver.test.ts src/lib/ownedRealtimeChannel.test.ts src/lib/desktopPromotionBanners.test.ts
 
       - name: Montar a prévia
         run: bun run build

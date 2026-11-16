@@ -10,6 +10,7 @@ test("renderer runs with isolated, sandboxed and non-Node web preferences", () =
   assert.equal(options.webPreferences.sandbox, true);
   assert.equal(options.webPreferences.webSecurity, true);
   assert.equal(options.webPreferences.allowRunningInsecureContent, false);
+  assert.equal(options.webPreferences.backgroundThrottling, false);
 });
 
 test("only HTTP and HTTPS external links are allowed", () => {
