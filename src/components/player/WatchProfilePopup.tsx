@@ -21,6 +21,7 @@ interface WatchProfilePopupProps {
   onClose: () => void;
   onEditProfile?: () => void;
   onSwitchProfile?: () => void;
+  onAvatarChange?: (url: string | null) => void;
   onLogout?: () => void;
 }
 
@@ -36,9 +37,9 @@ function computeFanRating(likes: number, hours: number, messages: number, vodCou
 }
 
 function fanLabel(stars: number): string {
-  if (stars >= 5) return "Super Fã";
-  if (stars >= 4) return "Grande Fã";
-  if (stars >= 3) return "Fã";
+  if (stars >= 5) return "Super FÃ£";
+  if (stars >= 4) return "Grande FÃ£";
+  if (stars >= 3) return "FÃ£";
   if (stars >= 2) return "Ouvinte Fiel";
   if (stars >= 1) return "Ouvinte";
   return "Novo Ouvinte";
@@ -63,9 +64,9 @@ export default function WatchProfilePopup({
   const [totalHours, setTotalHours] = useState(0);
   const [chatCount, setChatCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  // Contador que força refetch quando o perfil ou avatar mudam externamente.
+  // Contador que forÃ§a refetch quando o perfil ou avatar mudam externamente.
   const [refreshTick, setRefreshTick] = useState(0);
-  // Cópias locais reativas dos campos exibidos — permitem atualização instantânea
+  // CÃ³pias locais reativas dos campos exibidos â€” permitem atualizaÃ§Ã£o instantÃ¢nea
   // ao receber `nexo:profile:changed` sem esperar props do parent.
   const [displayName, setDisplayName] = useState(userName);
   const [displayEmail, setDisplayEmail] = useState<string | null | undefined>(userEmail);
@@ -98,7 +99,7 @@ export default function WatchProfilePopup({
     if (!userId) return;
 
     const fetchAll = async () => {
-      // Liked songs — last 10
+      // Liked songs â€” last 10
       let likesP: any = playerSupabase
         .from("music_likes")
         .select("titulo, artista, capa")
@@ -118,7 +119,7 @@ export default function WatchProfilePopup({
         .order("watched_at", { ascending: false })
         .limit(1);
 
-      // Total watch history entries (estimate hours — 1 entry ≈ 30 min)
+      // Total watch history entries (estimate hours â€” 1 entry â‰ˆ 30 min)
       let hoursP: any = playerSupabase
         .from("watch_history")
         .select("id", { count: "exact", head: true })
@@ -126,7 +127,7 @@ export default function WatchProfilePopup({
       hoursP = radioUserId ? hoursP.eq("radio_user_id", radioUserId) : hoursP.is("radio_user_id", null);
 
       // Chat message count
-      // player_chat_messages doesn't have user_id, uses nome — approximate by profile name
+      // player_chat_messages doesn't have user_id, uses nome â€” approximate by profile name
       const profileP = radioUserId
         ? fetchPlayerListenerProfile({ id: userId } as any, radioUserId)
         : playerSupabase.from("profiles").select("nome, avatar_url").eq("user_id", userId).maybeSingle().then(({ data }) => data || null);
@@ -148,7 +149,7 @@ export default function WatchProfilePopup({
       const entryCount = hoursRes.count ?? 0;
       setTotalHours(Math.round(entryCount * 0.5 * 10) / 10); // 30 min per entry
 
-      // Mantém nome/avatar exibidos sincronizados com o que está no banco,
+      // MantÃ©m nome/avatar exibidos sincronizados com o que estÃ¡ no banco,
       // caso tenham mudado em outra aba/tela.
       const savedName = String((profileRes as any)?.nome || "").trim();
       if (savedName) {
@@ -229,7 +230,7 @@ export default function WatchProfilePopup({
           <>
             <div className="px-5 py-3 flex items-center gap-2">
               <Film size={13} className="text-white/40 shrink-0" />
-              <span className="text-[10px] text-white/50">Último on demand:</span>
+              <span className="text-[10px] text-white/50">Ãšltimo on demand:</span>
               {lastVod.logo && (
                 <img src={lastVod.logo} alt="" className="w-5 h-5 rounded object-cover shrink-0" />
               )}
@@ -243,7 +244,7 @@ export default function WatchProfilePopup({
         <div className="px-5 py-4">
           <div className="flex items-center gap-1.5 mb-2">
             <Heart size={12} fill="#ffffff" style={{ color: "#ffffff" }} />
-            <span className="text-[10px] font-bold uppercase tracking-wide text-white/60">Últimas Curtidas</span>
+            <span className="text-[10px] font-bold uppercase tracking-wide text-white/60">Ãšltimas Curtidas</span>
           </div>
           {loading ? (
             <div className="space-y-1.5 animate-pulse">
@@ -313,3 +314,4 @@ export default function WatchProfilePopup({
     </div>
   );
 }
+
