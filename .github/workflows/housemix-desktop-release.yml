@@ -94,7 +94,11 @@ jobs:
         run: npm run desktop:build
 
       - name: Build House Mix Desktop
-        run: npm exec electron-builder -- --win nsis --publish never
+        shell: pwsh
+        env:
+          WIN_CSC_LINK: ${{ secrets.HMD_WINDOWS_CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.HMD_WINDOWS_CSC_KEY_PASSWORD }}
+        run: ./scripts/package-housemix-desktop.ps1
 
       - name: Publish House Mix Desktop release
         shell: pwsh

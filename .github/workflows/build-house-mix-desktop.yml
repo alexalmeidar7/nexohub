@@ -64,7 +64,11 @@ jobs:
           if (-not (Test-Path "infra/offline-first/api/node_modules/express/package.json")) { throw "Local API Express dependency is missing." }
           if (-not (Test-Path "infra/offline-first/api/node_modules/postgres/package.json")) { throw "Local API PostgreSQL client is missing." }
       - name: Package Windows installer
-        run: npx electron-builder --win nsis --x64 --publish never
+        shell: pwsh
+        env:
+          WIN_CSC_LINK: ${{ secrets.HMD_WINDOWS_CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.HMD_WINDOWS_CSC_KEY_PASSWORD }}
+        run: ./scripts/package-housemix-desktop.ps1
       - name: Upload installer
         uses: actions/upload-artifact@v6
         with:
