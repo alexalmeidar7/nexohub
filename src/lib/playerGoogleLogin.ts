@@ -1,1 +1,120 @@
-aW1wb3J0IHsgcGxheWVyU3VwYWJhc2UgfSBmcm9tICJAL2ludGVncmF0aW9ucy9zdXBhYmFzZS9wbGF5ZXJDbGllbnQiOwoKY29uc3QgUkVTVUxUX0tFWSA9ICJuZXhvaHViOnBsYXllcjpvYXV0aC1wb3B1cC1yZXN1bHQiOwpjb25zdCBDSEFOTkVMX05BTUUgPSAibmV4b2h1Yi1wbGF5ZXItb2F1dGgiOwoKLyoqIFN0YXJ0cyBHb29nbGUgT0F1dGggaW4gYSBwb3B1cCBhbmQgcmVzb2x2ZXMgd2l0aCB0aGUgYXV0aGVudGljYXRlZCBQbGF5ZXIgdXNlciBpZC4gKi8KZXhwb3J0IGFzeW5jIGZ1bmN0aW9uIHN0YXJ0UGxheWVyR29vZ2xlTG9naW4oKTogUHJvbWlzZTxzdHJpbmc+IHsKICBpZiAod2luZG93LmhvdXNlTWl4RGVza3RvcCkgcmV0dXJuIHN0YXJ0RGVza3RvcFBsYXllckdvb2dsZUxvZ2luKCk7CgogIGNvbnN0IGZsb3dJZCA9IHR5cGVvZiBjcnlwdG8ucmFuZG9tVVVJRCA9PT0gImZ1bmN0aW9uIgogICAgPyBjcnlwdG8ucmFuZG9tVVVJRCgpCiAgICA6IGAke0RhdGUubm93KCl9LSR7TWF0aC5yYW5kb20oKS50b1N0cmluZygzNikuc2xpY2UoMil9YDsKICBjb25zdCB3aWR0aCA9IDUwMDsKICBjb25zdCBoZWlnaHQgPSA2NTA7CiAgY29uc3QgbGVmdCA9IE1hdGgubWF4KDAsIE1hdGgucm91bmQoKHdpbmRvdy5zY3JlZW4ud2lkdGggLSB3aWR0aCkgLyAyKSk7CiAgY29uc3QgdG9wID0gTWF0aC5tYXgoMCwgTWF0aC5yb3VuZCgod2luZG93LnNjcmVlbi5oZWlnaHQgLSBoZWlnaHQpIC8gMikpOwogIGNvbnN0IHBvcHVwID0gd2luZG93Lm9wZW4oImFib3V0OmJsYW5rIiwgIm5leG9odWItcGxheWVyLWdvb2dsZS1sb2dpbiIsIGBwb3B1cD15ZXMsd2lkdGg9JHt3aWR0aH0saGVpZ2h0PSR7aGVpZ2h0fSxsZWZ0PSR7bGVmdH0sdG9wPSR7dG9wfSxyZXNpemFibGU9eWVzLHNjcm9sbGJhcnM9eWVzYCk7CiAgaWYgKCFwb3B1cCkgdGhyb3cgbmV3IEVycm9yKCJQZXJtaXRhIHBvcC11cHMgcGFyYSBlbnRyYXIgY29tIG8gR29vZ2xlLiIpOwoKICB0cnkgeyBsb2NhbFN0b3JhZ2UucmVtb3ZlSXRlbShSRVNVTFRfS0VZKTsgfSBjYXRjaCB7IC8qIG9wdGlvbmFsIHNpZ25hbCAqLyB9CiAgY29uc3QgeyBkYXRhLCBlcnJvciB9ID0gYXdhaXQgcGxheWVyU3VwYWJhc2UuYXV0aC5zaWduSW5XaXRoT0F1dGgoewogICAgcHJvdmlkZXI6ICJnb29nbGUiLAogICAgb3B0aW9uczogewogICAgICByZWRpcmVjdFRvOiBgJHt3aW5kb3cubG9jYXRpb24ub3JpZ2lufS9hdXRoL3BvcHVwLWNhbGxiYWNrP2Zsb3c9JHtlbmNvZGVVUklDb21wb25lbnQoZmxvd0lkKX1gLAogICAgICBxdWVyeVBhcmFtczogeyBwcm9tcHQ6ICJzZWxlY3RfYWNjb3VudCIgfSwKICAgICAgc2tpcEJyb3dzZXJSZWRpcmVjdDogdHJ1ZSwKICAgIH0sCiAgfSk7CiAgaWYgKGVycm9yIHx8ICFkYXRhLnVybCkgewogICAgcG9wdXAuY2xvc2UoKTsKICAgIHRocm93IG5ldyBFcnJvcihlcnJvcj8ubWVzc2FnZSB8fCAiTsOjbyBmb2kgcG9zc8OtdmVsIGluaWNpYXIgbyBsb2dpbiBHb29nbGUuIik7CiAgfQogIHBvcHVwLmxvY2F0aW9uLmhyZWYgPSBkYXRhLnVybDsKCiAgcmV0dXJuIGF3YWl0IG5ldyBQcm9taXNlPHN0cmluZz4oKHJlc29sdmUsIHJlamVjdCkgPT4gewogICAgbGV0IHNldHRsZWQgPSBmYWxzZTsKICAgIGNvbnN0IGNsZWFudXAgPSAoKSA9PiB7CiAgICAgIHdpbmRvdy5yZW1vdmVFdmVudExpc3RlbmVyKCJtZXNzYWdlIiwgb25NZXNzYWdlKTsKICAgICAgd2luZG93LnJlbW92ZUV2ZW50TGlzdGVuZXIoInN0b3JhZ2UiLCBvblN0b3JhZ2UpOwogICAgICB3aW5kb3cuY2xlYXJJbnRlcnZhbChwb2xsKTsKICAgICAgd2luZG93LmNsZWFyVGltZW91dCh0aW1lb3V0KTsKICAgICAgY2hhbm5lbD8uY2xvc2UoKTsKICAgIH07CiAgICBjb25zdCBmaW5pc2ggPSBhc3luYyAoc3VjY2VzczogYm9vbGVhbikgPT4gewogICAgICBpZiAoc2V0dGxlZCkgcmV0dXJuOwogICAgICBzZXR0bGVkID0gdHJ1ZTsKICAgICAgY2xlYW51cCgpOwogICAgICB0cnkgeyBwb3B1cC5jbG9zZSgpOyB9IGNhdGNoIHsgLyogYWxyZWFkeSBjbG9zZWQgKi8gfQogICAgICBpZiAoIXN1Y2Nlc3MpIHJldHVybiByZWplY3QobmV3IEVycm9yKCJMb2dpbiBjYW5jZWxhZG8gb3UgbsOjbyBjb25jbHXDrWRvLiIpKTsKICAgICAgY29uc3QgeyBkYXRhOiBzZXNzaW9uRGF0YSwgZXJyb3I6IHNlc3Npb25FcnJvciB9ID0gYXdhaXQgcGxheWVyU3VwYWJhc2UuYXV0aC5nZXRTZXNzaW9uKCk7CiAgICAgIGNvbnN0IHVzZXJJZCA9IHNlc3Npb25EYXRhLnNlc3Npb24/LnVzZXI/LmlkOwogICAgICBpZiAoc2Vzc2lvbkVycm9yIHx8ICF1c2VySWQpIHJldHVybiByZWplY3QobmV3IEVycm9yKCJBIHNlc3PDo28gZG8gUGxheWVyIG7Do28gZm9pIGNhcnJlZ2FkYSBhcMOzcyBvIGxvZ2luLiIpKTsKICAgICAgcmVzb2x2ZSh1c2VySWQpOwogICAgfTsKICAgIGNvbnN0IG1hdGNoZXMgPSAocmVzdWx0OiBhbnkpID0+IHJlc3VsdD8uZmxvd0lkID09PSBmbG93SWQgJiYgcmVzdWx0Py50eXBlID09PSAibmV4b2h1YjpwbGF5ZXI6b2F1dGgtcmVzdWx0IjsKICAgIGNvbnN0IG9uTWVzc2FnZSA9IChldmVudDogTWVzc2FnZUV2ZW50KSA9PiB7CiAgICAgIGlmIChldmVudC5vcmlnaW4gIT09IHdpbmRvdy5sb2NhdGlvbi5vcmlnaW4gfHwgZXZlbnQuc291cmNlICE9PSBwb3B1cCB8fCAhbWF0Y2hlcyhldmVudC5kYXRhKSkgcmV0dXJuOwogICAgICB2b2lkIGZpbmlzaChCb29sZWFuKGV2ZW50LmRhdGEuc3VjY2VzcykpOwogICAgfTsKICAgIGNvbnN0IG9uU3RvcmFnZSA9IChldmVudDogU3RvcmFnZUV2ZW50KSA9PiB7CiAgICAgIGlmIChldmVudC5rZXkgIT09IFJFU1VMVF9LRVkgfHwgIWV2ZW50Lm5ld1ZhbHVlKSByZXR1cm47CiAgICAgIHRyeSB7IGNvbnN0IHJlc3VsdCA9IEpTT04ucGFyc2UoZXZlbnQubmV3VmFsdWUpOyBpZiAobWF0Y2hlcyhyZXN1bHQpKSB2b2lkIGZpbmlzaChCb29sZWFuKHJlc3VsdC5zdWNjZXNzKSk7IH0gY2F0Y2ggeyAvKiBpZ25vcmUgKi8gfQogICAgfTsKICAgIGxldCBjaGFubmVsOiBCcm9hZGNhc3RDaGFubmVsIHwgbnVsbCA9IG51bGw7CiAgICB0cnkgewogICAgICBjaGFubmVsID0gbmV3IEJyb2FkY2FzdENoYW5uZWwoQ0hBTk5FTF9OQU1FKTsKICAgICAgY2hhbm5lbC5vbm1lc3NhZ2UgPSAoZXZlbnQpID0+IHsgaWYgKG1hdGNoZXMoZXZlbnQuZGF0YSkpIHZvaWQgZmluaXNoKEJvb2xlYW4oZXZlbnQuZGF0YS5zdWNjZXNzKSk7IH07CiAgICB9IGNhdGNoIHsgLyogcG9zdE1lc3NhZ2Uvc3RvcmFnZSBzdGlsbCB3b3JrICovIH0KICAgIHdpbmRvdy5hZGRFdmVudExpc3RlbmVyKCJtZXNzYWdlIiwgb25NZXNzYWdlKTsKICAgIHdpbmRvdy5hZGRFdmVudExpc3RlbmVyKCJzdG9yYWdlIiwgb25TdG9yYWdlKTsKICAgIGNvbnN0IHBvbGwgPSB3aW5kb3cuc2V0SW50ZXJ2YWwoKCkgPT4geyBpZiAocG9wdXAuY2xvc2VkKSB2b2lkIGZpbmlzaChmYWxzZSk7IH0sIDQwMCk7CiAgICBjb25zdCB0aW1lb3V0ID0gd2luZG93LnNldFRpbWVvdXQoKCkgPT4gdm9pZCBmaW5pc2goZmFsc2UpLCAxMjBfMDAwKTsKICB9KTsKfQoKYXN5bmMgZnVuY3Rpb24gc3RhcnREZXNrdG9wUGxheWVyR29vZ2xlTG9naW4oKTogUHJvbWlzZTxzdHJpbmc+IHsKICBjb25zdCBkZXNrdG9wID0gd2luZG93LmhvdXNlTWl4RGVza3RvcDsKICBpZiAoIWRlc2t0b3ApIHRocm93IG5ldyBFcnJvcigiTG9naW4gZXh0ZXJubyBpbmRpc3BvbsOtdmVsLiIpOwoKICBjb25zdCByZWRpcmVjdFRvID0gImhvdXNlbWl4Oi8vZGVza3RvcC9vYXV0aC1jYWxsYmFjayI7CiAgY29uc3QgeyBkYXRhLCBlcnJvciB9ID0gYXdhaXQgcGxheWVyU3VwYWJhc2UuYXV0aC5zaWduSW5XaXRoT0F1dGgoewogICAgcHJvdmlkZXI6ICJnb29nbGUiLAogICAgb3B0aW9uczogewogICAgICByZWRpcmVjdFRvLAogICAgICBxdWVyeVBhcmFtczogeyBwcm9tcHQ6ICJzZWxlY3RfYWNjb3VudCIgfSwKICAgICAgc2tpcEJyb3dzZXJSZWRpcmVjdDogdHJ1ZSwKICAgIH0sCiAgfSk7CiAgaWYgKGVycm9yIHx8ICFkYXRhLnVybCkgdGhyb3cgbmV3IEVycm9yKGVycm9yPy5tZXNzYWdlIHx8ICJOw6NvIGZvaSBwb3Nzw612ZWwgaW5pY2lhciBvIGxvZ2luIEdvb2dsZS4iKTsKCiAgcmV0dXJuIGF3YWl0IG5ldyBQcm9taXNlPHN0cmluZz4oKHJlc29sdmUsIHJlamVjdCkgPT4gewogICAgbGV0IHNldHRsZWQgPSBmYWxzZTsKICAgIGxldCB1bnN1YnNjcmliZTogKCgpID0+IHZvaWQpIHwgdW5kZWZpbmVkOwogICAgY29uc3QgdGltZW91dCA9IHdpbmRvdy5zZXRUaW1lb3V0KCgpID0+IGZpbmlzaChuZXcgRXJyb3IoIlRlbXBvIGVzZ290YWRvIG5vIGxvZ2luIEdvb2dsZS4iKSksIDEyMF8wMDApOwogICAgY29uc3QgZmluaXNoID0gKGVycm9yPzogRXJyb3IsIHVzZXJJZD86IHN0cmluZykgPT4gewogICAgICBpZiAoc2V0dGxlZCkgcmV0dXJuOwogICAgICBzZXR0bGVkID0gdHJ1ZTsKICAgICAgd2luZG93LmNsZWFyVGltZW91dCh0aW1lb3V0KTsKICAgICAgdW5zdWJzY3JpYmU/LigpOwogICAgICBpZiAoZXJyb3IpIHJlamVjdChlcnJvcik7CiAgICAgIGVsc2UgaWYgKHVzZXJJZCkgcmVzb2x2ZSh1c2VySWQpOwogICAgICBlbHNlIHJlamVjdChuZXcgRXJyb3IoIkEgc2Vzc8OjbyBkbyBQbGF5ZXIgbsOjbyBmb2kgY2FycmVnYWRhIGFww7NzIG8gbG9naW4uIikpOwogICAgfTsKICAgIHVuc3Vic2NyaWJlID0gZGVza3RvcC5vblBsYXllck9BdXRoQ2FsbGJhY2soKHJhd1VybCkgPT4gewogICAgICBsZXQgY2FsbGJhY2tVcmw6IFVSTDsKICAgICAgdHJ5IHsgY2FsbGJhY2tVcmwgPSBuZXcgVVJMKHJhd1VybCk7IH0gY2F0Y2ggeyByZXR1cm47IH0KICAgICAgaWYgKGNhbGxiYWNrVXJsLnByb3RvY29sICE9PSAiaG91c2VtaXg6IiB8fCBjYWxsYmFja1VybC5ob3N0bmFtZSAhPT0gImRlc2t0b3AiIHx8IGNhbGxiYWNrVXJsLnBhdGhuYW1lICE9PSAiL29hdXRoLWNhbGxiYWNrIikgcmV0dXJuOwogICAgICBjb25zdCBjb2RlID0gY2FsbGJhY2tVcmwuc2VhcmNoUGFyYW1zLmdldCgiY29kZSIpOwogICAgICBpZiAoIWNvZGUpIHJldHVybiBmaW5pc2gobmV3IEVycm9yKCJPIEdvb2dsZSBuw6NvIHJldG9ybm91IG8gY8OzZGlnbyBkZSBhdXRlbnRpY2HDp8Ojby4iKSk7CiAgICAgIHZvaWQgcGxheWVyU3VwYWJhc2UuYXV0aC5leGNoYW5nZUNvZGVGb3JTZXNzaW9uKGNvZGUpLnRoZW4oKHsgZGF0YTogc2Vzc2lvbkRhdGEsIGVycm9yOiBleGNoYW5nZUVycm9yIH0pID0+IHsKICAgICAgICBjb25zdCB1c2VySWQgPSBzZXNzaW9uRGF0YS5zZXNzaW9uPy51c2VyPy5pZDsKICAgICAgICBpZiAoZXhjaGFuZ2VFcnJvciB8fCAhdXNlcklkKSByZXR1cm4gZmluaXNoKG5ldyBFcnJvcihleGNoYW5nZUVycm9yPy5tZXNzYWdlIHx8ICJOw6NvIGZvaSBwb3Nzw612ZWwgY29uY2x1aXIgbyBsb2dpbiBkbyBQbGF5ZXIuIikpOwogICAgICAgIGZpbmlzaCh1bmRlZmluZWQsIHVzZXJJZCk7CiAgICAgIH0pLmNhdGNoKChleGNoYW5nZUVycm9yKSA9PiBmaW5pc2gobmV3IEVycm9yKGV4Y2hhbmdlRXJyb3I/Lm1lc3NhZ2UgfHwgIkZhbGhhIGFvIGNvbmNsdWlyIG8gbG9naW4gR29vZ2xlLiIpKSk7CiAgICB9KTsKICAgIHZvaWQgZGVza3RvcC5vcGVuRXh0ZXJuYWwoZGF0YS51cmwpLnRoZW4oKG9wZW5lZCkgPT4gewogICAgICBpZiAoIW9wZW5lZCkgZmluaXNoKG5ldyBFcnJvcigiTsOjbyBmb2kgcG9zc8OtdmVsIGFicmlyIG8gbmF2ZWdhZG9yIHBhZHLDo28uIikpOwogICAgfSkuY2F0Y2goKCkgPT4gZmluaXNoKG5ldyBFcnJvcigiTsOjbyBmb2kgcG9zc8OtdmVsIGFicmlyIG8gbmF2ZWdhZG9yIHBhZHLDo28uIikpKTsKICB9KTsKfQo=
+import { playerSupabase } from "@/integrations/supabase/playerClient";
+
+const RESULT_KEY = "nexohub:player:oauth-popup-result";
+const CHANNEL_NAME = "nexohub-player-oauth";
+
+/** Starts Google OAuth in a popup and resolves with the authenticated Player user id. */
+export async function startPlayerGoogleLogin(): Promise<string> {
+  if (window.houseMixDesktop) return startDesktopPlayerGoogleLogin();
+
+  const flowId = typeof crypto.randomUUID === "function"
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const width = 500;
+  const height = 650;
+  const left = Math.max(0, Math.round((window.screen.width - width) / 2));
+  const top = Math.max(0, Math.round((window.screen.height - height) / 2));
+  const popup = window.open("about:blank", "nexohub-player-google-login", `popup=yes,width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`);
+  if (!popup) throw new Error("Permita pop-ups para entrar com o Google.");
+
+  try { localStorage.removeItem(RESULT_KEY); } catch { /* optional signal */ }
+  const { data, error } = await playerSupabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${window.location.origin}/auth/popup-callback?flow=${encodeURIComponent(flowId)}`,
+      queryParams: { prompt: "select_account" },
+      skipBrowserRedirect: true,
+    },
+  });
+  if (error || !data.url) {
+    popup.close();
+    throw new Error(error?.message || "Não foi possível iniciar o login Google.");
+  }
+  popup.location.href = data.url;
+
+  return await new Promise<string>((resolve, reject) => {
+    let settled = false;
+    const cleanup = () => {
+      window.removeEventListener("message", onMessage);
+      window.removeEventListener("storage", onStorage);
+      window.clearInterval(poll);
+      window.clearTimeout(timeout);
+      channel?.close();
+    };
+    const finish = async (success: boolean) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      try { popup.close(); } catch { /* already closed */ }
+      if (!success) return reject(new Error("Login cancelado ou não concluído."));
+      const { data: sessionData, error: sessionError } = await playerSupabase.auth.getSession();
+      const userId = sessionData.session?.user?.id;
+      if (sessionError || !userId) return reject(new Error("A sessão do Player não foi carregada após o login."));
+      resolve(userId);
+    };
+    const matches = (result: any) => result?.flowId === flowId && result?.type === "nexohub:player:oauth-result";
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin || event.source !== popup || !matches(event.data)) return;
+      void finish(Boolean(event.data.success));
+    };
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== RESULT_KEY || !event.newValue) return;
+      try { const result = JSON.parse(event.newValue); if (matches(result)) void finish(Boolean(result.success)); } catch { /* ignore */ }
+    };
+    let channel: BroadcastChannel | null = null;
+    try {
+      channel = new BroadcastChannel(CHANNEL_NAME);
+      channel.onmessage = (event) => { if (matches(event.data)) void finish(Boolean(event.data.success)); };
+    } catch { /* postMessage/storage still work */ }
+    window.addEventListener("message", onMessage);
+    window.addEventListener("storage", onStorage);
+    const poll = window.setInterval(() => { if (popup.closed) void finish(false); }, 400);
+    const timeout = window.setTimeout(() => void finish(false), 120_000);
+  });
+}
+
+async function startDesktopPlayerGoogleLogin(): Promise<string> {
+  const desktop = window.houseMixDesktop;
+  if (!desktop) throw new Error("Login externo indisponível.");
+
+  const redirectTo = "housemix://desktop/oauth-callback";
+  const { data, error } = await playerSupabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo,
+      queryParams: { prompt: "select_account" },
+      skipBrowserRedirect: true,
+    },
+  });
+  if (error || !data.url) throw new Error(error?.message || "Não foi possível iniciar o login Google.");
+
+  return await new Promise<string>((resolve, reject) => {
+    let settled = false;
+    let unsubscribe: (() => void) | undefined;
+    const timeout = window.setTimeout(() => finish(new Error("Tempo esgotado no login Google.")), 120_000);
+    const finish = (error?: Error, userId?: string) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeout);
+      unsubscribe?.();
+      if (error) reject(error);
+      else if (userId) resolve(userId);
+      else reject(new Error("A sessão do Player não foi carregada após o login."));
+    };
+    unsubscribe = desktop.onPlayerOAuthCallback((rawUrl) => {
+      let callbackUrl: URL;
+      try { callbackUrl = new URL(rawUrl); } catch { return; }
+      if (callbackUrl.protocol !== "housemix:" || callbackUrl.hostname !== "desktop" || callbackUrl.pathname !== "/oauth-callback") return;
+      const code = callbackUrl.searchParams.get("code");
+      if (!code) return finish(new Error("O Google não retornou o código de autenticação."));
+      void playerSupabase.auth.exchangeCodeForSession(code).then(({ data: sessionData, error: exchangeError }) => {
+        const userId = sessionData.session?.user?.id;
+        if (exchangeError || !userId) return finish(new Error(exchangeError?.message || "Não foi possível concluir o login do Player."));
+        finish(undefined, userId);
+      }).catch((exchangeError) => finish(new Error(exchangeError?.message || "Falha ao concluir o login Google.")));
+    });
+    void desktop.openExternal(data.url).then((opened) => {
+      if (!opened) finish(new Error("Não foi possível abrir o navegador padrão."));
+    }).catch(() => finish(new Error("Não foi possível abrir o navegador padrão.")));
+  });
+}

@@ -1,1 +1,264 @@
-aW1wb3J0IHsgdXNlRWZmZWN0LCB1c2VNZW1vLCB1c2VSZWYsIHVzZVN0YXRlIH0gZnJvbSAicmVhY3QiOw0KaW1wb3J0IHsgQ2xvdWQsIENsb3VkTGlnaHRuaW5nLCBDbG91ZFJhaW4sIENsb3VkU25vdywgQ2xvdWRTdW4sIE1pbnVzLCBQbHVzLCBTdW4gfSBmcm9tICJsdWNpZGUtcmVhY3QiOw0KaW1wb3J0IHsgcGxheWVyU3VwYWJhc2UgfSBmcm9tICJAL2ludGVncmF0aW9ucy9zdXBhYmFzZS9wbGF5ZXJDbGllbnQiOw0KaW1wb3J0IHsgZmV0Y2hXZWF0aGVyRm9yZWNhc3QsIHNlYXJjaEdlb2NvZGUgfSBmcm9tICJAL2xpYi93ZWF0aGVyU2VydmljZSI7DQoNCnR5cGUgRm9yZWNhc3REYXkgPSB7IGRhdGU6IHN0cmluZzsgbWluOiBudW1iZXI7IG1heDogbnVtYmVyOyByYWluOiBudW1iZXI7IGNvZGU6IG51bWJlciB9Ow0KDQpmdW5jdGlvbiBGbGF0V2VhdGhlckljb24oeyBjb2RlLCBzaXplIH06IHsgY29kZTogbnVtYmVyOyBzaXplOiBudW1iZXIgfSkgew0KICBjb25zdCBJY29uID0gY29kZSA9PT0gMCA/IFN1bg0KICAgIDogY29kZSA9PT0gMSB8fCBjb2RlID09PSAyID8gQ2xvdWRTdW4NCiAgICA6IGNvZGUgPT09IDMgfHwgY29kZSA9PT0gNDUgfHwgY29kZSA9PT0gNDggPyBDbG91ZA0KICAgIDogY29kZSA+PSA3MSAmJiBjb2RlIDw9IDc3ID8gQ2xvdWRTbm93DQogICAgOiBjb2RlID49IDk1ID8gQ2xvdWRMaWdodG5pbmcNCiAgICA6IENsb3VkUmFpbjsNCiAgcmV0dXJuIDxJY29uIHNpemU9e3NpemV9IHN0cm9rZVdpZHRoPXsxLjh9IGNsYXNzTmFtZT0ic2hyaW5rLTAgdGV4dC13aGl0ZSIgYXJpYS1oaWRkZW49InRydWUiIC8+Ow0KfQ0KDQovKioNCiAqIFJlbMOzZ2lvICsgcHJldmlzw6NvIGRvIHRlbXBvIG5vIG1lc21vIHBhZHLDo28gdmlzdWFsIGRvIC9wbGF5ZXIvd2F0Y2guDQogKiBSZXV0aWxpesOhdmVsIGVtIHF1YWxxdWVyIHRlbGEgZG8gcGxheWVyLg0KICovDQpleHBvcnQgZGVmYXVsdCBmdW5jdGlvbiBQbGF5ZXJDbG9ja1dlYXRoZXIoew0KICByYWRpb1VzZXJJZCwNCiAgY29tcGFjdCA9IGZhbHNlLA0KfTogew0KICByYWRpb1VzZXJJZD86IHN0cmluZyB8IG51bGw7DQogIGNvbXBhY3Q/OiBib29sZWFuOw0KfSkgew0KICBjb25zdCBbbm93LCBzZXROb3ddID0gdXNlU3RhdGU8RGF0ZT4oKCkgPT4gbmV3IERhdGUoKSk7DQogIHVzZUVmZmVjdCgoKSA9PiB7DQogICAgY29uc3QgdCA9IHdpbmRvdy5zZXRJbnRlcnZhbCgoKSA9PiBzZXROb3cobmV3IERhdGUoKSksIDEwMDApOw0KICAgIHJldHVybiAoKSA9PiB3aW5kb3cuY2xlYXJJbnRlcnZhbCh0KTsNCiAgfSwgW10pOw0KICBjb25zdCBjbG9ja1RpbWUgPSB1c2VNZW1vKCgpID0+ICh7DQogICAgaGg6IFN0cmluZyhub3cuZ2V0SG91cnMoKSkucGFkU3RhcnQoMiwgIjAiKSwNCiAgICBtbTogU3RyaW5nKG5vdy5nZXRNaW51dGVzKCkpLnBhZFN0YXJ0KDIsICIwIiksDQogICAgc3M6IFN0cmluZyhub3cuZ2V0U2Vjb25kcygpKS5wYWRTdGFydCgyLCAiMCIpLA0KICB9KSwgW25vd10pOw0KDQogIGNvbnN0IFt3ZWF0aGVyLCBzZXRXZWF0aGVyXSA9IHVzZVN0YXRlPHsgdGVtcDogbnVtYmVyOyBjb2RlOiBudW1iZXI7IGZvcmVjYXN0OiBGb3JlY2FzdERheVtdIH0gfCBudWxsPihudWxsKTsNCiAgY29uc3QgW3dlYXRoZXJMb2FkaW5nLCBzZXRXZWF0aGVyTG9hZGluZ10gPSB1c2VTdGF0ZShmYWxzZSk7DQogIGNvbnN0IFt3ZWF0aGVyRXJyb3IsIHNldFdlYXRoZXJFcnJvcl0gPSB1c2VTdGF0ZShmYWxzZSk7DQogIGNvbnN0IFtmb3JlY2FzdE9wZW4sIHNldEZvcmVjYXN0T3Blbl0gPSB1c2VTdGF0ZShmYWxzZSk7DQogIGNvbnN0IGZvcmVjYXN0UmVmID0gdXNlUmVmPEhUTUxEaXZFbGVtZW50PihudWxsKTsNCg0KICB1c2VFZmZlY3QoKCkgPT4gew0KICAgIGlmICghZm9yZWNhc3RPcGVuKSByZXR1cm47DQogICAgY29uc3QgY2xvc2VPdXRzaWRlID0gKGV2ZW50OiBQb2ludGVyRXZlbnQpID0+IHsNCiAgICAgIGlmIChldmVudC50YXJnZXQgaW5zdGFuY2VvZiBOb2RlICYmICFmb3JlY2FzdFJlZi5jdXJyZW50Py5jb250YWlucyhldmVudC50YXJnZXQpKSBzZXRGb3JlY2FzdE9wZW4oZmFsc2UpOw0KICAgIH07DQogICAgY29uc3QgY2xvc2VPbkVzY2FwZSA9IChldmVudDogS2V5Ym9hcmRFdmVudCkgPT4gew0KICAgICAgaWYgKGV2ZW50LmtleSA9PT0gIkVzY2FwZSIpIHNldEZvcmVjYXN0T3BlbihmYWxzZSk7DQogICAgfTsNCiAgICBkb2N1bWVudC5hZGRFdmVudExpc3RlbmVyKCJwb2ludGVyZG93biIsIGNsb3NlT3V0c2lkZSk7DQogICAgZG9jdW1lbnQuYWRkRXZlbnRMaXN0ZW5lcigia2V5ZG93biIsIGNsb3NlT25Fc2NhcGUpOw0KICAgIHJldHVybiAoKSA9PiB7DQogICAgICBkb2N1bWVudC5yZW1vdmVFdmVudExpc3RlbmVyKCJwb2ludGVyZG93biIsIGNsb3NlT3V0c2lkZSk7DQogICAgICBkb2N1bWVudC5yZW1vdmVFdmVudExpc3RlbmVyKCJrZXlkb3duIiwgY2xvc2VPbkVzY2FwZSk7DQogICAgfTsNCiAgfSwgW2ZvcmVjYXN0T3Blbl0pOw0KDQogIHVzZUVmZmVjdCgoKSA9PiB7DQogICAgaWYgKCFyYWRpb1VzZXJJZCkgcmV0dXJuOw0KICAgIGxldCBjYW5jZWxsZWQgPSBmYWxzZTsNCiAgICBsZXQgaW50ZXJ2YWxJZDogbnVtYmVyIHwgdW5kZWZpbmVkOw0KDQogICAgY29uc3QgZmV0Y2hXZWF0aGVyID0gYXN5bmMgKGxhdD86IG51bWJlciB8IG51bGwsIGxvbj86IG51bWJlciB8IG51bGwpID0+IHsNCiAgICAgIHNldFdlYXRoZXJMb2FkaW5nKHRydWUpOw0KICAgICAgdHJ5IHsNCiAgICAgICAgbGV0IHBheWxvYWQ6IGFueTsNCiAgICAgICAgaWYgKGxhdCAhPSBudWxsICYmIGxvbiAhPSBudWxsKSB7DQogICAgICAgICAgY29uc3QgcmVzdWx0ID0gYXdhaXQgZmV0Y2hXZWF0aGVyRm9yZWNhc3QobGF0LCBsb24sIDMpOw0KICAgICAgICAgIGlmICghcmVzdWx0Lm9rIHx8ICFyZXN1bHQuZGF0YSkgdGhyb3cgbmV3IEVycm9yKHJlc3VsdC5lcnJvciB8fCAiUHJldmlzw6NvIHNlbSBkYWRvcyIpOw0KICAgICAgICAgIHBheWxvYWQgPSByZXN1bHQuZGF0YTsNCiAgICAgICAgfSBlbHNlIHsNCiAgICAgICAgICAvLyBFbSBzZXNzw7VlcyBww7pibGljYXMsIGEgcG9sw610aWNhIGRlIGxlaXR1cmEgcG9kZSBibG9xdWVhciB1c2VyX3NldHRpbmdzLg0KICAgICAgICAgIC8vIEEgZnVuw6fDo28gasOhIHJlc29sdmUgYSBjaWRhZGUgZGEgZW1pc3NvcmEgbm8gc2Vydmlkb3IgdXNhbmRvIHJhZGlvVXNlcklkLg0KICAgICAgICAgIGNvbnN0IHsgZGF0YSwgZXJyb3IgfSA9IGF3YWl0IHBsYXllclN1cGFiYXNlLmZ1bmN0aW9ucy5pbnZva2UoImZldGNoLXdlYXRoZXIiLCB7DQogICAgICAgICAgICBib2R5OiB7IGFjdGlvbjogImZvcmVjYXN0IiwgdXNlcl9pZDogcmFkaW9Vc2VySWQsIGZvcmVjYXN0X2RheXM6IDMgfSwNCiAgICAgICAgICB9KTsNCiAgICAgICAgICBpZiAoZXJyb3IpIHRocm93IGVycm9yOw0KICAgICAgICAgIGNvbnN0IHJlc3BvbnNlID0gZGF0YSBhcyBhbnk7DQogICAgICAgICAgcGF5bG9hZCA9IFtyZXNwb25zZT8uZGF0YSwgcmVzcG9uc2U/LmRhdGE/LmRhdGEsIHJlc3BvbnNlXS5maW5kKChjYW5kaWRhdGUpID0+IGNhbmRpZGF0ZT8uY3VycmVudCk7DQogICAgICAgICAgaWYgKCFwYXlsb2FkKSB0aHJvdyBuZXcgRXJyb3IocmVzcG9uc2U/LmVycm9yIHx8IHJlc3BvbnNlPy5kYXRhPy5lcnJvciB8fCAiQSBlbWlzc29yYSBuw6NvIHJldG9ybm91IGRhZG9zIGRvIHRlbXBvIik7DQogICAgICAgIH0NCiAgICAgICAgY29uc3QgYyA9IHBheWxvYWQuY3VycmVudDsNCiAgICAgICAgY29uc3QgZGFpbHkgPSBwYXlsb2FkLmRhaWx5Ow0KICAgICAgICBjb25zdCBjdXJyZW50VGVtcGVyYXR1cmUgPSBOdW1iZXIoYz8udGVtcGVyYXR1cmVfMm0pOw0KICAgICAgICBpZiAoIWNhbmNlbGxlZCAmJiBjICYmIE51bWJlci5pc0Zpbml0ZShjdXJyZW50VGVtcGVyYXR1cmUpKSB7DQogICAgICAgICAgY29uc3QgZm9yZWNhc3Q6IEZvcmVjYXN0RGF5W10gPSBBcnJheS5pc0FycmF5KGRhaWx5Py50aW1lKQ0KICAgICAgICAgICAgPyBkYWlseS50aW1lLnNsaWNlKDAsIDMpLm1hcCgoZGF0ZTogc3RyaW5nLCBpbmRleDogbnVtYmVyKSA9PiAoew0KICAgICAgICAgICAgICAgIGRhdGUsDQogICAgICAgICAgICAgICAgbWluOiBOdW1iZXIoZGFpbHkudGVtcGVyYXR1cmVfMm1fbWluPy5baW5kZXhdKSwNCiAgICAgICAgICAgICAgICBtYXg6IE51bWJlcihkYWlseS50ZW1wZXJhdHVyZV8ybV9tYXg/LltpbmRleF0pLA0KICAgICAgICAgICAgICAgIHJhaW46IE51bWJlcihkYWlseS5wcmVjaXBpdGF0aW9uX3N1bT8uW2luZGV4XSkgfHwgMCwNCiAgICAgICAgICAgICAgICBjb2RlOiBOdW1iZXIoZGFpbHkud2VhdGhlcl9jb2RlPy5baW5kZXhdKSB8fCAwLA0KICAgICAgICAgICAgICB9KSkuZmlsdGVyKChkYXk6IEZvcmVjYXN0RGF5KSA9PiBOdW1iZXIuaXNGaW5pdGUoZGF5Lm1pbikgJiYgTnVtYmVyLmlzRmluaXRlKGRheS5tYXgpKQ0KICAgICAgICAgICAgOiBbXTsNCiAgICAgICAgICBzZXRXZWF0aGVyKHsgdGVtcDogTWF0aC5yb3VuZChjdXJyZW50VGVtcGVyYXR1cmUpLCBjb2RlOiBOdW1iZXIoYy53ZWF0aGVyX2NvZGUpIHx8IDAsIGZvcmVjYXN0IH0pOw0KICAgICAgICAgIHNldFdlYXRoZXJFcnJvcihmYWxzZSk7DQogICAgICAgIH0gZWxzZSBpZiAoIWNhbmNlbGxlZCkgew0KICAgICAgICAgIGNvbnNvbGUud2FybigiUHJldmlzw6NvIGRvIENpZGFkZSBUZW1wbyBzZW0gZGFkb3MgYXR1YWlzOiIsIHBheWxvYWQpOw0KICAgICAgICAgIHNldFdlYXRoZXJFcnJvcih0cnVlKTsNCiAgICAgICAgfQ0KICAgICAgfSBjYXRjaCAoZXJyb3IpIHsNCiAgICAgICAgaWYgKCFjYW5jZWxsZWQpIHsNCiAgICAgICAgICBjb25zb2xlLndhcm4oIk7Do28gZm9pIHBvc3PDrXZlbCBjYXJyZWdhciBvIHRlbXBvIGF0dWFsOiIsIGVycm9yKTsNCiAgICAgICAgICBzZXRXZWF0aGVyRXJyb3IodHJ1ZSk7DQogICAgICAgIH0NCiAgICAgIH0gZmluYWxseSB7DQogICAgICAgIGlmICghY2FuY2VsbGVkKSBzZXRXZWF0aGVyTG9hZGluZyhmYWxzZSk7DQogICAgICB9DQogICAgfTsNCg0KICAgIGNvbnN0IG9uUHJpbWFyeUNpdHlDaGFuZ2VkID0gKGV2ZW50OiBFdmVudCkgPT4gew0KICAgICAgY29uc3QgY2l0eSA9IChldmVudCBhcyBDdXN0b21FdmVudDx7IGxhdD86IG51bWJlcjsgbG9uPzogbnVtYmVyIH0gfCBudWxsPikuZGV0YWlsOw0KICAgICAgaWYgKGNpdHk/LmxhdCAhPSBudWxsICYmIGNpdHk/LmxvbiAhPSBudWxsICYmIE51bWJlci5pc0Zpbml0ZShOdW1iZXIoY2l0eS5sYXQpKSAmJiBOdW1iZXIuaXNGaW5pdGUoTnVtYmVyKGNpdHkubG9uKSkpIHsNCiAgICAgICAgZmV0Y2hXZWF0aGVyKE51bWJlcihjaXR5LmxhdCksIE51bWJlcihjaXR5LmxvbikpOw0KICAgICAgfQ0KICAgIH07DQogICAgd2luZG93LmFkZEV2ZW50TGlzdGVuZXIoIndlYXRoZXI6cHJpbWFyeS1jaXR5LWNoYW5nZWQiLCBvblByaW1hcnlDaXR5Q2hhbmdlZCk7DQoNCiAgICAoYXN5bmMgKCkgPT4gew0KICAgICAgbGV0IGxhdDogbnVtYmVyIHwgbnVsbCA9IG51bGw7DQogICAgICBsZXQgbG9uOiBudW1iZXIgfCBudWxsID0gbnVsbDsNCiAgICAgIGxldCBjaXR5ID0gIiI7DQogICAgICB0cnkgew0KICAgICAgICAvLyBVc2FyIGEgbWVzbWEgb3JkZW0gZGUgY2hhdmVzIGRhIHDDoWdpbmEgQ2lkYWRlIFRlbXBvOiBkYWRvcyBlc2NvcGFkb3MNCiAgICAgICAgLy8gcGFyYSBhIGVtaXNzb3JhIHByaW1laXJvLCBzZWd1aWRvIGRvIHZhbG9yIHByaW5jaXBhbCBsZWdhZG8gZ2xvYmFsLg0KICAgICAgICBjb25zdCByYXdQcmltYXJ5ID0gbG9jYWxTdG9yYWdlLmdldEl0ZW0oYG5leG9odWJfY2lkYWRlX3RlbXBvX3ByaW1hcnlfJHtyYWRpb1VzZXJJZH1gKQ0KICAgICAgICAgIHx8IGxvY2FsU3RvcmFnZS5nZXRJdGVtKGBtYXN0ZXJ2aWV3X3ByaW1hcnlfY2l0eV8ke3JhZGlvVXNlcklkfWApDQogICAgICAgICAgfHwgbG9jYWxTdG9yYWdlLmdldEl0ZW0oIm1hc3RlcnZpZXdfcHJpbWFyeV9jaXR5Iik7DQogICAgICAgIGNvbnN0IHByaW1hcnkgPSByYXdQcmltYXJ5ID8gSlNPTi5wYXJzZShyYXdQcmltYXJ5KSA6IG51bGw7DQogICAgICAgIGNpdHkgPSBTdHJpbmcocHJpbWFyeT8ubmFtZSB8fCAiIikudHJpbSgpOw0KICAgICAgICBpZiAocHJpbWFyeT8ubGF0ICE9IG51bGwgJiYgcHJpbWFyeT8ubG9uICE9IG51bGwgJiYgTnVtYmVyLmlzRmluaXRlKE51bWJlcihwcmltYXJ5LmxhdCkpICYmIE51bWJlci5pc0Zpbml0ZShOdW1iZXIocHJpbWFyeS5sb24pKSkgew0KICAgICAgICAgIGxhdCA9IE51bWJlcihwcmltYXJ5LmxhdCk7DQogICAgICAgICAgbG9uID0gTnVtYmVyKHByaW1hcnkubG9uKTsNCiAgICAgICAgfQ0KICAgICAgICAvLyBDaWRhZGUgVGVtcG8gdGFtYsOpbSBzYWx2YSBhIMO6bHRpbWEgY2lkYWRlIGNvbnN1bHRhZGEgbWVzbW8gYW50ZXMgZGUNCiAgICAgICAgLy8gZWxhIHNlciBtYXJjYWRhIGNvbW8gcHJpbmNpcGFsLiBSZXV0aWxpemUgZXNzYSBlc2NvbGhhIG5vIHBsYXllci4NCiAgICAgICAgaWYgKCFjaXR5KSB7DQogICAgICAgICAgY2l0eSA9IGxvY2FsU3RvcmFnZS5nZXRJdGVtKGBtYXN0ZXJ2aWV3X2xhc3RfY2l0eV8ke3JhZGlvVXNlcklkfWApDQogICAgICAgICAgICB8fCBsb2NhbFN0b3JhZ2UuZ2V0SXRlbSgibWFzdGVydmlld19sYXN0X2NpdHkiKQ0KICAgICAgICAgICAgfHwgIiI7DQogICAgICAgIH0NCiAgICAgIH0gY2F0Y2gge30NCiAgICAgIHRyeSB7DQogICAgICAgIGNvbnN0IHsgZGF0YTogc2V0dGluZ3MgfSA9IGF3YWl0IHBsYXllclN1cGFiYXNlDQogICAgICAgICAgLmZyb20oInVzZXJfc2V0dGluZ3MiKQ0KICAgICAgICAgIC5zZWxlY3QoIndlYXRoZXJfY2l0eSwgd2VhdGhlcl9sYXQsIHdlYXRoZXJfbG9uLCBkYXNoYm9hcmRfaXRlbXMiKQ0KICAgICAgICAgIC5lcSgidXNlcl9pZCIsIHJhZGlvVXNlcklkKQ0KICAgICAgICAgIC5tYXliZVNpbmdsZSgpOw0KICAgICAgICBjb25zdCBpdGVtcyA9IChzZXR0aW5ncyBhcyBhbnkpPy5kYXNoYm9hcmRfaXRlbXMgfHwge307DQogICAgICAgIGNvbnN0IHByaW1hcnkgPSBpdGVtcy5jaWRhZGVfdGVtcG9fcHJpbWFyeTsNCiAgICAgICAgY2l0eSA9IGNpdHkgfHwgU3RyaW5nKHByaW1hcnk/Lm5hbWUgfHwgKHNldHRpbmdzIGFzIGFueSk/LndlYXRoZXJfY2l0eSB8fCAiIikudHJpbSgpOw0KICAgICAgICBpZiAobGF0ID09IG51bGwgfHwgbG9uID09IG51bGwpIHsNCiAgICAgICAgICBjb25zdCBzYXZlZExhdCA9IHByaW1hcnk/LmxhdCA/PyAoc2V0dGluZ3MgYXMgYW55KT8ud2VhdGhlcl9sYXQ7DQogICAgICAgICAgY29uc3Qgc2F2ZWRMb24gPSBwcmltYXJ5Py5sb24gPz8gKHNldHRpbmdzIGFzIGFueSk/LndlYXRoZXJfbG9uOw0KICAgICAgICAgIGlmIChzYXZlZExhdCAhPSBudWxsICYmIHNhdmVkTG9uICE9IG51bGwgJiYgTnVtYmVyLmlzRmluaXRlKE51bWJlcihzYXZlZExhdCkpICYmIE51bWJlci5pc0Zpbml0ZShOdW1iZXIoc2F2ZWRMb24pKSkgew0KICAgICAgICAgICAgbGF0ID0gTnVtYmVyKHNhdmVkTGF0KTsNCiAgICAgICAgICAgIGxvbiA9IE51bWJlcihzYXZlZExvbik7DQogICAgICAgICAgfQ0KICAgICAgICB9DQogICAgICB9IGNhdGNoIHt9DQogICAgICBpZiAoKGxhdCA9PSBudWxsIHx8IGxvbiA9PSBudWxsKSAmJiBjaXR5KSB7DQogICAgICAgIGNvbnN0IGxvY2F0aW9ucyA9IGF3YWl0IHNlYXJjaEdlb2NvZGUoY2l0eSwgMSk7DQogICAgICAgIGlmIChsb2NhdGlvbnNbMF0pIHsNCiAgICAgICAgICBsYXQgPSBsb2NhdGlvbnNbMF0ubGF0aXR1ZGU7DQogICAgICAgICAgbG9uID0gbG9jYXRpb25zWzBdLmxvbmdpdHVkZTsNCiAgICAgICAgfQ0KICAgICAgfQ0KICAgICAgZmV0Y2hXZWF0aGVyKGxhdCwgbG9uKTsNCiAgICAgIGludGVydmFsSWQgPSB3aW5kb3cuc2V0SW50ZXJ2YWwoKCkgPT4gZmV0Y2hXZWF0aGVyKGxhdCwgbG9uKSwgNSAqIDYwICogMTAwMCk7DQogICAgfSkoKTsNCg0KICAgIHJldHVybiAoKSA9PiB7DQogICAgICBjYW5jZWxsZWQgPSB0cnVlOw0KICAgICAgd2luZG93LnJlbW92ZUV2ZW50TGlzdGVuZXIoIndlYXRoZXI6cHJpbWFyeS1jaXR5LWNoYW5nZWQiLCBvblByaW1hcnlDaXR5Q2hhbmdlZCk7DQogICAgICBpZiAoaW50ZXJ2YWxJZCkgd2luZG93LmNsZWFySW50ZXJ2YWwoaW50ZXJ2YWxJZCk7DQogICAgfTsNCiAgfSwgW3JhZGlvVXNlcklkXSk7DQoNCiAgY29uc3QgY2xvY2tTaXplID0gY29tcGFjdCA/IDIyIDogMjg7DQogIGNvbnN0IHNlY1NpemUgPSBjb21wYWN0ID8gMTMgOiAxNjsNCg0KICByZXR1cm4gKA0KICAgIDxkaXYgY2xhc3NOYW1lPSJmbGV4IGl0ZW1zLWNlbnRlciBnYXAtMiBzbTpnYXAtMyI+DQogICAgICB7KHdlYXRoZXIgfHwgY29tcGFjdCkgJiYgKA0KICAgICAgICA8ZGl2DQogICAgICAgICAgY2xhc3NOYW1lPXtgJHtjb21wYWN0ID8gImZsZXgiIDogImhpZGRlbiBzbTpmbGV4In0gcmVsYXRpdmUgaXRlbXMtY2VudGVyIGdhcC0yIHRyYW5zaXRpb24tYWxsIGR1cmF0aW9uLTMwMCBlYXNlLW91dCAke2ZvcmVjYXN0T3BlbiA/ICJyb3VuZGVkLWZ1bGwgYmctd2hpdGUvWzAuMTBdIHB4LTMgcHktMSBiYWNrZHJvcC1ibHVyLXhsIHNoYWRvdy1bMF84cHhfMzJweF9yZ2JhKDAsMCwwLDAuMjIpLGluc2V0XzBfMXB4XzBfcmdiYSgyNTUsMjU1LDI1NSwwLjEyKV0iIDogIiJ9YH0NCiAgICAgICAgICByZWY9e2ZvcmVjYXN0UmVmfQ0KICAgICAgICA+DQogICAgICAgICAgPGRpdg0KICAgICAgICAgICAgY2xhc3NOYW1lPSJmbGV4IHNocmluay0wIGl0ZW1zLWNlbnRlciBnYXAtMiBvdmVyZmxvdy1oaWRkZW4gd2hpdGVzcGFjZS1ub3dyYXAgdHJhbnNpdGlvbi1hbGwgZHVyYXRpb24tMzAwIGVhc2Utb3V0Ig0KICAgICAgICAgICAgc3R5bGU9e3sgbWF4V2lkdGg6IGZvcmVjYXN0T3BlbiA/IDYyMCA6IDAsIG9wYWNpdHk6IGZvcmVjYXN0T3BlbiA/IDEgOiAwLCB0cmFuc2Zvcm06IGZvcmVjYXN0T3BlbiA/ICJ0cmFuc2xhdGVYKDApIiA6ICJ0cmFuc2xhdGVYKC04cHgpIiB9fQ0KICAgICAgICAgICAgYXJpYS1oaWRkZW49eyFmb3JlY2FzdE9wZW59DQogICAgICAgICAgPg0KICAgICAgICAgICAge3dlYXRoZXI/LmZvcmVjYXN0LnNsaWNlKDAsIDMpLm1hcCgoZGF5LCBpbmRleCkgPT4gKA0KICAgICAgICAgICAgICA8ZGl2IGtleT17ZGF5LmRhdGV9IGNsYXNzTmFtZT0iZmxleCBzaHJpbmstMCBpdGVtcy1jZW50ZXIgZ2FwLTIiPg0KICAgICAgICAgICAgICAgIHtpbmRleCA+IDAgJiYgPHNwYW4gYXJpYS1oaWRkZW49InRydWUiIGNsYXNzTmFtZT0idGV4dC13aGl0ZS81NSB0ZXh0LXNtIj58PC9zcGFuPn0NCiAgICAgICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9InRleHQtWzExcHhdIHNtOnRleHQteHMgZm9udC1zZW1pYm9sZCB0ZXh0LXdoaXRlIj4NCiAgICAgICAgICAgICAgICAgIHtpbmRleCA9PT0gMCA/ICJob2plIiA6IGAke2RheS5kYXRlLnNsaWNlKDgsIDEwKX0vJHtkYXkuZGF0ZS5zbGljZSg1LCA3KX1gfQ0KICAgICAgICAgICAgICAgIDwvc3Bhbj4NCiAgICAgICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9IndoaXRlc3BhY2Utbm93cmFwIHRleHQtWzEwcHhdIHNtOnRleHQteHMgdGV4dC13aGl0ZS84NSB0YWJ1bGFyLW51bXMiPg0KICAgICAgICAgICAgICAgICAge01hdGgucm91bmQoZGF5Lm1pbil9wrAve01hdGgucm91bmQoZGF5Lm1heCl9wrANCiAgICAgICAgICAgICAgICA8L3NwYW4+DQogICAgICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPSJ3aGl0ZXNwYWNlLW5vd3JhcCB0ZXh0LVs5cHhdIHNtOnRleHQtWzEwcHhdIHRleHQtd2hpdGUvNTUgdGFidWxhci1udW1zIiB0aXRsZT0iQ2h1dmEgYWN1bXVsYWRhIj4NCiAgICAgICAgICAgICAgICAgIHtkYXkucmFpbi50b0xvY2FsZVN0cmluZygicHQtQlIiLCB7IG1heGltdW1GcmFjdGlvbkRpZ2l0czogMSB9KX0gbW0NCiAgICAgICAgICAgICAgICA8L3NwYW4+DQogICAgICAgICAgICAgICAgPEZsYXRXZWF0aGVySWNvbiBjb2RlPXtkYXkuY29kZX0gc2l6ZT17MTN9IC8+DQogICAgICAgICAgICAgIDwvZGl2Pg0KICAgICAgICAgICAgKSl9DQogICAgICAgICAgICB7Zm9yZWNhc3RPcGVuICYmICF3ZWF0aGVyPy5mb3JlY2FzdC5sZW5ndGggJiYgKA0KICAgICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9InNocmluay0wIHRleHQtWzEwcHhdIHRleHQtd2hpdGUvNjUiPg0KICAgICAgICAgICAgICAgIHt3ZWF0aGVyTG9hZGluZyA/ICJjYXJyZWdhbmRvIHByZXZpc8Ojb+KApiIgOiB3ZWF0aGVyRXJyb3IgPyAicHJldmlzw6NvIGluZGlzcG9uw612ZWwiIDogInNlbSBwcmV2aXPDo28gZGlzcG9uw612ZWwifQ0KICAgICAgICAgICAgICA8L3NwYW4+DQogICAgICAgICAgICApfQ0KICAgICAgICAgIDwvZGl2Pg0KICAgICAgICAgIHtmb3JlY2FzdE9wZW4gJiYgPHNwYW4gYXJpYS1oaWRkZW49InRydWUiIGNsYXNzTmFtZT0idGV4dC13aGl0ZS81NSB0ZXh0LXNtIj58PC9zcGFuPn0NCiAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0iZmxleCBzaHJpbmstMCBpdGVtcy1jZW50ZXIgZ2FwLTIiIHRpdGxlPSJUZW1wbyBhZ29yYSIgYXJpYS1idXN5PXshd2VhdGhlcn0+DQogICAgICAgICAgICA8RmxhdFdlYXRoZXJJY29uIGNvZGU9e3dlYXRoZXI/LmNvZGUgPz8gMH0gc2l6ZT17Y29tcGFjdCA/IDE4IDogMjJ9IC8+DQogICAgICAgICAgICA8c3Bhbg0KICAgICAgICAgICAgICBjbGFzc05hbWU9InRleHQtd2hpdGUgZm9udC1saWdodCBsZWFkaW5nLW5vbmUgdGFidWxhci1udW1zIg0KICAgICAgICAgICAgICBzdHlsZT17eyBmb250RmFtaWx5OiAnIlNvcmEiLCBzeXN0ZW0tdWksIHNhbnMtc2VyaWYnLCBmb250U2l6ZTogY2xvY2tTaXplLCBmb250VmFyaWFudE51bWVyaWM6ICJ0YWJ1bGFyLW51bXMiIH19DQogICAgICAgICAgICA+DQogICAgICAgICAgICAgIHt3ZWF0aGVyID8gYCR7d2VhdGhlci50ZW1wfcKwYCA6ICItLcKwIn0NCiAgICAgICAgICAgIDwvc3Bhbj4NCiAgICAgICAgICA8L2Rpdj4NCiAgICAgICAgICA8YnV0dG9uDQogICAgICAgICAgICB0eXBlPSJidXR0b24iDQogICAgICAgICAgICBvbkNsaWNrPXsoKSA9PiBzZXRGb3JlY2FzdE9wZW4oKG9wZW4pID0+ICFvcGVuKX0NCiAgICAgICAgICAgIGFyaWEtbGFiZWw9e2ZvcmVjYXN0T3BlbiA/ICJGZWNoYXIgcHJldmlzw6NvIGRvIHRlbXBvIiA6ICJBYnJpciBwcmV2aXPDo28gZG8gdGVtcG8gcGFyYSBvcyBwcsOzeGltb3MgZGlhcyJ9DQogICAgICAgICAgICBhcmlhLWV4cGFuZGVkPXtmb3JlY2FzdE9wZW59DQogICAgICAgICAgICBjbGFzc05hbWU9ImlubGluZS1mbGV4IGgtNSB3LTUgc2hyaW5rLTAgaXRlbXMtY2VudGVyIGp1c3RpZnktY2VudGVyIHJvdW5kZWQtZnVsbCBib3JkZXIgYm9yZGVyLXdoaXRlLzM1IGJnLXdoaXRlL1swLjEwXSB0ZXh0LXdoaXRlIHNoYWRvdy1baW5zZXRfMF8xcHhfMF9yZ2JhKDI1NSwyNTUsMjU1LDAuMTgpLDBfM3B4XzEwcHhfcmdiYSgwLDAsMCwwLjE2KV0gYmFja2Ryb3AtYmx1ci14bCB0cmFuc2l0aW9uLWNvbG9ycyBob3ZlcjpiZy13aGl0ZS8yMCBmb2N1cy12aXNpYmxlOm91dGxpbmUtbm9uZSBmb2N1cy12aXNpYmxlOnJpbmctMSBmb2N1cy12aXNpYmxlOnJpbmctd2hpdGUvNzAiDQogICAgICAgICAgPg0KICAgICAgICAgICAge2ZvcmVjYXN0T3BlbiA/IDxNaW51cyBzaXplPXsxM30gc3Ryb2tlV2lkdGg9ezJ9IC8+IDogPFBsdXMgc2l6ZT17MTN9IHN0cm9rZVdpZHRoPXsyfSAvPn0NCiAgICAgICAgICA8L2J1dHRvbj4NCiAgICAgICAgPC9kaXY+DQogICAgICApfQ0KDQogICAgICB7KHdlYXRoZXIgfHwgY29tcGFjdCkgJiYgPHNwYW4gYXJpYS1oaWRkZW49InRydWUiIGNsYXNzTmFtZT0idGV4dC13aGl0ZS83MCB0ZXh0LWxnIGxlYWRpbmctbm9uZSI+fDwvc3Bhbj59DQoNCiAgICAgIDxkaXYNCiAgICAgICAgY2xhc3NOYW1lPSJmbGV4IGl0ZW1zLWJhc2VsaW5lIGdhcC0xIg0KICAgICAgICBhcmlhLWxhYmVsPSJIb3LDoXJpbyBhdHVhbCINCiAgICAgID4NCiAgICAgICAgPHNwYW4NCiAgICAgICAgICBjbGFzc05hbWU9InRleHQtd2hpdGUgZm9udC1saWdodCB0YWJ1bGFyLW51bXMgdHJhY2tpbmctWzAuMDJlbV0gbGVhZGluZy1ub25lIg0KICAgICAgICAgIHN0eWxlPXt7IGZvbnRGYW1pbHk6ICciU29yYSIsIHN5c3RlbS11aSwgc2Fucy1zZXJpZicsIGZvbnRTaXplOiBjbG9ja1NpemUsIGZvbnRWYXJpYW50TnVtZXJpYzogInRhYnVsYXItbnVtcyIsIHdpZHRoOiAiNWNoIiwgdGV4dEFsaWduOiAiY2VudGVyIiB9fQ0KICAgICAgICA+DQogICAgICAgICAge2Nsb2NrVGltZS5oaH0NCiAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9Im9wYWNpdHktNjAgbXgtWzJweF0iPjo8L3NwYW4+DQogICAgICAgICAge2Nsb2NrVGltZS5tbX0NCiAgICAgICAgPC9zcGFuPg0KICAgICAgICB7IWNvbXBhY3QgJiYgPHNwYW4NCiAgICAgICAgICBjbGFzc05hbWU9InRleHQtd2hpdGUvNjAgZm9udC1saWdodCB0YWJ1bGFyLW51bXMgbGVhZGluZy1ub25lIg0KICAgICAgICAgIHN0eWxlPXt7IGZvbnRGYW1pbHk6ICciU29yYSIsIHN5c3RlbS11aSwgc2Fucy1zZXJpZicsIGZvbnRTaXplOiBzZWNTaXplIH19DQogICAgICAgID4NCiAgICAgICAgICB7Y2xvY2tUaW1lLnNzfQ0KICAgICAgICA8L3NwYW4+fQ0KICAgICAgPC9kaXY+DQogICAgPC9kaXY+DQogICk7DQp9DQo=
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Cloud, CloudLightning, CloudRain, CloudSnow, CloudSun, Minus, Plus, Sun } from "lucide-react";
+import { playerSupabase } from "@/integrations/supabase/playerClient";
+import { fetchWeatherForecast, searchGeocode } from "@/lib/weatherService";
+
+type ForecastDay = { date: string; min: number; max: number; rain: number; code: number };
+
+function FlatWeatherIcon({ code, size }: { code: number; size: number }) {
+  const Icon = code === 0 ? Sun
+    : code === 1 || code === 2 ? CloudSun
+    : code === 3 || code === 45 || code === 48 ? Cloud
+    : code >= 71 && code <= 77 ? CloudSnow
+    : code >= 95 ? CloudLightning
+    : CloudRain;
+  return <Icon size={size} strokeWidth={1.8} className="shrink-0 text-white" aria-hidden="true" />;
+}
+
+/**
+ * Relógio + previsão do tempo no mesmo padrão visual do /player/watch.
+ * Reutilizável em qualquer tela do player.
+ */
+export default function PlayerClockWeather({
+  radioUserId,
+  compact = false,
+}: {
+  radioUserId?: string | null;
+  compact?: boolean;
+}) {
+  const [now, setNow] = useState<Date>(() => new Date());
+  useEffect(() => {
+    const t = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(t);
+  }, []);
+  const clockTime = useMemo(() => ({
+    hh: String(now.getHours()).padStart(2, "0"),
+    mm: String(now.getMinutes()).padStart(2, "0"),
+    ss: String(now.getSeconds()).padStart(2, "0"),
+  }), [now]);
+
+  const [weather, setWeather] = useState<{ temp: number; code: number; forecast: ForecastDay[] } | null>(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [weatherError, setWeatherError] = useState(false);
+  const [forecastOpen, setForecastOpen] = useState(false);
+  const forecastRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!forecastOpen) return;
+    const closeOutside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !forecastRef.current?.contains(event.target)) setForecastOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setForecastOpen(false);
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [forecastOpen]);
+
+  useEffect(() => {
+    if (!radioUserId) return;
+    let cancelled = false;
+    let intervalId: number | undefined;
+
+    const fetchWeather = async (lat?: number | null, lon?: number | null) => {
+      setWeatherLoading(true);
+      try {
+        let payload: any;
+        if (lat != null && lon != null) {
+          const result = await fetchWeatherForecast(lat, lon, 3);
+          if (!result.ok || !result.data) throw new Error(result.error || "Previsão sem dados");
+          payload = result.data;
+        } else {
+          // Em sessões públicas, a política de leitura pode bloquear user_settings.
+          // A função já resolve a cidade da emissora no servidor usando radioUserId.
+          const { data, error } = await playerSupabase.functions.invoke("fetch-weather", {
+            body: { action: "forecast", user_id: radioUserId, forecast_days: 3 },
+          });
+          if (error) throw error;
+          const response = data as any;
+          payload = [response?.data, response?.data?.data, response].find((candidate) => candidate?.current);
+          if (!payload) throw new Error(response?.error || response?.data?.error || "A emissora não retornou dados do tempo");
+        }
+        const c = payload.current;
+        const daily = payload.daily;
+        const currentTemperature = Number(c?.temperature_2m);
+        if (!cancelled && c && Number.isFinite(currentTemperature)) {
+          const forecast: ForecastDay[] = Array.isArray(daily?.time)
+            ? daily.time.slice(0, 3).map((date: string, index: number) => ({
+                date,
+                min: Number(daily.temperature_2m_min?.[index]),
+                max: Number(daily.temperature_2m_max?.[index]),
+                rain: Number(daily.precipitation_sum?.[index]) || 0,
+                code: Number(daily.weather_code?.[index]) || 0,
+              })).filter((day: ForecastDay) => Number.isFinite(day.min) && Number.isFinite(day.max))
+            : [];
+          setWeather({ temp: Math.round(currentTemperature), code: Number(c.weather_code) || 0, forecast });
+          setWeatherError(false);
+        } else if (!cancelled) {
+          console.warn("Previsão do Cidade Tempo sem dados atuais:", payload);
+          setWeatherError(true);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.warn("Não foi possível carregar o tempo atual:", error);
+          setWeatherError(true);
+        }
+      } finally {
+        if (!cancelled) setWeatherLoading(false);
+      }
+    };
+
+    const onPrimaryCityChanged = (event: Event) => {
+      const city = (event as CustomEvent<{ lat?: number; lon?: number } | null>).detail;
+      if (city?.lat != null && city?.lon != null && Number.isFinite(Number(city.lat)) && Number.isFinite(Number(city.lon))) {
+        fetchWeather(Number(city.lat), Number(city.lon));
+      }
+    };
+    window.addEventListener("weather:primary-city-changed", onPrimaryCityChanged);
+
+    (async () => {
+      let lat: number | null = null;
+      let lon: number | null = null;
+      let city = "";
+      try {
+        // Usar a mesma ordem de chaves da página Cidade Tempo: dados escopados
+        // para a emissora primeiro, seguido do valor principal legado global.
+        const rawPrimary = localStorage.getItem(`nexohub_cidade_tempo_primary_${radioUserId}`)
+          || localStorage.getItem(`masterview_primary_city_${radioUserId}`)
+          || localStorage.getItem("masterview_primary_city");
+        const primary = rawPrimary ? JSON.parse(rawPrimary) : null;
+        city = String(primary?.name || "").trim();
+        if (primary?.lat != null && primary?.lon != null && Number.isFinite(Number(primary.lat)) && Number.isFinite(Number(primary.lon))) {
+          lat = Number(primary.lat);
+          lon = Number(primary.lon);
+        }
+        // Cidade Tempo também salva a última cidade consultada mesmo antes de
+        // ela ser marcada como principal. Reutilize essa escolha no player.
+        if (!city) {
+          city = localStorage.getItem(`masterview_last_city_${radioUserId}`)
+            || localStorage.getItem("masterview_last_city")
+            || "";
+        }
+      } catch {}
+      try {
+        const { data: settings } = await playerSupabase
+          .from("user_settings")
+          .select("weather_city, weather_lat, weather_lon, dashboard_items")
+          .eq("user_id", radioUserId)
+          .maybeSingle();
+        const items = (settings as any)?.dashboard_items || {};
+        const primary = items.cidade_tempo_primary;
+        city = city || String(primary?.name || (settings as any)?.weather_city || "").trim();
+        if (lat == null || lon == null) {
+          const savedLat = primary?.lat ?? (settings as any)?.weather_lat;
+          const savedLon = primary?.lon ?? (settings as any)?.weather_lon;
+          if (savedLat != null && savedLon != null && Number.isFinite(Number(savedLat)) && Number.isFinite(Number(savedLon))) {
+            lat = Number(savedLat);
+            lon = Number(savedLon);
+          }
+        }
+      } catch {}
+      if ((lat == null || lon == null) && city) {
+        const locations = await searchGeocode(city, 1);
+        if (locations[0]) {
+          lat = locations[0].latitude;
+          lon = locations[0].longitude;
+        }
+      }
+      fetchWeather(lat, lon);
+      intervalId = window.setInterval(() => fetchWeather(lat, lon), 5 * 60 * 1000);
+    })();
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("weather:primary-city-changed", onPrimaryCityChanged);
+      if (intervalId) window.clearInterval(intervalId);
+    };
+  }, [radioUserId]);
+
+  const clockSize = compact ? 22 : 28;
+  const secSize = compact ? 13 : 16;
+
+  return (
+    <div className="flex items-center gap-2 sm:gap-3">
+      {(weather || compact) && (
+        <div
+          className={`${compact ? "flex" : "hidden sm:flex"} relative items-center gap-2 transition-all duration-300 ease-out ${forecastOpen ? "rounded-full bg-white/[0.10] px-3 py-1 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.12)]" : ""}`}
+          ref={forecastRef}
+        >
+          <div
+            className="flex shrink-0 items-center gap-2 overflow-hidden whitespace-nowrap transition-all duration-300 ease-out"
+            style={{ maxWidth: forecastOpen ? 620 : 0, opacity: forecastOpen ? 1 : 0, transform: forecastOpen ? "translateX(0)" : "translateX(-8px)" }}
+            aria-hidden={!forecastOpen}
+          >
+            {weather?.forecast.slice(0, 3).map((day, index) => (
+              <div key={day.date} className="flex shrink-0 items-center gap-2">
+                {index > 0 && <span aria-hidden="true" className="text-white/55 text-sm">|</span>}
+                <span className="text-[11px] sm:text-xs font-semibold text-white">
+                  {index === 0 ? "hoje" : `${day.date.slice(8, 10)}/${day.date.slice(5, 7)}`}
+                </span>
+                <span className="whitespace-nowrap text-[10px] sm:text-xs text-white/85 tabular-nums">
+                  {Math.round(day.min)}°/{Math.round(day.max)}°
+                </span>
+                <span className="whitespace-nowrap text-[9px] sm:text-[10px] text-white/55 tabular-nums" title="Chuva acumulada">
+                  {day.rain.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mm
+                </span>
+                <FlatWeatherIcon code={day.code} size={13} />
+              </div>
+            ))}
+            {forecastOpen && !weather?.forecast.length && (
+              <span className="shrink-0 text-[10px] text-white/65">
+                {weatherLoading ? "carregando previsão…" : weatherError ? "previsão indisponível" : "sem previsão disponível"}
+              </span>
+            )}
+          </div>
+          {forecastOpen && <span aria-hidden="true" className="text-white/55 text-sm">|</span>}
+          <div className="flex shrink-0 items-center gap-2" title="Tempo agora" aria-busy={!weather}>
+            <FlatWeatherIcon code={weather?.code ?? 0} size={compact ? 18 : 22} />
+            <span
+              className="text-white font-light leading-none tabular-nums"
+              style={{ fontFamily: '"Sora", system-ui, sans-serif', fontSize: clockSize, fontVariantNumeric: "tabular-nums" }}
+            >
+              {weather ? `${weather.temp}°` : "--°"}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setForecastOpen((open) => !open)}
+            aria-label={forecastOpen ? "Fechar previsão do tempo" : "Abrir previsão do tempo para os próximos dias"}
+            aria-expanded={forecastOpen}
+            className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-white/35 bg-white/[0.10] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_3px_10px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/70"
+          >
+            {forecastOpen ? <Minus size={13} strokeWidth={2} /> : <Plus size={13} strokeWidth={2} />}
+          </button>
+        </div>
+      )}
+
+      {(weather || compact) && <span aria-hidden="true" className="text-white/70 text-lg leading-none">|</span>}
+
+      <div
+        className="flex items-baseline gap-1"
+        aria-label="Horário atual"
+      >
+        <span
+          className="text-white font-light tabular-nums tracking-[0.02em] leading-none"
+          style={{ fontFamily: '"Sora", system-ui, sans-serif', fontSize: clockSize, fontVariantNumeric: "tabular-nums", width: "5ch", textAlign: "center" }}
+        >
+          {clockTime.hh}
+          <span className="opacity-60 mx-[2px]">:</span>
+          {clockTime.mm}
+        </span>
+        {!compact && <span
+          className="text-white/60 font-light tabular-nums leading-none"
+          style={{ fontFamily: '"Sora", system-ui, sans-serif', fontSize: secSize }}
+        >
+          {clockTime.ss}
+        </span>}
+      </div>
+    </div>
+  );
+}

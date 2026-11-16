@@ -1,1 +1,400 @@
-aW1wb3J0IHsgU3VzcGVuc2UsIENvbXBvbmVudCwgRnJhZ21lbnQsIHVzZUVmZmVjdCwgdXNlU3RhdGUsIHR5cGUgUmVhY3ROb2RlIH0gZnJvbSAicmVhY3QiOw0KaW1wb3J0IHsgTWF4aW1pemUyLCBNaW5pbWl6ZTIgfSBmcm9tICJsdWNpZGUtcmVhY3QiOw0KaW1wb3J0IHsgVG9hc3RlciB9IGZyb20gIkAvY29tcG9uZW50cy91aS90b2FzdGVyIjsNCmltcG9ydCBSb3V0ZVByb2dyZXNzIGZyb20gIkAvY29tcG9uZW50cy9Sb3V0ZVByb2dyZXNzIjsNCmltcG9ydCB7IFRvYXN0ZXIgYXMgU29ubmVyIH0gZnJvbSAiQC9jb21wb25lbnRzL3VpL3Nvbm5lciI7DQppbXBvcnQgeyBUb29sdGlwUHJvdmlkZXIgfSBmcm9tICJAL2NvbXBvbmVudHMvdWkvdG9vbHRpcCI7DQppbXBvcnQgeyBRdWVyeUNsaWVudCwgUXVlcnlDbGllbnRQcm92aWRlciB9IGZyb20gIkB0YW5zdGFjay9yZWFjdC1xdWVyeSI7DQppbXBvcnQgeyBCcm93c2VyUm91dGVyLCBSb3V0ZXMsIFJvdXRlLCBOYXZpZ2F0ZSwgdXNlUGFyYW1zLCB1c2VOYXZpZ2F0ZSwgdXNlTG9jYXRpb24gfSBmcm9tICJyZWFjdC1yb3V0ZXItZG9tIjsNCmltcG9ydCB7IGNvbnN1bWVPQXV0aFJldHVyblBhdGggfSBmcm9tICJAL2xpYi9vYXV0aFJldHVybiI7DQoNCi8vIFJlZGlyZWN0IGhlbHBlciB0aGF0IGludGVycG9sYXRlcyA6dXNlclNsdWcgZnJvbSB0aGUgY3VycmVudCBVUkwgcGFyYW1zLg0KLy8gUGxhaW4gPE5hdmlnYXRlIHRvPSIvOnVzZXJTbHVnLy4uLiI+IGRvZXMgTk9UIHN1YnN0aXR1dGUgcGFyYW1zIGFuZCB3b3VsZA0KLy8gc2VuZCB0aGUgYnJvd3NlciBsaXRlcmFsbHkgdG8gIi86dXNlclNsdWcvLi4uIiwgcHJvZHVjaW5nIGEgYmxhbmsgcGFnZS4NCmZ1bmN0aW9uIFNsdWdSZWRpcmVjdCh7IHRlbXBsYXRlIH06IHsgdGVtcGxhdGU6IHN0cmluZyB9KSB7DQogIGNvbnN0IHsgdXNlclNsdWcgPSAiIiB9ID0gdXNlUGFyYW1zKCk7DQogIGNvbnN0IHsgc2VhcmNoLCBoYXNoIH0gPSB3aW5kb3cubG9jYXRpb247DQogIHJldHVybiA8TmF2aWdhdGUgdG89e2Ake3RlbXBsYXRlLnJlcGxhY2UoIjp1c2VyU2x1ZyIsIHVzZXJTbHVnKX0ke3NlYXJjaH0ke2hhc2h9YH0gcmVwbGFjZSAvPjsNCn0NCg0KLy8gU2x1ZyBndWFyZDogdmFsaWRhIG8gOnVzZXJTbHVnIEFOVEVTIGRlIHJlbmRlcml6YXIgcm90YXMgZGluw6JtaWNhcy4gU2Ugbw0KLy8gcGFyw6JtZXRybyBjaGVnYXIgdmF6aW8sIGNvbW8gcGxhY2Vob2xkZXIgbGl0ZXJhbCAoIjp1c2Vyc2x1ZyIpLCBvdSBjb20NCi8vIGNhcmFjdGVyZXMgaW52w6FsaWRvcywgcmVkaXJlY2lvbmEgcGFyYSBhIGhvbWUgZW0gdmV6IGRlIGRpc3BhcmFyIG8gZWRnZQ0KLy8gZnVuY3Rpb24gY29tIHVtIHNsdWcgaW5leGlzdGVudGUgZSBtb3N0cmFyIHRlbGEgZW0gYnJhbmNvLg0KY29uc3QgU0xVR19SRSA9IC9eW2EtejAtOV1bYS16MC05Xy1dKiQvaTsNCmZ1bmN0aW9uIFNsdWdHdWFyZCh7IGNoaWxkcmVuIH06IHsgY2hpbGRyZW46IFJlYWN0Tm9kZSB9KSB7DQogIGNvbnN0IHsgdXNlclNsdWcgPSAiIiB9ID0gdXNlUGFyYW1zKCk7DQogIGNvbnN0IGNsZWFuID0gKHVzZXJTbHVnIHx8ICIiKS50cmltKCk7DQogIGlmICghY2xlYW4gfHwgIVNMVUdfUkUudGVzdChjbGVhbikgfHwgY2xlYW4udG9Mb3dlckNhc2UoKSA9PT0gIjp1c2Vyc2x1ZyIpIHsNCiAgICByZXR1cm4gPE5hdmlnYXRlIHRvPSIvIiByZXBsYWNlIC8+Ow0KICB9DQogIHJldHVybiA8PntjaGlsZHJlbn08Lz47DQp9DQoNCmZ1bmN0aW9uIE9BdXRoUmV0dXJuSGFuZGxlcigpIHsNCiAgY29uc3QgbmF2aWdhdGUgPSB1c2VOYXZpZ2F0ZSgpOw0KICBjb25zdCBsb2NhdGlvbiA9IHVzZUxvY2F0aW9uKCk7DQoNCiAgdXNlRWZmZWN0KCgpID0+IHsNCiAgICBpZiAobG9jYXRpb24ucGF0aG5hbWUgPT09ICIvYXV0aC9wb3B1cC1jYWxsYmFjayIpIHJldHVybjsNCiAgICBjb25zdCB0YXJnZXQgPSBjb25zdW1lT0F1dGhSZXR1cm5QYXRoKCk7DQogICAgaWYgKCF0YXJnZXQpIHJldHVybjsNCiAgICBpZiAodGFyZ2V0ID09PSBgJHtsb2NhdGlvbi5wYXRobmFtZX0ke2xvY2F0aW9uLnNlYXJjaH0ke2xvY2F0aW9uLmhhc2h9YCkgcmV0dXJuOw0KICAgIG5hdmlnYXRlKHRhcmdldCwgeyByZXBsYWNlOiB0cnVlIH0pOw0KICB9LCBbbG9jYXRpb24uaGFzaCwgbG9jYXRpb24ucGF0aG5hbWUsIGxvY2F0aW9uLnNlYXJjaCwgbmF2aWdhdGVdKTsNCg0KICByZXR1cm4gbnVsbDsNCn0NCg0KZnVuY3Rpb24gT0F1dGhDYWxsYmFja1JlZGlyZWN0KCkgew0KICBjb25zdCB0YXJnZXQgPSBjb25zdW1lT0F1dGhSZXR1cm5QYXRoKCkgfHwgIi8iOw0KICByZXR1cm4gPE5hdmlnYXRlIHRvPXt0YXJnZXR9IHJlcGxhY2UgLz47DQp9DQoNCmZ1bmN0aW9uIERlc2t0b3BXaW5kb3dDb250cm9scygpIHsNCiAgY29uc3QgW3dpbmRvd1N0YXRlLCBzZXRXaW5kb3dTdGF0ZV0gPSB1c2VTdGF0ZTx7IGF1eGlsaWFyeTogYm9vbGVhbjsgZnVsbHNjcmVlbjogYm9vbGVhbiB9IHwgbnVsbD4obnVsbCk7DQogIHVzZUVmZmVjdCgoKSA9PiB7DQogICAgaWYgKCF3aW5kb3cuaG91c2VNaXhEZXNrdG9wKSByZXR1cm47DQogICAgY29uc3QgcmVmcmVzaCA9ICgpID0+IHZvaWQgd2luZG93LmhvdXNlTWl4RGVza3RvcD8uZ2V0V2luZG93U3RhdGUoKS50aGVuKHNldFdpbmRvd1N0YXRlKS5jYXRjaCgoKSA9PiBzZXRXaW5kb3dTdGF0ZShudWxsKSk7DQogICAgcmVmcmVzaCgpOw0KICAgIGNvbnN0IHRpbWVyID0gd2luZG93LnNldEludGVydmFsKHJlZnJlc2gsIDEwMDApOw0KICAgIHJldHVybiAoKSA9PiB3aW5kb3cuY2xlYXJJbnRlcnZhbCh0aW1lcik7DQogIH0sIFtdKTsNCiAgaWYgKCF3aW5kb3dTdGF0ZT8uYXV4aWxpYXJ5KSByZXR1cm4gbnVsbDsNCiAgcmV0dXJuICgNCiAgICA8YnV0dG9uDQogICAgICB0eXBlPSJidXR0b24iDQogICAgICBvbkNsaWNrPXsoKSA9PiB2b2lkIHdpbmRvdy5ob3VzZU1peERlc2t0b3A/LnRvZ2dsZUZ1bGxzY3JlZW4oKS50aGVuKChmdWxsc2NyZWVuKSA9PiBzZXRXaW5kb3dTdGF0ZSgoc3RhdGUpID0+IHN0YXRlID8geyAuLi5zdGF0ZSwgZnVsbHNjcmVlbiB9IDogc3RhdGUpKX0NCiAgICAgIGNsYXNzTmFtZT0iZml4ZWQgcmlnaHQtMyB0b3AtMyB6LVsxMDAwMF0gZmxleCBpdGVtcy1jZW50ZXIgZ2FwLTIgcm91bmRlZC1sZyBiZy1zbGF0ZS05NTAvODUgcHgtMyBweS0yIHRleHQtc20gZm9udC1zZW1pYm9sZCB0ZXh0LXdoaXRlIHNoYWRvdy1sZyByaW5nLTEgcmluZy13aGl0ZS8yMCBiYWNrZHJvcC1ibHVyIGhvdmVyOmJnLWJsdWUtNzAwIg0KICAgICAgdGl0bGU9e3dpbmRvd1N0YXRlLmZ1bGxzY3JlZW4gPyAiU2FpciBkYSB0ZWxhIGNoZWlhIChFc2MpIiA6ICJFeGliaXIgZW0gdGVsYSBjaGVpYSJ9DQogICAgPg0KICAgICAge3dpbmRvd1N0YXRlLmZ1bGxzY3JlZW4gPyA8TWluaW1pemUyIHNpemU9ezE2fSAvPiA6IDxNYXhpbWl6ZTIgc2l6ZT17MTZ9IC8+fQ0KICAgICAge3dpbmRvd1N0YXRlLmZ1bGxzY3JlZW4gPyAiU2FpciBkYSB0ZWxhIGNoZWlhIiA6ICJUZWxhIGNoZWlhIn0NCiAgICA8L2J1dHRvbj4NCiAgKTsNCn0NCmltcG9ydCB7IEF1dGhQcm92aWRlciB9IGZyb20gIkAvaG9va3MvdXNlQXV0aCI7DQppbXBvcnQgSW5kZXggZnJvbSAiLi9wYWdlcy9JbmRleCI7DQppbXBvcnQgUmVzZXRQYXNzd29yZCBmcm9tICIuL3BhZ2VzL1Jlc2V0UGFzc3dvcmQiOw0KaW1wb3J0IElubGluZU5vdGlmaWNhdGlvbiBmcm9tICJAL2NvbXBvbmVudHMvSW5saW5lTm90aWZpY2F0aW9uIjsNCmltcG9ydCBMb2NhbEltYWdlQ2FjaGUgZnJvbSAiQC9jb21wb25lbnRzL0xvY2FsSW1hZ2VDYWNoZSI7DQppbXBvcnQgRGVza3RvcExvY2FsTWVkaWFTeW5jIGZyb20gIkAvY29tcG9uZW50cy9EZXNrdG9wTG9jYWxNZWRpYVN5bmMiOw0KaW1wb3J0IHsgaW5pdEdsb2JhbE5vdGlmaWNhdGlvbnMgfSBmcm9tICJAL2xpYi9ub3RpZnkiOw0KaW5pdEdsb2JhbE5vdGlmaWNhdGlvbnMoKTsNCmltcG9ydCBOb3RGb3VuZCBmcm9tICIuL3BhZ2VzL05vdEZvdW5kIjsNCmltcG9ydCB7IExvYWRlcjIgfSBmcm9tICJsdWNpZGUtcmVhY3QiOw0KaW1wb3J0IExvYWRpbmdTcGlubmVyIGZyb20gIkAvY29tcG9uZW50cy9Mb2FkaW5nU3Bpbm5lciI7DQppbXBvcnQgUGxheWVyU3luY0xvYWRlciBmcm9tICJAL2NvbXBvbmVudHMvcGxheWVyL1BsYXllclN5bmNMb2FkZXIiOw0KaW1wb3J0IHsgcHJ1bmVMb2NhbFN0b3JhZ2VFbWVyZ2VuY3kgfSBmcm9tICJAL2xpYi9tdXNpY1N0b3JhZ2VLZXlzIjsNCg0KaW1wb3J0IExheW91dFZlcnNpb25HdWFyZCBmcm9tICJAL2NvbXBvbmVudHMvTGF5b3V0VmVyc2lvbkd1YXJkIjsNCmltcG9ydCBEYWlseVVwZGF0ZUd1YXJkIGZyb20gIkAvY29tcG9uZW50cy9EYWlseVVwZGF0ZUd1YXJkIjsNCmltcG9ydCB7IGlzQ2h1bmtFcnJvck1lc3NhZ2UsIGxhenlSZXRyeSwgcmVjb3ZlckZyb21DaHVua0ZhaWx1cmUgfSBmcm9tICJAL2xpYi9sYXp5UmV0cnkiOw0KDQovLyBMYXp5LWxvYWRlZCBoZWF2eSBwYWdlcyB3aXRoIGF1dG9tYXRpYyByZXRyeQ0KY29uc3QgUGxheWVySHViID0gbGF6eVJldHJ5KCgpID0+IGltcG9ydCgiLi9wYWdlcy9wbGF5ZXIvUGxheWVySHViIikpOw0KY29uc3QgUGxheWVyUGFnZSA9IGxhenlSZXRyeSgoKSA9PiBpbXBvcnQoIi4vcGFnZXMvUGxheWVyIikpOw0KY29uc3QgUGxheWVyVHZXZWxjb21lID0gbGF6eVJldHJ5KCgpID0+IGltcG9ydCgiLi9wYWdlcy9wbGF5ZXIvUGxheWVyVHZXZWxjb21lIikpOw0KY29uc3QgUGFpclBhZ2UgPSBsYXp5UmV0cnkoKCkgPT4gaW1wb3J0KCIuL3BhZ2VzL1BhaXJQYWdlIikpOw0KY29uc3QgRW50cmVnYVByZW1pbyA9IGxhenlSZXRyeSgoKSA9PiBpbXBvcnQoIi4vcGFnZXMvRW50cmVnYVByZW1pbyIpKTsNCmNvbnN0IEdvb2dsZUNoZWNrUGFnZSA9IGxhenlSZXRyeSgoKSA9PiBpbXBvcnQoIi4vcGFnZXMvR29vZ2xlQ2hlY2tQYWdlIikpOw0KY29uc3QgT0F1dGhQb3B1cENhbGxiYWNrID0gbGF6eVJldHJ5KCgpID0+IGltcG9ydCgiLi9wYWdlcy9PQXV0aFBvcHVwQ2FsbGJhY2siKSk7DQpjb25zdCBUdlBhaXJpbmdFdmVudHNQYWdlID0gbGF6eVJldHJ5KCgpID0+IGltcG9ydCgiLi9wYWdlcy9UdlBhaXJpbmdFdmVudHNQYWdlIikpOw0KY29uc3QgUGxheWVyQXBwID0gbGF6eVJldHJ5KCgpID0+IGltcG9ydCgiLi9wYWdlcy9QbGF5ZXJBcHAiKSk7DQpjb25zdCBQcm9tb2NvZXNLaW9zayA9IGxhenlSZXRyeSgoKSA9PiBpbXBvcnQoIi4vcGFnZXMvUHJvbW9jb2VzIikpOw0KY29uc3QgTWFzdGVyVmlld0hvbWUgPSBsYXp5UmV0cnkoKCkgPT4gaW1wb3J0KCIuL3BhZ2VzL21hc3RlcnZpZXcvTWFzdGVyVmlld0hvbWUiKSk7DQpjb25zdCBUcEV4dGVybm8gPSBsYXp5UmV0cnkoKCkgPT4gaW1wb3J0KCIuL3BhZ2VzL1RwRXh0ZXJubyIpKTsNCmNvbnN0IFBsYXllckNhdGFsb2cgPSBsYXp5UmV0cnkoKCkgPT4gaW1wb3J0KCIuL3BhZ2VzL3BsYXllci9QbGF5ZXJDYXRhbG9nIikpOw0KY29uc3QgVm1peENvbnRyb2wgPSBsYXp5UmV0cnkoKCkgPT4gaW1wb3J0KCIuL3BhZ2VzL1ZtaXhDb250cm9sIikpOw0KY29uc3QgQ2VuYXJpb1RlbGEgPSBsYXp5UmV0cnkoKCkgPT4gaW1wb3J0KCIuL3BhZ2VzL0NlbmFyaW9UZWxhIikpOw0KY29uc3QgVGVsYUludGVyYXRpdmEgPSBsYXp5UmV0cnkoKCkgPT4gaW1wb3J0KCIuL3BhZ2VzL1RlbGFJbnRlcmF0aXZhIikpOw0KY29uc3QgQ2VuYXJpb1RlbGFGdWxsID0gbGF6eVJldHJ5KCgpID0+IGltcG9ydCgiLi9wYWdlcy9DZW5hcmlvVGVsYUZ1bGwiKSk7DQpjb25zdCBDZW5hcmlvRXN0dWRpb1dlYlRlbGEgPSBsYXp5UmV0cnkoKCkgPT4gaW1wb3J0KCIuL3BhZ2VzL0NlbmFyaW9Fc3R1ZGlvV2ViVGVsYSIpKTsNCmNvbnN0IEludGVyY29tTGlzdGVuZXIgPSBsYXp5UmV0cnkoKCkgPT4gaW1wb3J0KCIuL3BhZ2VzL0ludGVyY29tTGlzdGVuZXIiKSk7DQpjb25zdCBWbWl4QXNzdW50byA9IGxhenlSZXRyeSgoKSA9PiBpbXBvcnQoIi4vcGFnZXMvVm1peEFzc3VudG8iKSk7DQpjb25zdCBYbWxQdWJsaWNFbmRwb2ludCA9IGxhenlSZXRyeSgoKSA9PiBpbXBvcnQoIi4vcGFnZXMvWG1sUHVibGljRW5kcG9pbnQiKSk7DQoNCmludGVyZmFjZSBFcnJvckJvdW5kYXJ5U3RhdGUgew0KICBoYXNFcnJvcjogYm9vbGVhbjsNCiAgcmV0cnlDb3VudDogbnVtYmVyOw0KICByZW1vdW50S2V5OiBudW1iZXI7DQogIGVycm9yTWVzc2FnZT86IHN0cmluZzsNCn0NCg0KLy8gQXV0by1oZWFsIGRlbGF5czogcmVtb3VudCB0aGUgZmFpbGluZyBzdWJ0cmVlIGluIHBsYWNlIGluc3RlYWQgb2Ygc2hvd2luZyBhDQovLyBkZWFkLWVuZCBlcnJvciBzY3JlZW4uIE9ubHkgYWZ0ZXIgYWxsIGF0dGVtcHRzIGZhaWwgZG8gd2Ugc3VyZmFjZSB0aGUgVUkuDQpjb25zdCBBVVRPX0hFQUxfREVMQVlTX01TID0gWzI1MCwgNzAwLCAxODAwXTsNCg0KY2xhc3MgQ2h1bmtFcnJvckJvdW5kYXJ5IGV4dGVuZHMgQ29tcG9uZW50PHsgY2hpbGRyZW46IFJlYWN0Tm9kZTsgbG9jYXRpb25LZXk6IHN0cmluZyB9LCBFcnJvckJvdW5kYXJ5U3RhdGU+IHsNCiAgc3RhdGU6IEVycm9yQm91bmRhcnlTdGF0ZSA9IHsgaGFzRXJyb3I6IGZhbHNlLCByZXRyeUNvdW50OiAwLCByZW1vdW50S2V5OiAwIH07DQogIHByaXZhdGUgcmV0cnlUaW1lcjogUmV0dXJuVHlwZTx0eXBlb2Ygc2V0VGltZW91dD4gfCBudWxsID0gbnVsbDsNCg0KICBzdGF0aWMgZ2V0RGVyaXZlZFN0YXRlRnJvbUVycm9yKGVycm9yOiBFcnJvcikgew0KICAgIHJldHVybiB7IGhhc0Vycm9yOiB0cnVlLCBlcnJvck1lc3NhZ2U6IGVycm9yPy5tZXNzYWdlIHx8IFN0cmluZyhlcnJvcikgfTsNCiAgfQ0KDQogIGNvbXBvbmVudERpZENhdGNoKGVycm9yOiBFcnJvcikgew0KICAgIGNvbnN0IGlzQ2h1bmtFcnJvciA9IGlzQ2h1bmtFcnJvck1lc3NhZ2UoZXJyb3IubWVzc2FnZSk7DQoNCiAgICBjb25zb2xlLmVycm9yKCJbTmF2aWdhdGlvbkVycm9yQm91bmRhcnldIiwgew0KICAgICAgbWVzc2FnZTogZXJyb3IubWVzc2FnZSwNCiAgICAgIHN0YWNrOiBlcnJvci5zdGFjaywNCiAgICAgIHBhdGg6IHdpbmRvdy5sb2NhdGlvbi5wYXRobmFtZSwNCiAgICAgIGlzQ2h1bmtFcnJvciwNCiAgICAgIGF0dGVtcHQ6IHRoaXMuc3RhdGUucmV0cnlDb3VudCwNCiAgICB9KTsNCg0KICAgIHRoaXMuc2V0U3RhdGUoeyBlcnJvck1lc3NhZ2U6IGVycm9yPy5tZXNzYWdlIHx8IFN0cmluZyhlcnJvcikgfSk7DQoNCiAgICBjb25zdCBtc2cgPSAoZXJyb3I/Lm1lc3NhZ2UgfHwgIiIpLnRvTG93ZXJDYXNlKCk7DQogICAgaWYgKG1zZy5pbmNsdWRlcygicXVvdGEiKSB8fCBtc2cuaW5jbHVkZXMoInNldGl0ZW0iKSB8fCBlcnJvcj8ubmFtZSA9PT0gIlF1b3RhRXhjZWVkZWRFcnJvciIpIHsNCiAgICAgIHRyeSB7DQogICAgICAgIHBydW5lTG9jYWxTdG9yYWdlRW1lcmdlbmN5KCk7DQogICAgICB9IGNhdGNoIHt9DQogICAgfQ0KDQogICAgLy8gQSByZWplY3RlZCBSZWFjdC5sYXp5IGltcG9ydCBpcyBjYWNoZWQgYnkgUmVhY3QsIHNvIHJlbW91bnRpbmcgaXQgY2Fubm90DQogICAgLy8gcmVjb3ZlciBvbiBpdHMgb3duIOKAlCByZWxvYWQgb25jZSAoY2FjaGUtYnVzdGVkKSB3aGVuIGFsbG93ZWQuDQogICAgaWYgKGlzQ2h1bmtFcnJvciAmJiByZWNvdmVyRnJvbUNodW5rRmFpbHVyZSh0cnVlKSkgcmV0dXJuOw0KDQogICAgY29uc3QgZGVsYXkgPSBBVVRPX0hFQUxfREVMQVlTX01TW3RoaXMuc3RhdGUucmV0cnlDb3VudF07DQogICAgaWYgKGRlbGF5ID09PSB1bmRlZmluZWQpIHsNCiAgICAgIGlmIChpc0NodW5rRXJyb3IpIHsNCiAgICAgICAgcmVjb3ZlckZyb21DaHVua0ZhaWx1cmUodHJ1ZSk7DQogICAgICAgIHJldHVybjsNCiAgICAgIH0NCiAgICAgIC8vIE91dCBvZiBpbi1wbGFjZSBhdHRlbXB0czogc2hvdyB0aGUgbWFudWFsIHJlY292ZXJ5IFVJLg0KICAgICAgdGhpcy5zZXRTdGF0ZSh7IHJldHJ5Q291bnQ6IEFVVE9fSEVBTF9ERUxBWVNfTVMubGVuZ3RoIH0pOw0KICAgICAgcmV0dXJuOw0KICAgIH0NCg0KICAgIGlmICh0aGlzLnJldHJ5VGltZXIpIGNsZWFyVGltZW91dCh0aGlzLnJldHJ5VGltZXIpOw0KICAgIHRoaXMucmV0cnlUaW1lciA9IHNldFRpbWVvdXQoKCkgPT4gew0KICAgICAgdGhpcy5zZXRTdGF0ZSgocHJldikgPT4gKHsNCiAgICAgICAgaGFzRXJyb3I6IGZhbHNlLA0KICAgICAgICByZXRyeUNvdW50OiBwcmV2LnJldHJ5Q291bnQgKyAxLA0KICAgICAgICByZW1vdW50S2V5OiBwcmV2LnJlbW91bnRLZXkgKyAxLA0KICAgICAgfSkpOw0KICAgIH0sIGRlbGF5KTsNCiAgfQ0KDQogIGNvbXBvbmVudERpZFVwZGF0ZShwcmV2aW91c1Byb3BzOiBSZWFkb25seTx7IGNoaWxkcmVuOiBSZWFjdE5vZGU7IGxvY2F0aW9uS2V5OiBzdHJpbmcgfT4pIHsNCiAgICAvLyBBIG5ldyByb3V0ZSBpcyBhIGNsZWFuIHNsYXRlIOKAlCBmb3JnZXQgcHJldmlvdXMgZmFpbHVyZXMuDQogICAgaWYgKHByZXZpb3VzUHJvcHMubG9jYXRpb25LZXkgIT09IHRoaXMucHJvcHMubG9jYXRpb25LZXkpIHsNCiAgICAgIGlmICh0aGlzLnJldHJ5VGltZXIpIHsNCiAgICAgICAgY2xlYXJUaW1lb3V0KHRoaXMucmV0cnlUaW1lcik7DQogICAgICAgIHRoaXMucmV0cnlUaW1lciA9IG51bGw7DQogICAgICB9DQogICAgICBpZiAodGhpcy5zdGF0ZS5oYXNFcnJvciB8fCB0aGlzLnN0YXRlLnJldHJ5Q291bnQgPiAwKSB7DQogICAgICAgIHRoaXMuc2V0U3RhdGUoeyBoYXNFcnJvcjogZmFsc2UsIHJldHJ5Q291bnQ6IDAsIGVycm9yTWVzc2FnZTogdW5kZWZpbmVkIH0pOw0KICAgICAgfQ0KICAgIH0NCiAgfQ0KDQogIGNvbXBvbmVudFdpbGxVbm1vdW50KCkgew0KICAgIGlmICh0aGlzLnJldHJ5VGltZXIpIGNsZWFyVGltZW91dCh0aGlzLnJldHJ5VGltZXIpOw0KICB9DQoNCiAgaGFuZGxlUmV0cnkgPSAoKSA9PiB7DQogICAgaWYgKHRoaXMuc3RhdGUuZXJyb3JNZXNzYWdlICYmIGlzQ2h1bmtFcnJvck1lc3NhZ2UodGhpcy5zdGF0ZS5lcnJvck1lc3NhZ2UpKSB7DQogICAgICBpZiAocmVjb3ZlckZyb21DaHVua0ZhaWx1cmUodHJ1ZSkpIHJldHVybjsNCiAgICAgIHdpbmRvdy5sb2NhdGlvbi5yZWxvYWQoKTsNCiAgICAgIHJldHVybjsNCiAgICB9DQogICAgdGhpcy5zZXRTdGF0ZSgocHJldikgPT4gKHsgaGFzRXJyb3I6IGZhbHNlLCByZXRyeUNvdW50OiAwLCByZW1vdW50S2V5OiBwcmV2LnJlbW91bnRLZXkgKyAxLCBlcnJvck1lc3NhZ2U6IHVuZGVmaW5lZCB9KSk7DQogIH07DQoNCiAgaGFuZGxlUmVsb2FkID0gKCkgPT4gew0KICAgIGlmICghcmVjb3ZlckZyb21DaHVua0ZhaWx1cmUodHJ1ZSkpIHdpbmRvdy5sb2NhdGlvbi5yZWxvYWQoKTsNCiAgfTsNCg0KICBoYW5kbGVDbGVhckNhY2hlQW5kTG9naW4gPSAoKSA9PiB7DQogICAgdHJ5IHsNCiAgICAgIGxvY2FsU3RvcmFnZS5jbGVhcigpOw0KICAgICAgc2Vzc2lvblN0b3JhZ2UuY2xlYXIoKTsNCiAgICB9IGNhdGNoIHt9DQogICAgd2luZG93LmxvY2F0aW9uLmhyZWYgPSAiLyI7DQogIH07DQoNCiAgcmVuZGVyKCkgew0KICAgIGlmICh0aGlzLnN0YXRlLmhhc0Vycm9yKSB7DQogICAgICBjb25zdCBpc1BsYXllciA9IHR5cGVvZiB3aW5kb3cgIT09ICJ1bmRlZmluZWQiICYmIHdpbmRvdy5sb2NhdGlvbi5wYXRobmFtZS5pbmNsdWRlcygiL3BsYXllciIpOw0KICAgICAgY29uc3QgaGVhbGluZyA9IHRoaXMuc3RhdGUucmV0cnlDb3VudCA8IEFVVE9fSEVBTF9ERUxBWVNfTVMubGVuZ3RoOw0KDQogICAgICBpZiAoaXNQbGF5ZXIgJiYgaGVhbGluZykgew0KICAgICAgICByZXR1cm4gPFBsYXllclN5bmNMb2FkZXIgc2l6ZT17NDR9IC8+Ow0KICAgICAgfQ0KDQogICAgICByZXR1cm4gKA0KICAgICAgICA8ZGl2DQogICAgICAgICAgY2xhc3NOYW1lPSJoLXNjcmVlbiB3LXNjcmVlbiBmbGV4IGZsZXgtY29sIGl0ZW1zLWNlbnRlciBqdXN0aWZ5LWNlbnRlciBnYXAtNCBweC00IHRleHQtY2VudGVyIg0KICAgICAgICAgIHN0eWxlPXt7IGJhY2tncm91bmRDb2xvcjogaXNQbGF5ZXIgPyAiIzAwMCIgOiAiIzAwMDAwMCIsIGNvbG9yOiAiI2ZmZiIgfX0NCiAgICAgICAgPg0KICAgICAgICAgIHtoZWFsaW5nID8gKA0KICAgICAgICAgICAgPD4NCiAgICAgICAgICAgICAgPExvYWRpbmdTcGlubmVyIHNpemU9ezQ0fSBjb2xvcj0iI2ZmZmZmZiIgLz4NCiAgICAgICAgICAgICAgPHAgY2xhc3NOYW1lPSJ0ZXh0LXNtIG9wYWNpdHktNjAiPg0KICAgICAgICAgICAgICAgIFNpbmNyb25pemFuZG8gYW1iaWVudGUuLi4NCiAgICAgICAgICAgICAgPC9wPg0KICAgICAgICAgICAgPC8+DQogICAgICAgICAgKSA6ICgNCiAgICAgICAgICAgIDw+DQogICAgICAgICAgICAgIDxwIGNsYXNzTmFtZT0idGV4dC1sZyBmb250LXNlbWlib2xkIj5FcnJvIGFvIGNhcnJlZ2FyIGEgcMOhZ2luYTwvcD4NCiAgICAgICAgICAgICAge3RoaXMuc3RhdGUuZXJyb3JNZXNzYWdlICYmICgNCiAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0ibWF4LXcteGwgcC0zIGJnLXJlZC05NTAvNDAgYm9yZGVyIGJvcmRlci1yZWQtNTAwLzMwIHJvdW5kZWQtbGcgdGV4dC14cyB0ZXh0LXJlZC0yMDAgZm9udC1tb25vIHRleHQtbGVmdCBicmVhay13b3JkcyI+DQogICAgICAgICAgICAgICAgICB7dGhpcy5zdGF0ZS5lcnJvck1lc3NhZ2V9DQogICAgICAgICAgICAgICAgPC9kaXY+DQogICAgICAgICAgICAgICl9DQogICAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJmbGV4IGZsZXgtd3JhcCBpdGVtcy1jZW50ZXIganVzdGlmeS1jZW50ZXIgZ2FwLTMiPg0KICAgICAgICAgICAgICAgIDxidXR0b24NCiAgICAgICAgICAgICAgICAgIG9uQ2xpY2s9e3RoaXMuaGFuZGxlUmV0cnl9DQogICAgICAgICAgICAgICAgICBjbGFzc05hbWU9InB4LTYgcHktMiByb3VuZGVkLWxnIHRleHQtc20gZm9udC1tZWRpdW0gdHJhbnNpdGlvbi1vcGFjaXR5IGhvdmVyOm9wYWNpdHktOTAgY3Vyc29yLXBvaW50ZXIiDQogICAgICAgICAgICAgICAgICBzdHlsZT17eyBiYWNrZ3JvdW5kQ29sb3I6ICIjMjY4ZmZhIiB9fQ0KICAgICAgICAgICAgICAgID4NCiAgICAgICAgICAgICAgICAgIFRlbnRhciBub3ZhbWVudGUNCiAgICAgICAgICAgICAgICA8L2J1dHRvbj4NCiAgICAgICAgICAgICAgICA8YnV0dG9uDQogICAgICAgICAgICAgICAgICBvbkNsaWNrPXt0aGlzLmhhbmRsZVJlbG9hZH0NCiAgICAgICAgICAgICAgICAgIGNsYXNzTmFtZT0icHgtNiBweS0yIHJvdW5kZWQtbGcgdGV4dC1zbSBmb250LW1lZGl1bSB0cmFuc2l0aW9uLW9wYWNpdHkgaG92ZXI6b3BhY2l0eS05MCBjdXJzb3ItcG9pbnRlciINCiAgICAgICAgICAgICAgICAgIHN0eWxlPXt7IGJhY2tncm91bmRDb2xvcjogInJnYmEoMjU1LDI1NSwyNTUsMC4xNSkiIH19DQogICAgICAgICAgICAgICAgPg0KICAgICAgICAgICAgICAgICAgUmVjYXJyZWdhciBww6FnaW5hDQogICAgICAgICAgICAgICAgPC9idXR0b24+DQogICAgICAgICAgICAgICAgPGJ1dHRvbg0KICAgICAgICAgICAgICAgICAgb25DbGljaz17dGhpcy5oYW5kbGVDbGVhckNhY2hlQW5kTG9naW59DQogICAgICAgICAgICAgICAgICBjbGFzc05hbWU9InB4LTYgcHktMiByb3VuZGVkLWxnIHRleHQtc20gZm9udC1tZWRpdW0gdHJhbnNpdGlvbi1vcGFjaXR5IGhvdmVyOm9wYWNpdHktOTAgY3Vyc29yLXBvaW50ZXIgdGV4dC1hbWJlci0zMDAgYm9yZGVyIGJvcmRlci1hbWJlci01MDAvNDAiDQogICAgICAgICAgICAgICAgICBzdHlsZT17eyBiYWNrZ3JvdW5kQ29sb3I6ICJyZ2JhKDI0NSwgMTU4LCAxMSwgMC4xKSIgfX0NCiAgICAgICAgICAgICAgICA+DQogICAgICAgICAgICAgICAgICBMaW1wYXIgc2Vzc8OjbyBlIGlyIHBhcmEgTG9naW4NCiAgICAgICAgICAgICAgICA8L2J1dHRvbj4NCiAgICAgICAgICAgICAgPC9kaXY+DQogICAgICAgICAgICA8Lz4NCiAgICAgICAgICApfQ0KICAgICAgICA8L2Rpdj4NCiAgICAgICk7DQogICAgfQ0KICAgIHJldHVybiA8RnJhZ21lbnQga2V5PXt0aGlzLnN0YXRlLnJlbW91bnRLZXl9Pnt0aGlzLnByb3BzLmNoaWxkcmVufTwvRnJhZ21lbnQ+Ow0KICB9DQp9DQoNCmZ1bmN0aW9uIE5hdmlnYXRpb25FcnJvckJvdW5kYXJ5KHsgY2hpbGRyZW4gfTogeyBjaGlsZHJlbjogUmVhY3ROb2RlIH0pIHsNCiAgY29uc3QgbG9jYXRpb24gPSB1c2VMb2NhdGlvbigpOw0KICByZXR1cm4gKA0KICAgIDxDaHVua0Vycm9yQm91bmRhcnkgbG9jYXRpb25LZXk9e2Ake2xvY2F0aW9uLnBhdGhuYW1lfSR7bG9jYXRpb24uc2VhcmNofSR7bG9jYXRpb24uaGFzaH1gfT4NCiAgICAgIHtjaGlsZHJlbn0NCiAgICA8L0NodW5rRXJyb3JCb3VuZGFyeT4NCiAgKTsNCn0NCg0KY29uc3QgcXVlcnlDbGllbnQgPSBuZXcgUXVlcnlDbGllbnQoew0KICBkZWZhdWx0T3B0aW9uczogew0KICAgIHF1ZXJpZXM6IHsNCiAgICAgIHJlZmV0Y2hPbldpbmRvd0ZvY3VzOiBmYWxzZSwNCiAgICAgIHJlZmV0Y2hPblJlY29ubmVjdDogZmFsc2UsDQogICAgICBzdGFsZVRpbWU6IDMwICogMTAwMCwNCiAgICAgIHJldHJ5OiAxLA0KICAgIH0sDQogIH0sDQp9KTsNCg0KY29uc3QgQXBwID0gKCkgPT4gKA0KICA8UXVlcnlDbGllbnRQcm92aWRlciBjbGllbnQ9e3F1ZXJ5Q2xpZW50fT4NCiAgICA8VG9vbHRpcFByb3ZpZGVyPg0KICAgICAgPElubGluZU5vdGlmaWNhdGlvbiBtb2RlPSJmaXhlZCIgLz4NCiAgICAgIDxMYXlvdXRWZXJzaW9uR3VhcmQgLz4NCiAgICAgIDxEYWlseVVwZGF0ZUd1YXJkIC8+DQogICAgICANCiAgICAgIDxBdXRoUHJvdmlkZXI+DQogICAgICAgIDxEZXNrdG9wTG9jYWxNZWRpYVN5bmMgLz4NCiAgICAgICAgPExvY2FsSW1hZ2VDYWNoZSAvPg0KICAgICAgICA8QnJvd3NlclJvdXRlciBmdXR1cmU9e3sgdjdfc3RhcnRUcmFuc2l0aW9uOiB0cnVlLCB2N19yZWxhdGl2ZVNwbGF0UGF0aDogdHJ1ZSB9fT4NCiAgICAgICAgICA8RGVza3RvcFdpbmRvd0NvbnRyb2xzIC8+DQogICAgICAgICAgPE9BdXRoUmV0dXJuSGFuZGxlciAvPg0KICAgICAgICAgIDxOYXZpZ2F0aW9uRXJyb3JCb3VuZGFyeT4NCiAgICAgICAgICA8U3VzcGVuc2UgZmFsbGJhY2s9ezxSb3V0ZVByb2dyZXNzIC8+fT4NCiAgICAgICAgICA8Um91dGVzPg0KICAgICAgICAgICAgPFJvdXRlIHBhdGg9Ii8iIGVsZW1lbnQ9ezxJbmRleCAvPn0gLz4NCiAgICAgICAgICAgIDxSb3V0ZSBwYXRoPSIvcmVzZXQtcGFzc3dvcmQiIGVsZW1lbnQ9ezxSZXNldFBhc3N3b3JkIC8+fSAvPg0KICAgICAgICAgICAgPFJvdXRlIHBhdGg9Ii9hdXRoL2NhbGxiYWNrIiBlbGVtZW50PXs8T0F1dGhDYWxsYmFja1JlZGlyZWN0IC8+fSAvPg0KICAgICAgICAgICAgPFJvdXRlIHBhdGg9Ii9hdXRoL3BvcHVwLWNhbGxiYWNrIiBlbGVtZW50PXs8T0F1dGhQb3B1cENhbGxiYWNrIC8+fSAvPg0KICAgICAgICAgICAgPFJvdXRlIHBhdGg9Ii9+b2F1dGgvY2FsbGJhY2siIGVsZW1lbnQ9ezxPQXV0aENhbGxiYWNrUmVkaXJlY3QgLz59IC8+DQoNCiAgICAgICAgICAgIHsvKiBNYWluIHJvdXRlcyAqL30NCiAgICAgICAgICAgIDxSb3V0ZSBwYXRoPSIvaG9tZSIgZWxlbWVudD17PE1hc3RlclZpZXdIb21lIC8+fSAvPg0KICAgICAgICAgICAgPFJvdXRlIHBhdGg9Ii90ZWxhcHJvbW8iIGVsZW1lbnQ9ezxQcm9tb2NvZXNLaW9zayAvPn0gLz4NCiAgICAgICAgICAgIDxSb3V0ZSBwYXRoPSIvcGxheWVyIiBlbGVtZW50PXs8UGxheWVySHViIC8+fSAvPg0KICAgICAgICAgICAgPFJvdXRlIHBhdGg9Ii9wbGF5ZXIvd2F0Y2giIGVsZW1lbnQ9ezxQbGF5ZXJQYWdlIC8+fSAvPg0KICAgICAgICAgICAgPFJvdXRlIHBhdGg9Ii9wbGF5ZXIvY2F0YWxvZyIgZWxlbWVudD17PFBsYXllckNhdGFsb2cgLz59IC8+DQogICAgICAgICAgICA8Um91dGUgcGF0aD0iL3BsYXllci9hcHAiIGVsZW1lbnQ9ezxQbGF5ZXJBcHAgLz59IC8+DQogICAgICAgICAgICA8Um91dGUgcGF0aD0iL3RwLWV4dGVybm8iIGVsZW1lbnQ9ezxUcEV4dGVybm8gLz59IC8+DQogICAgICAgICAgICA8Um91dGUgcGF0aD0iL3ZtaXgtY29udHJvbCIgZWxlbWVudD17PFZtaXhDb250cm9sIGNsZWFuTGF5b3V0PXt0cnVlfSAvPn0gLz4NCiAgICAgICAgICAgIDxSb3V0ZSBwYXRoPSIvdm1peC1jb250cm9sL3N3aXRjaGVyIiBlbGVtZW50PXs8TmF2aWdhdGUgdG89Ii92bWl4LWNvbnRyb2wvYXV0b21hdGlvbiIgcmVwbGFjZSAvPn0gLz4NCiAgICAgICAgICAgIDxSb3V0ZSBwYXRoPSIvdm1peC1jb250cm9sL2F1dG9tYXRpb24iIGVsZW1lbnQ9ezxWbWl4Q29udHJvbCBmb3JjZWRDb25uZWN0ZWQ9e3RydWV9IGF1dG9tYXRpb25Nb2RlPXt0cnVlfSAvPn0gLz4NCiAgICAgICAgICAgIDxSb3V0ZSBwYXRoPSIvY2VuYXJpby10ZWxhIiBlbGVtZW50PXs8Q2VuYXJpb1RlbGEgLz59IC8+DQogICAgICAgICAgICA8Um91dGUgcGF0aD0iL2ludGVyY29tIiBlbGVtZW50PXs8SW50ZXJjb21MaXN0ZW5lciAvPn0gLz4NCiAgICAgICAgICAgIDxSb3V0ZSBwYXRoPSIvY2VuYXJpby10ZWxhLWZ1bGwiIGVsZW1lbnQ9ezxDZW5hcmlvVGVsYUZ1bGwgLz59IC8+DQogICAgICAgICAgICA8Um91dGUgcGF0aD0iL3RlbGFpbnRlcmF0aXZhdGVsYW8iIGVsZW1lbnQ9ezxUZWxhSW50ZXJhdGl2YSAvPn0gLz4NCiAgICAgICAgICAgIDxSb3V0ZSBwYXRoPSIvY2VuYXJpby1lc3R1ZGlvLXdlYi86dXNlclNsdWcvOmlkIiBlbGVtZW50PXs8Q2VuYXJpb0VzdHVkaW9XZWJUZWxhIC8+fSAvPg0KICAgICAgICAgICAgPFJvdXRlIHBhdGg9Ii92bWl4L2Fzc3VudG8vOnVzZXJJZCIgZWxlbWVudD17PFZtaXhBc3N1bnRvIC8+fSAvPg0KDQogICAgICAgICAgICB7LyogU2x1ZyByb3V0ZXMgZm9yIGR5bmFtaWMgYWNjZXNzICovfQ0KICAgICAgICAgICAgPFJvdXRlIHBhdGg9Ii86dXNlclNsdWcvdGVsYXByb21vIiBlbGVtZW50PXs8UHJvbW9jb2VzS2lvc2sgLz59IC8+DQogICAgICAgICAgICA8Um91dGUgcGF0aD0iLzp1c2VyU2x1Zy9sb2N1dG9yIiBlbGVtZW50PXs8UHJvbW9jb2VzS2lvc2sgLz59IC8+DQogICAgICAgICAgICA8Um91dGUgcGF0aD0iL2xvY3V0b3IiIGVsZW1lbnQ9ezxQcm9tb2NvZXNLaW9zayAvPn0gLz4NCiAgICAgICAgICAgIDxSb3V0ZSBwYXRoPSIvOnVzZXJTbHVnL3BsYXllciIgZWxlbWVudD17PFNsdWdHdWFyZD48UGxheWVySHViIC8+PC9TbHVnR3VhcmQ+fSAvPg0KICAgICAgICAgICAgPFJvdXRlIHBhdGg9Ii86dXNlclNsdWcvcGxheWVyL3R2IiBlbGVtZW50PXs8U2x1Z0d1YXJkPjxQbGF5ZXJUdldlbGNvbWUgLz48L1NsdWdHdWFyZD59IC8+DQogICAgICAgICAgICA8Um91dGUgcGF0aD0iL3BsYXllci90diIgZWxlbWVudD17PE5hdmlnYXRlIHRvPSIvIiByZXBsYWNlIC8+fSAvPg0KICAgICAgICAgICAgPFJvdXRlIHBhdGg9Ii86dXNlclNsdWcvcGFpciIgZWxlbWVudD17PFBhaXJQYWdlIC8+fSAvPg0KICAgICAgICAgICAgPFJvdXRlIHBhdGg9Ii9lbnRyZWdhLzp0b2tlbiIgZWxlbWVudD17PEVudHJlZ2FQcmVtaW8gLz59IC8+DQogICAgICAgICAgICA8Um91dGUgcGF0aD0iL2dvb2dsZS1jaGVjayIgZWxlbWVudD17PEdvb2dsZUNoZWNrUGFnZSAvPn0gLz4NCiAgICAgICAgICAgIDxSb3V0ZSBwYXRoPSIvOnVzZXJTbHVnL2dvb2dsZS1jaGVjayIgZWxlbWVudD17PEdvb2dsZUNoZWNrUGFnZSAvPn0gLz4NCiAgICAgICAgICAgIDxSb3V0ZSBwYXRoPSIvdHYtcGFpcmluZy1ldmVudHMiIGVsZW1lbnQ9ezxUdlBhaXJpbmdFdmVudHNQYWdlIC8+fSAvPg0KICAgICAgICAgICAgPFJvdXRlIHBhdGg9Ii86dXNlclNsdWcvcGxheWVyL3dhdGNoIiBlbGVtZW50PXs8UGxheWVyUGFnZSAvPn0gLz4NCiAgICAgICAgICAgIDxSb3V0ZSBwYXRoPSIvOnVzZXJTbHVnL3BsYXllci9jYXRhbG9nIiBlbGVtZW50PXs8UGxheWVyQ2F0YWxvZyAvPn0gLz4NCiAgICAgICAgICAgIDxSb3V0ZSBwYXRoPSIvOnVzZXJTbHVnL3BsYXllci9hcHAiIGVsZW1lbnQ9ezxQbGF5ZXJBcHAgLz59IC8+DQogICAgICAgICAgICA8Um91dGUgcGF0aD0iLzp1c2VyU2x1Zy90ZWxhaW50ZXJhdGl2YXRlbGFvIiBlbGVtZW50PXs8VGVsYUludGVyYXRpdmEgLz59IC8+DQoNCiAgICAgICAgICAgIHsvKiBQdWJsaWMgWE1MIEZlZWRzICovfQ0KICAgICAgICAgICAgPFJvdXRlIHBhdGg9Ii94bWwvOnNsdWcvOmZpbGUiIGVsZW1lbnQ9ezxYbWxQdWJsaWNFbmRwb2ludCAvPn0gLz4NCiAgICAgICAgICAgIDxSb3V0ZSBwYXRoPSIveG1sLzpmaWxlIiBlbGVtZW50PXs8WG1sUHVibGljRW5kcG9pbnQgLz59IC8+DQoNCiAgICAgICAgICAgIHsvKiBTdXBhYmFzZSBFZGdlIEZ1bmN0aW9uICYgU3RvcmFnZSBjb21wYXRpYmlsaXR5IGVuZHBvaW50cyAqL30NCiAgICAgICAgICAgIDxSb3V0ZSBwYXRoPSIvZnVuY3Rpb25zL3YxLzpmdW5jdGlvbk5hbWUiIGVsZW1lbnQ9ezxYbWxQdWJsaWNFbmRwb2ludCAvPn0gLz4NCiAgICAgICAgICAgIDxSb3V0ZSBwYXRoPSIvc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3htbC1maWxlcy86ZmlsZU5hbWUiIGVsZW1lbnQ9ezxYbWxQdWJsaWNFbmRwb2ludCAvPn0gLz4NCg0KDQoNCg0KICAgICAgICAgICAgey8qIFVzZXIgLyBOZXhvSHViIGxlZ2FjeSByZWRpcmVjdHMgKi99DQogICAgICAgICAgICA8Um91dGUgcGF0aD0iL3VzZXIiIGVsZW1lbnQ9ezxOYXZpZ2F0ZSB0bz0iL2hvbWUiIHJlcGxhY2UgLz59IC8+DQogICAgICAgICAgICA8Um91dGUgcGF0aD0iL3VzZXIvbG9naW4iIGVsZW1lbnQ9ezxJbmRleCAvPn0gLz4NCiAgICAgICAgICAgIDxSb3V0ZSBwYXRoPSIvdXNlci9uZXhvaHViL2hvbWUiIGVsZW1lbnQ9ezxOYXZpZ2F0ZSB0bz0iL2hvbWUiIHJlcGxhY2UgLz59IC8+DQogICAgICAgICAgICA8Um91dGUgcGF0aD0iL3VzZXIvbmV4b2h1Yi90ZWxhcHJvbW8iIGVsZW1lbnQ9ezxOYXZpZ2F0ZSB0bz0iL3RlbGFwcm9tbyIgcmVwbGFjZSAvPn0gLz4NCiAgICAgICAgICAgIDxSb3V0ZSBwYXRoPSIvdXNlci86dXNlclNsdWcvbmV4b2h1Yi90ZWxhcHJvbW8iIGVsZW1lbnQ9ezxTbHVnUmVkaXJlY3QgdGVtcGxhdGU9Ii86dXNlclNsdWcvdGVsYXByb21vIiAvPn0gLz4NCiAgICAgICAgICAgIDxSb3V0ZSBwYXRoPSIvdXNlci9uZXhvaHViL2xvY3V0b3IiIGVsZW1lbnQ9ezxOYXZpZ2F0ZSB0bz0iL2xvY3V0b3IiIHJlcGxhY2UgLz59IC8+DQogICAgICAgICAgICA8Um91dGUgcGF0aD0iL3VzZXIvOnVzZXJTbHVnL25leG9odWIvbG9jdXRvciIgZWxlbWVudD17PFNsdWdSZWRpcmVjdCB0ZW1wbGF0ZT0iLzp1c2VyU2x1Zy9sb2N1dG9yIiAvPn0gLz4NCiAgICAgICAgICAgIDxSb3V0ZSBwYXRoPSIvdXNlci9uZXhvaHViL3BsYXllciIgZWxlbWVudD17PE5hdmlnYXRlIHRvPSIvcGxheWVyIiByZXBsYWNlIC8+fSAvPg0KICAgICAgICAgICAgPFJvdXRlIHBhdGg9Ii91c2VyLzp1c2VyU2x1Zy9uZXhvaHViL3BsYXllciIgZWxlbWVudD17PFNsdWdSZWRpcmVjdCB0ZW1wbGF0ZT0iLzp1c2VyU2x1Zy9wbGF5ZXIiIC8+fSAvPg0KICAgICAgICAgICAgPFJvdXRlIHBhdGg9Ii91c2VyL25leG9odWIvcGxheWVyL3dhdGNoIiBlbGVtZW50PXs8TmF2aWdhdGUgdG89Ii9wbGF5ZXIvd2F0Y2giIHJlcGxhY2UgLz59IC8+DQogICAgICAgICAgICA8Um91dGUgcGF0aD0iL3VzZXIvOnVzZXJTbHVnL25leG9odWIvcGxheWVyL3dhdGNoIiBlbGVtZW50PXs8U2x1Z1JlZGlyZWN0IHRlbXBsYXRlPSIvOnVzZXJTbHVnL3BsYXllci93YXRjaCIgLz59IC8+DQogICAgICAgICAgICA8Um91dGUgcGF0aD0iL3VzZXIvbmV4b2h1Yi9wbGF5ZXIvY2F0YWxvZyIgZWxlbWVudD17PE5hdmlnYXRlIHRvPSIvcGxheWVyL2NhdGFsb2ciIHJlcGxhY2UgLz59IC8+DQogICAgICAgICAgICA8Um91dGUgcGF0aD0iL3VzZXIvOnVzZXJTbHVnL25leG9odWIvcGxheWVyL2NhdGFsb2ciIGVsZW1lbnQ9ezxTbHVnUmVkaXJlY3QgdGVtcGxhdGU9Ii86dXNlclNsdWcvcGxheWVyL2NhdGFsb2ciIC8+fSAvPg0KICAgICAgICAgICAgPFJvdXRlIHBhdGg9Ii91c2VyL25leG9odWIvcGxheWVyL2FwcCIgZWxlbWVudD17PE5hdmlnYXRlIHRvPSIvcGxheWVyL2FwcCIgcmVwbGFjZSAvPn0gLz4NCiAgICAgICAgICAgIDxSb3V0ZSBwYXRoPSIvdXNlci86dXNlclNsdWcvbmV4b2h1Yi9wbGF5ZXIvYXBwIiBlbGVtZW50PXs8U2x1Z1JlZGlyZWN0IHRlbXBsYXRlPSIvOnVzZXJTbHVnL3BsYXllci9hcHAiIC8+fSAvPg0KICAgICAgICAgICAgPFJvdXRlIHBhdGg9Ii91c2VyLzp1c2VyU2x1Zy90ZWxhaW50ZXJhdGl2YXRlbGFvIiBlbGVtZW50PXs8U2x1Z1JlZGlyZWN0IHRlbXBsYXRlPSIvOnVzZXJTbHVnL3RlbGFpbnRlcmF0aXZhdGVsYW8iIC8+fSAvPg0KDQogICAgICAgICAgICB7LyogTGVnYWN5IHJlZGlyZWN0cyAqL30NCiAgICAgICAgICAgIDxSb3V0ZSBwYXRoPSIvbWFzdGVydmlldy9ob21lIiBlbGVtZW50PXs8TmF2aWdhdGUgdG89Ii9ob21lIiByZXBsYWNlIC8+fSAvPg0KICAgICAgICAgICAgPFJvdXRlIHBhdGg9Ii9tb2R1bG8tdGVsYS1lc3R1ZGlvLXByb21vY2FvIiBlbGVtZW50PXs8TmF2aWdhdGUgdG89Ii90ZWxhcHJvbW8iIHJlcGxhY2UgLz59IC8+DQoNCiAgICAgICAgICAgIDxSb3V0ZSBwYXRoPSIqIiBlbGVtZW50PXs8Tm90Rm91bmQgLz59IC8+DQogICAgICAgICAgPC9Sb3V0ZXM+DQogICAgICAgICAgPC9TdXNwZW5zZT4NCiAgICAgICAgICA8L05hdmlnYXRpb25FcnJvckJvdW5kYXJ5Pg0KICAgICAgICA8L0Jyb3dzZXJSb3V0ZXI+DQogICAgICA8L0F1dGhQcm92aWRlcj4NCiAgICA8L1Rvb2x0aXBQcm92aWRlcj4NCiAgPC9RdWVyeUNsaWVudFByb3ZpZGVyPg0KKTsNCg0KZXhwb3J0IGRlZmF1bHQgQXBwOw0K
+import { Suspense, Component, Fragment, useEffect, useState, type ReactNode } from "react";
+import { Maximize2, Minimize2 } from "lucide-react";
+import { Toaster } from "@/components/ui/toaster";
+import RouteProgress from "@/components/RouteProgress";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate, useLocation } from "react-router-dom";
+import { consumeOAuthReturnPath } from "@/lib/oauthReturn";
+
+// Redirect helper that interpolates :userSlug from the current URL params.
+// Plain <Navigate to="/:userSlug/..."> does NOT substitute params and would
+// send the browser literally to "/:userSlug/...", producing a blank page.
+function SlugRedirect({ template }: { template: string }) {
+  const { userSlug = "" } = useParams();
+  const { search, hash } = window.location;
+  return <Navigate to={`${template.replace(":userSlug", userSlug)}${search}${hash}`} replace />;
+}
+
+// Slug guard: valida o :userSlug ANTES de renderizar rotas dinâmicas. Se o
+// parâmetro chegar vazio, como placeholder literal (":userslug"), ou com
+// caracteres inválidos, redireciona para a home em vez de disparar o edge
+// function com um slug inexistente e mostrar tela em branco.
+const SLUG_RE = /^[a-z0-9][a-z0-9_-]*$/i;
+function SlugGuard({ children }: { children: ReactNode }) {
+  const { userSlug = "" } = useParams();
+  const clean = (userSlug || "").trim();
+  if (!clean || !SLUG_RE.test(clean) || clean.toLowerCase() === ":userslug") {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
+}
+
+function OAuthReturnHandler() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.pathname === "/auth/popup-callback") return;
+    const target = consumeOAuthReturnPath();
+    if (!target) return;
+    if (target === `${location.pathname}${location.search}${location.hash}`) return;
+    navigate(target, { replace: true });
+  }, [location.hash, location.pathname, location.search, navigate]);
+
+  return null;
+}
+
+function OAuthCallbackRedirect() {
+  const target = consumeOAuthReturnPath() || "/";
+  return <Navigate to={target} replace />;
+}
+
+function DesktopWindowControls() {
+  const [windowState, setWindowState] = useState<{ auxiliary: boolean; fullscreen: boolean } | null>(null);
+  useEffect(() => {
+    if (!window.houseMixDesktop) return;
+    const refresh = () => void window.houseMixDesktop?.getWindowState().then(setWindowState).catch(() => setWindowState(null));
+    refresh();
+    const timer = window.setInterval(refresh, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  if (!windowState?.auxiliary) return null;
+  return (
+    <button
+      type="button"
+      onClick={() => void window.houseMixDesktop?.toggleFullscreen().then((fullscreen) => setWindowState((state) => state ? { ...state, fullscreen } : state))}
+      className="fixed right-3 top-3 z-[10000] flex items-center gap-2 rounded-lg bg-slate-950/85 px-3 py-2 text-sm font-semibold text-white shadow-lg ring-1 ring-white/20 backdrop-blur hover:bg-blue-700"
+      title={windowState.fullscreen ? "Sair da tela cheia (Esc)" : "Exibir em tela cheia"}
+    >
+      {windowState.fullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+      {windowState.fullscreen ? "Sair da tela cheia" : "Tela cheia"}
+    </button>
+  );
+}
+import { AuthProvider } from "@/hooks/useAuth";
+import Index from "./pages/Index";
+import ResetPassword from "./pages/ResetPassword";
+import InlineNotification from "@/components/InlineNotification";
+import LocalImageCache from "@/components/LocalImageCache";
+import DesktopLocalMediaSync from "@/components/DesktopLocalMediaSync";
+import { initGlobalNotifications } from "@/lib/notify";
+initGlobalNotifications();
+import NotFound from "./pages/NotFound";
+import { Loader2 } from "lucide-react";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import PlayerSyncLoader from "@/components/player/PlayerSyncLoader";
+import { pruneLocalStorageEmergency } from "@/lib/musicStorageKeys";
+
+import LayoutVersionGuard from "@/components/LayoutVersionGuard";
+import DailyUpdateGuard from "@/components/DailyUpdateGuard";
+import { isChunkErrorMessage, lazyRetry, recoverFromChunkFailure } from "@/lib/lazyRetry";
+
+// Lazy-loaded heavy pages with automatic retry
+const PlayerHub = lazyRetry(() => import("./pages/player/PlayerHub"));
+const PlayerPage = lazyRetry(() => import("./pages/Player"));
+const PlayerTvWelcome = lazyRetry(() => import("./pages/player/PlayerTvWelcome"));
+const PairPage = lazyRetry(() => import("./pages/PairPage"));
+const EntregaPremio = lazyRetry(() => import("./pages/EntregaPremio"));
+const GoogleCheckPage = lazyRetry(() => import("./pages/GoogleCheckPage"));
+const OAuthPopupCallback = lazyRetry(() => import("./pages/OAuthPopupCallback"));
+const TvPairingEventsPage = lazyRetry(() => import("./pages/TvPairingEventsPage"));
+const PlayerApp = lazyRetry(() => import("./pages/PlayerApp"));
+const PromocoesKiosk = lazyRetry(() => import("./pages/Promocoes"));
+const MasterViewHome = lazyRetry(() => import("./pages/masterview/MasterViewHome"));
+const TpExterno = lazyRetry(() => import("./pages/TpExterno"));
+const PlayerCatalog = lazyRetry(() => import("./pages/player/PlayerCatalog"));
+const VmixControl = lazyRetry(() => import("./pages/VmixControl"));
+const CenarioTela = lazyRetry(() => import("./pages/CenarioTela"));
+const TelaInterativa = lazyRetry(() => import("./pages/TelaInterativa"));
+const CenarioTelaFull = lazyRetry(() => import("./pages/CenarioTelaFull"));
+const CenarioEstudioWebTela = lazyRetry(() => import("./pages/CenarioEstudioWebTela"));
+const IntercomListener = lazyRetry(() => import("./pages/IntercomListener"));
+const VmixAssunto = lazyRetry(() => import("./pages/VmixAssunto"));
+const XmlPublicEndpoint = lazyRetry(() => import("./pages/XmlPublicEndpoint"));
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  retryCount: number;
+  remountKey: number;
+  errorMessage?: string;
+}
+
+// Auto-heal delays: remount the failing subtree in place instead of showing a
+// dead-end error screen. Only after all attempts fail do we surface the UI.
+const AUTO_HEAL_DELAYS_MS = [250, 700, 1800];
+
+class ChunkErrorBoundary extends Component<{ children: ReactNode; locationKey: string }, ErrorBoundaryState> {
+  state: ErrorBoundaryState = { hasError: false, retryCount: 0, remountKey: 0 };
+  private retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, errorMessage: error?.message || String(error) };
+  }
+
+  componentDidCatch(error: Error) {
+    const isChunkError = isChunkErrorMessage(error.message);
+
+    console.error("[NavigationErrorBoundary]", {
+      message: error.message,
+      stack: error.stack,
+      path: window.location.pathname,
+      isChunkError,
+      attempt: this.state.retryCount,
+    });
+
+    this.setState({ errorMessage: error?.message || String(error) });
+
+    const msg = (error?.message || "").toLowerCase();
+    if (msg.includes("quota") || msg.includes("setitem") || error?.name === "QuotaExceededError") {
+      try {
+        pruneLocalStorageEmergency();
+      } catch {}
+    }
+
+    // A rejected React.lazy import is cached by React, so remounting it cannot
+    // recover on its own — reload once (cache-busted) when allowed.
+    if (isChunkError && recoverFromChunkFailure(true)) return;
+
+    const delay = AUTO_HEAL_DELAYS_MS[this.state.retryCount];
+    if (delay === undefined) {
+      if (isChunkError) {
+        recoverFromChunkFailure(true);
+        return;
+      }
+      // Out of in-place attempts: show the manual recovery UI.
+      this.setState({ retryCount: AUTO_HEAL_DELAYS_MS.length });
+      return;
+    }
+
+    if (this.retryTimer) clearTimeout(this.retryTimer);
+    this.retryTimer = setTimeout(() => {
+      this.setState((prev) => ({
+        hasError: false,
+        retryCount: prev.retryCount + 1,
+        remountKey: prev.remountKey + 1,
+      }));
+    }, delay);
+  }
+
+  componentDidUpdate(previousProps: Readonly<{ children: ReactNode; locationKey: string }>) {
+    // A new route is a clean slate — forget previous failures.
+    if (previousProps.locationKey !== this.props.locationKey) {
+      if (this.retryTimer) {
+        clearTimeout(this.retryTimer);
+        this.retryTimer = null;
+      }
+      if (this.state.hasError || this.state.retryCount > 0) {
+        this.setState({ hasError: false, retryCount: 0, errorMessage: undefined });
+      }
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.retryTimer) clearTimeout(this.retryTimer);
+  }
+
+  handleRetry = () => {
+    if (this.state.errorMessage && isChunkErrorMessage(this.state.errorMessage)) {
+      if (recoverFromChunkFailure(true)) return;
+      window.location.reload();
+      return;
+    }
+    this.setState((prev) => ({ hasError: false, retryCount: 0, remountKey: prev.remountKey + 1, errorMessage: undefined }));
+  };
+
+  handleReload = () => {
+    if (!recoverFromChunkFailure(true)) window.location.reload();
+  };
+
+  handleClearCacheAndLogin = () => {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch {}
+    window.location.href = "/";
+  };
+
+  render() {
+    if (this.state.hasError) {
+      const isPlayer = typeof window !== "undefined" && window.location.pathname.includes("/player");
+      const healing = this.state.retryCount < AUTO_HEAL_DELAYS_MS.length;
+
+      if (isPlayer && healing) {
+        return <PlayerSyncLoader size={44} />;
+      }
+
+      return (
+        <div
+          className="h-screen w-screen flex flex-col items-center justify-center gap-4 px-4 text-center"
+          style={{ backgroundColor: isPlayer ? "#000" : "#000000", color: "#fff" }}
+        >
+          {healing ? (
+            <>
+              <LoadingSpinner size={44} color="#ffffff" />
+              <p className="text-sm opacity-60">
+                Sincronizando ambiente...
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-lg font-semibold">Erro ao carregar a página</p>
+              {this.state.errorMessage && (
+                <div className="max-w-xl p-3 bg-red-950/40 border border-red-500/30 rounded-lg text-xs text-red-200 font-mono text-left break-words">
+                  {this.state.errorMessage}
+                </div>
+              )}
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <button
+                  onClick={this.handleRetry}
+                  className="px-6 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-90 cursor-pointer"
+                  style={{ backgroundColor: "#268ffa" }}
+                >
+                  Tentar novamente
+                </button>
+                <button
+                  onClick={this.handleReload}
+                  className="px-6 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-90 cursor-pointer"
+                  style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
+                >
+                  Recarregar página
+                </button>
+                <button
+                  onClick={this.handleClearCacheAndLogin}
+                  className="px-6 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-90 cursor-pointer text-amber-300 border border-amber-500/40"
+                  style={{ backgroundColor: "rgba(245, 158, 11, 0.1)" }}
+                >
+                  Limpar sessão e ir para Login
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      );
+    }
+    return <Fragment key={this.state.remountKey}>{this.props.children}</Fragment>;
+  }
+}
+
+function NavigationErrorBoundary({ children }: { children: ReactNode }) {
+  const location = useLocation();
+  return (
+    <ChunkErrorBoundary locationKey={`${location.pathname}${location.search}${location.hash}`}>
+      {children}
+    </ChunkErrorBoundary>
+  );
+}
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      staleTime: 30 * 1000,
+      retry: 1,
+    },
+  },
+});
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <InlineNotification mode="fixed" />
+      <LayoutVersionGuard />
+      <DailyUpdateGuard />
+      
+      <AuthProvider>
+        <DesktopLocalMediaSync />
+        <LocalImageCache />
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <DesktopWindowControls />
+          <OAuthReturnHandler />
+          <NavigationErrorBoundary>
+          <Suspense fallback={<RouteProgress />}>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/auth/callback" element={<OAuthCallbackRedirect />} />
+            <Route path="/auth/popup-callback" element={<OAuthPopupCallback />} />
+            <Route path="/~oauth/callback" element={<OAuthCallbackRedirect />} />
+
+            {/* Main routes */}
+            <Route path="/home" element={<MasterViewHome />} />
+            <Route path="/telapromo" element={<PromocoesKiosk />} />
+            <Route path="/player" element={<PlayerHub />} />
+            <Route path="/player/watch" element={<PlayerPage />} />
+            <Route path="/player/catalog" element={<PlayerCatalog />} />
+            <Route path="/player/app" element={<PlayerApp />} />
+            <Route path="/tp-externo" element={<TpExterno />} />
+            <Route path="/vmix-control" element={<VmixControl cleanLayout={true} />} />
+            <Route path="/vmix-control/switcher" element={<Navigate to="/vmix-control/automation" replace />} />
+            <Route path="/vmix-control/automation" element={<VmixControl forcedConnected={true} automationMode={true} />} />
+            <Route path="/cenario-tela" element={<CenarioTela />} />
+            <Route path="/intercom" element={<IntercomListener />} />
+            <Route path="/cenario-tela-full" element={<CenarioTelaFull />} />
+            <Route path="/telainterativatelao" element={<TelaInterativa />} />
+            <Route path="/cenario-estudio-web/:userSlug/:id" element={<CenarioEstudioWebTela />} />
+            <Route path="/vmix/assunto/:userId" element={<VmixAssunto />} />
+
+            {/* Slug routes for dynamic access */}
+            <Route path="/:userSlug/telapromo" element={<PromocoesKiosk />} />
+            <Route path="/:userSlug/locutor" element={<PromocoesKiosk />} />
+            <Route path="/locutor" element={<PromocoesKiosk />} />
+            <Route path="/:userSlug/player" element={<SlugGuard><PlayerHub /></SlugGuard>} />
+            <Route path="/:userSlug/player/tv" element={<SlugGuard><PlayerTvWelcome /></SlugGuard>} />
+            <Route path="/player/tv" element={<Navigate to="/" replace />} />
+            <Route path="/:userSlug/pair" element={<PairPage />} />
+            <Route path="/entrega/:token" element={<EntregaPremio />} />
+            <Route path="/google-check" element={<GoogleCheckPage />} />
+            <Route path="/:userSlug/google-check" element={<GoogleCheckPage />} />
+            <Route path="/tv-pairing-events" element={<TvPairingEventsPage />} />
+            <Route path="/:userSlug/player/watch" element={<PlayerPage />} />
+            <Route path="/:userSlug/player/catalog" element={<PlayerCatalog />} />
+            <Route path="/:userSlug/player/app" element={<PlayerApp />} />
+            <Route path="/:userSlug/telainterativatelao" element={<TelaInterativa />} />
+
+            {/* Public XML Feeds */}
+            <Route path="/xml/:slug/:file" element={<XmlPublicEndpoint />} />
+            <Route path="/xml/:file" element={<XmlPublicEndpoint />} />
+
+            {/* Supabase Edge Function & Storage compatibility endpoints */}
+            <Route path="/functions/v1/:functionName" element={<XmlPublicEndpoint />} />
+            <Route path="/storage/v1/object/public/xml-files/:fileName" element={<XmlPublicEndpoint />} />
+
+
+
+
+            {/* User / NexoHub legacy redirects */}
+            <Route path="/user" element={<Navigate to="/home" replace />} />
+            <Route path="/user/login" element={<Index />} />
+            <Route path="/user/nexohub/home" element={<Navigate to="/home" replace />} />
+            <Route path="/user/nexohub/telapromo" element={<Navigate to="/telapromo" replace />} />
+            <Route path="/user/:userSlug/nexohub/telapromo" element={<SlugRedirect template="/:userSlug/telapromo" />} />
+            <Route path="/user/nexohub/locutor" element={<Navigate to="/locutor" replace />} />
+            <Route path="/user/:userSlug/nexohub/locutor" element={<SlugRedirect template="/:userSlug/locutor" />} />
+            <Route path="/user/nexohub/player" element={<Navigate to="/player" replace />} />
+            <Route path="/user/:userSlug/nexohub/player" element={<SlugRedirect template="/:userSlug/player" />} />
+            <Route path="/user/nexohub/player/watch" element={<Navigate to="/player/watch" replace />} />
+            <Route path="/user/:userSlug/nexohub/player/watch" element={<SlugRedirect template="/:userSlug/player/watch" />} />
+            <Route path="/user/nexohub/player/catalog" element={<Navigate to="/player/catalog" replace />} />
+            <Route path="/user/:userSlug/nexohub/player/catalog" element={<SlugRedirect template="/:userSlug/player/catalog" />} />
+            <Route path="/user/nexohub/player/app" element={<Navigate to="/player/app" replace />} />
+            <Route path="/user/:userSlug/nexohub/player/app" element={<SlugRedirect template="/:userSlug/player/app" />} />
+            <Route path="/user/:userSlug/telainterativatelao" element={<SlugRedirect template="/:userSlug/telainterativatelao" />} />
+
+            {/* Legacy redirects */}
+            <Route path="/masterview/home" element={<Navigate to="/home" replace />} />
+            <Route path="/modulo-tela-estudio-promocao" element={<Navigate to="/telapromo" replace />} />
+
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          </Suspense>
+          </NavigationErrorBoundary>
+        </BrowserRouter>
+      </AuthProvider>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
+
+export default App;

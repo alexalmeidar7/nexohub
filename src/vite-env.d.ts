@@ -1,1 +1,41 @@
-Ly8vIDxyZWZlcmVuY2UgdHlwZXM9InZpdGUvY2xpZW50IiAvPg0KDQppbnRlcmZhY2UgRmlsZVN5c3RlbUZpbGVIYW5kbGUgew0KICBnZXRGaWxlKCk6IFByb21pc2U8RmlsZT47DQogIGtpbmQ6ICdmaWxlJzsNCiAgbmFtZTogc3RyaW5nOw0KfQ0KDQppbnRlcmZhY2UgSG91c2VNaXhEZXNrdG9wVXBkYXRlU3RhdHVzIHsNCiAgc3RhdHVzOiAiaWRsZSIgfCAiY2hlY2tpbmciIHwgImF2YWlsYWJsZSIgfCAiZG93bmxvYWRpbmciIHwgImRvd25sb2FkZWQiOw0KICB2ZXJzaW9uPzogc3RyaW5nOw0KICBwZXJjZW50PzogbnVtYmVyOw0KfQ0KDQppbnRlcmZhY2UgV2luZG93IHsNCiAgc2hvd09wZW5GaWxlUGlja2VyPzogKG9wdGlvbnM/OiBhbnkpID0+IFByb21pc2U8RmlsZVN5c3RlbUZpbGVIYW5kbGVbXT47DQogIGhvdXNlTWl4RGVza3RvcD86IHsNCiAgICBpc0Rlc2t0b3A6IHRydWU7DQogICAgcGxhdGZvcm06IHN0cmluZzsNCiAgICB2ZXJzaW9uOiBzdHJpbmc7DQogICAgb3BlbkV4dGVybmFsOiAodXJsOiBzdHJpbmcpID0+IFByb21pc2U8Ym9vbGVhbj47DQogICAgb25QbGF5ZXJPQXV0aENhbGxiYWNrOiAoY2FsbGJhY2s6ICh1cmw6IHN0cmluZykgPT4gdm9pZCkgPT4gKCkgPT4gdm9pZDsNCiAgICBnZXRBcHBWZXJzaW9uOiAoKSA9PiBQcm9taXNlPHN0cmluZz47DQogICAgZ2V0U3RhcnRXaXRoV2luZG93czogKCkgPT4gUHJvbWlzZTx7IGVuYWJsZWQ6IGJvb2xlYW47IHN1cHBvcnRlZDogYm9vbGVhbiB9PjsNCiAgICBzZXRTdGFydFdpdGhXaW5kb3dzOiAoZW5hYmxlZDogYm9vbGVhbikgPT4gUHJvbWlzZTx7IGVuYWJsZWQ6IGJvb2xlYW47IHN1cHBvcnRlZDogYm9vbGVhbiB9PjsNCiAgICBnZXRVcGRhdGVTdGF0dXM6ICgpID0+IFByb21pc2U8SG91c2VNaXhEZXNrdG9wVXBkYXRlU3RhdHVzPjsNCiAgICBvblVwZGF0ZVN0YXR1czogKGNhbGxiYWNrOiAoc3RhdHVzOiBIb3VzZU1peERlc2t0b3BVcGRhdGVTdGF0dXMpID0+IHZvaWQpID0+ICgpID0+IHZvaWQ7DQogICAgZG93bmxvYWRVcGRhdGU6ICgpID0+IFByb21pc2U8Ym9vbGVhbj47DQogICAgaW5zdGFsbFVwZGF0ZTogKCkgPT4gUHJvbWlzZTxib29sZWFuPjsNCiAgICBpbml0aWFsaXplTG9jYWxBc3NldHM6IChzbHVnOiBzdHJpbmcpID0+IFByb21pc2U8c3RyaW5nPjsNCiAgICBnZXRYbWxQYXRoOiAoc2x1Zzogc3RyaW5nLCBmaWxlbmFtZTogc3RyaW5nKSA9PiBQcm9taXNlPHN0cmluZz47DQogICAgc2F2ZVhtbDogKHNsdWc6IHN0cmluZywgZmlsZW5hbWU6IHN0cmluZywgY29udGVudDogc3RyaW5nKSA9PiBQcm9taXNlPHN0cmluZz47DQogICAgcmVhZFhtbDogKHNsdWc6IHN0cmluZywgZmlsZW5hbWU6IHN0cmluZykgPT4gUHJvbWlzZTxzdHJpbmcgfCBudWxsPjsNCiAgICBjYWNoZUltYWdlOiAodXJsOiBzdHJpbmcsIGhpbnQ6IHN0cmluZywgc2x1Zzogc3RyaW5nLCByZWZyZXNoPzogYm9vbGVhbikgPT4gUHJvbWlzZTxzdHJpbmcgfCBudWxsPjsNCiAgICBjYWNoZUltYWdlRmlsZVVybDogKHVybDogc3RyaW5nLCBoaW50OiBzdHJpbmcsIHNsdWc6IHN0cmluZykgPT4gUHJvbWlzZTxzdHJpbmcgfCBudWxsPjsNCiAgICBnZXRDYWNoZWRJbWFnZUZpbGVVcmw6ICh1cmw6IHN0cmluZywgaGludDogc3RyaW5nLCBzbHVnOiBzdHJpbmcpID0+IFByb21pc2U8c3RyaW5nIHwgbnVsbD47DQogICAgc2F2ZUxvY2FsSW1hZ2U6IChzbHVnOiBzdHJpbmcsIGJ5dGVzOiBBcnJheUJ1ZmZlciwgY29udGVudFR5cGU6IHN0cmluZywgaGludDogc3RyaW5nKSA9PiBQcm9taXNlPHN0cmluZz47DQogICAgZ2V0V2luZG93U3RhdGU6ICgpID0+IFByb21pc2U8eyBhdXhpbGlhcnk6IGJvb2xlYW47IGZ1bGxzY3JlZW46IGJvb2xlYW4gfT47DQogICAgdG9nZ2xlRnVsbHNjcmVlbjogKCkgPT4gUHJvbWlzZTxib29sZWFuPjsNCiAgfTsNCn0NCg==
+/// <reference types="vite/client" />
+
+interface FileSystemFileHandle {
+  getFile(): Promise<File>;
+  kind: 'file';
+  name: string;
+}
+
+interface HouseMixDesktopUpdateStatus {
+  status: "idle" | "checking" | "available" | "downloading" | "downloaded";
+  version?: string;
+  percent?: number;
+}
+
+interface Window {
+  showOpenFilePicker?: (options?: any) => Promise<FileSystemFileHandle[]>;
+  houseMixDesktop?: {
+    isDesktop: true;
+    platform: string;
+    version: string;
+    openExternal: (url: string) => Promise<boolean>;
+    onPlayerOAuthCallback: (callback: (url: string) => void) => () => void;
+    getAppVersion: () => Promise<string>;
+    getStartWithWindows: () => Promise<{ enabled: boolean; supported: boolean }>;
+    setStartWithWindows: (enabled: boolean) => Promise<{ enabled: boolean; supported: boolean }>;
+    getUpdateStatus: () => Promise<HouseMixDesktopUpdateStatus>;
+    onUpdateStatus: (callback: (status: HouseMixDesktopUpdateStatus) => void) => () => void;
+    downloadUpdate: () => Promise<boolean>;
+    installUpdate: () => Promise<boolean>;
+    initializeLocalAssets: (slug: string) => Promise<string>;
+    getXmlPath: (slug: string, filename: string) => Promise<string>;
+    saveXml: (slug: string, filename: string, content: string) => Promise<string>;
+    readXml: (slug: string, filename: string) => Promise<string | null>;
+    cacheImage: (url: string, hint: string, slug: string, refresh?: boolean) => Promise<string | null>;
+    cacheImageFileUrl: (url: string, hint: string, slug: string) => Promise<string | null>;
+    getCachedImageFileUrl: (url: string, hint: string, slug: string) => Promise<string | null>;
+    saveLocalImage: (slug: string, bytes: ArrayBuffer, contentType: string, hint: string) => Promise<string>;
+    getWindowState: () => Promise<{ auxiliary: boolean; fullscreen: boolean }>;
+    toggleFullscreen: () => Promise<boolean>;
+  };
+}

@@ -1,1 +1,333 @@
-aW1wb3J0IHsgc3VwYWJhc2UgfSBmcm9tICJAL2ludGVncmF0aW9ucy9zdXBhYmFzZS9jbGllbnQiOw0KDQovKioNCiAqIENhY2hlIGUgcmVzb2x2ZWRvciBtdWx0aS10aWVyIGRlIGltYWdlbnMgZGUgYXJ0aXN0YXMuDQogKg0KICogRXN0cmF0w6lnaWEgZGUgcmVzb2x1w6fDo286DQogKiAgMSkgQ2FjaGUgZW0gbWVtw7NyaWEgKHPDrW5jcm9ubywgemVybyBsYXTDqm5jaWEpLg0KICogIDIpIGxvY2FsU3RvcmFnZSAoVFRMIGRlIDcgZGlhcyBwYXJhIGltYWdlbnMgdsOhbGlkYXMpLg0KICogIDMpIERlZXplciBBUEkgKHZpYSBKU09OUCBubyBicm93c2VyIHBhcmEgc3Vwb3J0ZSB0b3RhbCBhIENPUlMsIG91IGZldGNoIGRpcmV0bykuDQogKiAgNCkgV2lraXBlZGlhIC8gV2lraW1lZGlhIENvbW1vbnMgUGFnZUltYWdlcyBBUEkgKENPUlMgbmF0aXZvIGNvbSBvcmlnaW49KikuDQogKiAgNSkgaVR1bmVzIFNlYXJjaCBBUEkgKENPUlMgbmF0aXZvKS4NCiAqICA2KSBTdXBhYmFzZSBFZGdlIEZ1bmN0aW9uIGBmZXRjaC1hcnRpc3QtaW1hZ2VgIChjb21vIHRlbnRhdGl2YSBwYXJhbGVsYSBjb20gdGltZW91dCkuDQogKi8NCg0KY29uc3QgTFNfUFJFRklYID0gIm5leG86YXJ0aXN0SW1nOnYzOiI7DQpjb25zdCBUVExfTVMgPSA3ICogMjQgKiA2MCAqIDYwICogMTAwMDsgLy8gNyBkaWFzIHBhcmEgaW1hZ2VucyBlbmNvbnRyYWRhcw0KY29uc3QgTkVHX1RUTF9NUyA9IDUgKiA2MCAqIDEwMDA7IC8vIDUgbWludXRvcyBwYXJhIGZhbGhhIChwZXJtaXRlIHJldGVudGF0aXZhcyByw6FwaWRhcykNCmNvbnN0IExTX01BWCA9IDE1MDsNCg0KY29uc3QgUExBQ0VIT0xERVJfSEFTSEVTID0gWw0KICAiZDQxZDhjZDk4ZjAwYjIwNGU5ODAwOTk4ZWNmODQyN2UiLA0KICAiMmE3Yzc1ZmU3ZTI0OWU0M2ViMzdiMWU4NGI4YmE4YmEiLA0KXTsNCg0KdHlwZSBFbnRyeSA9IHsgdXJsOiBzdHJpbmcgfCBudWxsOyB0czogbnVtYmVyIH07DQoNCmNvbnN0IG1lbSA9IG5ldyBNYXA8c3RyaW5nLCBFbnRyeT4oKTsNCmNvbnN0IGluZmxpZ2h0ID0gbmV3IE1hcDxzdHJpbmcsIFByb21pc2U8c3RyaW5nIHwgbnVsbD4+KCk7DQpjb25zdCBjYW5kaWRhdGVQb29scyA9IG5ldyBNYXA8c3RyaW5nLCB7IGxpc3Q6IHN0cmluZ1tdOyB0czogbnVtYmVyIH0+KCk7DQoNCmNvbnN0IG5vcm0gPSAoYTogc3RyaW5nLCBza2lwID0gMCkgPT4gYCR7YS50cmltKCkudG9Mb3dlckNhc2UoKX0ke3NraXAgPyBgOjoke3NraXB9YCA6ICIifWA7DQoNCi8qKiBQcm9tb3RlIGtub3duIERlZXplci9pVHVuZXMgdGh1bWJuYWlsIFVSTCB2YXJpYW50cyBiZWZvcmUgdXNpbmcgdGhlbSBhcyBmdWxsLXNjcmVlbiBhcnQuICovDQpleHBvcnQgZnVuY3Rpb24gdXBncmFkZUFydGlzdEltYWdlUmVzb2x1dGlvbih1cmw/OiBzdHJpbmcgfCBudWxsKTogc3RyaW5nIHwgbnVsbCB7DQogIGlmICghdXJsIHx8IHR5cGVvZiB1cmwgIT09ICJzdHJpbmciKSByZXR1cm4gbnVsbDsNCiAgcmV0dXJuIHVybA0KICAgIC5yZXBsYWNlKC9cLyg/OjU2fDI1MHw1MDB8MTAwMCl4KD86NTZ8MjUwfDUwMHwxMDAwKSg/PS0pL2dpLCAiLzEwMDB4MTAwMCIpDQogICAgLnJlcGxhY2UoL1wvKD86NTZ8MjUwfDUwMHwxMDAwKXgoPzo1NnwyNTB8NTAwfDEwMDApKD89XC4pL2dpLCAiLzEwMDB4MTAwMCIpDQogICAgLnJlcGxhY2UoL1wvMTAweDEwMChiYik/XC5qcGcoPz1cP3wkKS9pLCAiLzYwMHg2MDAkMS5qcGciKTsNCn0NCg0KZnVuY3Rpb24gaXNDbGVhbkltYWdlVXJsKHVybD86IHN0cmluZyB8IG51bGwpOiB1cmwgaXMgc3RyaW5nIHsNCiAgaWYgKCF1cmwgfHwgdHlwZW9mIHVybCAhPT0gInN0cmluZyIpIHJldHVybiBmYWxzZTsNCiAgY29uc3QgdHJpbW1lZCA9IHVybC50cmltKCk7DQogIGlmICghdHJpbW1lZC5zdGFydHNXaXRoKCJodHRwOi8vIikgJiYgIXRyaW1tZWQuc3RhcnRzV2l0aCgiaHR0cHM6Ly8iKSkgcmV0dXJuIGZhbHNlOw0KICAvLyBFeGNsdWkgcGxhY2Vob2xkZXJzIHZhemlvcyBkbyBEZWV6ZXIgKGV4OiAvYXJ0aXN0Ly8xMDAweDEwMDAuLi4gb3UgL2NvdmVyLy81MDB4NTAwLi4uKQ0KICBpZiAoDQogICAgdHJpbW1lZC5pbmNsdWRlcygiL2FydGlzdC8vIikgfHwNCiAgICB0cmltbWVkLmluY2x1ZGVzKCIvY292ZXIvLyIpIHx8DQogICAgdHJpbW1lZC5pbmNsdWRlcygiL2FsYnVtLy8iKSB8fA0KICAgIHRyaW1tZWQuaW5jbHVkZXMoIi8vMTAwMHgxMDAwIikgfHwNCiAgICB0cmltbWVkLmluY2x1ZGVzKCIvLzUwMHg1MDAiKSB8fA0KICAgIHRyaW1tZWQuaW5jbHVkZXMoIi8vMjUweDI1MCIpDQogICkgew0KICAgIHJldHVybiBmYWxzZTsNCiAgfQ0KICByZXR1cm4gIVBMQUNFSE9MREVSX0hBU0hFUy5zb21lKGggPT4gdHJpbW1lZC5pbmNsdWRlcyhoKSk7DQp9DQoNCmZ1bmN0aW9uIGxzR2V0KGtleTogc3RyaW5nKTogRW50cnkgfCBudWxsIHsNCiAgaWYgKHR5cGVvZiB3aW5kb3cgPT09ICJ1bmRlZmluZWQiKSByZXR1cm4gbnVsbDsNCiAgdHJ5IHsNCiAgICBjb25zdCByYXcgPSB3aW5kb3cubG9jYWxTdG9yYWdlLmdldEl0ZW0oTFNfUFJFRklYICsga2V5KTsNCiAgICBpZiAoIXJhdykgcmV0dXJuIG51bGw7DQogICAgY29uc3QgcGFyc2VkID0gSlNPTi5wYXJzZShyYXcpIGFzIEVudHJ5Ow0KICAgIGlmICghcGFyc2VkIHx8IHR5cGVvZiBwYXJzZWQudHMgIT09ICJudW1iZXIiKSByZXR1cm4gbnVsbDsNCiAgICByZXR1cm4gcGFyc2VkOw0KICB9IGNhdGNoIHsgcmV0dXJuIG51bGw7IH0NCn0NCg0KZnVuY3Rpb24gbHNTZXQoa2V5OiBzdHJpbmcsIGVudHJ5OiBFbnRyeSkgew0KICBpZiAodHlwZW9mIHdpbmRvdyA9PT0gInVuZGVmaW5lZCIpIHJldHVybjsNCiAgdHJ5IHsNCiAgICBjb25zdCBrZXlzID0gT2JqZWN0LmtleXMod2luZG93LmxvY2FsU3RvcmFnZSkuZmlsdGVyKGsgPT4gay5zdGFydHNXaXRoKExTX1BSRUZJWCkpOw0KICAgIGlmIChrZXlzLmxlbmd0aCA+PSBMU19NQVgpIHsNCiAgICAgIGtleXMuc2xpY2UoMCwgTWF0aC5mbG9vcihMU19NQVggKiAwLjQpKS5mb3JFYWNoKGsgPT4gew0KICAgICAgICB0cnkgeyB3aW5kb3cubG9jYWxTdG9yYWdlLnJlbW92ZUl0ZW0oayk7IH0gY2F0Y2gge30NCiAgICAgIH0pOw0KICAgIH0NCiAgICB3aW5kb3cubG9jYWxTdG9yYWdlLnNldEl0ZW0oTFNfUFJFRklYICsga2V5LCBKU09OLnN0cmluZ2lmeShlbnRyeSkpOw0KICB9IGNhdGNoIHsNCiAgICB0cnkgew0KICAgICAgY29uc3Qga2V5cyA9IE9iamVjdC5rZXlzKHdpbmRvdy5sb2NhbFN0b3JhZ2UpLmZpbHRlcihrID0+IGsuc3RhcnRzV2l0aChMU19QUkVGSVgpKTsNCiAgICAgIGtleXMuc2xpY2UoMCwgNTApLmZvckVhY2goayA9PiB3aW5kb3cubG9jYWxTdG9yYWdlLnJlbW92ZUl0ZW0oaykpOw0KICAgIH0gY2F0Y2gge30NCiAgfQ0KfQ0KDQpmdW5jdGlvbiBpc0ZyZXNoKGVudHJ5OiBFbnRyeSk6IGJvb2xlYW4gew0KICBjb25zdCB0dGwgPSBlbnRyeS51cmwgPyBUVExfTVMgOiBORUdfVFRMX01TOw0KICByZXR1cm4gRGF0ZS5ub3coKSAtIGVudHJ5LnRzIDwgdHRsOw0KfQ0KDQpleHBvcnQgZnVuY3Rpb24gZ2V0QXJ0aXN0SW1hZ2VTeW5jKGFydGlzdDogc3RyaW5nLCBza2lwID0gMCk6IHN0cmluZyB8IG51bGwgew0KICBpZiAoIWFydGlzdCkgcmV0dXJuIG51bGw7DQogIGNvbnN0IGtleSA9IG5vcm0oYXJ0aXN0LCBza2lwKTsNCiAgY29uc3QgbWVtSGl0ID0gbWVtLmdldChrZXkpOw0KICBpZiAobWVtSGl0ICYmIGlzRnJlc2gobWVtSGl0KSkgcmV0dXJuIG1lbUhpdC51cmw7DQogIGNvbnN0IGxzSGl0ID0gbHNHZXQoa2V5KTsNCiAgaWYgKGxzSGl0ICYmIGlzRnJlc2gobHNIaXQpKSB7DQogICAgbWVtLnNldChrZXksIGxzSGl0KTsNCiAgICByZXR1cm4gbHNIaXQudXJsOw0KICB9DQogIHJldHVybiBudWxsOw0KfQ0KDQovKiogMS4gRGVlemVyOiB2aWEgSlNPTlAgbm8gYnJvd3NlciAoYnlwYXNzYSByZXN0cmnDp8O1ZXMgZGUgQ09SUykgb3UgZmV0Y2ggc2Ugc3Vwb3J0YWRvICovDQphc3luYyBmdW5jdGlvbiBmZXRjaERlZXplckNhbmRpZGF0ZXMoYXJ0aXN0OiBzdHJpbmcpOiBQcm9taXNlPHN0cmluZ1tdPiB7DQogIGNvbnN0IGlzQnJvd3NlciA9IHR5cGVvZiB3aW5kb3cgIT09ICJ1bmRlZmluZWQiICYmIHR5cGVvZiBkb2N1bWVudCAhPT0gInVuZGVmaW5lZCI7DQoNCiAgaWYgKGlzQnJvd3Nlcikgew0KICAgIHJldHVybiBuZXcgUHJvbWlzZSgocmVzb2x2ZSkgPT4gew0KICAgICAgY29uc3QgY2JOYW1lID0gYF9fZHpfY2JfJHtEYXRlLm5vdygpfV8ke01hdGgucmFuZG9tKCkudG9TdHJpbmcoMzYpLnNsaWNlKDIsIDcpfWA7DQogICAgICBjb25zdCBzY3JpcHQgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCJzY3JpcHQiKTsNCiAgICAgIGNvbnN0IHRpbWVyID0gc2V0VGltZW91dCgoKSA9PiB7DQogICAgICAgIGNsZWFudXAoKTsNCiAgICAgICAgcmVzb2x2ZShbXSk7DQogICAgICB9LCAzNTAwKTsNCg0KICAgICAgY29uc3QgY2xlYW51cCA9ICgpID0+IHsNCiAgICAgICAgY2xlYXJUaW1lb3V0KHRpbWVyKTsNCiAgICAgICAgdHJ5IHsgZGVsZXRlICh3aW5kb3cgYXMgYW55KVtjYk5hbWVdOyB9IGNhdGNoIHt9DQogICAgICAgIGlmIChzY3JpcHQucGFyZW50Tm9kZSkgc2NyaXB0LnBhcmVudE5vZGUucmVtb3ZlQ2hpbGQoc2NyaXB0KTsNCiAgICAgIH07DQoNCiAgICAgICh3aW5kb3cgYXMgYW55KVtjYk5hbWVdID0gKGRhdGE6IGFueSkgPT4gew0KICAgICAgICBjbGVhbnVwKCk7DQogICAgICAgIGNvbnN0IHJlc3VsdHM6IHN0cmluZ1tdID0gW107DQogICAgICAgIGNvbnN0IGxpc3QgPSBkYXRhPy5kYXRhIHx8IFtdOw0KICAgICAgICBpZiAoQXJyYXkuaXNBcnJheShsaXN0KSkgew0KICAgICAgICAgIGZvciAoY29uc3QgaXRlbSBvZiBsaXN0KSB7DQogICAgICAgICAgICBjb25zdCBpbWcgPSB1cGdyYWRlQXJ0aXN0SW1hZ2VSZXNvbHV0aW9uKGl0ZW0ucGljdHVyZV94bCB8fCBpdGVtLnBpY3R1cmVfYmlnIHx8IGl0ZW0ucGljdHVyZV9tZWRpdW0pOw0KICAgICAgICAgICAgaWYgKGlzQ2xlYW5JbWFnZVVybChpbWcpICYmICFyZXN1bHRzLmluY2x1ZGVzKGltZykpIHsNCiAgICAgICAgICAgICAgcmVzdWx0cy5wdXNoKGltZyk7DQogICAgICAgICAgICB9DQogICAgICAgICAgfQ0KICAgICAgICB9DQogICAgICAgIHJlc29sdmUocmVzdWx0cyk7DQogICAgICB9Ow0KDQogICAgICBzY3JpcHQuc3JjID0gYGh0dHBzOi8vYXBpLmRlZXplci5jb20vc2VhcmNoL2FydGlzdD9xPSR7ZW5jb2RlVVJJQ29tcG9uZW50KGFydGlzdCl9Jm91dHB1dD1qc29ucCZjYWxsYmFjaz0ke2NiTmFtZX0mbGltaXQ9NWA7DQogICAgICBzY3JpcHQub25lcnJvciA9ICgpID0+IHsgY2xlYW51cCgpOyByZXNvbHZlKFtdKTsgfTsNCiAgICAgIGRvY3VtZW50LmhlYWQuYXBwZW5kQ2hpbGQoc2NyaXB0KTsNCiAgICB9KTsNCiAgfQ0KDQogIC8vIEZhbGxiYWNrIHBhcmEgYW1iaWVudGVzIHNlbSBET00gKE5vZGUgLyBXb3JrZXIpDQogIHRyeSB7DQogICAgY29uc3QgcmVzID0gYXdhaXQgZmV0Y2goYGh0dHBzOi8vYXBpLmRlZXplci5jb20vc2VhcmNoL2FydGlzdD9xPSR7ZW5jb2RlVVJJQ29tcG9uZW50KGFydGlzdCl9JmxpbWl0PTVgKTsNCiAgICBpZiAoIXJlcy5vaykgcmV0dXJuIFtdOw0KICAgIGNvbnN0IGRhdGEgPSBhd2FpdCByZXMuanNvbigpOw0KICAgIGNvbnN0IHJlc3VsdHM6IHN0cmluZ1tdID0gW107DQogICAgZm9yIChjb25zdCBpdGVtIG9mIChkYXRhPy5kYXRhIHx8IFtdKSkgew0KICAgICAgY29uc3QgaW1nID0gdXBncmFkZUFydGlzdEltYWdlUmVzb2x1dGlvbihpdGVtLnBpY3R1cmVfeGwgfHwgaXRlbS5waWN0dXJlX2JpZyB8fCBpdGVtLnBpY3R1cmVfbWVkaXVtKTsNCiAgICAgIGlmIChpc0NsZWFuSW1hZ2VVcmwoaW1nKSAmJiAhcmVzdWx0cy5pbmNsdWRlcyhpbWcpKSB7DQogICAgICAgIHJlc3VsdHMucHVzaChpbWcpOw0KICAgICAgfQ0KICAgIH0NCiAgICByZXR1cm4gcmVzdWx0czsNCiAgfSBjYXRjaCB7DQogICAgcmV0dXJuIFtdOw0KICB9DQp9DQoNCi8qKiAyLiBXaWtpcGVkaWEgLyBXaWtpbWVkaWEgQ29tbW9uczogZm90b3Mgb2ZpY2lhaXMgY29tIG9yaWdpbj0qICovDQphc3luYyBmdW5jdGlvbiBmZXRjaFdpa2lwZWRpYUltYWdlcyhhcnRpc3Q6IHN0cmluZyk6IFByb21pc2U8c3RyaW5nW10+IHsNCiAgY29uc3QgaW1hZ2VzOiBzdHJpbmdbXSA9IFtdOw0KICBjb25zdCBlbmRwb2ludHMgPSBbDQogICAgYGh0dHBzOi8vZW4ud2lraXBlZGlhLm9yZy93L2FwaS5waHA/YWN0aW9uPXF1ZXJ5JnRpdGxlcz0ke2VuY29kZVVSSUNvbXBvbmVudChhcnRpc3QpfSZwcm9wPXBhZ2VpbWFnZXMmZm9ybWF0PWpzb24mcGl0aHVtYnNpemU9MTAwMCZvcmlnaW49KmAsDQogICAgYGh0dHBzOi8vcHQud2lraXBlZGlhLm9yZy93L2FwaS5waHA/YWN0aW9uPXF1ZXJ5JnRpdGxlcz0ke2VuY29kZVVSSUNvbXBvbmVudChhcnRpc3QpfSZwcm9wPXBhZ2VpbWFnZXMmZm9ybWF0PWpzb24mcGl0aHVtYnNpemU9MTAwMCZvcmlnaW49KmAsDQogIF07DQoNCiAgZm9yIChjb25zdCBlcCBvZiBlbmRwb2ludHMpIHsNCiAgICB0cnkgew0KICAgICAgY29uc3QgcmVzID0gYXdhaXQgZmV0Y2goZXAsIHsgc2lnbmFsOiBBYm9ydFNpZ25hbC50aW1lb3V0KDMwMDApIH0pOw0KICAgICAgaWYgKCFyZXMub2spIGNvbnRpbnVlOw0KICAgICAgY29uc3QgZGF0YSA9IGF3YWl0IHJlcy5qc29uKCk7DQogICAgICBjb25zdCBwYWdlcyA9IGRhdGE/LnF1ZXJ5Py5wYWdlcyB8fCB7fTsNCiAgICAgIGZvciAoY29uc3QgayBpbiBwYWdlcykgew0KICAgICAgICBjb25zdCB0aHVtYiA9IHBhZ2VzW2tdPy50aHVtYm5haWw/LnNvdXJjZTsNCiAgICAgICAgaWYgKGlzQ2xlYW5JbWFnZVVybCh0aHVtYikgJiYgIWltYWdlcy5pbmNsdWRlcyh0aHVtYikpIHsNCiAgICAgICAgICBpbWFnZXMucHVzaCh0aHVtYik7DQogICAgICAgIH0NCiAgICAgIH0NCiAgICAgIGlmIChpbWFnZXMubGVuZ3RoID4gMCkgYnJlYWs7DQogICAgfSBjYXRjaCB7fQ0KICB9DQoNCiAgcmV0dXJuIGltYWdlczsNCn0NCg0KLyoqIDMuIGlUdW5lcyBTZWFyY2ggQVBJOiBjYXBhcyBlbSBhbHRhIGRlZmluacOnw6NvIGNvbSBDT1JTIG5hdGl2byAqLw0KYXN5bmMgZnVuY3Rpb24gZmV0Y2hJdHVuZXNJbWFnZXMoYXJ0aXN0OiBzdHJpbmcpOiBQcm9taXNlPHN0cmluZ1tdPiB7DQogIHRyeSB7DQogICAgY29uc3QgcmVzID0gYXdhaXQgZmV0Y2goYGh0dHBzOi8vaXR1bmVzLmFwcGxlLmNvbS9zZWFyY2g/dGVybT0ke2VuY29kZVVSSUNvbXBvbmVudChhcnRpc3QpfSZtZWRpYT1tdXNpYyZlbnRpdHk9YWxidW0mbGltaXQ9MTBgLCB7DQogICAgICBzaWduYWw6IEFib3J0U2lnbmFsLnRpbWVvdXQoMzUwMCksDQogICAgfSk7DQogICAgaWYgKCFyZXMub2spIHJldHVybiBbXTsNCiAgICBjb25zdCBkYXRhID0gYXdhaXQgcmVzLmpzb24oKTsNCiAgICBjb25zdCByZXN1bHRzOiBzdHJpbmdbXSA9IFtdOw0KICAgIGZvciAoY29uc3QgciBvZiAoZGF0YT8ucmVzdWx0cyB8fCBbXSkpIHsNCiAgICAgIGlmIChyLmFydHdvcmtVcmwxMDAgJiYgdHlwZW9mIHIuYXJ0d29ya1VybDEwMCA9PT0gInN0cmluZyIpIHsNCiAgICAgICAgY29uc3QgaGlSZXMgPSByLmFydHdvcmtVcmwxMDANCiAgICAgICAgICAucmVwbGFjZSgvMTAweDEwMGJiXC5qcGckLywgIjYwMHg2MDBiYi5qcGciKQ0KICAgICAgICAgIC5yZXBsYWNlKC8xMDB4MTAwXC5qcGckLywgIjYwMHg2MDAuanBnIik7DQogICAgICAgIGlmIChpc0NsZWFuSW1hZ2VVcmwoaGlSZXMpICYmICFyZXN1bHRzLmluY2x1ZGVzKGhpUmVzKSkgew0KICAgICAgICAgIHJlc3VsdHMucHVzaChoaVJlcyk7DQogICAgICAgIH0NCiAgICAgIH0NCiAgICB9DQogICAgcmV0dXJuIHJlc3VsdHM7DQogIH0gY2F0Y2ggew0KICAgIHJldHVybiBbXTsNCiAgfQ0KfQ0KDQovKiogNC4gU3VwYWJhc2UgRWRnZSBGdW5jdGlvbiAoY29tIHRpbWVvdXQgY3VydG8gcGFyYSBuw6NvIHRyYXZhciBxdWFuZG8gb2ZmbGluZSkgKi8NCmFzeW5jIGZ1bmN0aW9uIGZldGNoU3VwYWJhc2VFZGdlRnVuY3Rpb24oYXJ0aXN0OiBzdHJpbmcsIHNraXAgPSAwKTogUHJvbWlzZTxzdHJpbmcgfCBudWxsPiB7DQogIHRyeSB7DQogICAgY29uc3QgaW52b2tlUHJvbWlzZSA9IHN1cGFiYXNlLmZ1bmN0aW9ucy5pbnZva2UoImZldGNoLWFydGlzdC1pbWFnZSIsIHsNCiAgICAgIGJvZHk6IHNraXAgPyB7IGFydGlzdCwgc2tpcCB9IDogeyBhcnRpc3QgfSwNCiAgICB9KTsNCiAgICBjb25zdCB0aW1lb3V0UHJvbWlzZSA9IG5ldyBQcm9taXNlPHsgZXJyb3I6IEVycm9yIH0+KChfLCByZWplY3QpID0+DQogICAgICBzZXRUaW1lb3V0KCgpID0+IHJlamVjdChuZXcgRXJyb3IoIlRpbWVvdXQiKSksIDI1MDApDQogICAgKTsNCg0KICAgIGNvbnN0IHsgZGF0YSwgZXJyb3IgfSA9IGF3YWl0IFByb21pc2UucmFjZShbaW52b2tlUHJvbWlzZSwgdGltZW91dFByb21pc2VdKSBhcyBhbnk7DQogICAgaWYgKCFlcnJvciAmJiBkYXRhPy5vayAmJiB0eXBlb2YgZGF0YT8udXJsID09PSAic3RyaW5nIiAmJiBpc0NsZWFuSW1hZ2VVcmwoZGF0YS51cmwpKSB7DQogICAgICByZXR1cm4gZGF0YS51cmw7DQogICAgfQ0KICB9IGNhdGNoIHt9DQogIHJldHVybiBudWxsOw0KfQ0KDQovKioNCiAqIFJldG9ybmEgdW1hIGxpc3RhIHVuaWZpY2FkYSBkZSBpbWFnZW5zIGNhbmRpZGF0YXMgcGFyYSBvIGFydGlzdGEuDQogKi8NCmV4cG9ydCBhc3luYyBmdW5jdGlvbiBmZXRjaEFydGlzdEltYWdlQ2FuZGlkYXRlcyhhcnRpc3Q6IHN0cmluZyk6IFByb21pc2U8c3RyaW5nW10+IHsNCiAgY29uc3QgY2xlYW5OYW1lID0gYXJ0aXN0LnRyaW0oKS5yZXBsYWNlKC9ccysvZywgJyAnKTsNCiAgaWYgKCFjbGVhbk5hbWUpIHJldHVybiBbXTsNCiAgY29uc3QgcG9vbEtleSA9IGNsZWFuTmFtZS50b0xvd2VyQ2FzZSgpOw0KDQogIGNvbnN0IGNhY2hlZFBvb2wgPSBjYW5kaWRhdGVQb29scy5nZXQocG9vbEtleSk7DQogIGlmIChjYWNoZWRQb29sICYmIERhdGUubm93KCkgLSBjYWNoZWRQb29sLnRzIDwgVFRMX01TICYmIGNhY2hlZFBvb2wubGlzdC5sZW5ndGggPiAwKSB7DQogICAgcmV0dXJuIGNhY2hlZFBvb2wubGlzdDsNCiAgfQ0KDQogIC8vIEJ1c2NhIGVtIHBhcmFsZWxvIGF0cmF2w6lzIGRlIG3Dumx0aXBsb3MgcHJvdmVkb3Jlcw0KICBjb25zdCBbZWRnZVVybCwgZGVlemVySW1ncywgd2lraUltZ3MsIGl0dW5lc0ltZ3NdID0gYXdhaXQgUHJvbWlzZS5hbGwoWw0KICAgIGZldGNoU3VwYWJhc2VFZGdlRnVuY3Rpb24oY2xlYW5OYW1lLCAwKSwNCiAgICBmZXRjaERlZXplckNhbmRpZGF0ZXMoY2xlYW5OYW1lKSwNCiAgICBmZXRjaFdpa2lwZWRpYUltYWdlcyhjbGVhbk5hbWUpLA0KICAgIGZldGNoSXR1bmVzSW1hZ2VzKGNsZWFuTmFtZSksDQogIF0pOw0KDQogIGNvbnN0IHBvb2w6IHN0cmluZ1tdID0gW107DQoNCiAgLy8gMS4gSW1hZ2VtIG9maWNpYWwgZG8gRGVlemVyIG91IGRhIEVkZ2UgRnVuY3Rpb24NCiAgY29uc3QgaGlnaFJlc0VkZ2VVcmwgPSB1cGdyYWRlQXJ0aXN0SW1hZ2VSZXNvbHV0aW9uKGVkZ2VVcmwpOw0KICBpZiAoaXNDbGVhbkltYWdlVXJsKGhpZ2hSZXNFZGdlVXJsKSAmJiAhcG9vbC5pbmNsdWRlcyhoaWdoUmVzRWRnZVVybCkpIHBvb2wucHVzaChoaWdoUmVzRWRnZVVybCk7DQogIGlmIChkZWV6ZXJJbWdzWzBdICYmICFwb29sLmluY2x1ZGVzKGRlZXplckltZ3NbMF0pKSBwb29sLnB1c2goZGVlemVySW1nc1swXSk7DQoNCiAgLy8gMi4gRm90byBkZSByZXRyYXRvIHZlcmlmaWNhZGEgZGEgV2lraXBlZGlhDQogIGlmICh3aWtpSW1nc1swXSAmJiAhcG9vbC5pbmNsdWRlcyh3aWtpSW1nc1swXSkpIHBvb2wucHVzaCh3aWtpSW1nc1swXSk7DQoNCiAgLy8gMy4gRGVtYWlzIGZvdG9zIGRvIERlZXplcg0KICBmb3IgKGxldCBpID0gMTsgaSA8IGRlZXplckltZ3MubGVuZ3RoOyBpKyspIHsNCiAgICBpZiAoIXBvb2wuaW5jbHVkZXMoZGVlemVySW1nc1tpXSkpIHBvb2wucHVzaChkZWV6ZXJJbWdzW2ldKTsNCiAgfQ0KDQogIC8vIDQuIENhcGFzIGVtIGFsdGEgZG8gaVR1bmVzDQogIGZvciAoY29uc3QgaXQgb2YgaXR1bmVzSW1ncykgew0KICAgIGlmICghcG9vbC5pbmNsdWRlcyhpdCkpIHBvb2wucHVzaChpdCk7DQogIH0NCg0KICBpZiAocG9vbC5sZW5ndGggPiAwKSB7DQogICAgY2FuZGlkYXRlUG9vbHMuc2V0KHBvb2xLZXksIHsgbGlzdDogcG9vbCwgdHM6IERhdGUubm93KCkgfSk7DQogIH0NCg0KICByZXR1cm4gcG9vbDsNCn0NCg0KZXhwb3J0IGFzeW5jIGZ1bmN0aW9uIGZldGNoQXJ0aXN0SW1hZ2VDYWNoZWQoYXJ0aXN0OiBzdHJpbmcsIHNraXAgPSAwKTogUHJvbWlzZTxzdHJpbmcgfCBudWxsPiB7DQogIGNvbnN0IGNsZWFuTmFtZSA9IGFydGlzdC50cmltKCkucmVwbGFjZSgvXHMrL2csICcgJyk7DQogIGlmICghY2xlYW5OYW1lKSByZXR1cm4gbnVsbDsNCiAgY29uc3Qga2V5ID0gbm9ybShjbGVhbk5hbWUsIHNraXApOw0KDQogIGNvbnN0IGNhY2hlZCA9IGdldEFydGlzdEltYWdlU3luYyhjbGVhbk5hbWUsIHNraXApOw0KICBpZiAoY2FjaGVkICE9PSBudWxsKSByZXR1cm4gY2FjaGVkOw0KDQogIC8vIFNlIGrDoSB0ZW1vcyBhIHBvb2wgY2FycmVnYWRhIHBhcmEgbyBhcnRpc3RhLCBzZWxlY2lvbmEgbyBza2lwIGNvcnJlc3BvbmRlbnRlDQogIGNvbnN0IHBvb2xLZXkgPSBjbGVhbk5hbWUudG9Mb3dlckNhc2UoKTsNCiAgY29uc3QgZXhpc3RpbmdQb29sID0gY2FuZGlkYXRlUG9vbHMuZ2V0KHBvb2xLZXkpOw0KICBpZiAoZXhpc3RpbmdQb29sICYmIGV4aXN0aW5nUG9vbC5saXN0Lmxlbmd0aCA+IDApIHsNCiAgICBjb25zdCBzZWxlY3RlZCA9IGV4aXN0aW5nUG9vbC5saXN0W3NraXAgJSBleGlzdGluZ1Bvb2wubGlzdC5sZW5ndGhdOw0KICAgIGNvbnN0IGVudHJ5OiBFbnRyeSA9IHsgdXJsOiBzZWxlY3RlZCwgdHM6IERhdGUubm93KCkgfTsNCiAgICBtZW0uc2V0KGtleSwgZW50cnkpOw0KICAgIGxzU2V0KGtleSwgZW50cnkpOw0KICAgIHJldHVybiBzZWxlY3RlZDsNCiAgfQ0KDQogIGNvbnN0IGZseWluZyA9IGluZmxpZ2h0LmdldChrZXkpOw0KICBpZiAoZmx5aW5nKSByZXR1cm4gZmx5aW5nOw0KDQogIGNvbnN0IHAgPSAoYXN5bmMgKCkgPT4gew0KICAgIHRyeSB7DQogICAgICBjb25zdCBwb29sID0gYXdhaXQgZmV0Y2hBcnRpc3RJbWFnZUNhbmRpZGF0ZXMoY2xlYW5OYW1lKTsNCiAgICAgIGlmIChwb29sLmxlbmd0aCA+IDApIHsNCiAgICAgICAgY29uc3QgdXJsID0gcG9vbFtza2lwICUgcG9vbC5sZW5ndGhdOw0KICAgICAgICBjb25zdCBlbnRyeTogRW50cnkgPSB7IHVybCwgdHM6IERhdGUubm93KCkgfTsNCiAgICAgICAgbWVtLnNldChrZXksIGVudHJ5KTsNCiAgICAgICAgbHNTZXQoa2V5LCBlbnRyeSk7DQogICAgICAgIHJldHVybiB1cmw7DQogICAgICB9DQoNCiAgICAgIC8vIFNlIG5lbmh1bSBwcm92ZWRvciBlbmNvbnRyb3UNCiAgICAgIGNvbnN0IGVudHJ5OiBFbnRyeSA9IHsgdXJsOiBudWxsLCB0czogRGF0ZS5ub3coKSB9Ow0KICAgICAgbWVtLnNldChrZXksIGVudHJ5KTsNCiAgICAgIGxzU2V0KGtleSwgZW50cnkpOw0KICAgICAgcmV0dXJuIG51bGw7DQogICAgfSBjYXRjaCB7DQogICAgICBjb25zdCBlbnRyeTogRW50cnkgPSB7IHVybDogbnVsbCwgdHM6IERhdGUubm93KCkgfTsNCiAgICAgIG1lbS5zZXQoa2V5LCBlbnRyeSk7DQogICAgICBsc1NldChrZXksIGVudHJ5KTsNCiAgICAgIHJldHVybiBudWxsOw0KICAgIH0gZmluYWxseSB7DQogICAgICBpbmZsaWdodC5kZWxldGUoa2V5KTsNCiAgICB9DQogIH0pKCk7DQoNCiAgaW5mbGlnaHQuc2V0KGtleSwgcCk7DQogIHJldHVybiBwOw0KfQ0K
+import { supabase } from "@/integrations/supabase/client";
+
+/**
+ * Cache e resolvedor multi-tier de imagens de artistas.
+ *
+ * Estratégia de resolução:
+ *  1) Cache em memória (síncrono, zero latência).
+ *  2) localStorage (TTL de 7 dias para imagens válidas).
+ *  3) Deezer API (via JSONP no browser para suporte total a CORS, ou fetch direto).
+ *  4) Wikipedia / Wikimedia Commons PageImages API (CORS nativo com origin=*).
+ *  5) iTunes Search API (CORS nativo).
+ *  6) Supabase Edge Function `fetch-artist-image` (como tentativa paralela com timeout).
+ */
+
+const LS_PREFIX = "nexo:artistImg:v3:";
+const TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 dias para imagens encontradas
+const NEG_TTL_MS = 5 * 60 * 1000; // 5 minutos para falha (permite retentativas rápidas)
+const LS_MAX = 150;
+
+const PLACEHOLDER_HASHES = [
+  "d41d8cd98f00b204e9800998ecf8427e",
+  "2a7c75fe7e249e43eb37b1e84b8ba8ba",
+];
+
+type Entry = { url: string | null; ts: number };
+
+const mem = new Map<string, Entry>();
+const inflight = new Map<string, Promise<string | null>>();
+const candidatePools = new Map<string, { list: string[]; ts: number }>();
+
+const norm = (a: string, skip = 0) => `${a.trim().toLowerCase()}${skip ? `::${skip}` : ""}`;
+
+/** Promote known Deezer/iTunes thumbnail URL variants before using them as full-screen art. */
+export function upgradeArtistImageResolution(url?: string | null): string | null {
+  if (!url || typeof url !== "string") return null;
+  return url
+    .replace(/\/(?:56|250|500|1000)x(?:56|250|500|1000)(?=-)/gi, "/1000x1000")
+    .replace(/\/(?:56|250|500|1000)x(?:56|250|500|1000)(?=\.)/gi, "/1000x1000")
+    .replace(/\/100x100(bb)?\.jpg(?=\?|$)/i, "/600x600$1.jpg");
+}
+
+function isCleanImageUrl(url?: string | null): url is string {
+  if (!url || typeof url !== "string") return false;
+  const trimmed = url.trim();
+  if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) return false;
+  // Exclui placeholders vazios do Deezer (ex: /artist//1000x1000... ou /cover//500x500...)
+  if (
+    trimmed.includes("/artist//") ||
+    trimmed.includes("/cover//") ||
+    trimmed.includes("/album//") ||
+    trimmed.includes("//1000x1000") ||
+    trimmed.includes("//500x500") ||
+    trimmed.includes("//250x250")
+  ) {
+    return false;
+  }
+  return !PLACEHOLDER_HASHES.some(h => trimmed.includes(h));
+}
+
+function lsGet(key: string): Entry | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(LS_PREFIX + key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Entry;
+    if (!parsed || typeof parsed.ts !== "number") return null;
+    return parsed;
+  } catch { return null; }
+}
+
+function lsSet(key: string, entry: Entry) {
+  if (typeof window === "undefined") return;
+  try {
+    const keys = Object.keys(window.localStorage).filter(k => k.startsWith(LS_PREFIX));
+    if (keys.length >= LS_MAX) {
+      keys.slice(0, Math.floor(LS_MAX * 0.4)).forEach(k => {
+        try { window.localStorage.removeItem(k); } catch {}
+      });
+    }
+    window.localStorage.setItem(LS_PREFIX + key, JSON.stringify(entry));
+  } catch {
+    try {
+      const keys = Object.keys(window.localStorage).filter(k => k.startsWith(LS_PREFIX));
+      keys.slice(0, 50).forEach(k => window.localStorage.removeItem(k));
+    } catch {}
+  }
+}
+
+function isFresh(entry: Entry): boolean {
+  const ttl = entry.url ? TTL_MS : NEG_TTL_MS;
+  return Date.now() - entry.ts < ttl;
+}
+
+export function getArtistImageSync(artist: string, skip = 0): string | null {
+  if (!artist) return null;
+  const key = norm(artist, skip);
+  const memHit = mem.get(key);
+  if (memHit && isFresh(memHit)) return memHit.url;
+  const lsHit = lsGet(key);
+  if (lsHit && isFresh(lsHit)) {
+    mem.set(key, lsHit);
+    return lsHit.url;
+  }
+  return null;
+}
+
+/** 1. Deezer: via JSONP no browser (bypassa restrições de CORS) ou fetch se suportado */
+async function fetchDeezerCandidates(artist: string): Promise<string[]> {
+  const isBrowser = typeof window !== "undefined" && typeof document !== "undefined";
+
+  if (isBrowser) {
+    return new Promise((resolve) => {
+      const cbName = `__dz_cb_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      const script = document.createElement("script");
+      const timer = setTimeout(() => {
+        cleanup();
+        resolve([]);
+      }, 3500);
+
+      const cleanup = () => {
+        clearTimeout(timer);
+        try { delete (window as any)[cbName]; } catch {}
+        if (script.parentNode) script.parentNode.removeChild(script);
+      };
+
+      (window as any)[cbName] = (data: any) => {
+        cleanup();
+        const results: string[] = [];
+        const list = data?.data || [];
+        if (Array.isArray(list)) {
+          for (const item of list) {
+            const img = upgradeArtistImageResolution(item.picture_xl || item.picture_big || item.picture_medium);
+            if (isCleanImageUrl(img) && !results.includes(img)) {
+              results.push(img);
+            }
+          }
+        }
+        resolve(results);
+      };
+
+      script.src = `https://api.deezer.com/search/artist?q=${encodeURIComponent(artist)}&output=jsonp&callback=${cbName}&limit=5`;
+      script.onerror = () => { cleanup(); resolve([]); };
+      document.head.appendChild(script);
+    });
+  }
+
+  // Fallback para ambientes sem DOM (Node / Worker)
+  try {
+    const res = await fetch(`https://api.deezer.com/search/artist?q=${encodeURIComponent(artist)}&limit=5`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    const results: string[] = [];
+    for (const item of (data?.data || [])) {
+      const img = upgradeArtistImageResolution(item.picture_xl || item.picture_big || item.picture_medium);
+      if (isCleanImageUrl(img) && !results.includes(img)) {
+        results.push(img);
+      }
+    }
+    return results;
+  } catch {
+    return [];
+  }
+}
+
+/** 2. Wikipedia / Wikimedia Commons: fotos oficiais com origin=* */
+async function fetchWikipediaImages(artist: string): Promise<string[]> {
+  const images: string[] = [];
+  const endpoints = [
+    `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(artist)}&prop=pageimages&format=json&pithumbsize=1000&origin=*`,
+    `https://pt.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(artist)}&prop=pageimages&format=json&pithumbsize=1000&origin=*`,
+  ];
+
+  for (const ep of endpoints) {
+    try {
+      const res = await fetch(ep, { signal: AbortSignal.timeout(3000) });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const pages = data?.query?.pages || {};
+      for (const k in pages) {
+        const thumb = pages[k]?.thumbnail?.source;
+        if (isCleanImageUrl(thumb) && !images.includes(thumb)) {
+          images.push(thumb);
+        }
+      }
+      if (images.length > 0) break;
+    } catch {}
+  }
+
+  return images;
+}
+
+/** 3. iTunes Search API: capas em alta definição com CORS nativo */
+async function fetchItunesImages(artist: string): Promise<string[]> {
+  try {
+    const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(artist)}&media=music&entity=album&limit=10`, {
+      signal: AbortSignal.timeout(3500),
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const results: string[] = [];
+    for (const r of (data?.results || [])) {
+      if (r.artworkUrl100 && typeof r.artworkUrl100 === "string") {
+        const hiRes = r.artworkUrl100
+          .replace(/100x100bb\.jpg$/, "600x600bb.jpg")
+          .replace(/100x100\.jpg$/, "600x600.jpg");
+        if (isCleanImageUrl(hiRes) && !results.includes(hiRes)) {
+          results.push(hiRes);
+        }
+      }
+    }
+    return results;
+  } catch {
+    return [];
+  }
+}
+
+/** 4. Supabase Edge Function (com timeout curto para não travar quando offline) */
+async function fetchSupabaseEdgeFunction(artist: string, skip = 0): Promise<string | null> {
+  try {
+    const invokePromise = supabase.functions.invoke("fetch-artist-image", {
+      body: skip ? { artist, skip } : { artist },
+    });
+    const timeoutPromise = new Promise<{ error: Error }>((_, reject) =>
+      setTimeout(() => reject(new Error("Timeout")), 2500)
+    );
+
+    const { data, error } = await Promise.race([invokePromise, timeoutPromise]) as any;
+    if (!error && data?.ok && typeof data?.url === "string" && isCleanImageUrl(data.url)) {
+      return data.url;
+    }
+  } catch {}
+  return null;
+}
+
+/**
+ * Retorna uma lista unificada de imagens candidatas para o artista.
+ */
+export async function fetchArtistImageCandidates(artist: string): Promise<string[]> {
+  const cleanName = artist.trim().replace(/\s+/g, ' ');
+  if (!cleanName) return [];
+  const poolKey = cleanName.toLowerCase();
+
+  const cachedPool = candidatePools.get(poolKey);
+  if (cachedPool && Date.now() - cachedPool.ts < TTL_MS && cachedPool.list.length > 0) {
+    return cachedPool.list;
+  }
+
+  // Busca em paralelo através de múltiplos provedores
+  const [edgeUrl, deezerImgs, wikiImgs, itunesImgs] = await Promise.all([
+    fetchSupabaseEdgeFunction(cleanName, 0),
+    fetchDeezerCandidates(cleanName),
+    fetchWikipediaImages(cleanName),
+    fetchItunesImages(cleanName),
+  ]);
+
+  const pool: string[] = [];
+
+  // 1. Imagem oficial do Deezer ou da Edge Function
+  const highResEdgeUrl = upgradeArtistImageResolution(edgeUrl);
+  if (isCleanImageUrl(highResEdgeUrl) && !pool.includes(highResEdgeUrl)) pool.push(highResEdgeUrl);
+  if (deezerImgs[0] && !pool.includes(deezerImgs[0])) pool.push(deezerImgs[0]);
+
+  // 2. Foto de retrato verificada da Wikipedia
+  if (wikiImgs[0] && !pool.includes(wikiImgs[0])) pool.push(wikiImgs[0]);
+
+  // 3. Demais fotos do Deezer
+  for (let i = 1; i < deezerImgs.length; i++) {
+    if (!pool.includes(deezerImgs[i])) pool.push(deezerImgs[i]);
+  }
+
+  // 4. Capas em alta do iTunes
+  for (const it of itunesImgs) {
+    if (!pool.includes(it)) pool.push(it);
+  }
+
+  if (pool.length > 0) {
+    candidatePools.set(poolKey, { list: pool, ts: Date.now() });
+  }
+
+  return pool;
+}
+
+export async function fetchArtistImageCached(artist: string, skip = 0): Promise<string | null> {
+  const cleanName = artist.trim().replace(/\s+/g, ' ');
+  if (!cleanName) return null;
+  const key = norm(cleanName, skip);
+
+  const cached = getArtistImageSync(cleanName, skip);
+  if (cached !== null) return cached;
+
+  // Se já temos a pool carregada para o artista, seleciona o skip correspondente
+  const poolKey = cleanName.toLowerCase();
+  const existingPool = candidatePools.get(poolKey);
+  if (existingPool && existingPool.list.length > 0) {
+    const selected = existingPool.list[skip % existingPool.list.length];
+    const entry: Entry = { url: selected, ts: Date.now() };
+    mem.set(key, entry);
+    lsSet(key, entry);
+    return selected;
+  }
+
+  const flying = inflight.get(key);
+  if (flying) return flying;
+
+  const p = (async () => {
+    try {
+      const pool = await fetchArtistImageCandidates(cleanName);
+      if (pool.length > 0) {
+        const url = pool[skip % pool.length];
+        const entry: Entry = { url, ts: Date.now() };
+        mem.set(key, entry);
+        lsSet(key, entry);
+        return url;
+      }
+
+      // Se nenhum provedor encontrou
+      const entry: Entry = { url: null, ts: Date.now() };
+      mem.set(key, entry);
+      lsSet(key, entry);
+      return null;
+    } catch {
+      const entry: Entry = { url: null, ts: Date.now() };
+      mem.set(key, entry);
+      lsSet(key, entry);
+      return null;
+    } finally {
+      inflight.delete(key);
+    }
+  })();
+
+  inflight.set(key, p);
+  return p;
+}

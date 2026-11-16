@@ -1,1 +1,14 @@
-aW1wb3J0IHsgcGxheWVyU3VwYWJhc2UgfSBmcm9tICJAL2ludGVncmF0aW9ucy9zdXBhYmFzZS9wbGF5ZXJDbGllbnQiOwppbXBvcnQgeyBjbGVhclBsYXllclNlc3Npb24gfSBmcm9tICJAL2xpYi9wbGF5ZXJTZXNzaW9uIjsKCi8qKiBFbmRzIG9ubHkgdGhlIFBsYXllcidzIGxvY2FsIFN1cGFiYXNlIHNlc3Npb24gYW5kIHJldHVybnMgdG8gaXRzIGxvZ2luIHNjcmVlbi4gKi8KZXhwb3J0IGFzeW5jIGZ1bmN0aW9uIHBsYXllclNpZ25PdXQobG9naW5QYXRoPzogc3RyaW5nKSB7CiAgdHJ5IHsgYXdhaXQgcGxheWVyU3VwYWJhc2UuYXV0aC5zaWduT3V0KHsgc2NvcGU6ICJsb2NhbCIgfSk7IH0gY2F0Y2ggeyAvKiBsb2NhbCBjbGVhbnVwIGJlbG93IHN0aWxsIGFwcGxpZXMgKi8gfQogIGNsZWFyUGxheWVyU2Vzc2lvbigpOwogIHRyeSB7CiAgICBPYmplY3Qua2V5cyhsb2NhbFN0b3JhZ2UpCiAgICAgIC5maWx0ZXIoKGtleSkgPT4ga2V5LnN0YXJ0c1dpdGgoInBsYXllcl9wcm9maWxlIikgfHwga2V5LnN0YXJ0c1dpdGgoIm5leG9fcGxheWVyXyIpIHx8IGtleS5zdGFydHNXaXRoKCJwbGF5ZXItc3RlcC1ob21lOiIpKQogICAgICAuZm9yRWFjaCgoa2V5KSA9PiBsb2NhbFN0b3JhZ2UucmVtb3ZlSXRlbShrZXkpKTsKICB9IGNhdGNoIHsgLyogc3RvcmFnZSBjYW4gYmUgdW5hdmFpbGFibGUgaW4gcHJpdmF0ZSBtb2RlICovIH0KICBpZiAobG9naW5QYXRoKSB3aW5kb3cubG9jYXRpb24uaHJlZiA9IGxvZ2luUGF0aDsKfQo=
+import { playerSupabase } from "@/integrations/supabase/playerClient";
+import { clearPlayerSession } from "@/lib/playerSession";
+
+/** Ends only the Player's local Supabase session and returns to its login screen. */
+export async function playerSignOut(loginPath?: string) {
+  try { await playerSupabase.auth.signOut({ scope: "local" }); } catch { /* local cleanup below still applies */ }
+  clearPlayerSession();
+  try {
+    Object.keys(localStorage)
+      .filter((key) => key.startsWith("player_profile") || key.startsWith("nexo_player_") || key.startsWith("player-step-home:"))
+      .forEach((key) => localStorage.removeItem(key));
+  } catch { /* storage can be unavailable in private mode */ }
+  if (loginPath) window.location.href = loginPath;
+}

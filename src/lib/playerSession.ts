@@ -1,1 +1,16 @@
-Y29uc3QgUExBWUVSX1NFU1NJT05fVVNFUl9LRVkgPSAibmV4b2h1Yl9wbGF5ZXJfc2Vzc2lvbl91c2VyIjsKCmV4cG9ydCBmdW5jdGlvbiBnZXRQbGF5ZXJTZXNzaW9uVXNlcklkKCkgewogIGlmICh0eXBlb2Ygd2luZG93ID09PSAidW5kZWZpbmVkIikgcmV0dXJuIG51bGw7CiAgdHJ5IHsgcmV0dXJuIHdpbmRvdy5zZXNzaW9uU3RvcmFnZS5nZXRJdGVtKFBMQVlFUl9TRVNTSU9OX1VTRVJfS0VZKTsgfSBjYXRjaCB7IHJldHVybiBudWxsOyB9Cn0KCmV4cG9ydCBmdW5jdGlvbiBtYXJrUGxheWVyU2Vzc2lvbih1c2VySWQ6IHN0cmluZykgewogIGlmICh0eXBlb2Ygd2luZG93ID09PSAidW5kZWZpbmVkIiB8fCAhdXNlcklkKSByZXR1cm47CiAgdHJ5IHsgd2luZG93LnNlc3Npb25TdG9yYWdlLnNldEl0ZW0oUExBWUVSX1NFU1NJT05fVVNFUl9LRVksIHVzZXJJZCk7IH0gY2F0Y2gge30KfQoKZXhwb3J0IGZ1bmN0aW9uIGNsZWFyUGxheWVyU2Vzc2lvbigpIHsKICBpZiAodHlwZW9mIHdpbmRvdyA9PT0gInVuZGVmaW5lZCIpIHJldHVybjsKICB0cnkgeyB3aW5kb3cuc2Vzc2lvblN0b3JhZ2UucmVtb3ZlSXRlbShQTEFZRVJfU0VTU0lPTl9VU0VSX0tFWSk7IH0gY2F0Y2gge30KfQo=
+const PLAYER_SESSION_USER_KEY = "nexohub_player_session_user";
+
+export function getPlayerSessionUserId() {
+  if (typeof window === "undefined") return null;
+  try { return window.sessionStorage.getItem(PLAYER_SESSION_USER_KEY); } catch { return null; }
+}
+
+export function markPlayerSession(userId: string) {
+  if (typeof window === "undefined" || !userId) return;
+  try { window.sessionStorage.setItem(PLAYER_SESSION_USER_KEY, userId); } catch {}
+}
+
+export function clearPlayerSession() {
+  if (typeof window === "undefined") return;
+  try { window.sessionStorage.removeItem(PLAYER_SESSION_USER_KEY); } catch {}
+}

@@ -1,1 +1,47 @@
-Y29uc3QgT0FVVEhfUkVUVVJOX0tFWSA9ICJuZXhvaHViX29hdXRoX3JldHVybl9wYXRoIjsNCg0KZnVuY3Rpb24gc2FuaXRpemVSZXR1cm5QYXRoKHBhdGg6IHN0cmluZyB8IG51bGwgfCB1bmRlZmluZWQpOiBzdHJpbmcgfCBudWxsIHsNCiAgY29uc3QgdmFsdWUgPSAocGF0aCB8fCAiIikudHJpbSgpOw0KICBpZiAoIXZhbHVlIHx8ICF2YWx1ZS5zdGFydHNXaXRoKCIvIikgfHwgdmFsdWUuc3RhcnRzV2l0aCgiLy8iKSkgcmV0dXJuIG51bGw7DQogIGlmICh2YWx1ZS5zdGFydHNXaXRoKCIvfm9hdXRoIikpIHJldHVybiBudWxsOw0KICByZXR1cm4gdmFsdWU7DQp9DQoNCmV4cG9ydCBmdW5jdGlvbiBnZXRDdXJyZW50UmV0dXJuUGF0aCgpIHsNCiAgaWYgKHR5cGVvZiB3aW5kb3cgPT09ICJ1bmRlZmluZWQiKSByZXR1cm4gIi8iOw0KICByZXR1cm4gc2FuaXRpemVSZXR1cm5QYXRoKGAke3dpbmRvdy5sb2NhdGlvbi5wYXRobmFtZX0ke3dpbmRvdy5sb2NhdGlvbi5zZWFyY2h9JHt3aW5kb3cubG9jYXRpb24uaGFzaH1gKSB8fCAiLyI7DQp9DQoNCmV4cG9ydCBmdW5jdGlvbiBzZXRPQXV0aFJldHVyblBhdGgocGF0aDogc3RyaW5nKSB7DQogIGlmICh0eXBlb2Ygd2luZG93ID09PSAidW5kZWZpbmVkIikgcmV0dXJuOw0KICBjb25zdCBzYWZlID0gc2FuaXRpemVSZXR1cm5QYXRoKHBhdGgpOw0KICBpZiAoIXNhZmUpIHJldHVybjsNCiAgdHJ5IHsNCiAgICB3aW5kb3cubG9jYWxTdG9yYWdlLnNldEl0ZW0oT0FVVEhfUkVUVVJOX0tFWSwgc2FmZSk7DQogIH0gY2F0Y2ggeyAvKiBpZ25vcmUgKi8gfQ0KfQ0KDQpleHBvcnQgZnVuY3Rpb24gY29uc3VtZU9BdXRoUmV0dXJuUGF0aCgpIHsNCiAgaWYgKHR5cGVvZiB3aW5kb3cgPT09ICJ1bmRlZmluZWQiKSByZXR1cm4gbnVsbDsNCiAgdHJ5IHsNCiAgICBjb25zdCBzYWZlID0gc2FuaXRpemVSZXR1cm5QYXRoKHdpbmRvdy5sb2NhbFN0b3JhZ2UuZ2V0SXRlbShPQVVUSF9SRVRVUk5fS0VZKSk7DQogICAgd2luZG93LmxvY2FsU3RvcmFnZS5yZW1vdmVJdGVtKE9BVVRIX1JFVFVSTl9LRVkpOw0KICAgIHJldHVybiBzYWZlOw0KICB9IGNhdGNoIHsNCiAgICByZXR1cm4gbnVsbDsNCiAgfQ0KfQ0KDQpleHBvcnQgZnVuY3Rpb24gY2xlYXJPQXV0aFJldHVyblBhdGgoKSB7DQogIGlmICh0eXBlb2Ygd2luZG93ID09PSAidW5kZWZpbmVkIikgcmV0dXJuOw0KICB0cnkgeyB3aW5kb3cubG9jYWxTdG9yYWdlLnJlbW92ZUl0ZW0oT0FVVEhfUkVUVVJOX0tFWSk7IH0gY2F0Y2ggeyAvKiBpZ25vcmUgKi8gfQ0KfQ0KDQpleHBvcnQgZnVuY3Rpb24gZ2V0TWFuYWdlZE9BdXRoUmVkaXJlY3RVcmkoKSB7DQogIGlmICh0eXBlb2Ygd2luZG93ID09PSAidW5kZWZpbmVkIikgcmV0dXJuIHVuZGVmaW5lZDsNCiAgLy8gVXNlIGFwZW5hcyBvIG9yaWdpbjogbyBmbHV4byBtYW5hZ2VkICh3ZWJfbWVzc2FnZS9wb3B1cCkgcG9zdGFyw6Egb3MgdG9rZW5zDQogIC8vIGRlIHZvbHRhIGFvIG9wZW5lciBhbnRlcyBkZSBxdWFscXVlciBuYXZlZ2HDp8Ojby4gQXBvbnRhciByZWRpcmVjdF91cmkgcGFyYQ0KICAvLyB1bWEgcm90YSBTUEEgKGV4LjogL2F1dGgvY2FsbGJhY2spIGZheiBvIE5hdmlnYXRlIGNvcnJlciBhbnRlcyBkbyBoYW5kc2hha2UNCiAgLy8gcG9zdE1lc3NhZ2UgdGVybWluYXIsIHJlc3VsdGFuZG8gZW0gc2Vzc8OjbyB2YXppYSBlIHJldG9ybm8gw6AgdGVsYSBkZSBsb2dpbi4NCiAgcmV0dXJuIHdpbmRvdy5sb2NhdGlvbi5vcmlnaW47DQp9DQo=
+const OAUTH_RETURN_KEY = "nexohub_oauth_return_path";
+
+function sanitizeReturnPath(path: string | null | undefined): string | null {
+  const value = (path || "").trim();
+  if (!value || !value.startsWith("/") || value.startsWith("//")) return null;
+  if (value.startsWith("/~oauth")) return null;
+  return value;
+}
+
+export function getCurrentReturnPath() {
+  if (typeof window === "undefined") return "/";
+  return sanitizeReturnPath(`${window.location.pathname}${window.location.search}${window.location.hash}`) || "/";
+}
+
+export function setOAuthReturnPath(path: string) {
+  if (typeof window === "undefined") return;
+  const safe = sanitizeReturnPath(path);
+  if (!safe) return;
+  try {
+    window.localStorage.setItem(OAUTH_RETURN_KEY, safe);
+  } catch { /* ignore */ }
+}
+
+export function consumeOAuthReturnPath() {
+  if (typeof window === "undefined") return null;
+  try {
+    const safe = sanitizeReturnPath(window.localStorage.getItem(OAUTH_RETURN_KEY));
+    window.localStorage.removeItem(OAUTH_RETURN_KEY);
+    return safe;
+  } catch {
+    return null;
+  }
+}
+
+export function clearOAuthReturnPath() {
+  if (typeof window === "undefined") return;
+  try { window.localStorage.removeItem(OAUTH_RETURN_KEY); } catch { /* ignore */ }
+}
+
+export function getManagedOAuthRedirectUri() {
+  if (typeof window === "undefined") return undefined;
+  // Use apenas o origin: o fluxo managed (web_message/popup) postará os tokens
+  // de volta ao opener antes de qualquer navegação. Apontar redirect_uri para
+  // uma rota SPA (ex.: /auth/callback) faz o Navigate correr antes do handshake
+  // postMessage terminar, resultando em sessão vazia e retorno à tela de login.
+  return window.location.origin;
+}

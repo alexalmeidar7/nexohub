@@ -1,1 +1,315 @@
-aW1wb3J0IHsgdXNlRWZmZWN0LCB1c2VTdGF0ZSwgdXNlUmVmIH0gZnJvbSAicmVhY3QiOw0KaW1wb3J0IHsgcGxheWVyU3VwYWJhc2UgfSBmcm9tICJAL2ludGVncmF0aW9ucy9zdXBhYmFzZS9wbGF5ZXJDbGllbnQiOw0KaW1wb3J0IHsgSGVhcnQsIE11c2ljLCBGaWxtLCBNZXNzYWdlU3F1YXJlLCBDbG9jaywgU3RhciwgTG9nT3V0LCBVc2VyLCBVc2VycywgWCB9IGZyb20gImx1Y2lkZS1yZWFjdCI7DQppbXBvcnQgeyBvblByb2ZpbGVDaGFuZ2VkIH0gZnJvbSAiQC9saWIvcHJvZmlsZVN5bmMiOw0KaW1wb3J0IHsgZmV0Y2hQbGF5ZXJMaXN0ZW5lclByb2ZpbGUgfSBmcm9tICJAL2xpYi9wbGF5ZXJMaXN0ZW5lclByb2ZpbGUiOw0KDQppbnRlcmZhY2UgTGlrZWRTb25nIHsNCiAgdGl0dWxvOiBzdHJpbmc7DQogIGFydGlzdGE6IHN0cmluZzsNCiAgY2FwYTogc3RyaW5nOw0KfQ0KDQppbnRlcmZhY2UgV2F0Y2hQcm9maWxlUG9wdXBQcm9wcyB7DQogIHVzZXJJZDogc3RyaW5nOw0KICB1c2VyTmFtZTogc3RyaW5nOw0KICB1c2VyRW1haWw/OiBzdHJpbmcgfCBudWxsOw0KICBhdmF0YXJVcmw6IHN0cmluZyB8IG51bGw7DQogIHJhZGlvTmFtZT86IHN0cmluZzsNCiAgcmFkaW9Vc2VySWQ/OiBzdHJpbmcgfCBudWxsOw0KICBvcGVuVG9SaWdodD86IGJvb2xlYW47DQogIG9uQ2xvc2U6ICgpID0+IHZvaWQ7DQogIG9uRWRpdFByb2ZpbGU/OiAoKSA9PiB2b2lkOw0KICBvblN3aXRjaFByb2ZpbGU/OiAoKSA9PiB2b2lkOw0KICBvbkxvZ291dD86ICgpID0+IHZvaWQ7DQp9DQoNCmZ1bmN0aW9uIGNvbXB1dGVGYW5SYXRpbmcobGlrZXM6IG51bWJlciwgaG91cnM6IG51bWJlciwgbWVzc2FnZXM6IG51bWJlciwgdm9kQ291bnQ6IG51bWJlcik6IG51bWJlciB7DQogIC8vIFNjb3JlOiBsaWtlcyoxICsgaG91cnMqMiArIG1lc3NhZ2VzKjAuNSArIHZvZCoxLCBtYXBwZWQgdG8gMC01IHN0YXJzDQogIGNvbnN0IHNjb3JlID0gbGlrZXMgKyBob3VycyAqIDIgKyBtZXNzYWdlcyAqIDAuNSArIHZvZENvdW50Ow0KICBpZiAoc2NvcmUgPj0gMTAwKSByZXR1cm4gNTsNCiAgaWYgKHNjb3JlID49IDUwKSByZXR1cm4gNDsNCiAgaWYgKHNjb3JlID49IDIwKSByZXR1cm4gMzsNCiAgaWYgKHNjb3JlID49IDUpIHJldHVybiAyOw0KICBpZiAoc2NvcmUgPj0gMSkgcmV0dXJuIDE7DQogIHJldHVybiAwOw0KfQ0KDQpmdW5jdGlvbiBmYW5MYWJlbChzdGFyczogbnVtYmVyKTogc3RyaW5nIHsNCiAgaWYgKHN0YXJzID49IDUpIHJldHVybiAiU3VwZXIgRsOjIjsNCiAgaWYgKHN0YXJzID49IDQpIHJldHVybiAiR3JhbmRlIEbDoyI7DQogIGlmIChzdGFycyA+PSAzKSByZXR1cm4gIkbDoyI7DQogIGlmIChzdGFycyA+PSAyKSByZXR1cm4gIk91dmludGUgRmllbCI7DQogIGlmIChzdGFycyA+PSAxKSByZXR1cm4gIk91dmludGUiOw0KICByZXR1cm4gIk5vdm8gT3V2aW50ZSI7DQp9DQoNCmV4cG9ydCBkZWZhdWx0IGZ1bmN0aW9uIFdhdGNoUHJvZmlsZVBvcHVwKHsNCiAgdXNlcklkLA0KICB1c2VyTmFtZSwNCiAgdXNlckVtYWlsLA0KICBhdmF0YXJVcmwsDQogIHJhZGlvTmFtZSwNCiAgcmFkaW9Vc2VySWQsDQogIG9wZW5Ub1JpZ2h0ID0gZmFsc2UsDQogIG9uQ2xvc2UsDQogIG9uRWRpdFByb2ZpbGUsDQogIG9uU3dpdGNoUHJvZmlsZSwNCiAgb25Mb2dvdXQsDQp9OiBXYXRjaFByb2ZpbGVQb3B1cFByb3BzKSB7DQogIGNvbnN0IHJlZiA9IHVzZVJlZjxIVE1MRGl2RWxlbWVudD4obnVsbCk7DQogIGNvbnN0IFtsaWtlZFNvbmdzLCBzZXRMaWtlZFNvbmdzXSA9IHVzZVN0YXRlPExpa2VkU29uZ1tdPihbXSk7DQogIGNvbnN0IFtsYXN0Vm9kLCBzZXRMYXN0Vm9kXSA9IHVzZVN0YXRlPHsgbmFtZTogc3RyaW5nOyBsb2dvOiBzdHJpbmcgfCBudWxsIH0gfCBudWxsPihudWxsKTsNCiAgY29uc3QgW3RvdGFsSG91cnMsIHNldFRvdGFsSG91cnNdID0gdXNlU3RhdGUoMCk7DQogIGNvbnN0IFtjaGF0Q291bnQsIHNldENoYXRDb3VudF0gPSB1c2VTdGF0ZSgwKTsNCiAgY29uc3QgW2xvYWRpbmcsIHNldExvYWRpbmddID0gdXNlU3RhdGUodHJ1ZSk7DQogIC8vIENvbnRhZG9yIHF1ZSBmb3LDp2EgcmVmZXRjaCBxdWFuZG8gbyBwZXJmaWwgb3UgYXZhdGFyIG11ZGFtIGV4dGVybmFtZW50ZS4NCiAgY29uc3QgW3JlZnJlc2hUaWNrLCBzZXRSZWZyZXNoVGlja10gPSB1c2VTdGF0ZSgwKTsNCiAgLy8gQ8OzcGlhcyBsb2NhaXMgcmVhdGl2YXMgZG9zIGNhbXBvcyBleGliaWRvcyDigJQgcGVybWl0ZW0gYXR1YWxpemHDp8OjbyBpbnN0YW50w6JuZWENCiAgLy8gYW8gcmVjZWJlciBgbmV4bzpwcm9maWxlOmNoYW5nZWRgIHNlbSBlc3BlcmFyIHByb3BzIGRvIHBhcmVudC4NCiAgY29uc3QgW2Rpc3BsYXlOYW1lLCBzZXREaXNwbGF5TmFtZV0gPSB1c2VTdGF0ZSh1c2VyTmFtZSk7DQogIGNvbnN0IFtkaXNwbGF5RW1haWwsIHNldERpc3BsYXlFbWFpbF0gPSB1c2VTdGF0ZTxzdHJpbmcgfCBudWxsIHwgdW5kZWZpbmVkPih1c2VyRW1haWwpOw0KDQogIHVzZUVmZmVjdCgoKSA9PiB7IHNldERpc3BsYXlOYW1lKHVzZXJOYW1lKTsgfSwgW3VzZXJOYW1lXSk7DQogIHVzZUVmZmVjdCgoKSA9PiB7IHNldERpc3BsYXlFbWFpbCh1c2VyRW1haWwpOyB9LCBbdXNlckVtYWlsXSk7DQoNCiAgLy8gUmVmZXRjaCBxdWFuZG8gcHJvcCBgdXNlck5hbWVgIG91IGBhdmF0YXJVcmxgIG11ZGFyZW0gKHRyb2NhIGRlIHN1YnBlcmZpbCkuDQogIHVzZUVmZmVjdCgoKSA9PiB7IHNldFJlZnJlc2hUaWNrKHQgPT4gdCArIDEpOyB9LCBbdXNlck5hbWUsIGF2YXRhclVybF0pOw0KDQogIC8vIEVzY3V0YSBvIGJhcnJhbWVudG8gZ2xvYmFsIGRlIHBlcmZpbCBlIGF0dWFsaXphIHR1ZG8gZW0gdGVtcG8gcmVhbC4NCiAgdXNlRWZmZWN0KCgpID0+IHsNCiAgICBjb25zdCBvZmYgPSBvblByb2ZpbGVDaGFuZ2VkKChkZXRhaWwpID0+IHsNCiAgICAgIGlmIChkZXRhaWwubm9tZSAhPSBudWxsKSBzZXREaXNwbGF5TmFtZShkZXRhaWwubm9tZSk7DQogICAgICBpZiAoZGV0YWlsLmVtYWlsICE9PSB1bmRlZmluZWQpIHNldERpc3BsYXlFbWFpbChkZXRhaWwuZW1haWwpOw0KICAgICAgc2V0UmVmcmVzaFRpY2sodCA9PiB0ICsgMSk7DQogICAgfSk7DQogICAgcmV0dXJuIG9mZjsNCiAgfSwgW10pOw0KDQogIHVzZUVmZmVjdCgoKSA9PiB7DQogICAgY29uc3QgaGFuZGxlciA9IChlOiBNb3VzZUV2ZW50KSA9PiB7DQogICAgICBpZiAocmVmLmN1cnJlbnQgJiYgIXJlZi5jdXJyZW50LmNvbnRhaW5zKGUudGFyZ2V0IGFzIE5vZGUpKSBvbkNsb3NlKCk7DQogICAgfTsNCiAgICBkb2N1bWVudC5hZGRFdmVudExpc3RlbmVyKCJtb3VzZWRvd24iLCBoYW5kbGVyKTsNCiAgICByZXR1cm4gKCkgPT4gZG9jdW1lbnQucmVtb3ZlRXZlbnRMaXN0ZW5lcigibW91c2Vkb3duIiwgaGFuZGxlcik7DQogIH0sIFtvbkNsb3NlXSk7DQoNCiAgdXNlRWZmZWN0KCgpID0+IHsNCiAgICBpZiAoIXVzZXJJZCkgcmV0dXJuOw0KDQogICAgY29uc3QgZmV0Y2hBbGwgPSBhc3luYyAoKSA9PiB7DQogICAgICAvLyBMaWtlZCBzb25ncyDigJQgbGFzdCAxMA0KICAgICAgbGV0IGxpa2VzUDogYW55ID0gcGxheWVyU3VwYWJhc2UNCiAgICAgICAgLmZyb20oIm11c2ljX2xpa2VzIikNCiAgICAgICAgLnNlbGVjdCgidGl0dWxvLCBhcnRpc3RhLCBjYXBhIikNCiAgICAgICAgLmVxKCJ1c2VyX2lkIiwgdXNlcklkKTsNCiAgICAgIGxpa2VzUCA9IHJhZGlvVXNlcklkID8gbGlrZXNQLmVxKCJyYWRpb191c2VyX2lkIiwgcmFkaW9Vc2VySWQpIDogbGlrZXNQLmlzKCJyYWRpb191c2VyX2lkIiwgbnVsbCk7DQogICAgICBsaWtlc1AgPSBsaWtlc1ANCiAgICAgICAgLm9yZGVyKCJjcmVhdGVkX2F0IiwgeyBhc2NlbmRpbmc6IGZhbHNlIH0pDQogICAgICAgIC5saW1pdCgxMCk7DQoNCiAgICAgIC8vIExhc3QgVk9EIHdhdGNoZWQNCiAgICAgIGxldCB2b2RQOiBhbnkgPSBwbGF5ZXJTdXBhYmFzZQ0KICAgICAgICAuZnJvbSgid2F0Y2hfaGlzdG9yeSIpDQogICAgICAgIC5zZWxlY3QoImNoYW5uZWxfbmFtZSwgY2hhbm5lbF9sb2dvX3VybCIpDQogICAgICAgIC5lcSgidXNlcl9pZCIsIHVzZXJJZCk7DQogICAgICB2b2RQID0gcmFkaW9Vc2VySWQgPyB2b2RQLmVxKCJyYWRpb191c2VyX2lkIiwgcmFkaW9Vc2VySWQpIDogdm9kUC5pcygicmFkaW9fdXNlcl9pZCIsIG51bGwpOw0KICAgICAgdm9kUCA9IHZvZFANCiAgICAgICAgLm9yZGVyKCJ3YXRjaGVkX2F0IiwgeyBhc2NlbmRpbmc6IGZhbHNlIH0pDQogICAgICAgIC5saW1pdCgxKTsNCg0KICAgICAgLy8gVG90YWwgd2F0Y2ggaGlzdG9yeSBlbnRyaWVzIChlc3RpbWF0ZSBob3VycyDigJQgMSBlbnRyeSDiiYggMzAgbWluKQ0KICAgICAgbGV0IGhvdXJzUDogYW55ID0gcGxheWVyU3VwYWJhc2UNCiAgICAgICAgLmZyb20oIndhdGNoX2hpc3RvcnkiKQ0KICAgICAgICAuc2VsZWN0KCJpZCIsIHsgY291bnQ6ICJleGFjdCIsIGhlYWQ6IHRydWUgfSkNCiAgICAgICAgLmVxKCJ1c2VyX2lkIiwgdXNlcklkKTsNCiAgICAgIGhvdXJzUCA9IHJhZGlvVXNlcklkID8gaG91cnNQLmVxKCJyYWRpb191c2VyX2lkIiwgcmFkaW9Vc2VySWQpIDogaG91cnNQLmlzKCJyYWRpb191c2VyX2lkIiwgbnVsbCk7DQoNCiAgICAgIC8vIENoYXQgbWVzc2FnZSBjb3VudA0KICAgICAgLy8gcGxheWVyX2NoYXRfbWVzc2FnZXMgZG9lc24ndCBoYXZlIHVzZXJfaWQsIHVzZXMgbm9tZSDigJQgYXBwcm94aW1hdGUgYnkgcHJvZmlsZSBuYW1lDQogICAgICBjb25zdCBwcm9maWxlUCA9IHJhZGlvVXNlcklkDQogICAgICAgID8gZmV0Y2hQbGF5ZXJMaXN0ZW5lclByb2ZpbGUoeyBpZDogdXNlcklkIH0gYXMgYW55LCByYWRpb1VzZXJJZCkNCiAgICAgICAgOiBwbGF5ZXJTdXBhYmFzZS5mcm9tKCJwcm9maWxlcyIpLnNlbGVjdCgibm9tZSwgYXZhdGFyX3VybCIpLmVxKCJ1c2VyX2lkIiwgdXNlcklkKS5tYXliZVNpbmdsZSgpLnRoZW4oKHsgZGF0YSB9KSA9PiBkYXRhIHx8IG51bGwpOw0KDQogICAgICBjb25zdCBbbGlrZXNSZXMsIHZvZFJlcywgaG91cnNSZXMsIHByb2ZpbGVSZXNdID0gYXdhaXQgUHJvbWlzZS5hbGwoW2xpa2VzUCwgdm9kUCwgaG91cnNQLCBwcm9maWxlUF0pOw0KDQogICAgICBpZiAobGlrZXNSZXMuZGF0YSkgew0KICAgICAgICBzZXRMaWtlZFNvbmdzKGxpa2VzUmVzLmRhdGEubWFwKHIgPT4gKHsNCiAgICAgICAgICB0aXR1bG86IHIudGl0dWxvLA0KICAgICAgICAgIGFydGlzdGE6IHIuYXJ0aXN0YSwNCiAgICAgICAgICBjYXBhOiByLmNhcGEgfHwgIiIsDQogICAgICAgIH0pKSk7DQogICAgICB9DQoNCiAgICAgIGlmICh2b2RSZXMuZGF0YSAmJiB2b2RSZXMuZGF0YS5sZW5ndGggPiAwKSB7DQogICAgICAgIHNldExhc3RWb2QoeyBuYW1lOiB2b2RSZXMuZGF0YVswXS5jaGFubmVsX25hbWUsIGxvZ286IHZvZFJlcy5kYXRhWzBdLmNoYW5uZWxfbG9nb191cmwgfSk7DQogICAgICB9DQoNCiAgICAgIGNvbnN0IGVudHJ5Q291bnQgPSBob3Vyc1Jlcy5jb3VudCA/PyAwOw0KICAgICAgc2V0VG90YWxIb3VycyhNYXRoLnJvdW5kKGVudHJ5Q291bnQgKiAwLjUgKiAxMCkgLyAxMCk7IC8vIDMwIG1pbiBwZXIgZW50cnkNCg0KICAgICAgLy8gTWFudMOpbSBub21lL2F2YXRhciBleGliaWRvcyBzaW5jcm9uaXphZG9zIGNvbSBvIHF1ZSBlc3TDoSBubyBiYW5jbywNCiAgICAgIC8vIGNhc28gdGVuaGFtIG11ZGFkbyBlbSBvdXRyYSBhYmEvdGVsYS4NCiAgICAgIGNvbnN0IHNhdmVkTmFtZSA9IFN0cmluZygocHJvZmlsZVJlcyBhcyBhbnkpPy5ub21lIHx8ICIiKS50cmltKCk7DQogICAgICBpZiAoc2F2ZWROYW1lKSB7DQogICAgICAgIGNvbnN0IGNoYXRSZXMgPSBhd2FpdCBwbGF5ZXJTdXBhYmFzZQ0KICAgICAgICAgIC5mcm9tKCJwbGF5ZXJfY2hhdF9tZXNzYWdlcyIpDQogICAgICAgICAgLnNlbGVjdCgiaWQiLCB7IGNvdW50OiAiZXhhY3QiLCBoZWFkOiB0cnVlIH0pDQogICAgICAgICAgLmVxKCJub21lIiwgc2F2ZWROYW1lKTsNCiAgICAgICAgc2V0Q2hhdENvdW50KGNoYXRSZXMuY291bnQgPz8gMCk7DQogICAgICB9DQogICAgICBzZXRMb2FkaW5nKGZhbHNlKTsNCiAgICB9Ow0KDQogICAgZmV0Y2hBbGwoKTsNCiAgfSwgW3VzZXJJZCwgcmFkaW9Vc2VySWQsIHJlZnJlc2hUaWNrXSk7DQoNCiAgY29uc3Qgc3RhcnMgPSBjb21wdXRlRmFuUmF0aW5nKGxpa2VkU29uZ3MubGVuZ3RoLCB0b3RhbEhvdXJzLCBjaGF0Q291bnQsIGxhc3RWb2QgPyAxIDogMCk7DQogIGNvbnN0IGxhYmVsID0gZmFuTGFiZWwoc3RhcnMpOw0KDQogIHJldHVybiAoDQogICAgPGRpdg0KICAgICAgcmVmPXtyZWZ9DQogICAgICBjbGFzc05hbWU9e2BhYnNvbHV0ZSAke29wZW5Ub1JpZ2h0ID8gImxlZnQtMCByaWdodC1hdXRvIiA6ICJyaWdodC0wIn0gdG9wLVtjYWxjKDEwMCUrOHB4KV0gei1bNjBdIGFuaW1hdGUtZmFkZS1pbmB9DQogICAgICBzdHlsZT17eyB3aWR0aDogIm1pbigzNTZweCwgY2FsYygxMDB2dyAtIDI0cHgpKSIsIG1heEhlaWdodDogIjgwdmgiIH19DQogICAgPg0KICAgICAgPGRpdg0KICAgICAgICBjbGFzc05hbWU9InJvdW5kZWQtMnhsIGZsZXggZmxleC1jb2wgb3ZlcmZsb3ctaGlkZGVuIg0KICAgICAgICBzdHlsZT17ew0KICAgICAgICAgIGJhY2tncm91bmQ6ICIjMjQyNjJiIiwNCiAgICAgICAgICBib3JkZXI6ICIxcHggc29saWQgcmdiYSgyNTUsMjU1LDI1NSwwLjEyKSIsDQogICAgICAgICAgYm94U2hhZG93OiAiMCAxNnB4IDQ4cHggcmdiYSgwLDAsMCwwLjQyKSIsDQogICAgICAgICAgY29sb3I6ICIjZmZmIiwNCiAgICAgICAgfX0NCiAgICAgID4NCiAgICAgICAgey8qIEhlYWRlciAqL30NCiAgICAgICAgPGRpdiBjbGFzc05hbWU9InJlbGF0aXZlIHB4LTUgcHQtNSBwYi00IHByLTE0Ij4NCiAgICAgICAgICA8YnV0dG9uDQogICAgICAgICAgICB0eXBlPSJidXR0b24iDQogICAgICAgICAgICBvbkNsaWNrPXtvbkNsb3NlfQ0KICAgICAgICAgICAgYXJpYS1sYWJlbD0iRmVjaGFyIHBlcmZpbCINCiAgICAgICAgICAgIGNsYXNzTmFtZT0iYWJzb2x1dGUgcmlnaHQtMyB0b3AtMyBmbGV4IGgtOSB3LTkgaXRlbXMtY2VudGVyIGp1c3RpZnktY2VudGVyIHJvdW5kZWQtZnVsbCBib3JkZXIgYm9yZGVyLXdoaXRlLzE1IGJnLXdoaXRlL1swLjA0XSB0ZXh0LXdoaXRlLzc1IHRyYW5zaXRpb24gaG92ZXI6Ymctd2hpdGUvMTAgaG92ZXI6dGV4dC13aGl0ZSBmb2N1cy12aXNpYmxlOm91dGxpbmUtbm9uZSBmb2N1cy12aXNpYmxlOnJpbmctMiBmb2N1cy12aXNpYmxlOnJpbmctd2hpdGUvNjAiDQogICAgICAgICAgPg0KICAgICAgICAgICAgPFggc2l6ZT17MTZ9IC8+DQogICAgICAgICAgPC9idXR0b24+DQogICAgICAgICAgPGRpdiBjbGFzc05hbWU9Im1pbi13LTAiPg0KICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPSJibG9jayB0cnVuY2F0ZSB0ZXh0LWJhc2UgZm9udC1ib2xkIGxlYWRpbmctdGlnaHQgdGV4dC13aGl0ZSI+e2Rpc3BsYXlOYW1lfTwvc3Bhbj4NCiAgICAgICAgICAgIHtkaXNwbGF5RW1haWwgJiYgPHNwYW4gY2xhc3NOYW1lPSJtdC0xIGJsb2NrIHRydW5jYXRlIHRleHQtWzExcHhdIHRleHQtd2hpdGUvNjUiPntkaXNwbGF5RW1haWx9PC9zcGFuPn0NCiAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJtdC0yIGZsZXggaXRlbXMtY2VudGVyIGdhcC0xIiBhcmlhLWxhYmVsPXtgJHtzdGFyc30gZGUgNSBlc3RyZWxhcywgJHtsYWJlbH1gfT4NCiAgICAgICAgICAgICAge0FycmF5LmZyb20oeyBsZW5ndGg6IDUgfSkubWFwKChfLCBpKSA9PiAoDQogICAgICAgICAgICAgICAgPFN0YXIga2V5PXtpfSBzaXplPXsxM30gZmlsbD17aSA8IHN0YXJzID8gIiNmZmZmZmYiIDogInRyYW5zcGFyZW50In0gc3R5bGU9e3sgY29sb3I6IGkgPCBzdGFycyA/ICIjZmZmZmZmIiA6ICJyZ2JhKDI1NSwyNTUsMjU1LDAuMykiIH19IC8+DQogICAgICAgICAgICAgICkpfQ0KICAgICAgICAgICAgPC9kaXY+DQogICAgICAgICAgPC9kaXY+DQogICAgICAgIDwvZGl2Pg0KDQogICAgICAgIHsvKiBTdGF0cyByb3cgKi99DQogICAgICAgIDxkaXYgY2xhc3NOYW1lPSJteC00IGdyaWQgZ3JpZC1jb2xzLTMgZGl2aWRlLXggZGl2aWRlLXdoaXRlLzEwIHJvdW5kZWQteGwgYm9yZGVyIGJvcmRlci13aGl0ZS8xMCBiZy1ibGFjay8xMCBweC0xIHB5LTMiPg0KICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJmbGV4IGZsZXgtY29sIGl0ZW1zLWNlbnRlciBnYXAtMC41Ij4NCiAgICAgICAgICAgIDxDbG9jayBzaXplPXsxNH0gY2xhc3NOYW1lPSJ0ZXh0LXdoaXRlLzQwIiAvPg0KICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPSJ0ZXh0LXhzIGZvbnQtYm9sZCB0ZXh0LXdoaXRlIj57dG90YWxIb3Vyc31oPC9zcGFuPg0KICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPSJ0ZXh0LVs5cHhdIHRleHQtd2hpdGUvNDAiPm91dmluZG88L3NwYW4+DQogICAgICAgICAgPC9kaXY+DQogICAgICAgICAgPGRpdiBjbGFzc05hbWU9ImZsZXggZmxleC1jb2wgaXRlbXMtY2VudGVyIGdhcC0wLjUiPg0KICAgICAgICAgICAgPEhlYXJ0IHNpemU9ezE0fSBmaWxsPSIjZmZmZmZmIiBzdHlsZT17eyBjb2xvcjogIiNmZmZmZmYiIH19IC8+DQogICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9InRleHQteHMgZm9udC1ib2xkIHRleHQtd2hpdGUiPntsaWtlZFNvbmdzLmxlbmd0aH08L3NwYW4+DQogICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9InRleHQtWzlweF0gdGV4dC13aGl0ZS80MCI+Y3VydGlkYXM8L3NwYW4+DQogICAgICAgICAgPC9kaXY+DQogICAgICAgICAgPGRpdiBjbGFzc05hbWU9ImZsZXggZmxleC1jb2wgaXRlbXMtY2VudGVyIGdhcC0wLjUiPg0KICAgICAgICAgICAgPE1lc3NhZ2VTcXVhcmUgc2l6ZT17MTR9IGNsYXNzTmFtZT0idGV4dC13aGl0ZS80MCIgLz4NCiAgICAgICAgICAgIDxzcGFuIGNsYXNzTmFtZT0idGV4dC14cyBmb250LWJvbGQgdGV4dC13aGl0ZSI+e2NoYXRDb3VudH08L3NwYW4+DQogICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9InRleHQtWzlweF0gdGV4dC13aGl0ZS80MCI+bWVuc2FnZW5zPC9zcGFuPg0KICAgICAgICAgIDwvZGl2Pg0KICAgICAgICA8L2Rpdj4NCg0KICAgICAgICA8ZGl2IGNsYXNzTmFtZT0ibXgtNCBoLXB4IGJnLXdoaXRlLzEwIiAvPg0KDQogICAgICAgIHsvKiBMYXN0IFZPRCAqL30NCiAgICAgICAge2xhc3RWb2QgJiYgKA0KICAgICAgICAgIDw+DQogICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0icHgtNSBweS0zIGZsZXggaXRlbXMtY2VudGVyIGdhcC0yIj4NCiAgICAgICAgICAgICAgPEZpbG0gc2l6ZT17MTN9IGNsYXNzTmFtZT0idGV4dC13aGl0ZS80MCBzaHJpbmstMCIgLz4NCiAgICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPSJ0ZXh0LVsxMHB4XSB0ZXh0LXdoaXRlLzUwIj7Dmmx0aW1vIG9uIGRlbWFuZDo8L3NwYW4+DQogICAgICAgICAgICAgIHtsYXN0Vm9kLmxvZ28gJiYgKA0KICAgICAgICAgICAgICAgIDxpbWcgc3JjPXtsYXN0Vm9kLmxvZ299IGFsdD0iIiBjbGFzc05hbWU9InctNSBoLTUgcm91bmRlZCBvYmplY3QtY292ZXIgc2hyaW5rLTAiIC8+DQogICAgICAgICAgICAgICl9DQogICAgICAgICAgICAgIDxzcGFuIGNsYXNzTmFtZT0idGV4dC1bMTFweF0gZm9udC1zZW1pYm9sZCB0ZXh0LXdoaXRlIHRydW5jYXRlIj57bGFzdFZvZC5uYW1lfTwvc3Bhbj4NCiAgICAgICAgICAgIDwvZGl2Pg0KICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9Im14LTQgaC1weCBiZy13aGl0ZS8xMCIgLz4NCiAgICAgICAgICA8Lz4NCiAgICAgICAgKX0NCg0KICAgICAgICB7LyogTGlrZWQgc29uZ3MgKi99DQogICAgICAgIDxkaXYgY2xhc3NOYW1lPSJweC01IHB5LTQiPg0KICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJmbGV4IGl0ZW1zLWNlbnRlciBnYXAtMS41IG1iLTIiPg0KICAgICAgICAgICAgPEhlYXJ0IHNpemU9ezEyfSBmaWxsPSIjZmZmZmZmIiBzdHlsZT17eyBjb2xvcjogIiNmZmZmZmYiIH19IC8+DQogICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9InRleHQtWzEwcHhdIGZvbnQtYm9sZCB1cHBlcmNhc2UgdHJhY2tpbmctd2lkZSB0ZXh0LXdoaXRlLzYwIj7Dmmx0aW1hcyBDdXJ0aWRhczwvc3Bhbj4NCiAgICAgICAgICA8L2Rpdj4NCiAgICAgICAgICB7bG9hZGluZyA/ICgNCiAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJzcGFjZS15LTEuNSBhbmltYXRlLXB1bHNlIj4NCiAgICAgICAgICAgICAge0FycmF5LmZyb20oeyBsZW5ndGg6IDQgfSkubWFwKChfLCBpKSA9PiAoDQogICAgICAgICAgICAgICAgPGRpdiBrZXk9e2l9IGNsYXNzTmFtZT0iZmxleCBpdGVtcy1jZW50ZXIgZ2FwLTIgcHktMC41Ij4NCiAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJ3LTYgaC02IHJvdW5kZWQgYmctd2hpdGUvMTAgc2hyaW5rLTAiIC8+DQogICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0iZmxleC0xIHNwYWNlLXktMC41Ij4NCiAgICAgICAgICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9ImgtMiB3LTMvNCByb3VuZGVkIGJnLXdoaXRlLzEwIiAvPg0KICAgICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0iaC0xLjUgdy0xLzIgcm91bmRlZCBiZy13aGl0ZS81IiAvPg0KICAgICAgICAgICAgICAgICAgPC9kaXY+DQogICAgICAgICAgICAgICAgPC9kaXY+DQogICAgICAgICAgICAgICkpfQ0KICAgICAgICAgICAgPC9kaXY+DQogICAgICAgICAgKSA6IGxpa2VkU29uZ3MubGVuZ3RoID09PSAwID8gKA0KICAgICAgICAgICAgPHAgY2xhc3NOYW1lPSJ0ZXh0LVsxMHB4XSB0ZXh0LXdoaXRlLzMwIj5OZW5odW1hIGN1cnRpZGEgYWluZGE8L3A+DQogICAgICAgICAgKSA6ICgNCiAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJzcGFjZS15LTAuNSBtYXgtaC1bMTgwcHhdIG92ZXJmbG93LXktYXV0byBzY3JvbGxiYXItaGlkZSI+DQogICAgICAgICAgICAgIHtsaWtlZFNvbmdzLm1hcCgoc29uZywgaSkgPT4gKA0KICAgICAgICAgICAgICAgIDxkaXYga2V5PXtgJHtzb25nLmFydGlzdGF9LSR7c29uZy50aXR1bG99LSR7aX1gfSBjbGFzc05hbWU9ImZsZXggaXRlbXMtY2VudGVyIGdhcC0yIHB5LTAuNSByb3VuZGVkLWxnIj4NCiAgICAgICAgICAgICAgICAgIHtzb25nLmNhcGEgPyAoDQogICAgICAgICAgICAgICAgICAgIDxpbWcgc3JjPXtzb25nLmNhcGF9IGFsdD0iIiBjbGFzc05hbWU9InctNiBoLTYgcm91bmRlZCBvYmplY3QtY292ZXIgc2hyaW5rLTAiIC8+DQogICAgICAgICAgICAgICAgICApIDogKA0KICAgICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0idy02IGgtNiByb3VuZGVkIGZsZXggaXRlbXMtY2VudGVyIGp1c3RpZnktY2VudGVyIHNocmluay0wIGJnLXdoaXRlLzEwIj4NCiAgICAgICAgICAgICAgICAgICAgICA8TXVzaWMgc2l6ZT17MTB9IGNsYXNzTmFtZT0idGV4dC13aGl0ZS80MCIgLz4NCiAgICAgICAgICAgICAgICAgICAgPC9kaXY+DQogICAgICAgICAgICAgICAgICApfQ0KICAgICAgICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9ImZsZXgtMSBtaW4tdy0wIj4NCiAgICAgICAgICAgICAgICAgICAgPHAgY2xhc3NOYW1lPSJ0ZXh0LVsxMHB4XSBmb250LXNlbWlib2xkIHRydW5jYXRlIHRleHQtd2hpdGUiPntzb25nLnRpdHVsb308L3A+DQogICAgICAgICAgICAgICAgICAgIDxwIGNsYXNzTmFtZT0idGV4dC1bOHB4XSB0cnVuY2F0ZSB0ZXh0LXdoaXRlLzQwIj57c29uZy5hcnRpc3RhfTwvcD4NCiAgICAgICAgICAgICAgICAgIDwvZGl2Pg0KICAgICAgICAgICAgICAgIDwvZGl2Pg0KICAgICAgICAgICAgICApKX0NCiAgICAgICAgICAgIDwvZGl2Pg0KICAgICAgICAgICl9DQogICAgICAgIDwvZGl2Pg0KDQogICAgICAgIDxkaXYgY2xhc3NOYW1lPSJteC00IGgtcHggYmctd2hpdGUvMTAiIC8+DQoNCiAgICAgICAgey8qIEFjdGlvbnMgKi99DQogICAgICAgIDxkaXYgY2xhc3NOYW1lPSJweC00IHB5LTMgZmxleCBmbGV4LWNvbCBnYXAtMSI+DQogICAgICAgICAge29uRWRpdFByb2ZpbGUgJiYgKA0KICAgICAgICAgICAgPGJ1dHRvbg0KICAgICAgICAgICAgICBvbkNsaWNrPXsoKSA9PiB7IG9uQ2xvc2UoKTsgb25FZGl0UHJvZmlsZSgpOyB9fQ0KICAgICAgICAgICAgICBjbGFzc05hbWU9ImZsZXggbWluLWgtOSBpdGVtcy1jZW50ZXIgZ2FwLTMgdGV4dC13aGl0ZS83NSB0ZXh0LXhzIGhvdmVyOnRleHQtd2hpdGUgdHJhbnNpdGlvbi1jb2xvcnMgcm91bmRlZC1sZyBweC0zIHB5LTIgaG92ZXI6Ymctd2hpdGUvMTAiDQogICAgICAgICAgICA+DQogICAgICAgICAgICAgIDxVc2VyIHNpemU9ezEzfSAvPiBFZGl0YXIgcGVyZmlsDQogICAgICAgICAgICA8L2J1dHRvbj4NCiAgICAgICAgICApfQ0KICAgICAgICAgIHtvblN3aXRjaFByb2ZpbGUgJiYgKA0KICAgICAgICAgICAgPGJ1dHRvbg0KICAgICAgICAgICAgICBvbkNsaWNrPXsoKSA9PiB7IG9uQ2xvc2UoKTsgb25Td2l0Y2hQcm9maWxlKCk7IH19DQogICAgICAgICAgICAgIGNsYXNzTmFtZT0iZmxleCBtaW4taC05IGl0ZW1zLWNlbnRlciBnYXAtMyB0ZXh0LXdoaXRlLzc1IHRleHQteHMgaG92ZXI6dGV4dC13aGl0ZSB0cmFuc2l0aW9uLWNvbG9ycyByb3VuZGVkLWxnIHB4LTMgcHktMiBob3ZlcjpiZy13aGl0ZS8xMCINCiAgICAgICAgICAgID4NCiAgICAgICAgICAgICAgPFVzZXJzIHNpemU9ezEzfSAvPiBUcm9jYXIgZGUgcGVyZmlsDQogICAgICAgICAgICA8L2J1dHRvbj4NCiAgICAgICAgICApfQ0KICAgICAgICAgIHtvbkxvZ291dCAmJiAoDQogICAgICAgICAgICA8YnV0dG9uDQogICAgICAgICAgICAgIG9uQ2xpY2s9eygpID0+IHsgb25DbG9zZSgpOyBvbkxvZ291dCgpOyB9fQ0KICAgICAgICAgICAgICBjbGFzc05hbWU9ImZsZXggbWluLWgtOSBpdGVtcy1jZW50ZXIgZ2FwLTMgdGV4dC13aGl0ZS82NSB0ZXh0LXhzIGhvdmVyOnRleHQtd2hpdGUgdHJhbnNpdGlvbi1jb2xvcnMgcm91bmRlZC1sZyBweC0zIHB5LTIgaG92ZXI6Ymctd2hpdGUvMTAiDQogICAgICAgICAgICA+DQogICAgICAgICAgICAgIDxMb2dPdXQgc2l6ZT17MTN9IC8+IFNhaXINCiAgICAgICAgICAgIDwvYnV0dG9uPg0KICAgICAgICAgICl9DQogICAgICAgIDwvZGl2Pg0KICAgICAgPC9kaXY+DQogICAgPC9kaXY+DQogICk7DQp9DQo=
+import { useEffect, useState, useRef } from "react";
+import { playerSupabase } from "@/integrations/supabase/playerClient";
+import { Heart, Music, Film, MessageSquare, Clock, Star, LogOut, User, Users, X } from "lucide-react";
+import { onProfileChanged } from "@/lib/profileSync";
+import { fetchPlayerListenerProfile } from "@/lib/playerListenerProfile";
+
+interface LikedSong {
+  titulo: string;
+  artista: string;
+  capa: string;
+}
+
+interface WatchProfilePopupProps {
+  userId: string;
+  userName: string;
+  userEmail?: string | null;
+  avatarUrl: string | null;
+  radioName?: string;
+  radioUserId?: string | null;
+  openToRight?: boolean;
+  onClose: () => void;
+  onEditProfile?: () => void;
+  onSwitchProfile?: () => void;
+  onLogout?: () => void;
+}
+
+function computeFanRating(likes: number, hours: number, messages: number, vodCount: number): number {
+  // Score: likes*1 + hours*2 + messages*0.5 + vod*1, mapped to 0-5 stars
+  const score = likes + hours * 2 + messages * 0.5 + vodCount;
+  if (score >= 100) return 5;
+  if (score >= 50) return 4;
+  if (score >= 20) return 3;
+  if (score >= 5) return 2;
+  if (score >= 1) return 1;
+  return 0;
+}
+
+function fanLabel(stars: number): string {
+  if (stars >= 5) return "Super Fã";
+  if (stars >= 4) return "Grande Fã";
+  if (stars >= 3) return "Fã";
+  if (stars >= 2) return "Ouvinte Fiel";
+  if (stars >= 1) return "Ouvinte";
+  return "Novo Ouvinte";
+}
+
+export default function WatchProfilePopup({
+  userId,
+  userName,
+  userEmail,
+  avatarUrl,
+  radioName,
+  radioUserId,
+  openToRight = false,
+  onClose,
+  onEditProfile,
+  onSwitchProfile,
+  onLogout,
+}: WatchProfilePopupProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [likedSongs, setLikedSongs] = useState<LikedSong[]>([]);
+  const [lastVod, setLastVod] = useState<{ name: string; logo: string | null } | null>(null);
+  const [totalHours, setTotalHours] = useState(0);
+  const [chatCount, setChatCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  // Contador que força refetch quando o perfil ou avatar mudam externamente.
+  const [refreshTick, setRefreshTick] = useState(0);
+  // Cópias locais reativas dos campos exibidos — permitem atualização instantânea
+  // ao receber `nexo:profile:changed` sem esperar props do parent.
+  const [displayName, setDisplayName] = useState(userName);
+  const [displayEmail, setDisplayEmail] = useState<string | null | undefined>(userEmail);
+
+  useEffect(() => { setDisplayName(userName); }, [userName]);
+  useEffect(() => { setDisplayEmail(userEmail); }, [userEmail]);
+
+  // Refetch quando prop `userName` ou `avatarUrl` mudarem (troca de subperfil).
+  useEffect(() => { setRefreshTick(t => t + 1); }, [userName, avatarUrl]);
+
+  // Escuta o barramento global de perfil e atualiza tudo em tempo real.
+  useEffect(() => {
+    const off = onProfileChanged((detail) => {
+      if (detail.nome != null) setDisplayName(detail.nome);
+      if (detail.email !== undefined) setDisplayEmail(detail.email);
+      setRefreshTick(t => t + 1);
+    });
+    return off;
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchAll = async () => {
+      // Liked songs — last 10
+      let likesP: any = playerSupabase
+        .from("music_likes")
+        .select("titulo, artista, capa")
+        .eq("user_id", userId);
+      likesP = radioUserId ? likesP.eq("radio_user_id", radioUserId) : likesP.is("radio_user_id", null);
+      likesP = likesP
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      // Last VOD watched
+      let vodP: any = playerSupabase
+        .from("watch_history")
+        .select("channel_name, channel_logo_url")
+        .eq("user_id", userId);
+      vodP = radioUserId ? vodP.eq("radio_user_id", radioUserId) : vodP.is("radio_user_id", null);
+      vodP = vodP
+        .order("watched_at", { ascending: false })
+        .limit(1);
+
+      // Total watch history entries (estimate hours — 1 entry ≈ 30 min)
+      let hoursP: any = playerSupabase
+        .from("watch_history")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId);
+      hoursP = radioUserId ? hoursP.eq("radio_user_id", radioUserId) : hoursP.is("radio_user_id", null);
+
+      // Chat message count
+      // player_chat_messages doesn't have user_id, uses nome — approximate by profile name
+      const profileP = radioUserId
+        ? fetchPlayerListenerProfile({ id: userId } as any, radioUserId)
+        : playerSupabase.from("profiles").select("nome, avatar_url").eq("user_id", userId).maybeSingle().then(({ data }) => data || null);
+
+      const [likesRes, vodRes, hoursRes, profileRes] = await Promise.all([likesP, vodP, hoursP, profileP]);
+
+      if (likesRes.data) {
+        setLikedSongs(likesRes.data.map(r => ({
+          titulo: r.titulo,
+          artista: r.artista,
+          capa: r.capa || "",
+        })));
+      }
+
+      if (vodRes.data && vodRes.data.length > 0) {
+        setLastVod({ name: vodRes.data[0].channel_name, logo: vodRes.data[0].channel_logo_url });
+      }
+
+      const entryCount = hoursRes.count ?? 0;
+      setTotalHours(Math.round(entryCount * 0.5 * 10) / 10); // 30 min per entry
+
+      // Mantém nome/avatar exibidos sincronizados com o que está no banco,
+      // caso tenham mudado em outra aba/tela.
+      const savedName = String((profileRes as any)?.nome || "").trim();
+      if (savedName) {
+        const chatRes = await playerSupabase
+          .from("player_chat_messages")
+          .select("id", { count: "exact", head: true })
+          .eq("nome", savedName);
+        setChatCount(chatRes.count ?? 0);
+      }
+      setLoading(false);
+    };
+
+    fetchAll();
+  }, [userId, radioUserId, refreshTick]);
+
+  const stars = computeFanRating(likedSongs.length, totalHours, chatCount, lastVod ? 1 : 0);
+  const label = fanLabel(stars);
+
+  return (
+    <div
+      ref={ref}
+      className={`absolute ${openToRight ? "left-0 right-auto" : "right-0"} top-[calc(100%+8px)] z-[60] animate-fade-in`}
+      style={{ width: "min(356px, calc(100vw - 24px))", maxHeight: "80vh" }}
+    >
+      <div
+        className="rounded-2xl flex flex-col overflow-hidden"
+        style={{
+          background: "#24262b",
+          border: "1px solid rgba(255,255,255,0.12)",
+          boxShadow: "0 16px 48px rgba(0,0,0,0.42)",
+          color: "#fff",
+        }}
+      >
+        {/* Header */}
+        <div className="relative px-5 pt-5 pb-4 pr-14">
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Fechar perfil"
+            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] text-white/75 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+          >
+            <X size={16} />
+          </button>
+          <div className="min-w-0">
+            <span className="block truncate text-base font-bold leading-tight text-white">{displayName}</span>
+            {displayEmail && <span className="mt-1 block truncate text-[11px] text-white/65">{displayEmail}</span>}
+            <div className="mt-2 flex items-center gap-1" aria-label={`${stars} de 5 estrelas, ${label}`}>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star key={i} size={13} fill={i < stars ? "#ffffff" : "transparent"} style={{ color: i < stars ? "#ffffff" : "rgba(255,255,255,0.3)" }} />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Stats row */}
+        <div className="mx-4 grid grid-cols-3 divide-x divide-white/10 rounded-xl border border-white/10 bg-black/10 px-1 py-3">
+          <div className="flex flex-col items-center gap-0.5">
+            <Clock size={14} className="text-white/40" />
+            <span className="text-xs font-bold text-white">{totalHours}h</span>
+            <span className="text-[9px] text-white/40">ouvindo</span>
+          </div>
+          <div className="flex flex-col items-center gap-0.5">
+            <Heart size={14} fill="#ffffff" style={{ color: "#ffffff" }} />
+            <span className="text-xs font-bold text-white">{likedSongs.length}</span>
+            <span className="text-[9px] text-white/40">curtidas</span>
+          </div>
+          <div className="flex flex-col items-center gap-0.5">
+            <MessageSquare size={14} className="text-white/40" />
+            <span className="text-xs font-bold text-white">{chatCount}</span>
+            <span className="text-[9px] text-white/40">mensagens</span>
+          </div>
+        </div>
+
+        <div className="mx-4 h-px bg-white/10" />
+
+        {/* Last VOD */}
+        {lastVod && (
+          <>
+            <div className="px-5 py-3 flex items-center gap-2">
+              <Film size={13} className="text-white/40 shrink-0" />
+              <span className="text-[10px] text-white/50">Último on demand:</span>
+              {lastVod.logo && (
+                <img src={lastVod.logo} alt="" className="w-5 h-5 rounded object-cover shrink-0" />
+              )}
+              <span className="text-[11px] font-semibold text-white truncate">{lastVod.name}</span>
+            </div>
+            <div className="mx-4 h-px bg-white/10" />
+          </>
+        )}
+
+        {/* Liked songs */}
+        <div className="px-5 py-4">
+          <div className="flex items-center gap-1.5 mb-2">
+            <Heart size={12} fill="#ffffff" style={{ color: "#ffffff" }} />
+            <span className="text-[10px] font-bold uppercase tracking-wide text-white/60">Últimas Curtidas</span>
+          </div>
+          {loading ? (
+            <div className="space-y-1.5 animate-pulse">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-2 py-0.5">
+                  <div className="w-6 h-6 rounded bg-white/10 shrink-0" />
+                  <div className="flex-1 space-y-0.5">
+                    <div className="h-2 w-3/4 rounded bg-white/10" />
+                    <div className="h-1.5 w-1/2 rounded bg-white/5" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : likedSongs.length === 0 ? (
+            <p className="text-[10px] text-white/30">Nenhuma curtida ainda</p>
+          ) : (
+            <div className="space-y-0.5 max-h-[180px] overflow-y-auto scrollbar-hide">
+              {likedSongs.map((song, i) => (
+                <div key={`${song.artista}-${song.titulo}-${i}`} className="flex items-center gap-2 py-0.5 rounded-lg">
+                  {song.capa ? (
+                    <img src={song.capa} alt="" className="w-6 h-6 rounded object-cover shrink-0" />
+                  ) : (
+                    <div className="w-6 h-6 rounded flex items-center justify-center shrink-0 bg-white/10">
+                      <Music size={10} className="text-white/40" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-semibold truncate text-white">{song.titulo}</p>
+                    <p className="text-[8px] truncate text-white/40">{song.artista}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="mx-4 h-px bg-white/10" />
+
+        {/* Actions */}
+        <div className="px-4 py-3 flex flex-col gap-1">
+          {onEditProfile && (
+            <button
+              onClick={() => { onClose(); onEditProfile(); }}
+              className="flex min-h-9 items-center gap-3 text-white/75 text-xs hover:text-white transition-colors rounded-lg px-3 py-2 hover:bg-white/10"
+            >
+              <User size={13} /> Editar perfil
+            </button>
+          )}
+          {onSwitchProfile && (
+            <button
+              onClick={() => { onClose(); onSwitchProfile(); }}
+              className="flex min-h-9 items-center gap-3 text-white/75 text-xs hover:text-white transition-colors rounded-lg px-3 py-2 hover:bg-white/10"
+            >
+              <Users size={13} /> Trocar de perfil
+            </button>
+          )}
+          {onLogout && (
+            <button
+              onClick={() => { onClose(); onLogout(); }}
+              className="flex min-h-9 items-center gap-3 text-white/65 text-xs hover:text-white transition-colors rounded-lg px-3 py-2 hover:bg-white/10"
+            >
+              <LogOut size={13} /> Sair
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

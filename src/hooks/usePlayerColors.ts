@@ -1,1 +1,230 @@
-aW1wb3J0IHsgdXNlRWZmZWN0LCB1c2VMYXlvdXRFZmZlY3QsIHVzZVN0YXRlLCB1c2VDYWxsYmFjayB9IGZyb20gInJlYWN0IjsNCmltcG9ydCB7IHBsYXllclN1cGFiYXNlIH0gZnJvbSAiQC9pbnRlZ3JhdGlvbnMvc3VwYWJhc2UvcGxheWVyQ2xpZW50IjsNCmltcG9ydCB7IHVzZVBsYXllckF1dGggfSBmcm9tICJAL2hvb2tzL3VzZVBsYXllckF1dGgiOw0KaW1wb3J0IHsgZmluZENsaWVudEFjY291bnRCeUVtYWlsLCBmaW5kQ2xpZW50QWNjb3VudEJ5SWQgfSBmcm9tICJAL2xpYi9jbGllbnRBdXRoQWNjb3VudHMiOw0KaW1wb3J0IHsgZGVmYXVsdFBsYXllckNvbG9ycywgcmVzb2x2ZVBsYXllckNvbG9ycywgdHlwZSBQbGF5ZXJDb2xvcnMsIHR5cGUgU2NyZWVuQmdDb25maWcsIGJ1aWxkQmdTdHlsZSwgZGVmYXVsdFNjcmVlbkJnIH0gZnJvbSAiQC9jb21wb25lbnRzL1BsYXllckxheW91dEN1c3RvbWl6ZXIiOw0KDQp0eXBlIFNjcmVlblRhYiA9ICJsb2FkaW5nIiB8ICJsb2dpbiIgfCAiaG9tZSIgfCAibGl2ZSIgfCAiY2F0YWxvZyI7DQp0eXBlIFNjcmVlbkJnQ29uZmlncyA9IFJlY29yZDxTY3JlZW5UYWIsIFNjcmVlbkJnQ29uZmlnPjsNCg0KY29uc3QgZGVmYXVsdEJnQ29uZmlnczogU2NyZWVuQmdDb25maWdzID0gew0KICBsb2FkaW5nOiB7IC4uLmRlZmF1bHRTY3JlZW5CZyB9LA0KICBsb2dpbjogeyAuLi5kZWZhdWx0U2NyZWVuQmcgfSwNCiAgaG9tZTogeyAuLi5kZWZhdWx0U2NyZWVuQmcgfSwNCiAgbGl2ZTogeyAuLi5kZWZhdWx0U2NyZWVuQmcgfSwNCiAgY2F0YWxvZzogeyAuLi5kZWZhdWx0U2NyZWVuQmcgfSwNCn07DQoNCi8qKiBDb252ZXJ0IGhleCBjb2xvciB0byBIU0wgc3RyaW5nICJIIFMlIEwlIiBmb3IgQ1NTIGN1c3RvbSBwcm9wZXJ0aWVzICovDQpmdW5jdGlvbiBoZXhUb0hzbChoZXg6IHN0cmluZyk6IHN0cmluZyB8IG51bGwgew0KICBjb25zdCByZXN1bHQgPSAvXiM/KFthLWZcZF17Mn0pKFthLWZcZF17Mn0pKFthLWZcZF17Mn0pJC9pLmV4ZWMoaGV4KTsNCiAgaWYgKCFyZXN1bHQpIHJldHVybiBudWxsOw0KICBsZXQgciA9IHBhcnNlSW50KHJlc3VsdFsxXSwgMTYpIC8gMjU1Ow0KICBsZXQgZyA9IHBhcnNlSW50KHJlc3VsdFsyXSwgMTYpIC8gMjU1Ow0KICBsZXQgYiA9IHBhcnNlSW50KHJlc3VsdFszXSwgMTYpIC8gMjU1Ow0KICBjb25zdCBtYXggPSBNYXRoLm1heChyLCBnLCBiKSwgbWluID0gTWF0aC5taW4ociwgZywgYik7DQogIGxldCBoID0gMCwgcyA9IDAsIGwgPSAobWF4ICsgbWluKSAvIDI7DQogIGlmIChtYXggIT09IG1pbikgew0KICAgIGNvbnN0IGQgPSBtYXggLSBtaW47DQogICAgcyA9IGwgPiAwLjUgPyBkIC8gKDIgLSBtYXggLSBtaW4pIDogZCAvIChtYXggKyBtaW4pOw0KICAgIHN3aXRjaCAobWF4KSB7DQogICAgICBjYXNlIHI6IGggPSAoKGcgLSBiKSAvIGQgKyAoZyA8IGIgPyA2IDogMCkpIC8gNjsgYnJlYWs7DQogICAgICBjYXNlIGc6IGggPSAoKGIgLSByKSAvIGQgKyAyKSAvIDY7IGJyZWFrOw0KICAgICAgY2FzZSBiOiBoID0gKChyIC0gZykgLyBkICsgNCkgLyA2OyBicmVhazsNCiAgICB9DQogIH0NCiAgY29uc3QgSCA9IE1hdGgucm91bmQoaCAqIDM2MCk7DQogIGNvbnN0IFMgPSBNYXRoLnJvdW5kKHMgKiAxMDApOw0KICBjb25zdCBMID0gTWF0aC5yb3VuZChsICogMTAwKTsNCiAgcmV0dXJuIGAke0h9ICR7U30lICR7TH0lYDsNCn0NCg0KLyoqDQogKiBMb2FkcyBzYXZlZCBwbGF5ZXIgY29sb3JzICsgYmcgY29uZmlncyBmcm9tIHVzZXJfc2V0dGluZ3MuZGFzaGJvYXJkX2l0ZW1zDQogKiBhbmQgYXBwbGllcyB0aGVtIGFzIENTUyBjdXN0b20gcHJvcGVydGllcyBvbiA6cm9vdCBzbyBhbGwgcGxheWVyIHNjcmVlbnMgcGljayB0aGVtIHVwLg0KICovDQpleHBvcnQgZnVuY3Rpb24gdXNlUGxheWVyQ29sb3JzKGV4dGVybmFsVXNlcklkPzogc3RyaW5nIHwgbnVsbCwgcHVibGljU2x1Zz86IHN0cmluZyB8IG51bGwpIHsNCiAgY29uc3QgeyB1c2VyIH0gPSB1c2VQbGF5ZXJBdXRoKCk7DQogIGNvbnN0IFtjb2xvcnMsIHNldENvbG9yc10gPSB1c2VTdGF0ZTxQbGF5ZXJDb2xvcnM+KGRlZmF1bHRQbGF5ZXJDb2xvcnMpOw0KICBjb25zdCBbYmdDb25maWdzLCBzZXRCZ0NvbmZpZ3NdID0gdXNlU3RhdGU8U2NyZWVuQmdDb25maWdzPihkZWZhdWx0QmdDb25maWdzKTsNCiAgY29uc3QgW2NvbG9yc1JlYWR5LCBzZXRDb2xvcnNSZWFkeV0gPSB1c2VTdGF0ZShmYWxzZSk7DQoNCiAgLy8gSWYgYW4gZXhwbGljaXQgZXh0ZXJuYWxVc2VySWQgaXMgcHJvdmlkZWQgKHB1YmxpYy9zbHVnIG1vZGUpLCBpdCB0YWtlcyBwcmlvcml0eQ0KICAvLyBvdmVyIHRoZSBsb2dnZWQtaW4gdXNlciB0byBwcmV2ZW50IGNyb3NzLXVzZXIgY29sb3IgY29udGFtaW5hdGlvbi4NCiAgY29uc3QgYWNjID0gKHVzZXI/LmlkICYmIGZpbmRDbGllbnRBY2NvdW50QnlJZCh1c2VyLmlkKSkgfHwgKHVzZXI/LmVtYWlsICYmIGZpbmRDbGllbnRBY2NvdW50QnlFbWFpbCh1c2VyLmVtYWlsKSk7DQogIGNvbnN0IHJhd1RhcmdldElkID0gZXh0ZXJuYWxVc2VySWQgfHwgYWNjPy5wYXJlbnRVc2VySWQgfHwgYWNjPy5pZCB8fCB1c2VyPy5pZCB8fCBudWxsOw0KICBjb25zdCBlZmZlY3RpdmVVc2VySWQgPSByYXdUYXJnZXRJZCAmJiAvXlswLTlhLWZdezh9LVswLTlhLWZdezR9LVswLTlhLWZdezR9LVswLTlhLWZdezR9LVswLTlhLWZdezEyfSQvaS50ZXN0KHJhd1RhcmdldElkKSA/IHJhd1RhcmdldElkIDogbnVsbDsNCg0KICBjb25zdCBmZXRjaENvbG9ycyA9IHVzZUNhbGxiYWNrKGFzeW5jICgpID0+IHsNCiAgICBpZiAocHVibGljU2x1Zykgew0KICAgICAgY29uc3QgeyBkYXRhLCBlcnJvciB9ID0gYXdhaXQgcGxheWVyU3VwYWJhc2UuZnVuY3Rpb25zLmludm9rZSgicHVibGljLXBsYXllci1kYXRhIiwgew0KICAgICAgICBib2R5OiB7IHNsdWc6IHB1YmxpY1NsdWcgfSwNCiAgICAgIH0pOw0KICAgICAgaWYgKCFlcnJvciAmJiBkYXRhICYmICFkYXRhLmVycm9yKSB7DQogICAgICAgIGxldCByZWNlaXZlZFBsYXllckNvbmZpZyA9IGZhbHNlOw0KICAgICAgICBpZiAoZGF0YS5wbGF5ZXJDb2xvcnMgJiYgdHlwZW9mIGRhdGEucGxheWVyQ29sb3JzID09PSAib2JqZWN0Iikgew0KICAgICAgICAgIHNldENvbG9ycyhyZXNvbHZlUGxheWVyQ29sb3JzKGRhdGEucGxheWVyQ29sb3JzKSk7DQogICAgICAgICAgcmVjZWl2ZWRQbGF5ZXJDb25maWcgPSB0cnVlOw0KICAgICAgICB9DQogICAgICAgIGlmIChkYXRhLnBsYXllckJnQ29uZmlncyAmJiB0eXBlb2YgZGF0YS5wbGF5ZXJCZ0NvbmZpZ3MgPT09ICJvYmplY3QiKSB7DQogICAgICAgICAgc2V0QmdDb25maWdzKHsgLi4uZGVmYXVsdEJnQ29uZmlncywgLi4uZGF0YS5wbGF5ZXJCZ0NvbmZpZ3MgfSk7DQogICAgICAgICAgcmVjZWl2ZWRQbGF5ZXJDb25maWcgPSB0cnVlOw0KICAgICAgICB9DQogICAgICAgIC8vIE9sZGVyIGRlcGxveWVkIHZlcnNpb25zIG9mIHB1YmxpYy1wbGF5ZXItZGF0YSBvbWl0IHRoZXNlIGZpZWxkcy4NCiAgICAgICAgLy8gSW4gdGhhdCBjYXNlLCBrZWVwIGdvaW5nIHNvIGFuIGF1dGhlbnRpY2F0ZWQvbG9jYWwgZmFsbGJhY2sgY2FuIGxvYWQgdGhlbS4NCiAgICAgICAgaWYgKHJlY2VpdmVkUGxheWVyQ29uZmlnIHx8ICFlZmZlY3RpdmVVc2VySWQpIHJldHVybjsNCiAgICAgIH0NCiAgICB9DQoNCiAgICBpZiAoIWVmZmVjdGl2ZVVzZXJJZCkgcmV0dXJuOw0KDQogICAgY29uc3QgeyBkYXRhIH0gPSBhd2FpdCBwbGF5ZXJTdXBhYmFzZQ0KICAgICAgLmZyb20oInVzZXJfc2V0dGluZ3MiKQ0KICAgICAgLnNlbGVjdCgiZGFzaGJvYXJkX2l0ZW1zIikNCiAgICAgIC5lcSgidXNlcl9pZCIsIGVmZmVjdGl2ZVVzZXJJZCkNCiAgICAgIC5tYXliZVNpbmdsZSgpOw0KDQogICAgaWYgKGRhdGE/LmRhc2hib2FyZF9pdGVtcyAmJiB0eXBlb2YgZGF0YS5kYXNoYm9hcmRfaXRlbXMgPT09ICJvYmplY3QiKSB7DQogICAgICBjb25zdCBkaSA9IGRhdGEuZGFzaGJvYXJkX2l0ZW1zIGFzIGFueTsNCiAgICAgIGlmIChkaS5wbGF5ZXJfY29sb3JzKSB7DQogICAgICAgIHNldENvbG9ycyhyZXNvbHZlUGxheWVyQ29sb3JzKGRpLnBsYXllcl9jb2xvcnMpKTsNCiAgICAgIH0NCiAgICAgIGlmIChkaS5wbGF5ZXJfYmdfY29uZmlncykgew0KICAgICAgICBzZXRCZ0NvbmZpZ3MoeyAuLi5kZWZhdWx0QmdDb25maWdzLCAuLi5kaS5wbGF5ZXJfYmdfY29uZmlncyB9KTsNCiAgICAgIH0NCiAgICB9DQogIH0sIFtlZmZlY3RpdmVVc2VySWQsIHB1YmxpY1NsdWddKTsNCg0KICB1c2VFZmZlY3QoKCkgPT4gew0KICAgIGxldCBhY3RpdmUgPSB0cnVlOw0KICAgIHNldENvbG9yc1JlYWR5KGZhbHNlKTsNCiAgICBmZXRjaENvbG9ycygpLmZpbmFsbHkoKCkgPT4gew0KICAgICAgaWYgKGFjdGl2ZSkgc2V0Q29sb3JzUmVhZHkodHJ1ZSk7DQogICAgfSk7DQogICAgcmV0dXJuICgpID0+IHsgYWN0aXZlID0gZmFsc2U7IH07DQogIH0sIFtmZXRjaENvbG9yc10pOw0KDQogIHVzZUVmZmVjdCgoKSA9PiB7DQogICAgY29uc3QgaGFuZGxlciA9ICgpID0+IHsNCiAgICAgIHNldENvbG9yc1JlYWR5KGZhbHNlKTsNCiAgICAgIGZldGNoQ29sb3JzKCkuZmluYWxseSgoKSA9PiBzZXRDb2xvcnNSZWFkeSh0cnVlKSk7DQogICAgfTsNCiAgICB3aW5kb3cuYWRkRXZlbnRMaXN0ZW5lcigicGxheWVyLWNvbG9ycy11cGRhdGVkIiwgaGFuZGxlcik7DQogICAgcmV0dXJuICgpID0+IHdpbmRvdy5yZW1vdmVFdmVudExpc3RlbmVyKCJwbGF5ZXItY29sb3JzLXVwZGF0ZWQiLCBoYW5kbGVyKTsNCiAgfSwgW2ZldGNoQ29sb3JzXSk7DQoNCiAgLy8gQXBwbHkgQ1NTIGN1c3RvbSBwcm9wZXJ0aWVzDQogIHVzZUxheW91dEVmZmVjdCgoKSA9PiB7DQogICAgY29uc3Qgcm9vdCA9IGRvY3VtZW50LmRvY3VtZW50RWxlbWVudDsNCiAgICBjb25zdCBpbmhlcml0ZWRXYXRjaEFjY2VudCA9DQogICAgICBjb2xvcnMubGl2ZUFjY2VudCAmJiBjb2xvcnMubGl2ZUFjY2VudCAhPT0gZGVmYXVsdFBsYXllckNvbG9ycy5saXZlQWNjZW50DQogICAgICAgID8gY29sb3JzLmxpdmVBY2NlbnQNCiAgICAgICAgOiBjb2xvcnMuaG9tZUFjY2VudDsNCg0KICAgIGNvbnN0IHJlc29sdmVkV2F0Y2hUb3BCYXJBY2NlbnQgPQ0KICAgICAgY29sb3JzLndhdGNoVG9wQmFyQWNjZW50ICYmDQogICAgICBjb2xvcnMud2F0Y2hUb3BCYXJBY2NlbnQgIT09IGRlZmF1bHRQbGF5ZXJDb2xvcnMud2F0Y2hUb3BCYXJBY2NlbnQNCiAgICAgICAgPyBjb2xvcnMud2F0Y2hUb3BCYXJBY2NlbnQNCiAgICAgICAgOiBpbmhlcml0ZWRXYXRjaEFjY2VudDsNCg0KICAgIGNvbnN0IHJlc29sdmVkV2F0Y2hTY3J1YmJlciA9DQogICAgICBjb2xvcnMud2F0Y2hTY3J1YmJlciAmJiBjb2xvcnMud2F0Y2hTY3J1YmJlciAhPT0gZGVmYXVsdFBsYXllckNvbG9ycy53YXRjaFNjcnViYmVyDQogICAgICAgID8gY29sb3JzLndhdGNoU2NydWJiZXINCiAgICAgICAgOiBpbmhlcml0ZWRXYXRjaEFjY2VudDsNCg0KICAgIGNvbnN0IHJlc29sdmVkV2F0Y2hNdXNpY0FjY2VudCA9DQogICAgICBjb2xvcnMud2F0Y2hNdXNpY0FjY2VudCAmJg0KICAgICAgY29sb3JzLndhdGNoTXVzaWNBY2NlbnQgIT09IGRlZmF1bHRQbGF5ZXJDb2xvcnMud2F0Y2hNdXNpY0FjY2VudA0KICAgICAgICA/IGNvbG9ycy53YXRjaE11c2ljQWNjZW50DQogICAgICAgIDogaW5oZXJpdGVkV2F0Y2hBY2NlbnQ7DQoNCiAgICAvLyBNYXAgcGxheWVyIGNvbG9ycyB0byBDU1MgdmFyaWFibGVzDQogICAgLy8gRG8gbm90IHBhaW50IHRoZSBkZWZhdWx0IHN0YXRpb24gcmVkIHdoaWxlIHRoZSBzYXZlZCBicmFuZCBjb2xvciBpcw0KICAgIC8vIHN0aWxsIGxvYWRpbmcuIFRoaXMgYXZvaWRzIGEgcmVkIGZsYXNoIGJlaGluZCB0aGUgdXNlcidzIGNob3NlbiBjb2xvci4NCiAgICBjb25zdCBkb21pbmFudENvbG9yID0gY29sb3JzUmVhZHkgPyAoY29sb3JzLmRvbWluYW50Q29sb3IgfHwgY29sb3JzLmhvbWVBY2NlbnQpIDogIiMxMTEyMTQiOw0KICAgIGNvbnN0IGFjY2VudEhzbCA9IGhleFRvSHNsKGRvbWluYW50Q29sb3IpOw0KICAgIGNvbnN0IGFjY2VudEhvdmVySHNsID0gaGV4VG9Ic2woZG9taW5hbnRDb2xvcik7DQogICAgY29uc3QgYmdIc2wgPSBoZXhUb0hzbChjb2xvcnMuaG9tZUJnKTsNCiAgICBjb25zdCBmZ0hzbCA9IGhleFRvSHNsKGNvbG9ycy5ob21lVGV4dCk7DQoNCiAgICBpZiAoYmdIc2wpIHJvb3Quc3R5bGUuc2V0UHJvcGVydHkoIi0tcGxheWVyLWJnIiwgYmdIc2wpOw0KICAgIGlmIChmZ0hzbCkgcm9vdC5zdHlsZS5zZXRQcm9wZXJ0eSgiLS1wbGF5ZXItZm9yZWdyb3VuZCIsIGZnSHNsKTsNCiAgICBpZiAoYWNjZW50SHNsKSB7DQogICAgICByb290LnN0eWxlLnNldFByb3BlcnR5KCItLXBsYXllci1hY2NlbnQiLCBhY2NlbnRIc2wpOw0KICAgICAgcm9vdC5zdHlsZS5zZXRQcm9wZXJ0eSgiLS1wbGF5ZXItYWNjZW50LXNvZnQiLCBhY2NlbnRIc2wpOw0KICAgIH0NCiAgICAvLyBQcmVzZXJ2ZSB0aGUgZXhhY3Qgc2F2ZWQgYnJhbmQgY29sb3IgZm9yIHNjcmVlbnMgdGhhdCBuZWVkIGEgQ1NTIGNvbG9yDQogICAgLy8gdmFsdWUgKGluY2x1ZGluZyAvd2F0Y2gpOyBuZXZlciBmYWxsIGJhY2sgdG8gYSBoYXJkLWNvZGVkIHN0YXRpb24gcmVkLg0KICAgIHJvb3Quc3R5bGUuc2V0UHJvcGVydHkoIi0tcGxheWVyLWRvbWluYW50LWNvbG9yIiwgZG9taW5hbnRDb2xvcik7DQogICAgaWYgKGFjY2VudEhvdmVySHNsKSByb290LnN0eWxlLnNldFByb3BlcnR5KCItLXBsYXllci1hY2NlbnQtaG92ZXIiLCBhY2NlbnRIb3ZlckhzbCk7DQoNCiAgICAvLyBNdXRlZCBjb2xvcnMgZGVyaXZlZCBmcm9tIGZvcmVncm91bmQNCiAgICBjb25zdCBtdXRlZEhzbCA9IGhleFRvSHNsKGNvbG9ycy5ob21lQ2FyZFRleHQpOw0KICAgIGlmIChtdXRlZEhzbCkgcm9vdC5zdHlsZS5zZXRQcm9wZXJ0eSgiLS1wbGF5ZXItbXV0ZWQtZm9yZWdyb3VuZCIsIG11dGVkSHNsKTsNCg0KICAgIC8vIFN1cmZhY2UvY2FyZCBjb2xvcnMNCiAgICBjb25zdCBzdXJmYWNlSHNsID0gaGV4VG9Ic2woY29sb3JzLmhvbWVDYXJkQmcpOw0KICAgIGlmIChzdXJmYWNlSHNsKSByb290LnN0eWxlLnNldFByb3BlcnR5KCItLXBsYXllci1zdXJmYWNlIiwgc3VyZmFjZUhzbCk7DQoNCiAgICBjb25zdCBib3JkZXJIc2wgPSBoZXhUb0hzbChjb2xvcnMuaG9tZUNhcmRCb3JkZXIpOw0KICAgIGlmIChib3JkZXJIc2wpIHJvb3Quc3R5bGUuc2V0UHJvcGVydHkoIi0tcGxheWVyLWJvcmRlciIsIGJvcmRlckhzbCk7DQoNCiAgICAvLyBMb2FkaW5nIHNjcmVlbiBzcGVjaWZpYw0KICAgIHJvb3Quc3R5bGUuc2V0UHJvcGVydHkoIi0tcGxheWVyLWxvYWRpbmctYmciLCBjb2xvcnMubG9hZGluZ0JnKTsNCiAgICByb290LnN0eWxlLnNldFByb3BlcnR5KCItLXBsYXllci1sb2FkaW5nLXNwaW5uZXIiLCBjb2xvcnNSZWFkeSA/IGNvbG9ycy5sb2FkaW5nU3Bpbm5lciA6IGRvbWluYW50Q29sb3IpOw0KICAgIHJvb3Quc3R5bGUuc2V0UHJvcGVydHkoIi0tcGxheWVyLWxvYWRpbmctdGV4dCIsIGNvbG9ycy5sb2FkaW5nVGV4dCk7DQoNCiAgICAvLyBMb2dpbiBzY3JlZW4gc3BlY2lmaWMNCiAgICByb290LnN0eWxlLnNldFByb3BlcnR5KCItLXBsYXllci1sb2dpbi1iZyIsIGNvbG9ycy5sb2dpbkJnKTsNCiAgICByb290LnN0eWxlLnNldFByb3BlcnR5KCItLXBsYXllci1sb2dpbi1jYXJkLWJnIiwgY29sb3JzLmxvZ2luQ2FyZEJnKTsNCiAgICByb290LnN0eWxlLnNldFByb3BlcnR5KCItLXBsYXllci1sb2dpbi1idXR0b24tYmciLCBjb2xvcnNSZWFkeSA/IGNvbG9ycy5sb2dpbkJ1dHRvbkJnIDogZG9taW5hbnRDb2xvcik7DQogICAgcm9vdC5zdHlsZS5zZXRQcm9wZXJ0eSgiLS1wbGF5ZXItbG9naW4tYnV0dG9uLXRleHQiLCBjb2xvcnMubG9naW5CdXR0b25UZXh0KTsNCiAgICByb290LnN0eWxlLnNldFByb3BlcnR5KCItLXBsYXllci1sb2dpbi10ZXh0IiwgY29sb3JzLmxvZ2luVGV4dCk7DQogICAgcm9vdC5zdHlsZS5zZXRQcm9wZXJ0eSgiLS1wbGF5ZXItbG9naW4tc3VidGV4dCIsIGNvbG9ycy5sb2dpblN1YnRleHQpOw0KDQogICAgLy8gTGl2ZSBzY3JlZW4gc3BlY2lmaWMNCiAgICByb290LnN0eWxlLnNldFByb3BlcnR5KCItLXBsYXllci1saXZlLWFjY2VudCIsIGNvbG9yc1JlYWR5ID8gY29sb3JzLmxpdmVBY2NlbnQgOiBkb21pbmFudENvbG9yKTsNCiAgICByb290LnN0eWxlLnNldFByb3BlcnR5KCItLXBsYXllci1saXZlLWJhZGdlLWJnIiwgY29sb3JzUmVhZHkgPyBjb2xvcnMubGl2ZUJhZGdlQmcgOiBkb21pbmFudENvbG9yKTsNCiAgICByb290LnN0eWxlLnNldFByb3BlcnR5KCItLXBsYXllci1saXZlLWJhZGdlLXRleHQiLCBjb2xvcnMubGl2ZUJhZGdlVGV4dCk7DQogICAgcm9vdC5zdHlsZS5zZXRQcm9wZXJ0eSgiLS1wbGF5ZXItbGl2ZS1jb250cm9sLWJnIiwgY29sb3JzLmxpdmVDb250cm9sQmcpOw0KICAgIHJvb3Quc3R5bGUuc2V0UHJvcGVydHkoIi0tcGxheWVyLWxpdmUtY29udHJvbC10ZXh0IiwgY29sb3JzLmxpdmVDb250cm9sVGV4dCk7DQoNCiAgICAvLyBBdWRpbyBjaGFubmVsIHNldHRpbmdzDQogICAgcm9vdC5zdHlsZS5zZXRQcm9wZXJ0eSgiLS1wbGF5ZXItbGl2ZS1hdWRpby1iZy1tb2RlIiwgY29sb3JzLmxpdmVBdWRpb0JnTW9kZSB8fCAiY292ZXIiKTsNCiAgICByb290LnN0eWxlLnNldFByb3BlcnR5KCItLXBsYXllci1zcGVjdHJ1bS1jb2xvciIsIGNvbG9yc1JlYWR5ID8gKGNvbG9ycy5zcGVjdHJ1bUNvbG9yIHx8IGRvbWluYW50Q29sb3IpIDogZG9taW5hbnRDb2xvcik7DQoNCiAgICAvLyBBdWRpbyBncmFkaWVudCBzZXR0aW5ncw0KICAgIHJvb3Quc3R5bGUuc2V0UHJvcGVydHkoIi0tcGxheWVyLWF1ZGlvLWdyYWRpZW50LWNvbG9yMSIsIFN0cmluZyhjb2xvcnNSZWFkeSA/IChjb2xvcnMubGl2ZUF1ZGlvR3JhZGllbnRDb2xvcjEgfHwgZG9taW5hbnRDb2xvcikgOiBkb21pbmFudENvbG9yKSk7DQogICAgcm9vdC5zdHlsZS5zZXRQcm9wZXJ0eSgiLS1wbGF5ZXItYXVkaW8tZ3JhZGllbnQtY29sb3IyIiwgU3RyaW5nKGNvbG9ycy5saXZlQXVkaW9HcmFkaWVudENvbG9yMiB8fCAiIzAwMDAwMCIpKTsNCiAgICByb290LnN0eWxlLnNldFByb3BlcnR5KCItLXBsYXllci1hdWRpby1ncmFkaWVudC10eXBlIiwgU3RyaW5nKGNvbG9ycy5saXZlQXVkaW9HcmFkaWVudFR5cGUgfHwgInJhZGlhbCIpKTsNCiAgICByb290LnN0eWxlLnNldFByb3BlcnR5KCItLXBsYXllci1hdWRpby1ncmFkaWVudC1wb3NpdGlvbiIsIFN0cmluZyhjb2xvcnMubGl2ZUF1ZGlvR3JhZGllbnRQb3NpdGlvbiB8fCAiYm90dG9tIikpOw0KICAgIHJvb3Quc3R5bGUuc2V0UHJvcGVydHkoIi0tcGxheWVyLWF1ZGlvLWdyYWRpZW50LWFuZ2xlIiwgU3RyaW5nKGNvbG9ycy5saXZlQXVkaW9HcmFkaWVudEFuZ2xlID8/IDEzNSkpOw0KICAgIHJvb3Quc3R5bGUuc2V0UHJvcGVydHkoIi0tcGxheWVyLWF1ZGlvLWdyYWRpZW50LW1pZHBvaW50IiwgU3RyaW5nKGNvbG9ycy5saXZlQXVkaW9HcmFkaWVudE1pZHBvaW50ID8/IDYyKSk7DQoNCiAgICAvLyBXYXRjaCBjb250cm9scw0KICAgIHJvb3Quc3R5bGUuc2V0UHJvcGVydHkoIi0tcGxheWVyLXdhdGNoLXRvcGJhci1iZyIsIGNvbG9ycy53YXRjaFRvcEJhckJnIHx8ICIjMDAwMDAwY2MiKTsNCiAgICByb290LnN0eWxlLnNldFByb3BlcnR5KCItLXBsYXllci13YXRjaC10b3BiYXItdGV4dCIsIGNvbG9ycy53YXRjaFRvcEJhclRleHQgfHwgIiNmZmZmZmYiKTsNCiAgICByb290LnN0eWxlLnNldFByb3BlcnR5KCItLXBsYXllci13YXRjaC10b3BiYXItYWNjZW50IiwgY29sb3JzUmVhZHkgPyByZXNvbHZlZFdhdGNoVG9wQmFyQWNjZW50IDogZG9taW5hbnRDb2xvcik7DQogICAgcm9vdC5zdHlsZS5zZXRQcm9wZXJ0eSgiLS1wbGF5ZXItd2F0Y2gtYm90dG9tYmFyLWJnIiwgY29sb3JzLndhdGNoQm90dG9tQmFyQmcgfHwgIiMwMDAwMDBjYyIpOw0KICAgIHJvb3Quc3R5bGUuc2V0UHJvcGVydHkoIi0tcGxheWVyLXdhdGNoLWJvdHRvbWJhci10ZXh0IiwgY29sb3JzLndhdGNoQm90dG9tQmFyVGV4dCB8fCAiI2ZmZmZmZiIpOw0KICAgIHJvb3Quc3R5bGUuc2V0UHJvcGVydHkoIi0tcGxheWVyLXdhdGNoLXNjcnViYmVyIiwgY29sb3JzUmVhZHkgPyByZXNvbHZlZFdhdGNoU2NydWJiZXIgOiBkb21pbmFudENvbG9yKTsNCiAgICByb290LnN0eWxlLnNldFByb3BlcnR5KCItLXBsYXllci13YXRjaC1tdXNpYy1iZyIsIGNvbG9ycy53YXRjaE11c2ljQmcgfHwgIiMwMDAwMDBlZSIpOw0KICAgIHJvb3Quc3R5bGUuc2V0UHJvcGVydHkoIi0tcGxheWVyLXdhdGNoLW11c2ljLXRleHQiLCBjb2xvcnMud2F0Y2hNdXNpY1RleHQgfHwgIiNmZmZmZmYiKTsNCiAgICByb290LnN0eWxlLnNldFByb3BlcnR5KCItLXBsYXllci13YXRjaC1tdXNpYy10aXRsZS1jb2xvciIsIGNvbG9ycy53YXRjaE11c2ljVGl0bGVDb2xvciB8fCBjb2xvcnMud2F0Y2hNdXNpY1RleHQgfHwgIiNmZmZmZmYiKTsNCiAgICByb290LnN0eWxlLnNldFByb3BlcnR5KCItLXBsYXllci13YXRjaC1tdXNpYy1hcnRpc3QtY29sb3IiLCBjb2xvcnMud2F0Y2hNdXNpY0FydGlzdENvbG9yIHx8ICJjb2xvci1taXgoaW4gc3JnYiwgIiArIChjb2xvcnMud2F0Y2hNdXNpY1RleHQgfHwgIiNmZmZmZmYiKSArICIgODUlLCB0cmFuc3BhcmVudCkiKTsNCiAgICByb290LnN0eWxlLnNldFByb3BlcnR5KCItLXBsYXllci13YXRjaC1tdXNpYy1hY2NlbnQiLCBjb2xvcnNSZWFkeSA/IHJlc29sdmVkV2F0Y2hNdXNpY0FjY2VudCA6IGRvbWluYW50Q29sb3IpOw0KDQogICAgLy8gR2xvdyBncmFkaWVudCBmcm9tIGFjY2VudCArIGJnDQogICAgY29uc3QgZ2xvd0dyYWRpZW50ID0gYHJhZGlhbC1ncmFkaWVudChlbGxpcHNlIGF0IDUwJSAxMDAlLCAke2RvbWluYW50Q29sb3J9NTUgMCUsICR7Y29sb3JzLmhvbWVCZ30gNTAlLCAke2NvbG9ycy5ob21lQmd9IDEwMCUpYDsNCiAgICByb290LnN0eWxlLnNldFByb3BlcnR5KCItLXBsYXllci1nbG93IiwgZ2xvd0dyYWRpZW50KTsNCiAgICByb290LnN0eWxlLnNldFByb3BlcnR5KCItLXBsYXllci1nbG93LWNvcm5lciIsIGdsb3dHcmFkaWVudCk7DQoNCiAgICAvLyBTdG9yZSBiZyBjb25maWdzIGFzIENTUyB2YXJzIGZvciBzY3JlZW5zIHRoYXQgYnVpbGQgYmFja2dyb3VuZHMNCiAgICBjb25zdCBsb2FkaW5nQmdTdHlsZSA9IGJ1aWxkQmdTdHlsZShjb2xvcnMubG9hZGluZ0JnLCBiZ0NvbmZpZ3MubG9hZGluZyk7DQogICAgaWYgKGxvYWRpbmdCZ1N0eWxlLmJhY2tncm91bmQpIHJvb3Quc3R5bGUuc2V0UHJvcGVydHkoIi0tcGxheWVyLWxvYWRpbmctYmFja2dyb3VuZCIsIGxvYWRpbmdCZ1N0eWxlLmJhY2tncm91bmQgYXMgc3RyaW5nKTsNCiAgICBlbHNlIGlmIChsb2FkaW5nQmdTdHlsZS5iYWNrZ3JvdW5kQ29sb3IpIHJvb3Quc3R5bGUuc2V0UHJvcGVydHkoIi0tcGxheWVyLWxvYWRpbmctYmFja2dyb3VuZCIsIGxvYWRpbmdCZ1N0eWxlLmJhY2tncm91bmRDb2xvciBhcyBzdHJpbmcpOw0KDQogIH0sIFtjb2xvcnMsIGJnQ29uZmlncywgY29sb3JzUmVhZHldKTsNCg0KICByZXR1cm4geyBjb2xvcnMsIGJnQ29uZmlncyB9Ow0KfQ0K
+import { useEffect, useLayoutEffect, useState, useCallback } from "react";
+import { playerSupabase } from "@/integrations/supabase/playerClient";
+import { usePlayerAuth } from "@/hooks/usePlayerAuth";
+import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
+import { defaultPlayerColors, resolvePlayerColors, type PlayerColors, type ScreenBgConfig, buildBgStyle, defaultScreenBg } from "@/components/PlayerLayoutCustomizer";
+
+type ScreenTab = "loading" | "login" | "home" | "live" | "catalog";
+type ScreenBgConfigs = Record<ScreenTab, ScreenBgConfig>;
+
+const defaultBgConfigs: ScreenBgConfigs = {
+  loading: { ...defaultScreenBg },
+  login: { ...defaultScreenBg },
+  home: { ...defaultScreenBg },
+  live: { ...defaultScreenBg },
+  catalog: { ...defaultScreenBg },
+};
+
+/** Convert hex color to HSL string "H S% L%" for CSS custom properties */
+function hexToHsl(hex: string): string | null {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) return null;
+  let r = parseInt(result[1], 16) / 255;
+  let g = parseInt(result[2], 16) / 255;
+  let b = parseInt(result[3], 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0, l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+  const H = Math.round(h * 360);
+  const S = Math.round(s * 100);
+  const L = Math.round(l * 100);
+  return `${H} ${S}% ${L}%`;
+}
+
+/**
+ * Loads saved player colors + bg configs from user_settings.dashboard_items
+ * and applies them as CSS custom properties on :root so all player screens pick them up.
+ */
+export function usePlayerColors(externalUserId?: string | null, publicSlug?: string | null) {
+  const { user } = usePlayerAuth();
+  const [colors, setColors] = useState<PlayerColors>(defaultPlayerColors);
+  const [bgConfigs, setBgConfigs] = useState<ScreenBgConfigs>(defaultBgConfigs);
+  const [colorsReady, setColorsReady] = useState(false);
+
+  // If an explicit externalUserId is provided (public/slug mode), it takes priority
+  // over the logged-in user to prevent cross-user color contamination.
+  const acc = (user?.id && findClientAccountById(user.id)) || (user?.email && findClientAccountByEmail(user.email));
+  const rawTargetId = externalUserId || acc?.parentUserId || acc?.id || user?.id || null;
+  const effectiveUserId = rawTargetId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawTargetId) ? rawTargetId : null;
+
+  const fetchColors = useCallback(async () => {
+    if (publicSlug) {
+      const { data, error } = await playerSupabase.functions.invoke("public-player-data", {
+        body: { slug: publicSlug },
+      });
+      if (!error && data && !data.error) {
+        let receivedPlayerConfig = false;
+        if (data.playerColors && typeof data.playerColors === "object") {
+          setColors(resolvePlayerColors(data.playerColors));
+          receivedPlayerConfig = true;
+        }
+        if (data.playerBgConfigs && typeof data.playerBgConfigs === "object") {
+          setBgConfigs({ ...defaultBgConfigs, ...data.playerBgConfigs });
+          receivedPlayerConfig = true;
+        }
+        // Older deployed versions of public-player-data omit these fields.
+        // In that case, keep going so an authenticated/local fallback can load them.
+        if (receivedPlayerConfig || !effectiveUserId) return;
+      }
+    }
+
+    if (!effectiveUserId) return;
+
+    const { data } = await playerSupabase
+      .from("user_settings")
+      .select("dashboard_items")
+      .eq("user_id", effectiveUserId)
+      .maybeSingle();
+
+    if (data?.dashboard_items && typeof data.dashboard_items === "object") {
+      const di = data.dashboard_items as any;
+      if (di.player_colors) {
+        setColors(resolvePlayerColors(di.player_colors));
+      }
+      if (di.player_bg_configs) {
+        setBgConfigs({ ...defaultBgConfigs, ...di.player_bg_configs });
+      }
+    }
+  }, [effectiveUserId, publicSlug]);
+
+  useEffect(() => {
+    let active = true;
+    setColorsReady(false);
+    fetchColors().finally(() => {
+      if (active) setColorsReady(true);
+    });
+    return () => { active = false; };
+  }, [fetchColors]);
+
+  useEffect(() => {
+    const handler = () => {
+      setColorsReady(false);
+      fetchColors().finally(() => setColorsReady(true));
+    };
+    window.addEventListener("player-colors-updated", handler);
+    return () => window.removeEventListener("player-colors-updated", handler);
+  }, [fetchColors]);
+
+  // Apply CSS custom properties
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    const inheritedWatchAccent =
+      colors.liveAccent && colors.liveAccent !== defaultPlayerColors.liveAccent
+        ? colors.liveAccent
+        : colors.homeAccent;
+
+    const resolvedWatchTopBarAccent =
+      colors.watchTopBarAccent &&
+      colors.watchTopBarAccent !== defaultPlayerColors.watchTopBarAccent
+        ? colors.watchTopBarAccent
+        : inheritedWatchAccent;
+
+    const resolvedWatchScrubber =
+      colors.watchScrubber && colors.watchScrubber !== defaultPlayerColors.watchScrubber
+        ? colors.watchScrubber
+        : inheritedWatchAccent;
+
+    const resolvedWatchMusicAccent =
+      colors.watchMusicAccent &&
+      colors.watchMusicAccent !== defaultPlayerColors.watchMusicAccent
+        ? colors.watchMusicAccent
+        : inheritedWatchAccent;
+
+    // Map player colors to CSS variables
+    // Do not paint the default station red while the saved brand color is
+    // still loading. This avoids a red flash behind the user's chosen color.
+    const dominantColor = colorsReady ? (colors.dominantColor || colors.homeAccent) : "#111214";
+    const accentHsl = hexToHsl(dominantColor);
+    const accentHoverHsl = hexToHsl(dominantColor);
+    const bgHsl = hexToHsl(colors.homeBg);
+    const fgHsl = hexToHsl(colors.homeText);
+
+    if (bgHsl) root.style.setProperty("--player-bg", bgHsl);
+    if (fgHsl) root.style.setProperty("--player-foreground", fgHsl);
+    if (accentHsl) {
+      root.style.setProperty("--player-accent", accentHsl);
+      root.style.setProperty("--player-accent-soft", accentHsl);
+    }
+    // Preserve the exact saved brand color for screens that need a CSS color
+    // value (including /watch); never fall back to a hard-coded station red.
+    root.style.setProperty("--player-dominant-color", dominantColor);
+    if (accentHoverHsl) root.style.setProperty("--player-accent-hover", accentHoverHsl);
+
+    // Muted colors derived from foreground
+    const mutedHsl = hexToHsl(colors.homeCardText);
+    if (mutedHsl) root.style.setProperty("--player-muted-foreground", mutedHsl);
+
+    // Surface/card colors
+    const surfaceHsl = hexToHsl(colors.homeCardBg);
+    if (surfaceHsl) root.style.setProperty("--player-surface", surfaceHsl);
+
+    const borderHsl = hexToHsl(colors.homeCardBorder);
+    if (borderHsl) root.style.setProperty("--player-border", borderHsl);
+
+    // Loading screen specific
+    root.style.setProperty("--player-loading-bg", colors.loadingBg);
+    root.style.setProperty("--player-loading-spinner", colorsReady ? colors.loadingSpinner : dominantColor);
+    root.style.setProperty("--player-loading-text", colors.loadingText);
+
+    // Login screen specific
+    root.style.setProperty("--player-login-bg", colors.loginBg);
+    root.style.setProperty("--player-login-card-bg", colors.loginCardBg);
+    root.style.setProperty("--player-login-button-bg", colorsReady ? colors.loginButtonBg : dominantColor);
+    root.style.setProperty("--player-login-button-text", colors.loginButtonText);
+    root.style.setProperty("--player-login-text", colors.loginText);
+    root.style.setProperty("--player-login-subtext", colors.loginSubtext);
+
+    // Live screen specific
+    root.style.setProperty("--player-live-accent", colorsReady ? colors.liveAccent : dominantColor);
+    root.style.setProperty("--player-live-badge-bg", colorsReady ? colors.liveBadgeBg : dominantColor);
+    root.style.setProperty("--player-live-badge-text", colors.liveBadgeText);
+    root.style.setProperty("--player-live-control-bg", colors.liveControlBg);
+    root.style.setProperty("--player-live-control-text", colors.liveControlText);
+
+    // Audio channel settings
+    root.style.setProperty("--player-live-audio-bg-mode", colors.liveAudioBgMode || "cover");
+    root.style.setProperty("--player-spectrum-color", colorsReady ? (colors.spectrumColor || dominantColor) : dominantColor);
+
+    // Audio gradient settings
+    root.style.setProperty("--player-audio-gradient-color1", String(colorsReady ? (colors.liveAudioGradientColor1 || dominantColor) : dominantColor));
+    root.style.setProperty("--player-audio-gradient-color2", String(colors.liveAudioGradientColor2 || "#000000"));
+    root.style.setProperty("--player-audio-gradient-type", String(colors.liveAudioGradientType || "radial"));
+    root.style.setProperty("--player-audio-gradient-position", String(colors.liveAudioGradientPosition || "bottom"));
+    root.style.setProperty("--player-audio-gradient-angle", String(colors.liveAudioGradientAngle ?? 135));
+    root.style.setProperty("--player-audio-gradient-midpoint", String(colors.liveAudioGradientMidpoint ?? 62));
+
+    // Watch controls
+    root.style.setProperty("--player-watch-topbar-bg", colors.watchTopBarBg || "#000000cc");
+    root.style.setProperty("--player-watch-topbar-text", colors.watchTopBarText || "#ffffff");
+    root.style.setProperty("--player-watch-topbar-accent", colorsReady ? resolvedWatchTopBarAccent : dominantColor);
+    root.style.setProperty("--player-watch-bottombar-bg", colors.watchBottomBarBg || "#000000cc");
+    root.style.setProperty("--player-watch-bottombar-text", colors.watchBottomBarText || "#ffffff");
+    root.style.setProperty("--player-watch-scrubber", colorsReady ? resolvedWatchScrubber : dominantColor);
+    root.style.setProperty("--player-watch-music-bg", colors.watchMusicBg || "#000000ee");
+    root.style.setProperty("--player-watch-music-text", colors.watchMusicText || "#ffffff");
+    root.style.setProperty("--player-watch-music-title-color", colors.watchMusicTitleColor || colors.watchMusicText || "#ffffff");
+    root.style.setProperty("--player-watch-music-artist-color", colors.watchMusicArtistColor || "color-mix(in srgb, " + (colors.watchMusicText || "#ffffff") + " 85%, transparent)");
+    root.style.setProperty("--player-watch-music-accent", colorsReady ? resolvedWatchMusicAccent : dominantColor);
+
+    // Glow gradient from accent + bg
+    const glowGradient = `radial-gradient(ellipse at 50% 100%, ${dominantColor}55 0%, ${colors.homeBg} 50%, ${colors.homeBg} 100%)`;
+    root.style.setProperty("--player-glow", glowGradient);
+    root.style.setProperty("--player-glow-corner", glowGradient);
+
+    // Store bg configs as CSS vars for screens that build backgrounds
+    const loadingBgStyle = buildBgStyle(colors.loadingBg, bgConfigs.loading);
+    if (loadingBgStyle.background) root.style.setProperty("--player-loading-background", loadingBgStyle.background as string);
+    else if (loadingBgStyle.backgroundColor) root.style.setProperty("--player-loading-background", loadingBgStyle.backgroundColor as string);
+
+  }, [colors, bgConfigs, colorsReady]);
+
+  return { colors, bgConfigs };
+}

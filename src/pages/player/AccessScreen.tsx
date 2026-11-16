@@ -1,1 +1,76 @@
-aW1wb3J0IHsgdXNlU3RhdGUgfSBmcm9tICJyZWFjdCI7DQppbXBvcnQgeyBzdGFydFBsYXllckdvb2dsZUxvZ2luIH0gZnJvbSAiQC9saWIvcGxheWVyR29vZ2xlTG9naW4iOw0KaW1wb3J0IEVsZWdhbnRMb2FkZXIgZnJvbSAiQC9jb21wb25lbnRzL3BsYXllci9FbGVnYW50TG9hZGVyIjsNCmltcG9ydCBQbGF5ZXJCcmFuZENvcm5lciBmcm9tICJAL2NvbXBvbmVudHMvcGxheWVyL1BsYXllckJyYW5kQ29ybmVyIjsNCmltcG9ydCB7IHRvYXN0IH0gZnJvbSAic29ubmVyIjsNCmltcG9ydCB7IG1hcmtQbGF5ZXJTZXNzaW9uIH0gZnJvbSAiQC9saWIvcGxheWVyU2Vzc2lvbiI7DQoNCmludGVyZmFjZSBBY2Nlc3NTY3JlZW5Qcm9wcyB7DQogIGxvZ29Vcmw/OiBzdHJpbmcgfCBudWxsOw0KICBiYWNrZ3JvdW5kVXJsPzogc3RyaW5nIHwgbnVsbDsNCiAgbXVzaWM/OiB7IHRpdGxlPzogc3RyaW5nOyBhcnRpc3Q/OiBzdHJpbmc7IGNvdmVyPzogc3RyaW5nIHwgbnVsbCB9IHwgbnVsbDsNCiAgcmFkaW9Vc2VySWQ/OiBzdHJpbmcgfCBudWxsOw0KICBvbkxvZ2luU3VjY2VzczogKCkgPT4gdm9pZDsNCn0NCg0KZXhwb3J0IGRlZmF1bHQgZnVuY3Rpb24gQWNjZXNzU2NyZWVuKHsgbG9nb1VybCwgYmFja2dyb3VuZFVybCwgbXVzaWMsIHJhZGlvVXNlcklkLCBvbkxvZ2luU3VjY2VzcyB9OiBBY2Nlc3NTY3JlZW5Qcm9wcykgew0KICBjb25zdCBbbG9hZGluZywgc2V0TG9hZGluZ10gPSB1c2VTdGF0ZShmYWxzZSk7DQoNCiAgY29uc3QgaGFuZGxlR29vZ2xlQXV0aCA9IGFzeW5jICgpID0+IHsNCiAgICBzZXRMb2FkaW5nKHRydWUpOw0KICAgIHRyeSB7DQogICAgICBjb25zdCB1c2VySWQgPSBhd2FpdCBzdGFydFBsYXllckdvb2dsZUxvZ2luKCk7DQogICAgICBtYXJrUGxheWVyU2Vzc2lvbih1c2VySWQpOw0KICAgICAgb25Mb2dpblN1Y2Nlc3MoKTsNCiAgICB9IGNhdGNoIChlcnIpIHsNCiAgICAgIHRvYXN0LmVycm9yKFN0cmluZygoZXJyIGFzIGFueSk/Lm1lc3NhZ2UgfHwgZXJyKSk7DQogICAgfSBmaW5hbGx5IHsNCiAgICAgIHNldExvYWRpbmcoZmFsc2UpOw0KICAgIH0NCiAgfTsNCg0KICByZXR1cm4gKA0KICAgIDxtYWluIGNsYXNzTmFtZT0iZml4ZWQgaW5zZXQtMCB6LTUwIG92ZXJmbG93LWhpZGRlbiBiZy1ibGFjayB0ZXh0LXdoaXRlIGFudGlhbGlhc2VkIj4NCiAgICAgIDxzdHlsZT57IkBrZXlmcmFtZXMgcGxheWVyLWxvZ2luLXBhbiB7IDAlLDEwMCUgeyB0cmFuc2Zvcm06IHNjYWxlKDEuMDYpIHRyYW5zbGF0ZVgoLTEuNSUpIH0gNTAlIHsgdHJhbnNmb3JtOiBzY2FsZSgxLjA2KSB0cmFuc2xhdGVYKDEuNSUpIH0gfSAucGxheWVyLWxvZ2luLWJnIHsgdHJhbnNmb3JtLW9yaWdpbjogY2VudGVyIHRvcDsgYW5pbWF0aW9uOiBwbGF5ZXItbG9naW4tcGFuIDI4cyBlYXNlLWluLW91dCBpbmZpbml0ZTsgd2lsbC1jaGFuZ2U6IHRyYW5zZm9ybTsgfSBAbWVkaWEgKHByZWZlcnMtcmVkdWNlZC1tb3Rpb246IHJlZHVjZSkgeyAucGxheWVyLWxvZ2luLWJnIHsgYW5pbWF0aW9uOiBub25lOyB0cmFuc2Zvcm06IG5vbmU7IH0gfSJ9PC9zdHlsZT4NCiAgICAgIDxkaXYgY2xhc3NOYW1lPSJhYnNvbHV0ZSBpbnNldC0wIG92ZXJmbG93LWhpZGRlbiBiZy1ibGFjayI+DQogICAgICAgIHtiYWNrZ3JvdW5kVXJsICYmIDxpbWcgc3JjPXtiYWNrZ3JvdW5kVXJsfSBhbHQ9IiIgY2xhc3NOYW1lPSJwbGF5ZXItbG9naW4tYmcgYWJzb2x1dGUgaW5zZXQtMCBoLWZ1bGwgdy1mdWxsIG9iamVjdC1jb3ZlciBvYmplY3QtdG9wIiAvPn0NCiAgICAgICAgPGRpdiBjbGFzc05hbWU9ImFic29sdXRlIGluc2V0LTAgYmctYmxhY2svNDUiIC8+DQogICAgICAgIDxkaXYgY2xhc3NOYW1lPSJhYnNvbHV0ZSBpbnNldC0wIGJnLWdyYWRpZW50LXRvLXQgZnJvbS1ibGFjay81NSB2aWEtdHJhbnNwYXJlbnQgdG8tYmxhY2svMjUiIC8+DQogICAgICA8L2Rpdj4NCiAgICAgIDxidXR0b24NCiAgICAgICAgdHlwZT0iYnV0dG9uIg0KICAgICAgICBvbkNsaWNrPXtoYW5kbGVHb29nbGVBdXRofQ0KICAgICAgICBkaXNhYmxlZD17bG9hZGluZ30NCiAgICAgICAgY2xhc3NOYW1lPSJhYnNvbHV0ZSBsZWZ0LVs2dnddIHRvcC1bNHZoXSB6LTEwIGZsZXggaC1bY2xhbXAoNDhweCw1LjV2aCw2MnB4KV0gdy1bbWluKDMyMHB4LDg0dncpXSBpdGVtcy1jZW50ZXIganVzdGlmeS1iZXR3ZWVuIGdhcC0zIHJvdW5kZWQtZnVsbCBweC01IHNtOnB4LTYgdGV4dC13aGl0ZSB0cmFuc2l0aW9uLWFsbCBob3ZlcjpiZy13aGl0ZS8yMCBob3ZlcjpzY2FsZS1bMS4wMl0gZGlzYWJsZWQ6b3BhY2l0eS03MCINCiAgICAgICAgc3R5bGU9e3sNCiAgICAgICAgICBiYWNrZ3JvdW5kOiAicmdiYSgyNTUsMjU1LDI1NSwwLjEzKSIsDQogICAgICAgICAgYm9yZGVyOiAiMXB4IHNvbGlkIHJnYmEoMjU1LDI1NSwyNTUsMC4yNCkiLA0KICAgICAgICAgIGJhY2tkcm9wRmlsdGVyOiAiYmx1cigyMnB4KSBzYXR1cmF0ZSgxNDUlKSIsDQogICAgICAgICAgV2Via2l0QmFja2Ryb3BGaWx0ZXI6ICJibHVyKDIycHgpIHNhdHVyYXRlKDE0NSUpIiwNCiAgICAgICAgICBib3hTaGFkb3c6ICIwIDEycHggMzZweCByZ2JhKDAsMCwwLDAuMjgpLCBpbnNldCAwIDFweCAwIHJnYmEoMjU1LDI1NSwyNTUsMC4xNikiLA0KICAgICAgICB9fQ0KICAgICAgPg0KICAgICAgICA8c3BhbiBjbGFzc05hbWU9InRleHQtbGVmdCB0ZXh0LVtjbGFtcCgxMnB4LDAuOXZ3LDE2cHgpXSBsZWFkaW5nLXNudWciPjxzdHJvbmc+ZmEmY2NlZGlsO2EgbG9naW48L3N0cm9uZz4gY29tIHN1YSBjb250YSBkbyBHb29nbGU8L3NwYW4+DQogICAgICAgIDxzdmcgYXJpYS1oaWRkZW49InRydWUiIGNsYXNzTmFtZT0iaC02IHctNiBzaHJpbmstMCIgdmlld0JveD0iMCAwIDQ4IDQ4Ij4NCiAgICAgICAgICA8cGF0aCBmaWxsPSIjRkZDMTA3IiBkPSJNNDMuNiAyMC41SDQyVjIwSDI0djhoMTEuM0MzMy43IDMyLjQgMjkuMyAzNS41IDI0IDM1LjVjLTYuNCAwLTExLjUtNS4xLTExLjUtMTEuNVMxNy42IDEyLjUgMjQgMTIuNWMyLjkgMCA1LjYgMS4xIDcuNiAyLjlsNS43LTUuN0MzMy43IDQuNSAyOS4xIDQuNSAyNCA0LjUgMTMuMiA0LjUgNC41IDEzLjIgNC41IDI0UzEzLjIgNDMuNSAyNCA0My41YzEwLjggMCAxOS41LTguNyAxOS41LTE5LjUgMC0xLjItLjEtMi4zLS40LTMuNXoiIC8+DQogICAgICAgICAgPHBhdGggZmlsbD0iI0ZGM0QwMCIgZD0iTTYuMyAxNC4xbDYuNiA0LjhDMTQuNyAxNS4xIDE5IDEyLjUgMjQgMTIuNWMyLjkgMCA1LjYgMS4xIDcuNiAyLjlsNS43LTUuN0MzMy43IDQuNSAyOS4xIDQuNSAyNCA0LjUgMTYuMyA0LjUgOS43IDguOSA2LjMgMTQuMXoiIC8+DQogICAgICAgICAgPHBhdGggZmlsbD0iIzRDQUY1MCIgZD0iTTI0IDQzLjVjNS4xIDAgOS43LTEuOSAxMy4yLTVsLTYuMS01Yy0yIDEuNC00LjQgMi4zLTcuMSAyLjMtNS4zIDAtOS43LTMuMS0xMS4zLTcuNWwtNi41IDVDOS42IDM5IDE2LjIgNDMuNSAyNCA0My41eiIgLz4NCiAgICAgICAgICA8cGF0aCBmaWxsPSIjMTk3NkQyIiBkPSJNNDMuNiAyMC41SDQyVjIwSDI0djhoMTEuM2MtLjggMi4yLTIuMiA0LjEtNC4xIDUuNWw2LjEgNUM0MS43IDM0LjkgNDMuNSAzMCA0My41IDI0YzAtMS4yLS4xLTIuMy0uNC0zLjV6IiAvPg0KICAgICAgICA8L3N2Zz4NCiAgICAgIDwvYnV0dG9uPg0KICAgICAgPFBsYXllckJyYW5kQ29ybmVyIHJhZGlvVXNlcklkPXtyYWRpb1VzZXJJZH0gbG9nb1VybD17bG9nb1VybH0gbG9nb0FsdD0iTG9nbyBkYSByw6FkaW8iIGNsYXNzTmFtZT0iYWJzb2x1dGUgcmlnaHQtWzQuNXZ3XSB0b3AtWzN2aF0gei0xMCIgLz4NCiAgICAgIHsobXVzaWM/LnRpdGxlIHx8IG11c2ljPy5hcnRpc3QgfHwgbXVzaWM/LmNvdmVyKSAmJiA8ZGl2IGNsYXNzTmFtZT0iYWJzb2x1dGUgYm90dG9tLVsxNS42dmhdIGxlZnQtWzZ2d10gei0xMCBmbGV4IG1heC13LVs1NXZ3XSBpdGVtcy1jZW50ZXIgZ2FwLTUgdGV4dC13aGl0ZSBkcm9wLXNoYWRvdy1sZyI+DQogICAgICAgIHttdXNpYy5jb3ZlciAmJiA8aW1nIHNyYz17bXVzaWMuY292ZXJ9IGFsdD0iQ2FwYSBkYSBtJnVhY3V0ZTtzaWNhIiBjbGFzc05hbWU9ImgtW21pbigxNXZoLDE2MHB4KV0gdy1bbWluKDE1dmgsMTYwcHgpXSBzaHJpbmstMCByb3VuZGVkLVsyNHB4XSBvYmplY3QtY292ZXIgc2hhZG93LXhsIiAvPn0NCiAgICAgICAgPGRpdiBjbGFzc05hbWU9Im1pbi13LTAiPjxkaXYgY2xhc3NOYW1lPSJ0ZXh0LVtjbGFtcCgyMHB4LDEuNnZ3LDMycHgpXSBsZWFkaW5nLXRpZ2h0Ij50b2NhbmRvIGFnb3JhOjwvZGl2PnttdXNpYy50aXRsZSAmJiA8ZGl2IGNsYXNzTmFtZT0ibXQtMSB0cnVuY2F0ZSB0ZXh0LVtjbGFtcCgyMXB4LDEuN3Z3LDM0cHgpXSBmb250LWJvbGQgbGVhZGluZy10aWdodCI+e211c2ljLnRpdGxlfTwvZGl2Pn17bXVzaWMuYXJ0aXN0ICYmIDxkaXYgY2xhc3NOYW1lPSJ0cnVuY2F0ZSB0ZXh0LVtjbGFtcCgxOXB4LDEuNXZ3LDMwcHgpXSBsZWFkaW5nLXRpZ2h0Ij57bXVzaWMuYXJ0aXN0fTwvZGl2Pn08L2Rpdj4NCiAgICAgIDwvZGl2Pn0NCiAgICAgIDxpbWcNCiAgICAgICAgc3JjPSIvaW1hZ2VzL3BsYXllci1vdHQtc2VhbC13aGl0ZS5wbmciDQogICAgICAgIGFsdD0iTmV4byBPVFQgUGxheWVyIg0KICAgICAgICBjbGFzc05hbWU9ImFic29sdXRlIGJvdHRvbS1bOHZoXSBsZWZ0LVs2dnddIHotMTAgaC1hdXRvIHctW2NsYW1wKDgycHgsOHZ3LDExMHB4KV0gb2JqZWN0LWNvbnRhaW4gb3BhY2l0eS03NSBkcm9wLXNoYWRvdy1sZyINCiAgICAgICAgZHJhZ2dhYmxlPXtmYWxzZX0NCiAgICAgIC8+DQogICAgICA8ZGl2IGNsYXNzTmFtZT0iYWJzb2x1dGUgYm90dG9tLVs3dmhdIHJpZ2h0LVs0LjV2d10gei0xMCB0ZXh0LXJpZ2h0IHRleHQtW2NsYW1wKDEycHgsMXZ3LDIwcHgpXSB0ZXh0LXdoaXRlIGRyb3Atc2hhZG93LWxnIj5kZXNlbnZvbHZpZG8gcG9yIDogTmV4byBCcmFzaWw8L2Rpdj4NCiAgICAgIHtsb2FkaW5nICYmIDxkaXYgY2xhc3NOYW1lPSJmaXhlZCBpbnNldC0wIHotWzYwXSBmbGV4IGl0ZW1zLWNlbnRlciBqdXN0aWZ5LWNlbnRlciBiZy1ibGFjay82MCI+PGRpdiBjbGFzc05hbWU9ImZsZXggZmxleC1jb2wgaXRlbXMtY2VudGVyIGdhcC0zIj48RWxlZ2FudExvYWRlciBzaXplPXs0OH0gLz48cCBjbGFzc05hbWU9InRleHQtd2hpdGUgdGV4dC1zbSI+Q29uZWN0YW5kbyBhbyBHb29nbGUuLi48L3A+PC9kaXY+PC9kaXY+fQ0KICAgIDwvbWFpbj4NCiAgKTsNCn0NCg==
+import { useState } from "react";
+import { startPlayerGoogleLogin } from "@/lib/playerGoogleLogin";
+import ElegantLoader from "@/components/player/ElegantLoader";
+import PlayerBrandCorner from "@/components/player/PlayerBrandCorner";
+import { toast } from "sonner";
+import { markPlayerSession } from "@/lib/playerSession";
+
+interface AccessScreenProps {
+  logoUrl?: string | null;
+  backgroundUrl?: string | null;
+  music?: { title?: string; artist?: string; cover?: string | null } | null;
+  radioUserId?: string | null;
+  onLoginSuccess: () => void;
+}
+
+export default function AccessScreen({ logoUrl, backgroundUrl, music, radioUserId, onLoginSuccess }: AccessScreenProps) {
+  const [loading, setLoading] = useState(false);
+
+  const handleGoogleAuth = async () => {
+    setLoading(true);
+    try {
+      const userId = await startPlayerGoogleLogin();
+      markPlayerSession(userId);
+      onLoginSuccess();
+    } catch (err) {
+      toast.error(String((err as any)?.message || err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <main className="fixed inset-0 z-50 overflow-hidden bg-black text-white antialiased">
+      <style>{"@keyframes player-login-pan { 0%,100% { transform: scale(1.06) translateX(-1.5%) } 50% { transform: scale(1.06) translateX(1.5%) } } .player-login-bg { transform-origin: center top; animation: player-login-pan 28s ease-in-out infinite; will-change: transform; } @media (prefers-reduced-motion: reduce) { .player-login-bg { animation: none; transform: none; } }"}</style>
+      <div className="absolute inset-0 overflow-hidden bg-black">
+        {backgroundUrl && <img src={backgroundUrl} alt="" className="player-login-bg absolute inset-0 h-full w-full object-cover object-top" />}
+        <div className="absolute inset-0 bg-black/45" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/25" />
+      </div>
+      <button
+        type="button"
+        onClick={handleGoogleAuth}
+        disabled={loading}
+        className="absolute left-[6vw] top-[4vh] z-10 flex h-[clamp(48px,5.5vh,62px)] w-[min(320px,84vw)] items-center justify-between gap-3 rounded-full px-5 sm:px-6 text-white transition-all hover:bg-white/20 hover:scale-[1.02] disabled:opacity-70"
+        style={{
+          background: "rgba(255,255,255,0.13)",
+          border: "1px solid rgba(255,255,255,0.24)",
+          backdropFilter: "blur(22px) saturate(145%)",
+          WebkitBackdropFilter: "blur(22px) saturate(145%)",
+          boxShadow: "0 12px 36px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.16)",
+        }}
+      >
+        <span className="text-left text-[clamp(12px,0.9vw,16px)] leading-snug"><strong>fa&ccedil;a login</strong> com sua conta do Google</span>
+        <svg aria-hidden="true" className="h-6 w-6 shrink-0" viewBox="0 0 48 48">
+          <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.4 29.3 35.5 24 35.5c-6.4 0-11.5-5.1-11.5-11.5S17.6 12.5 24 12.5c2.9 0 5.6 1.1 7.6 2.9l5.7-5.7C33.7 4.5 29.1 4.5 24 4.5 13.2 4.5 4.5 13.2 4.5 24S13.2 43.5 24 43.5c10.8 0 19.5-8.7 19.5-19.5 0-1.2-.1-2.3-.4-3.5z" />
+          <path fill="#FF3D00" d="M6.3 14.1l6.6 4.8C14.7 15.1 19 12.5 24 12.5c2.9 0 5.6 1.1 7.6 2.9l5.7-5.7C33.7 4.5 29.1 4.5 24 4.5 16.3 4.5 9.7 8.9 6.3 14.1z" />
+          <path fill="#4CAF50" d="M24 43.5c5.1 0 9.7-1.9 13.2-5l-6.1-5c-2 1.4-4.4 2.3-7.1 2.3-5.3 0-9.7-3.1-11.3-7.5l-6.5 5C9.6 39 16.2 43.5 24 43.5z" />
+          <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l6.1 5C41.7 34.9 43.5 30 43.5 24c0-1.2-.1-2.3-.4-3.5z" />
+        </svg>
+      </button>
+      <PlayerBrandCorner radioUserId={radioUserId} logoUrl={logoUrl} logoAlt="Logo da rádio" className="absolute right-[4.5vw] top-[3vh] z-10" />
+      {(music?.title || music?.artist || music?.cover) && <div className="absolute bottom-[15.6vh] left-[6vw] z-10 flex max-w-[55vw] items-center gap-5 text-white drop-shadow-lg">
+        {music.cover && <img src={music.cover} alt="Capa da m&uacute;sica" className="h-[min(15vh,160px)] w-[min(15vh,160px)] shrink-0 rounded-[24px] object-cover shadow-xl" />}
+        <div className="min-w-0"><div className="text-[clamp(20px,1.6vw,32px)] leading-tight">tocando agora:</div>{music.title && <div className="mt-1 truncate text-[clamp(21px,1.7vw,34px)] font-bold leading-tight">{music.title}</div>}{music.artist && <div className="truncate text-[clamp(19px,1.5vw,30px)] leading-tight">{music.artist}</div>}</div>
+      </div>}
+      <img
+        src="/images/player-ott-seal-white.png"
+        alt="Nexo OTT Player"
+        className="absolute bottom-[8vh] left-[6vw] z-10 h-auto w-[clamp(82px,8vw,110px)] object-contain opacity-75 drop-shadow-lg"
+        draggable={false}
+      />
+      <div className="absolute bottom-[7vh] right-[4.5vw] z-10 text-right text-[clamp(12px,1vw,20px)] text-white drop-shadow-lg">desenvolvido por : Nexo Brasil</div>
+      {loading && <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60"><div className="flex flex-col items-center gap-3"><ElegantLoader size={48} /><p className="text-white text-sm">Conectando ao Google...</p></div></div>}
+    </main>
+  );
+}

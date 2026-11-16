@@ -1,1 +1,138 @@
-aW1wb3J0IHR5cGUgeyBVc2VyIH0gZnJvbSAiQHN1cGFiYXNlL3N1cGFiYXNlLWpzIjsNCmltcG9ydCB7IHBsYXllclN1cGFiYXNlIH0gZnJvbSAiQC9pbnRlZ3JhdGlvbnMvc3VwYWJhc2UvcGxheWVyQ2xpZW50IjsNCg0KZXhwb3J0IGNvbnN0IFBMQVlFUl9ERUZBVUxUX0FWQVRBUiA9ICIvYXZhdGFycy91c3ItZGVmYXVsdC5wbmciOw0KDQpleHBvcnQgdHlwZSBQbGF5ZXJMaXN0ZW5lclByb2ZpbGUgPSB7DQogIG5vbWU6IHN0cmluZzsNCiAgZW1haWw6IHN0cmluZzsNCiAgY2lkYWRlOiBzdHJpbmc7DQogIGVzdGFkbzogc3RyaW5nOw0KICB3aGF0c2FwcD86IHN0cmluZzsNCiAgc2V4bz86IHN0cmluZzsNCiAgY3BmPzogc3RyaW5nOw0KICBzZXRvcj86IHN0cmluZzsNCiAgZGF0YV9uYXNjaW1lbnRvPzogc3RyaW5nOw0KICBhdmF0YXJfdXJsOiBzdHJpbmc7DQogIHN1Yl9wcm9maWxlcz86IEFycmF5PHsgaWQ6IHN0cmluZzsgbmFtZTogc3RyaW5nOyBhdmF0YXJfdXJsOiBzdHJpbmc7IHBvaW50cz86IG51bWJlciB9PjsNCn07DQoNCmV4cG9ydCBmdW5jdGlvbiBnZXRHb29nbGVQcm9maWxlRmFsbGJhY2sodXNlcjogVXNlciB8IG51bGwgfCB1bmRlZmluZWQsIGZhbGxiYWNrTmFtZSA9ICJWaXNpdGFudGUiKTogUGxheWVyTGlzdGVuZXJQcm9maWxlIHsNCiAgY29uc3QgZ29vZ2xlSWRlbnRpdHkgPSAodXNlcj8uaWRlbnRpdGllcyB8fCBbXSkuZmluZCgoaTogYW55KSA9PiBpLnByb3ZpZGVyID09PSAiZ29vZ2xlIik7DQogIGNvbnN0IGdEYXRhOiBhbnkgPSBnb29nbGVJZGVudGl0eT8uaWRlbnRpdHlfZGF0YSB8fCB7fTsNCiAgY29uc3QgbWV0YTogYW55ID0gdXNlcj8udXNlcl9tZXRhZGF0YSB8fCB7fTsNCiAgY29uc3QgZW1haWwgPSBnRGF0YS5lbWFpbCB8fCB1c2VyPy5lbWFpbCB8fCAiIjsNCiAgcmV0dXJuIHsNCiAgICBub21lOiBnRGF0YS5mdWxsX25hbWUgfHwgZ0RhdGEubmFtZSB8fCBtZXRhLmZ1bGxfbmFtZSB8fCBtZXRhLm5hbWUgfHwgZW1haWwuc3BsaXQoIkAiKVswXSB8fCBmYWxsYmFja05hbWUsDQogICAgZW1haWwsDQogICAgY2lkYWRlOiAiIiwNCiAgICBlc3RhZG86ICIiLA0KICAgIGF2YXRhcl91cmw6IGdEYXRhLmF2YXRhcl91cmwgfHwgZ0RhdGEucGljdHVyZSB8fCBtZXRhLmF2YXRhcl91cmwgfHwgbWV0YS5waWN0dXJlIHx8IFBMQVlFUl9ERUZBVUxUX0FWQVRBUiwNCiAgICBzdWJfcHJvZmlsZXM6IFtdLA0KICB9Ow0KfQ0KDQpleHBvcnQgYXN5bmMgZnVuY3Rpb24gZmV0Y2hQbGF5ZXJMaXN0ZW5lclByb2ZpbGUoDQogIGF1dGhVc2VyOiBVc2VyIHwgbnVsbCB8IHVuZGVmaW5lZCwNCiAgcmFkaW9Vc2VySWQ6IHN0cmluZyB8IG51bGwgfCB1bmRlZmluZWQsDQogIGZhbGxiYWNrTmFtZSA9ICJWaXNpdGFudGUiLA0KKTogUHJvbWlzZTxQbGF5ZXJMaXN0ZW5lclByb2ZpbGU+IHsNCiAgY29uc3QgZmFsbGJhY2sgPSBnZXRHb29nbGVQcm9maWxlRmFsbGJhY2soYXV0aFVzZXIsIGZhbGxiYWNrTmFtZSk7DQogIGlmICghYXV0aFVzZXI/LmlkIHx8ICFyYWRpb1VzZXJJZCkgcmV0dXJuIGZhbGxiYWNrOw0KDQogIGNvbnN0IHsgZGF0YSB9ID0gYXdhaXQgcGxheWVyU3VwYWJhc2UNCiAgICAuZnJvbSgicGxheWVyX2xpc3RlbmVyX3Byb2ZpbGVzIikNCiAgICAuc2VsZWN0KCJub21lLCBlbWFpbCwgY2lkYWRlLCBlc3RhZG8sIHdoYXRzYXBwLCBzZXhvLCBjcGYsIHNldG9yLCBkYXRhX25hc2NpbWVudG8sIGF2YXRhcl91cmwsIHN1Yl9wcm9maWxlcyIpDQogICAgLmVxKCJhdXRoX3VzZXJfaWQiLCBhdXRoVXNlci5pZCkNCiAgICAuZXEoInJhZGlvX3VzZXJfaWQiLCByYWRpb1VzZXJJZCkNCiAgICAubWF5YmVTaW5nbGUoKTsNCg0KICBpZiAoIWRhdGEgJiYgYXV0aFVzZXIuaWQgPT09IHJhZGlvVXNlcklkKSB7DQogICAgY29uc3QgeyBkYXRhOiBvd25lclByb2ZpbGUgfSA9IGF3YWl0IHBsYXllclN1cGFiYXNlDQogICAgICAuZnJvbSgicHJvZmlsZXMiKQ0KICAgICAgLnNlbGVjdCgibm9tZSwgZW1haWwsIGNpZGFkZSwgZXN0YWRvLCB3aGF0c2FwcCwgc2V4bywgY3BmLCBzZXRvciwgZGF0YV9uYXNjaW1lbnRvLCBhdmF0YXJfdXJsLCBzdWJfcHJvZmlsZXMiKQ0KICAgICAgLmVxKCJ1c2VyX2lkIiwgYXV0aFVzZXIuaWQpDQogICAgICAubWF5YmVTaW5nbGUoKTsNCiAgICBpZiAob3duZXJQcm9maWxlKSB7DQogICAgICByZXR1cm4gew0KICAgICAgICBub21lOiBvd25lclByb2ZpbGUubm9tZSB8fCBmYWxsYmFjay5ub21lLA0KICAgICAgICBlbWFpbDogb3duZXJQcm9maWxlLmVtYWlsIHx8IGZhbGxiYWNrLmVtYWlsLA0KICAgICAgICBjaWRhZGU6IG93bmVyUHJvZmlsZS5jaWRhZGUgfHwgIiIsDQogICAgICAgIGVzdGFkbzogb3duZXJQcm9maWxlLmVzdGFkbyB8fCAiIiwNCiAgICAgICAgd2hhdHNhcHA6IG93bmVyUHJvZmlsZS53aGF0c2FwcCB8fCAiIiwNCiAgICAgICAgc2V4bzogb3duZXJQcm9maWxlLnNleG8gfHwgIiIsDQogICAgICAgIGNwZjogb3duZXJQcm9maWxlLmNwZiB8fCAiIiwNCiAgICAgICAgc2V0b3I6IG93bmVyUHJvZmlsZS5zZXRvciB8fCAiIiwNCiAgICAgICAgZGF0YV9uYXNjaW1lbnRvOiBvd25lclByb2ZpbGUuZGF0YV9uYXNjaW1lbnRvIHx8ICIiLA0KICAgICAgICBhdmF0YXJfdXJsOiBvd25lclByb2ZpbGUuYXZhdGFyX3VybCB8fCBmYWxsYmFjay5hdmF0YXJfdXJsIHx8IFBMQVlFUl9ERUZBVUxUX0FWQVRBUiwNCiAgICAgICAgc3ViX3Byb2ZpbGVzOiBBcnJheS5pc0FycmF5KG93bmVyUHJvZmlsZS5zdWJfcHJvZmlsZXMpID8gb3duZXJQcm9maWxlLnN1Yl9wcm9maWxlcyBhcyBQbGF5ZXJMaXN0ZW5lclByb2ZpbGVbInN1Yl9wcm9maWxlcyJdIDogW10sDQogICAgICB9Ow0KICAgIH0NCiAgfQ0KDQogIGlmICghZGF0YSkgcmV0dXJuIGZhbGxiYWNrOw0KICBjb25zdCBzdWJQcm9maWxlcyA9IEFycmF5LmlzQXJyYXkoZGF0YS5zdWJfcHJvZmlsZXMpID8gZGF0YS5zdWJfcHJvZmlsZXMgYXMgUGxheWVyTGlzdGVuZXJQcm9maWxlWyJzdWJfcHJvZmlsZXMiXSA6IFtdOw0KICByZXR1cm4gew0KICAgIG5vbWU6IGRhdGEubm9tZSB8fCBmYWxsYmFjay5ub21lLA0KICAgIGVtYWlsOiBkYXRhLmVtYWlsIHx8IGZhbGxiYWNrLmVtYWlsLA0KICAgIGNpZGFkZTogZGF0YS5jaWRhZGUgfHwgIiIsDQogICAgZXN0YWRvOiBkYXRhLmVzdGFkbyB8fCAiIiwNCiAgICB3aGF0c2FwcDogZGF0YS53aGF0c2FwcCB8fCAiIiwNCiAgICBzZXhvOiBkYXRhLnNleG8gfHwgIiIsDQogICAgY3BmOiBkYXRhLmNwZiB8fCAiIiwNCiAgICBzZXRvcjogZGF0YS5zZXRvciB8fCAiIiwNCiAgICBkYXRhX25hc2NpbWVudG86IGRhdGEuZGF0YV9uYXNjaW1lbnRvIHx8ICIiLA0KICAgIGF2YXRhcl91cmw6IGRhdGEuYXZhdGFyX3VybCB8fCBmYWxsYmFjay5hdmF0YXJfdXJsIHx8IFBMQVlFUl9ERUZBVUxUX0FWQVRBUiwNCiAgICBzdWJfcHJvZmlsZXM6IHN1YlByb2ZpbGVzLA0KICB9Ow0KfQ0KDQpleHBvcnQgYXN5bmMgZnVuY3Rpb24gdXBzZXJ0UGxheWVyTGlzdGVuZXJQcm9maWxlKA0KICBhdXRoVXNlcklkOiBzdHJpbmcsDQogIHJhZGlvVXNlcklkOiBzdHJpbmcsDQogIHBhdGNoOiBQYXJ0aWFsPFBsYXllckxpc3RlbmVyUHJvZmlsZT4sDQogIG9yaWdlbTogInBsYXllcl9zaXRlIiB8ICJhcHAiID0gInBsYXllcl9zaXRlIiwNCikgew0KICBjb25zdCByZXN1bHQgPSBhd2FpdCBwbGF5ZXJTdXBhYmFzZS5mcm9tKCJwbGF5ZXJfbGlzdGVuZXJfcHJvZmlsZXMiKS51cHNlcnQoew0KICAgIGF1dGhfdXNlcl9pZDogYXV0aFVzZXJJZCwNCiAgICByYWRpb191c2VyX2lkOiByYWRpb1VzZXJJZCwNCiAgICAuLi5wYXRjaCwNCiAgICB1cGRhdGVkX2F0OiBuZXcgRGF0ZSgpLnRvSVNPU3RyaW5nKCksDQogIH0gYXMgYW55LCB7IG9uQ29uZmxpY3Q6ICJhdXRoX3VzZXJfaWQscmFkaW9fdXNlcl9pZCIgfSk7DQoNCiAgLy8gUmVmbGV0ZSBvIGNhZGFzdHJvIG5hIHRhYmVsYSBgb3V2aW50ZXNgIChDUk0pIOKAlCBzZW0gaW50ZXJyb21wZXIgbyBmbHV4bw0KICAvLyBjYXNvIG8gdXBzZXJ0IGRvIENSTSBmYWxoZS4gT3JpZ2VtIHByZXNlcnZhIGEgZm9udGUgb3JpZ2luYWwgcXVhbmRvIG8NCiAgLy8gb3V2aW50ZSBqw6EgZXhpc3RpciAoZGVmaW5pZG8gZW0gdXBzZXJ0T3V2aW50ZVJlY29yZCkuDQogIHRyeSB7DQogICAgY29uc3QgeyB1cHNlcnRPdXZpbnRlUmVjb3JkIH0gPSBhd2FpdCBpbXBvcnQoIi4vb3V2aW50ZXNVcHNlcnQiKTsNCiAgICAvLyBTZXBhcmEgY2lkYWRlL1VGIHF1YW5kbyBvIHByb2ZpbGUgcGVyc2lzdGlyIGNhbXBvcyBzZXBhcmFkb3MuDQogICAgY29uc3QgY2lkYWRlID0gKHBhdGNoIGFzIGFueSkuY2lkYWRlIHx8ICIiOw0KICAgIGNvbnN0IGVzdGFkbyA9IChwYXRjaCBhcyBhbnkpLmVzdGFkbyB8fCAiIjsNCiAgICBjb25zdCBjaWRhZGVfdWYgPSBjaWRhZGUNCiAgICAgID8gKGVzdGFkbyA/IGAke1N0cmluZyhjaWRhZGUpLnRyaW0oKX0vJHtTdHJpbmcoZXN0YWRvKS50cmltKCl9YCA6IFN0cmluZyhjaWRhZGUpLnRyaW0oKSkNCiAgICAgIDogbnVsbDsNCiAgICB2b2lkIHVwc2VydE91dmludGVSZWNvcmQoew0KICAgICAgcmFkaW9Vc2VySWQsDQogICAgICBvcmlnZW0sDQogICAgICBmaWVsZHM6IHsNCiAgICAgICAgbm9tZTogKHBhdGNoIGFzIGFueSkubm9tZSB8fCBudWxsLA0KICAgICAgICBlbWFpbDogKHBhdGNoIGFzIGFueSkuZW1haWwgfHwgbnVsbCwNCiAgICAgICAgY3BmOiAocGF0Y2ggYXMgYW55KS5jcGYgfHwgbnVsbCwNCiAgICAgICAgdGVsZWZvbmU6IChwYXRjaCBhcyBhbnkpLndoYXRzYXBwIHx8IG51bGwsDQogICAgICAgIHNleG86IChwYXRjaCBhcyBhbnkpLnNleG8gfHwgbnVsbCwNCiAgICAgICAgZGF0YV9uYXNjaW1lbnRvOiAocGF0Y2ggYXMgYW55KS5kYXRhX25hc2NpbWVudG8gfHwgbnVsbCwNCiAgICAgICAgc2V0b3I6IChwYXRjaCBhcyBhbnkpLnNldG9yIHx8IG51bGwsDQogICAgICAgIGNpZGFkZV91ZiwNCiAgICAgIH0sDQogICAgfSk7DQogIH0gY2F0Y2ggeyAvKiBpZ25vcmUg4oCUIENSTSDDqSBiZXN0LWVmZm9ydCAqLyB9DQoNCiAgcmV0dXJuIHJlc3VsdDsNCn0NCg0KZXhwb3J0IGZ1bmN0aW9uIHNjb3BlZFJhZGlvRmlsdGVyPFQgZXh0ZW5kcyB7IGVxOiAoY29sdW1uOiBzdHJpbmcsIHZhbHVlOiBhbnkpID0+IFQ7IGlzOiAoY29sdW1uOiBzdHJpbmcsIHZhbHVlOiBudWxsKSA9PiBUIH0+KA0KICBxdWVyeTogVCwNCiAgcmFkaW9Vc2VySWQ6IHN0cmluZyB8IG51bGwgfCB1bmRlZmluZWQsDQopIHsNCiAgcmV0dXJuIHJhZGlvVXNlcklkID8gcXVlcnkuZXEoInJhZGlvX3VzZXJfaWQiLCByYWRpb1VzZXJJZCkgOiBxdWVyeS5pcygicmFkaW9fdXNlcl9pZCIsIG51bGwpOw0KfQ==
+import type { User } from "@supabase/supabase-js";
+import { playerSupabase } from "@/integrations/supabase/playerClient";
+
+export const PLAYER_DEFAULT_AVATAR = "/avatars/usr-default.png";
+
+export type PlayerListenerProfile = {
+  nome: string;
+  email: string;
+  cidade: string;
+  estado: string;
+  whatsapp?: string;
+  sexo?: string;
+  cpf?: string;
+  setor?: string;
+  data_nascimento?: string;
+  avatar_url: string;
+  sub_profiles?: Array<{ id: string; name: string; avatar_url: string; points?: number }>;
+};
+
+export function getGoogleProfileFallback(user: User | null | undefined, fallbackName = "Visitante"): PlayerListenerProfile {
+  const googleIdentity = (user?.identities || []).find((i: any) => i.provider === "google");
+  const gData: any = googleIdentity?.identity_data || {};
+  const meta: any = user?.user_metadata || {};
+  const email = gData.email || user?.email || "";
+  return {
+    nome: gData.full_name || gData.name || meta.full_name || meta.name || email.split("@")[0] || fallbackName,
+    email,
+    cidade: "",
+    estado: "",
+    avatar_url: gData.avatar_url || gData.picture || meta.avatar_url || meta.picture || PLAYER_DEFAULT_AVATAR,
+    sub_profiles: [],
+  };
+}
+
+export async function fetchPlayerListenerProfile(
+  authUser: User | null | undefined,
+  radioUserId: string | null | undefined,
+  fallbackName = "Visitante",
+): Promise<PlayerListenerProfile> {
+  const fallback = getGoogleProfileFallback(authUser, fallbackName);
+  if (!authUser?.id || !radioUserId) return fallback;
+
+  const { data } = await playerSupabase
+    .from("player_listener_profiles")
+    .select("nome, email, cidade, estado, whatsapp, sexo, cpf, setor, data_nascimento, avatar_url, sub_profiles")
+    .eq("auth_user_id", authUser.id)
+    .eq("radio_user_id", radioUserId)
+    .maybeSingle();
+
+  if (!data && authUser.id === radioUserId) {
+    const { data: ownerProfile } = await playerSupabase
+      .from("profiles")
+      .select("nome, email, cidade, estado, whatsapp, sexo, cpf, setor, data_nascimento, avatar_url, sub_profiles")
+      .eq("user_id", authUser.id)
+      .maybeSingle();
+    if (ownerProfile) {
+      return {
+        nome: ownerProfile.nome || fallback.nome,
+        email: ownerProfile.email || fallback.email,
+        cidade: ownerProfile.cidade || "",
+        estado: ownerProfile.estado || "",
+        whatsapp: ownerProfile.whatsapp || "",
+        sexo: ownerProfile.sexo || "",
+        cpf: ownerProfile.cpf || "",
+        setor: ownerProfile.setor || "",
+        data_nascimento: ownerProfile.data_nascimento || "",
+        avatar_url: ownerProfile.avatar_url || fallback.avatar_url || PLAYER_DEFAULT_AVATAR,
+        sub_profiles: Array.isArray(ownerProfile.sub_profiles) ? ownerProfile.sub_profiles as PlayerListenerProfile["sub_profiles"] : [],
+      };
+    }
+  }
+
+  if (!data) return fallback;
+  const subProfiles = Array.isArray(data.sub_profiles) ? data.sub_profiles as PlayerListenerProfile["sub_profiles"] : [];
+  return {
+    nome: data.nome || fallback.nome,
+    email: data.email || fallback.email,
+    cidade: data.cidade || "",
+    estado: data.estado || "",
+    whatsapp: data.whatsapp || "",
+    sexo: data.sexo || "",
+    cpf: data.cpf || "",
+    setor: data.setor || "",
+    data_nascimento: data.data_nascimento || "",
+    avatar_url: data.avatar_url || fallback.avatar_url || PLAYER_DEFAULT_AVATAR,
+    sub_profiles: subProfiles,
+  };
+}
+
+export async function upsertPlayerListenerProfile(
+  authUserId: string,
+  radioUserId: string,
+  patch: Partial<PlayerListenerProfile>,
+  origem: "player_site" | "app" = "player_site",
+) {
+  const result = await playerSupabase.from("player_listener_profiles").upsert({
+    auth_user_id: authUserId,
+    radio_user_id: radioUserId,
+    ...patch,
+    updated_at: new Date().toISOString(),
+  } as any, { onConflict: "auth_user_id,radio_user_id" });
+
+  // Reflete o cadastro na tabela `ouvintes` (CRM) — sem interromper o fluxo
+  // caso o upsert do CRM falhe. Origem preserva a fonte original quando o
+  // ouvinte já existir (definido em upsertOuvinteRecord).
+  try {
+    const { upsertOuvinteRecord } = await import("./ouvintesUpsert");
+    // Separa cidade/UF quando o profile persistir campos separados.
+    const cidade = (patch as any).cidade || "";
+    const estado = (patch as any).estado || "";
+    const cidade_uf = cidade
+      ? (estado ? `${String(cidade).trim()}/${String(estado).trim()}` : String(cidade).trim())
+      : null;
+    void upsertOuvinteRecord({
+      radioUserId,
+      origem,
+      fields: {
+        nome: (patch as any).nome || null,
+        email: (patch as any).email || null,
+        cpf: (patch as any).cpf || null,
+        telefone: (patch as any).whatsapp || null,
+        sexo: (patch as any).sexo || null,
+        data_nascimento: (patch as any).data_nascimento || null,
+        setor: (patch as any).setor || null,
+        cidade_uf,
+      },
+    });
+  } catch { /* ignore — CRM é best-effort */ }
+
+  return result;
+}
+
+export function scopedRadioFilter<T extends { eq: (column: string, value: any) => T; is: (column: string, value: null) => T }>(
+  query: T,
+  radioUserId: string | null | undefined,
+) {
+  return radioUserId ? query.eq("radio_user_id", radioUserId) : query.is("radio_user_id", null);
+}

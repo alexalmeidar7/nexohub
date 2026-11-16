@@ -1,1 +1,34 @@
-Y29uc3QgeyBjb250ZXh0QnJpZGdlLCBpcGNSZW5kZXJlciB9ID0gcmVxdWlyZSgiZWxlY3Ryb24iKTsNCg0KY29udGV4dEJyaWRnZS5leHBvc2VJbk1haW5Xb3JsZCgiaG91c2VNaXhEZXNrdG9wIiwgT2JqZWN0LmZyZWV6ZSh7DQogIGlzRGVza3RvcDogdHJ1ZSwNCiAgcGxhdGZvcm06IHByb2Nlc3MucGxhdGZvcm0sDQogIHZlcnNpb246IHByb2Nlc3MuZW52Lm5wbV9wYWNrYWdlX3ZlcnNpb24gfHwgIjAuMC4wIiwNCiAgb3BlbkV4dGVybmFsOiAodXJsKSA9PiBpcGNSZW5kZXJlci5pbnZva2UoImhvdXNlbWl4Om9wZW4tZXh0ZXJuYWwiLCB1cmwpLA0KICBvblBsYXllck9BdXRoQ2FsbGJhY2s6IChjYWxsYmFjaykgPT4gew0KICAgIGNvbnN0IGxpc3RlbmVyID0gKF9ldmVudCwgdXJsKSA9PiBjYWxsYmFjayh1cmwpOw0KICAgIGlwY1JlbmRlcmVyLm9uKCJob3VzZW1peDpwbGF5ZXItb2F1dGgtY2FsbGJhY2siLCBsaXN0ZW5lcik7DQogICAgcmV0dXJuICgpID0+IGlwY1JlbmRlcmVyLnJlbW92ZUxpc3RlbmVyKCJob3VzZW1peDpwbGF5ZXItb2F1dGgtY2FsbGJhY2siLCBsaXN0ZW5lcik7DQogIH0sDQogIGdldEFwcFZlcnNpb246ICgpID0+IGlwY1JlbmRlcmVyLmludm9rZSgiaG91c2VtaXg6YXBwLXZlcnNpb24iKSwNCiAgZ2V0U3RhcnRXaXRoV2luZG93czogKCkgPT4gaXBjUmVuZGVyZXIuaW52b2tlKCJob3VzZW1peDpnZXQtc3RhcnQtd2l0aC13aW5kb3dzIiksDQogIHNldFN0YXJ0V2l0aFdpbmRvd3M6IChlbmFibGVkKSA9PiBpcGNSZW5kZXJlci5pbnZva2UoImhvdXNlbWl4OnNldC1zdGFydC13aXRoLXdpbmRvd3MiLCBlbmFibGVkKSwNCiAgZ2V0VXBkYXRlU3RhdHVzOiAoKSA9PiBpcGNSZW5kZXJlci5pbnZva2UoImhvdXNlbWl4OnVwZGF0ZS1zdGF0dXMiKSwNCiAgZG93bmxvYWRVcGRhdGU6ICgpID0+IGlwY1JlbmRlcmVyLmludm9rZSgiaG91c2VtaXg6ZG93bmxvYWQtdXBkYXRlIiksDQogIG9uVXBkYXRlU3RhdHVzOiAoY2FsbGJhY2spID0+IHsNCiAgICBjb25zdCBsaXN0ZW5lciA9IChfZXZlbnQsIHN0YXR1cykgPT4gY2FsbGJhY2soc3RhdHVzKTsNCiAgICBpcGNSZW5kZXJlci5vbigiaG91c2VtaXg6dXBkYXRlLXN0YXR1cyIsIGxpc3RlbmVyKTsNCiAgICByZXR1cm4gKCkgPT4gaXBjUmVuZGVyZXIucmVtb3ZlTGlzdGVuZXIoImhvdXNlbWl4OnVwZGF0ZS1zdGF0dXMiLCBsaXN0ZW5lcik7DQogIH0sDQogIGluc3RhbGxVcGRhdGU6ICgpID0+IGlwY1JlbmRlcmVyLmludm9rZSgiaG91c2VtaXg6aW5zdGFsbC11cGRhdGUiKSwNCiAgaW5pdGlhbGl6ZUxvY2FsQXNzZXRzOiAoc2x1ZykgPT4gaXBjUmVuZGVyZXIuaW52b2tlKCJob3VzZW1peDphc3NldHMtaW5pdCIsIHNsdWcpLA0KICBnZXRYbWxQYXRoOiAoc2x1ZywgZmlsZW5hbWUpID0+IGlwY1JlbmRlcmVyLmludm9rZSgiaG91c2VtaXg6eG1sLXBhdGgiLCBzbHVnLCBmaWxlbmFtZSksDQogIHNhdmVYbWw6IChzbHVnLCBmaWxlbmFtZSwgY29udGVudCkgPT4gaXBjUmVuZGVyZXIuaW52b2tlKCJob3VzZW1peDp4bWwtc2F2ZSIsIHNsdWcsIGZpbGVuYW1lLCBjb250ZW50KSwNCiAgcmVhZFhtbDogKHNsdWcsIGZpbGVuYW1lKSA9PiBpcGNSZW5kZXJlci5pbnZva2UoImhvdXNlbWl4OnhtbC1yZWFkIiwgc2x1ZywgZmlsZW5hbWUpLA0KICBjYWNoZUltYWdlOiAodXJsLCBoaW50LCBzbHVnLCByZWZyZXNoID0gZmFsc2UpID0+IGlwY1JlbmRlcmVyLmludm9rZSgiaG91c2VtaXg6aW1hZ2UtY2FjaGUiLCB1cmwsIGhpbnQsIHNsdWcsIHJlZnJlc2gpLA0KICBjYWNoZUltYWdlRmlsZVVybDogKHVybCwgaGludCwgc2x1ZykgPT4gaXBjUmVuZGVyZXIuaW52b2tlKCJob3VzZW1peDppbWFnZS1jYWNoZS1maWxlLXVybCIsIHVybCwgaGludCwgc2x1ZyksDQogIGdldENhY2hlZEltYWdlRmlsZVVybDogKHVybCwgaGludCwgc2x1ZykgPT4gaXBjUmVuZGVyZXIuaW52b2tlKCJob3VzZW1peDppbWFnZS1jYWNoZWQtZmlsZS11cmwiLCB1cmwsIGhpbnQsIHNsdWcpLA0KICBzYXZlTG9jYWxJbWFnZTogKHNsdWcsIGJ5dGVzLCBjb250ZW50VHlwZSwgaGludCkgPT4gaXBjUmVuZGVyZXIuaW52b2tlKCJob3VzZW1peDppbWFnZS1zYXZlLWxvY2FsIiwgc2x1ZywgYnl0ZXMsIGNvbnRlbnRUeXBlLCBoaW50KSwNCiAgZ2V0V2luZG93U3RhdGU6ICgpID0+IGlwY1JlbmRlcmVyLmludm9rZSgiaG91c2VtaXg6d2luZG93LXN0YXRlIiksDQogIHRvZ2dsZUZ1bGxzY3JlZW46ICgpID0+IGlwY1JlbmRlcmVyLmludm9rZSgiaG91c2VtaXg6d2luZG93LWZ1bGxzY3JlZW4iKQ0KfSkpOw0K
+const { contextBridge, ipcRenderer } = require("electron");
+
+contextBridge.exposeInMainWorld("houseMixDesktop", Object.freeze({
+  isDesktop: true,
+  platform: process.platform,
+  version: process.env.npm_package_version || "0.0.0",
+  openExternal: (url) => ipcRenderer.invoke("housemix:open-external", url),
+  onPlayerOAuthCallback: (callback) => {
+    const listener = (_event, url) => callback(url);
+    ipcRenderer.on("housemix:player-oauth-callback", listener);
+    return () => ipcRenderer.removeListener("housemix:player-oauth-callback", listener);
+  },
+  getAppVersion: () => ipcRenderer.invoke("housemix:app-version"),
+  getStartWithWindows: () => ipcRenderer.invoke("housemix:get-start-with-windows"),
+  setStartWithWindows: (enabled) => ipcRenderer.invoke("housemix:set-start-with-windows", enabled),
+  getUpdateStatus: () => ipcRenderer.invoke("housemix:update-status"),
+  downloadUpdate: () => ipcRenderer.invoke("housemix:download-update"),
+  onUpdateStatus: (callback) => {
+    const listener = (_event, status) => callback(status);
+    ipcRenderer.on("housemix:update-status", listener);
+    return () => ipcRenderer.removeListener("housemix:update-status", listener);
+  },
+  installUpdate: () => ipcRenderer.invoke("housemix:install-update"),
+  initializeLocalAssets: (slug) => ipcRenderer.invoke("housemix:assets-init", slug),
+  getXmlPath: (slug, filename) => ipcRenderer.invoke("housemix:xml-path", slug, filename),
+  saveXml: (slug, filename, content) => ipcRenderer.invoke("housemix:xml-save", slug, filename, content),
+  readXml: (slug, filename) => ipcRenderer.invoke("housemix:xml-read", slug, filename),
+  cacheImage: (url, hint, slug, refresh = false) => ipcRenderer.invoke("housemix:image-cache", url, hint, slug, refresh),
+  cacheImageFileUrl: (url, hint, slug) => ipcRenderer.invoke("housemix:image-cache-file-url", url, hint, slug),
+  getCachedImageFileUrl: (url, hint, slug) => ipcRenderer.invoke("housemix:image-cached-file-url", url, hint, slug),
+  saveLocalImage: (slug, bytes, contentType, hint) => ipcRenderer.invoke("housemix:image-save-local", slug, bytes, contentType, hint),
+  getWindowState: () => ipcRenderer.invoke("housemix:window-state"),
+  toggleFullscreen: () => ipcRenderer.invoke("housemix:window-fullscreen")
+}));

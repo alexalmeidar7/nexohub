@@ -1,1 +1,58 @@
-aW1wb3J0IHsgdXNlU3RhdGUsIHVzZUVmZmVjdCB9IGZyb20gInJlYWN0IjsNCmltcG9ydCBFbGVnYW50TG9hZGVyIGZyb20gIkAvY29tcG9uZW50cy9wbGF5ZXIvRWxlZ2FudExvYWRlciI7DQoNCmludGVyZmFjZSBMb2FkaW5nT3ZlcmxheVByb3BzIHsNCiAgaXNMb2FkaW5nOiBib29sZWFuOw0KICBvbkZpbmlzaGVkPzogKCkgPT4gdm9pZDsNCiAgbWluRHVyYXRpb25Ncz86IG51bWJlcjsNCiAgcHJvZ3Jlc3M/OiBudW1iZXI7DQp9DQoNCi8qKg0KICogQSBmdWxsLXNjcmVlbiBibGFjayBvdmVybGF5IHdpdGggdGhlIEVsZWdhbnRMb2FkZXIuDQogKiBJdCByZW1haW5zIHZpc2libGUgZm9yIGF0IGxlYXN0IG1pbkR1cmF0aW9uTXMgdG8gZW5zdXJlIHRoZSB2aWRlbyBoYXMgDQogKiBlbm91Z2ggdGltZSB0byBidWZmZXIvaW5pdGlhbGl6ZSBiZWZvcmUgcmV2ZWFsaW5nIHRoZSBwbGF5ZXIgVUkuDQogKi8NCmV4cG9ydCBkZWZhdWx0IGZ1bmN0aW9uIFBsYXllckxvYWRpbmdPdmVybGF5KHsgDQogIGlzTG9hZGluZywgDQogIG9uRmluaXNoZWQsDQogIG1pbkR1cmF0aW9uTXMgPSAzMDAwLA0KfTogTG9hZGluZ092ZXJsYXlQcm9wcykgew0KICBjb25zdCBbc2hvdywgc2V0U2hvd10gPSB1c2VTdGF0ZSh0cnVlKTsNCiAgY29uc3QgW3Nob3VsZEZhZGVPdXQsIHNldFNob3VsZEZhZGVPdXRdID0gdXNlU3RhdGUoZmFsc2UpOw0KICBjb25zdCBbdGltZXJFeHBpcmVkLCBzZXRUaW1lckV4cGlyZWRdID0gdXNlU3RhdGUoZmFsc2UpOw0KDQogIHVzZUVmZmVjdCgoKSA9PiB7DQogICAgY29uc3QgdGltZXIgPSBzZXRUaW1lb3V0KCgpID0+IHsNCiAgICAgIHNldFRpbWVyRXhwaXJlZCh0cnVlKTsNCiAgICB9LCBtaW5EdXJhdGlvbk1zKTsNCiAgICByZXR1cm4gKCkgPT4gY2xlYXJUaW1lb3V0KHRpbWVyKTsNCiAgfSwgW21pbkR1cmF0aW9uTXNdKTsNCg0KICB1c2VFZmZlY3QoKCkgPT4gew0KICAgIC8vIE9ubHkgaGlkZSBpZiB0aGUgaW50ZXJuYWwgdGltZXIgZXhwaXJlZCBBTkQgdGhlIGV4dGVybmFsIGlzTG9hZGluZyBpcyBmYWxzZQ0KICAgIGlmICghaXNMb2FkaW5nICYmIHRpbWVyRXhwaXJlZCkgew0KICAgICAgc2V0U2hvdWxkRmFkZU91dCh0cnVlKTsNCiAgICAgIGNvbnN0IGhpZGVUaW1lciA9IHNldFRpbWVvdXQoKCkgPT4gew0KICAgICAgICBzZXRTaG93KGZhbHNlKTsNCiAgICAgICAgb25GaW5pc2hlZD8uKCk7DQogICAgICB9LCA1MDApOyAvLyBmYWRlIGR1cmF0aW9uDQogICAgICByZXR1cm4gKCkgPT4gY2xlYXJUaW1lb3V0KGhpZGVUaW1lcik7DQogICAgfQ0KICB9LCBbaXNMb2FkaW5nLCB0aW1lckV4cGlyZWQsIG9uRmluaXNoZWRdKTsNCg0KICBpZiAoIXNob3cpIHJldHVybiBudWxsOw0KDQogIHJldHVybiAoDQogICAgPGRpdiANCiAgICAgIGNsYXNzTmFtZT17YGZpeGVkIGluc2V0LTAgei1bOTk5OV0gYmctYmxhY2sgZmxleCBpdGVtcy1jZW50ZXIganVzdGlmeS1jZW50ZXIgdHJhbnNpdGlvbi1vcGFjaXR5IGR1cmF0aW9uLTUwMCAkew0KICAgICAgICBzaG91bGRGYWRlT3V0ID8gIm9wYWNpdHktMCBwb2ludGVyLWV2ZW50cy1ub25lIiA6ICJvcGFjaXR5LTEwMCINCiAgICAgIH1gfQ0KICAgID4NCiAgICAgIDxkaXYgY2xhc3NOYW1lPSJmbGV4IGl0ZW1zLWNlbnRlciBqdXN0aWZ5LWNlbnRlciBhbmltYXRlLWZhZGUtaW4iPg0KICAgICAgICA8RWxlZ2FudExvYWRlciBzaXplPXs0NH0gLz4NCiAgICAgIDwvZGl2Pg0KDQogICAgPC9kaXY+DQogICk7DQp9DQo=
+import { useState, useEffect } from "react";
+import ElegantLoader from "@/components/player/ElegantLoader";
+
+interface LoadingOverlayProps {
+  isLoading: boolean;
+  onFinished?: () => void;
+  minDurationMs?: number;
+  progress?: number;
+}
+
+/**
+ * A full-screen black overlay with the ElegantLoader.
+ * It remains visible for at least minDurationMs to ensure the video has 
+ * enough time to buffer/initialize before revealing the player UI.
+ */
+export default function PlayerLoadingOverlay({ 
+  isLoading, 
+  onFinished,
+  minDurationMs = 3000,
+}: LoadingOverlayProps) {
+  const [show, setShow] = useState(true);
+  const [shouldFadeOut, setShouldFadeOut] = useState(false);
+  const [timerExpired, setTimerExpired] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setTimerExpired(true);
+    }, minDurationMs);
+    return () => clearTimeout(timer);
+  }, [minDurationMs]);
+
+  useEffect(() => {
+    // Only hide if the internal timer expired AND the external isLoading is false
+    if (!isLoading && timerExpired) {
+      setShouldFadeOut(true);
+      const hideTimer = setTimeout(() => {
+        setShow(false);
+        onFinished?.();
+      }, 500); // fade duration
+      return () => clearTimeout(hideTimer);
+    }
+  }, [isLoading, timerExpired, onFinished]);
+
+  if (!show) return null;
+
+  return (
+    <div 
+      className={`fixed inset-0 z-[9999] bg-black flex items-center justify-center transition-opacity duration-500 ${
+        shouldFadeOut ? "opacity-0 pointer-events-none" : "opacity-100"
+      }`}
+    >
+      <div className="flex items-center justify-center animate-fade-in">
+        <ElegantLoader size={44} />
+      </div>
+
+    </div>
+  );
+}

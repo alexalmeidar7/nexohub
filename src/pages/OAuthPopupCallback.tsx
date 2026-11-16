@@ -1,1 +1,67 @@
-aW1wb3J0IHsgdXNlRWZmZWN0LCB1c2VTdGF0ZSB9IGZyb20gInJlYWN0IjsKaW1wb3J0IHsgcGxheWVyU3VwYWJhc2UgfSBmcm9tICJAL2ludGVncmF0aW9ucy9zdXBhYmFzZS9wbGF5ZXJDbGllbnQiOwoKLyoqIEZpbmFsaXphIGEgc2Vzc8OjbyBPQXV0aCBubyBwb3B1cCBlIGRldm9sdmUgbyBjb250cm9sZSDDoCBqYW5lbGEgZG8gcGxheWVyLiAqLwpleHBvcnQgZGVmYXVsdCBmdW5jdGlvbiBPQXV0aFBvcHVwQ2FsbGJhY2soKSB7CiAgY29uc3QgW2ZhaWxlZCwgc2V0RmFpbGVkXSA9IHVzZVN0YXRlKGZhbHNlKTsKCiAgdXNlRWZmZWN0KCgpID0+IHsKICAgIGxldCBhY3RpdmUgPSB0cnVlOwogICAgbGV0IGNvbXBsZXRlZCA9IGZhbHNlOwogICAgY29uc3QgZmxvd0lkID0gbmV3IFVSTFNlYXJjaFBhcmFtcyh3aW5kb3cubG9jYXRpb24uc2VhcmNoKS5nZXQoImZsb3ciKSB8fCAiIjsKICAgIGNvbnN0IG5vdGlmeU9wZW5lciA9IChzdWNjZXNzOiBib29sZWFuKSA9PiB7CiAgICAgIGlmIChjb21wbGV0ZWQpIHJldHVybjsKICAgICAgY29tcGxldGVkID0gdHJ1ZTsKICAgICAgY29uc3QgcmVzdWx0ID0geyB0eXBlOiAibmV4b2h1YjpwbGF5ZXI6b2F1dGgtcmVzdWx0Iiwgc3VjY2VzcywgZmxvd0lkLCBhdDogRGF0ZS5ub3coKSB9OwogICAgICAvLyBPIG5hdmVnYWRvciBwb2RlIHJlbW92ZXIgd2luZG93Lm9wZW5lciBhbyBhdHJhdmVzc2FyIEdvb2dsZS9TdXBhYmFzZS4KICAgICAgLy8gQnJvYWRjYXN0Q2hhbm5lbCBlIHN0b3JhZ2UgY29icmVtIGVzc2UgY2FzbyBtYW50ZW5kbyBhIGphbmVsYSBwcmluY2lwYWwKICAgICAgLy8gaW5mb3JtYWRhIG1lc21vIHF1YW5kbyBwb3N0TWVzc2FnZSBuw6NvIGVzdMOhIG1haXMgZGlzcG9uw612ZWwuCiAgICAgIHRyeSB7IHdpbmRvdy5sb2NhbFN0b3JhZ2Uuc2V0SXRlbSgibmV4b2h1YjpwbGF5ZXI6b2F1dGgtcG9wdXAtcmVzdWx0IiwgSlNPTi5zdHJpbmdpZnkocmVzdWx0KSk7IH0gY2F0Y2gge30KICAgICAgdHJ5IHsKICAgICAgICBjb25zdCBjaGFubmVsID0gbmV3IEJyb2FkY2FzdENoYW5uZWwoIm5leG9odWItcGxheWVyLW9hdXRoIik7CiAgICAgICAgY2hhbm5lbC5wb3N0TWVzc2FnZShyZXN1bHQpOwogICAgICAgIGNoYW5uZWwuY2xvc2UoKTsKICAgICAgfSBjYXRjaCB7fQogICAgICBpZiAod2luZG93Lm9wZW5lciAmJiAhd2luZG93Lm9wZW5lci5jbG9zZWQpIHsKICAgICAgICB0cnkgeyB3aW5kb3cub3BlbmVyLnBvc3RNZXNzYWdlKHJlc3VsdCwgd2luZG93LmxvY2F0aW9uLm9yaWdpbik7IH0gY2F0Y2gge30KICAgICAgfQogICAgICAvLyBGZWNoYXIgc2VtcHJlOiBwb3N0TWVzc2FnZSBuw6NvIMOpIG8gw7puaWNvIG1lY2FuaXNtbyBkZSByZXRvcm5vLgogICAgICBpZiAod2luZG93Lm9wZW5lciB8fCB3aW5kb3cuY2xvc2VkID09PSBmYWxzZSkgewogICAgICAgIHdpbmRvdy5zZXRUaW1lb3V0KCgpID0+IHdpbmRvdy5jbG9zZSgpLCA1MCk7CiAgICAgIH0KICAgICAgaWYgKCFzdWNjZXNzICYmIGFjdGl2ZSkgewogICAgICAgIHNldEZhaWxlZCh0cnVlKTsKICAgICAgfQogICAgfTsKCiAgICBjb25zdCB7IGRhdGE6IHsgc3Vic2NyaXB0aW9uIH0gfSA9IHBsYXllclN1cGFiYXNlLmF1dGgub25BdXRoU3RhdGVDaGFuZ2UoKGV2ZW50LCBzZXNzaW9uKSA9PiB7CiAgICAgIGlmIChzZXNzaW9uICYmIChldmVudCA9PT0gIlNJR05FRF9JTiIgfHwgZXZlbnQgPT09ICJJTklUSUFMX1NFU1NJT04iKSkgbm90aWZ5T3BlbmVyKHRydWUpOwogICAgfSk7CgogICAgLy8gZ2V0U2Vzc2lvbiBhZ3VhcmRhIG8gY2xpZW50ZSBwcm9jZXNzYXIgbyBjb2RlL2hhc2ggT0F1dGggZGVzdGEgVVJMLgogICAgdm9pZCBwbGF5ZXJTdXBhYmFzZS5hdXRoLmdldFNlc3Npb24oKS50aGVuKCh7IGRhdGEsIGVycm9yIH0pID0+IHsKICAgICAgaWYgKCFhY3RpdmUpIHJldHVybjsKICAgICAgaWYgKGRhdGEuc2Vzc2lvbikgbm90aWZ5T3BlbmVyKHRydWUpOwogICAgICBlbHNlIGlmIChlcnJvcikgbm90aWZ5T3BlbmVyKGZhbHNlKTsKICAgIH0pLmNhdGNoKCgpID0+IHsgaWYgKGFjdGl2ZSkgbm90aWZ5T3BlbmVyKGZhbHNlKTsgfSk7CgogICAgY29uc3QgdGltZW91dCA9IHdpbmRvdy5zZXRUaW1lb3V0KCgpID0+IHsKICAgICAgaWYgKGFjdGl2ZSAmJiAhY29tcGxldGVkKSBub3RpZnlPcGVuZXIoZmFsc2UpOwogICAgfSwgMjAwMDApOwoKICAgIHJldHVybiAoKSA9PiB7CiAgICAgIGFjdGl2ZSA9IGZhbHNlOwogICAgICB3aW5kb3cuY2xlYXJUaW1lb3V0KHRpbWVvdXQpOwogICAgICBzdWJzY3JpcHRpb24udW5zdWJzY3JpYmUoKTsKICAgIH07CiAgfSwgW10pOwoKICByZXR1cm4gKAogICAgPG1haW4gY2xhc3NOYW1lPSJmaXhlZCBpbnNldC0wIGZsZXggaXRlbXMtY2VudGVyIGp1c3RpZnktY2VudGVyIGJnLWJsYWNrIHB4LTYgdGV4dC1jZW50ZXIgdGV4dC13aGl0ZSI+CiAgICAgIDxkaXYgY2xhc3NOYW1lPSJzcGFjZS15LTMiPgogICAgICAgIDxzcGFuIGNsYXNzTmFtZT0ibXgtYXV0byBibG9jayBoLTkgdy05IGFuaW1hdGUtc3BpbiByb3VuZGVkLWZ1bGwgYm9yZGVyLTIgYm9yZGVyLXdoaXRlLzI1IGJvcmRlci10LXdoaXRlIiAvPgogICAgICAgIDxwIGNsYXNzTmFtZT0idGV4dC1zbSB0ZXh0LXdoaXRlLzc1Ij57ZmFpbGVkID8gIk7Do28gZm9pIHBvc3PDrXZlbCBjb25jbHVpciBvIGxvZ2luLiBGZWNoZSBlc3RhIGphbmVsYSBlIHRlbnRlIG5vdmFtZW50ZS4iIDogIkNvbmNsdWluZG8gbG9naW7igKYifTwvcD4KICAgICAgPC9kaXY+CiAgICA8L21haW4+CiAgKTsKfQo=
+import { useEffect, useState } from "react";
+import { playerSupabase } from "@/integrations/supabase/playerClient";
+
+/** Finaliza a sessão OAuth no popup e devolve o controle à janela do player. */
+export default function OAuthPopupCallback() {
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    let completed = false;
+    const flowId = new URLSearchParams(window.location.search).get("flow") || "";
+    const notifyOpener = (success: boolean) => {
+      if (completed) return;
+      completed = true;
+      const result = { type: "nexohub:player:oauth-result", success, flowId, at: Date.now() };
+      // O navegador pode remover window.opener ao atravessar Google/Supabase.
+      // BroadcastChannel e storage cobrem esse caso mantendo a janela principal
+      // informada mesmo quando postMessage não está mais disponível.
+      try { window.localStorage.setItem("nexohub:player:oauth-popup-result", JSON.stringify(result)); } catch {}
+      try {
+        const channel = new BroadcastChannel("nexohub-player-oauth");
+        channel.postMessage(result);
+        channel.close();
+      } catch {}
+      if (window.opener && !window.opener.closed) {
+        try { window.opener.postMessage(result, window.location.origin); } catch {}
+      }
+      // Fechar sempre: postMessage não é o único mecanismo de retorno.
+      if (window.opener || window.closed === false) {
+        window.setTimeout(() => window.close(), 50);
+      }
+      if (!success && active) {
+        setFailed(true);
+      }
+    };
+
+    const { data: { subscription } } = playerSupabase.auth.onAuthStateChange((event, session) => {
+      if (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) notifyOpener(true);
+    });
+
+    // getSession aguarda o cliente processar o code/hash OAuth desta URL.
+    void playerSupabase.auth.getSession().then(({ data, error }) => {
+      if (!active) return;
+      if (data.session) notifyOpener(true);
+      else if (error) notifyOpener(false);
+    }).catch(() => { if (active) notifyOpener(false); });
+
+    const timeout = window.setTimeout(() => {
+      if (active && !completed) notifyOpener(false);
+    }, 20000);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  return (
+    <main className="fixed inset-0 flex items-center justify-center bg-black px-6 text-center text-white">
+      <div className="space-y-3">
+        <span className="mx-auto block h-9 w-9 animate-spin rounded-full border-2 border-white/25 border-t-white" />
+        <p className="text-sm text-white/75">{failed ? "Não foi possível concluir o login. Feche esta janela e tente novamente." : "Concluindo login…"}</p>
+      </div>
+    </main>
+  );
+}

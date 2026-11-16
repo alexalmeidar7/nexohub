@@ -1,1 +1,4 @@
-LS0gU3RvcmUgdGhlIHNlbmRlcidzIGNoYXQgYXZhdGFyIHdpdGggZWFjaCBtZXNzYWdlIHNvIGV2ZXJ5IGxpc3RlbmVyIHNlZXMgdGhlCi0tIGF2YXRhciBzZWxlY3RlZCBieSB0aGUgc2VuZGVyLiBUaGlzIGlzIGFkZGl0aXZlIGFuZCBwcmVzZXJ2ZXMgZXhpc3Rpbmcgcm93cy4KQUxURVIgVEFCTEUgcHVibGljLnBsYXllcl9jaGF0X21lc3NhZ2VzCiAgQUREIENPTFVNTiBJRiBOT1QgRVhJU1RTIGF2YXRhcl91cmwgVEVYVDsK
+-- Store the sender's chat avatar with each message so every listener sees the
+-- avatar selected by the sender. This is additive and preserves existing rows.
+ALTER TABLE public.player_chat_messages
+  ADD COLUMN IF NOT EXISTS avatar_url TEXT;

@@ -1,1 +1,93 @@
-aW1wb3J0IHsgdXNlRWZmZWN0LCB1c2VTdGF0ZSB9IGZyb20gInJlYWN0IjsKaW1wb3J0IHsgTG9hZGVyMiwgU2F2ZSB9IGZyb20gImx1Y2lkZS1yZWFjdCI7CmltcG9ydCB7IHN1cGFiYXNlIH0gZnJvbSAiQC9pbnRlZ3JhdGlvbnMvc3VwYWJhc2UvY2xpZW50IjsKaW1wb3J0IHsgbWVyZ2VVc2VyRGFzaGJvYXJkSXRlbXMgfSBmcm9tICJAL2xpYi91c2VyU2V0dGluZ3MiOwppbXBvcnQgeyBkZWZhdWx0UGxheWVyQ29sb3JzIH0gZnJvbSAiQC9jb21wb25lbnRzL1BsYXllckxheW91dEN1c3RvbWl6ZXIiOwppbXBvcnQgeyB0b2FzdCB9IGZyb20gInNvbm5lciI7CgpleHBvcnQgZGVmYXVsdCBmdW5jdGlvbiBQbGF5ZXJEb21pbmFudENvbG9yRmllbGQoeyB1c2VySWQgfTogeyB1c2VySWQ6IHN0cmluZyB8IG51bGwgfSkgewogIGNvbnN0IFtjb2xvciwgc2V0Q29sb3JdID0gdXNlU3RhdGUoZGVmYXVsdFBsYXllckNvbG9ycy5kb21pbmFudENvbG9yKTsKICBjb25zdCBbZHJhZnQsIHNldERyYWZ0XSA9IHVzZVN0YXRlKGRlZmF1bHRQbGF5ZXJDb2xvcnMuZG9taW5hbnRDb2xvcik7CiAgY29uc3QgW3NhdmluZywgc2V0U2F2aW5nXSA9IHVzZVN0YXRlKGZhbHNlKTsKCiAgdXNlRWZmZWN0KCgpID0+IHsKICAgIGxldCBhY3RpdmUgPSB0cnVlOwogICAgaWYgKCF1c2VySWQpIHJldHVybjsKICAgIHZvaWQgc3VwYWJhc2UuZnJvbSgidXNlcl9zZXR0aW5ncyIpLnNlbGVjdCgiZGFzaGJvYXJkX2l0ZW1zIikuZXEoInVzZXJfaWQiLCB1c2VySWQpLm1heWJlU2luZ2xlKCkKICAgICAgLnRoZW4oKHsgZGF0YSB9KSA9PiB7CiAgICAgICAgaWYgKCFhY3RpdmUpIHJldHVybjsKICAgICAgICBjb25zdCBwbGF5ZXJDb2xvcnMgPSAoZGF0YT8uZGFzaGJvYXJkX2l0ZW1zIGFzIGFueSk/LnBsYXllcl9jb2xvcnMgfHwge307CiAgICAgICAgY29uc3Qgc2F2ZWRDb2xvciA9IHR5cGVvZiBwbGF5ZXJDb2xvcnMuZG9taW5hbnRDb2xvciA9PT0gInN0cmluZyIKICAgICAgICAgID8gcGxheWVyQ29sb3JzLmRvbWluYW50Q29sb3IKICAgICAgICAgIDogdHlwZW9mIHBsYXllckNvbG9ycy5ob21lQWNjZW50ID09PSAic3RyaW5nIiA/IHBsYXllckNvbG9ycy5ob21lQWNjZW50IDogZGVmYXVsdFBsYXllckNvbG9ycy5kb21pbmFudENvbG9yOwogICAgICAgIGlmICgvXiNbMC05YS1mXXs2fSQvaS50ZXN0KHNhdmVkQ29sb3IpKSB7CiAgICAgICAgICBzZXRDb2xvcihzYXZlZENvbG9yKTsKICAgICAgICAgIHNldERyYWZ0KHNhdmVkQ29sb3IpOwogICAgICAgIH0KICAgICAgfSk7CiAgICByZXR1cm4gKCkgPT4geyBhY3RpdmUgPSBmYWxzZTsgfTsKICB9LCBbdXNlcklkXSk7CgogIGNvbnN0IG5vcm1hbGl6ZWREcmFmdCA9IGRyYWZ0LnRyaW0oKS5zdGFydHNXaXRoKCIjIikgPyBkcmFmdC50cmltKCkgOiBgIyR7ZHJhZnQudHJpbSgpfWA7CiAgY29uc3QgdmFsaWREcmFmdCA9IC9eI1swLTlhLWZdezZ9JC9pLnRlc3Qobm9ybWFsaXplZERyYWZ0KTsKCiAgY29uc3Qgc2F2ZUNvbG9yID0gYXN5bmMgKCkgPT4gewogICAgaWYgKCF1c2VySWQpIHsKICAgICAgdG9hc3QuZXJyb3IoIkVudHJlIG5hIGNvbnRhIGRhIGVtaXNzb3JhIHBhcmEgc2FsdmFyIGEgY29yIGRvIFBsYXllci4iKTsKICAgICAgcmV0dXJuOwogICAgfQogICAgaWYgKCF2YWxpZERyYWZ0KSB7CiAgICAgIHRvYXN0LmVycm9yKCJEaWdpdGUgdW1hIGNvciBoZXhhZGVjaW1hbCB2w6FsaWRhLCBjb21vICNFMzA2MTMuIik7CiAgICAgIHJldHVybjsKICAgIH0KICAgIHNldFNhdmluZyh0cnVlKTsKICAgIHRyeSB7CiAgICAgIGNvbnN0IG5leHRDb2xvciA9IG5vcm1hbGl6ZWREcmFmdC50b1VwcGVyQ2FzZSgpOwogICAgICBhd2FpdCBtZXJnZVVzZXJEYXNoYm9hcmRJdGVtcyh1c2VySWQsIHsgcGxheWVyX2NvbG9yczogeyBkb21pbmFudENvbG9yOiBuZXh0Q29sb3IgfSB9KTsKICAgICAgc2V0Q29sb3IobmV4dENvbG9yKTsKICAgICAgc2V0RHJhZnQobmV4dENvbG9yKTsKICAgICAgd2luZG93LmRpc3BhdGNoRXZlbnQobmV3IEV2ZW50KCJwbGF5ZXItY29sb3JzLXVwZGF0ZWQiKSk7CiAgICAgIHRvYXN0LnN1Y2Nlc3MoIkNvciBwcmVkb21pbmFudGUgZG8gUGxheWVyIHNhbHZhLiIpOwogICAgfSBjYXRjaCAoZXJyb3IpIHsKICAgICAgY29uc29sZS5lcnJvcigiRmFsaGEgYW8gc2FsdmFyIGEgY29yIHByZWRvbWluYW50ZSBkbyBQbGF5ZXI6IiwgZXJyb3IpOwogICAgICB0b2FzdC5lcnJvcigiTsOjbyBmb2kgcG9zc8OtdmVsIHNhbHZhciBhIGNvciBwcmVkb21pbmFudGUuIik7CiAgICB9IGZpbmFsbHkgewogICAgICBzZXRTYXZpbmcoZmFsc2UpOwogICAgfQogIH07CgogIHJldHVybiAoCiAgICA8ZGl2IGNsYXNzTmFtZT0iZmxleCBpdGVtcy1jZW50ZXIgZ2FwLTIgcm91bmRlZC0yeGwgYm9yZGVyIGJvcmRlci1zbGF0ZS0yMDAgYmctc2xhdGUtNTAgcHgtMyBweS0yIj4KICAgICAgPGxhYmVsIGh0bWxGb3I9InBsYXllci1kb21pbmFudC1jb2xvciIgY2xhc3NOYW1lPSJ3aGl0ZXNwYWNlLW5vd3JhcCB0ZXh0LVs5cHhdIGZvbnQtYm9sZCB1cHBlcmNhc2UgdHJhY2tpbmctd2lkZXIgdGV4dC1zbGF0ZS01MDAiPgogICAgICAgIENvciBwcmVkb21pbmFudGUKICAgICAgPC9sYWJlbD4KICAgICAgPGlucHV0CiAgICAgICAgYXJpYS1sYWJlbD0iU2VsZWNpb25hciBjb3IgcHJlZG9taW5hbnRlIGRvIFBsYXllciIKICAgICAgICB0eXBlPSJjb2xvciIKICAgICAgICB2YWx1ZT17dmFsaWREcmFmdCA/IG5vcm1hbGl6ZWREcmFmdCA6IGNvbG9yfQogICAgICAgIG9uQ2hhbmdlPXsoZXZlbnQpID0+IHNldERyYWZ0KGV2ZW50LnRhcmdldC52YWx1ZS50b1VwcGVyQ2FzZSgpKX0KICAgICAgICBjbGFzc05hbWU9ImgtOCB3LTkgY3Vyc29yLXBvaW50ZXIgcm91bmRlZC1sZyBib3JkZXIgYm9yZGVyLXNsYXRlLTIwMCBiZy13aGl0ZSBwLTEiCiAgICAgIC8+CiAgICAgIDxpbnB1dAogICAgICAgIGlkPSJwbGF5ZXItZG9taW5hbnQtY29sb3IiCiAgICAgICAgYXJpYS1sYWJlbD0iQ8OzZGlnbyBoZXhhZGVjaW1hbCBkYSBjb3IgcHJlZG9taW5hbnRlIgogICAgICAgIHZhbHVlPXtkcmFmdH0KICAgICAgICBvbkNoYW5nZT17KGV2ZW50KSA9PiBzZXREcmFmdChldmVudC50YXJnZXQudmFsdWUpfQogICAgICAgIG9uS2V5RG93bj17KGV2ZW50KSA9PiB7IGlmIChldmVudC5rZXkgPT09ICJFbnRlciIpIHZvaWQgc2F2ZUNvbG9yKCk7IH19CiAgICAgICAgcGxhY2Vob2xkZXI9IiNFMzA2MTMiCiAgICAgICAgbWF4TGVuZ3RoPXs3fQogICAgICAgIGNsYXNzTmFtZT0iaC04IHctWzkycHhdIHJvdW5kZWQtbGcgYm9yZGVyIGJvcmRlci1zbGF0ZS0yMDAgYmctd2hpdGUgcHgtMiBmb250LW1vbm8gdGV4dC14cyB1cHBlcmNhc2UgdGV4dC1zbGF0ZS03MDAgb3V0bGluZS1ub25lIGZvY3VzOmJvcmRlci1ibHVlLTUwMCIKICAgICAgLz4KICAgICAgPGJ1dHRvbgogICAgICAgIHR5cGU9ImJ1dHRvbiIKICAgICAgICBvbkNsaWNrPXsoKSA9PiB2b2lkIHNhdmVDb2xvcigpfQogICAgICAgIGRpc2FibGVkPXtzYXZpbmcgfHwgIXZhbGlkRHJhZnQgfHwgIXVzZXJJZH0KICAgICAgICBhcmlhLWxhYmVsPSJTYWx2YXIgY29yIHByZWRvbWluYW50ZSIKICAgICAgICB0aXRsZT0iU2FsdmFyIGNvciBwcmVkb21pbmFudGUiCiAgICAgICAgY2xhc3NOYW1lPSJmbGV4IGgtOCB3LTggc2hyaW5rLTAgaXRlbXMtY2VudGVyIGp1c3RpZnktY2VudGVyIHJvdW5kZWQtbGcgYmctWyMwMDU1ZmZdIHRleHQtd2hpdGUgdHJhbnNpdGlvbi1vcGFjaXR5IGhvdmVyOm9wYWNpdHktOTAgZGlzYWJsZWQ6Y3Vyc29yLW5vdC1hbGxvd2VkIGRpc2FibGVkOm9wYWNpdHktNTAiCiAgICAgID4KICAgICAgICB7c2F2aW5nID8gPExvYWRlcjIgc2l6ZT17MTR9IGNsYXNzTmFtZT0iYW5pbWF0ZS1zcGluIiAvPiA6IDxTYXZlIHNpemU9ezE0fSAvPn0KICAgICAgPC9idXR0b24+CiAgICA8L2Rpdj4KICApOwp9Cg==
+import { useEffect, useState } from "react";
+import { Loader2, Save } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { mergeUserDashboardItems } from "@/lib/userSettings";
+import { defaultPlayerColors } from "@/components/PlayerLayoutCustomizer";
+import { toast } from "sonner";
+
+export default function PlayerDominantColorField({ userId }: { userId: string | null }) {
+  const [color, setColor] = useState(defaultPlayerColors.dominantColor);
+  const [draft, setDraft] = useState(defaultPlayerColors.dominantColor);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    if (!userId) return;
+    void supabase.from("user_settings").select("dashboard_items").eq("user_id", userId).maybeSingle()
+      .then(({ data }) => {
+        if (!active) return;
+        const playerColors = (data?.dashboard_items as any)?.player_colors || {};
+        const savedColor = typeof playerColors.dominantColor === "string"
+          ? playerColors.dominantColor
+          : typeof playerColors.homeAccent === "string" ? playerColors.homeAccent : defaultPlayerColors.dominantColor;
+        if (/^#[0-9a-f]{6}$/i.test(savedColor)) {
+          setColor(savedColor);
+          setDraft(savedColor);
+        }
+      });
+    return () => { active = false; };
+  }, [userId]);
+
+  const normalizedDraft = draft.trim().startsWith("#") ? draft.trim() : `#${draft.trim()}`;
+  const validDraft = /^#[0-9a-f]{6}$/i.test(normalizedDraft);
+
+  const saveColor = async () => {
+    if (!userId) {
+      toast.error("Entre na conta da emissora para salvar a cor do Player.");
+      return;
+    }
+    if (!validDraft) {
+      toast.error("Digite uma cor hexadecimal válida, como #E30613.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const nextColor = normalizedDraft.toUpperCase();
+      await mergeUserDashboardItems(userId, { player_colors: { dominantColor: nextColor } });
+      setColor(nextColor);
+      setDraft(nextColor);
+      window.dispatchEvent(new Event("player-colors-updated"));
+      toast.success("Cor predominante do Player salva.");
+    } catch (error) {
+      console.error("Falha ao salvar a cor predominante do Player:", error);
+      toast.error("Não foi possível salvar a cor predominante.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
+      <label htmlFor="player-dominant-color" className="whitespace-nowrap text-[9px] font-bold uppercase tracking-wider text-slate-500">
+        Cor predominante
+      </label>
+      <input
+        aria-label="Selecionar cor predominante do Player"
+        type="color"
+        value={validDraft ? normalizedDraft : color}
+        onChange={(event) => setDraft(event.target.value.toUpperCase())}
+        className="h-8 w-9 cursor-pointer rounded-lg border border-slate-200 bg-white p-1"
+      />
+      <input
+        id="player-dominant-color"
+        aria-label="Código hexadecimal da cor predominante"
+        value={draft}
+        onChange={(event) => setDraft(event.target.value)}
+        onKeyDown={(event) => { if (event.key === "Enter") void saveColor(); }}
+        placeholder="#E30613"
+        maxLength={7}
+        className="h-8 w-[92px] rounded-lg border border-slate-200 bg-white px-2 font-mono text-xs uppercase text-slate-700 outline-none focus:border-blue-500"
+      />
+      <button
+        type="button"
+        onClick={() => void saveColor()}
+        disabled={saving || !validDraft || !userId}
+        aria-label="Salvar cor predominante"
+        title="Salvar cor predominante"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#0055ff] text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+      </button>
+    </div>
+  );
+}
