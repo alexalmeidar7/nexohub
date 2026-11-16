@@ -10,6 +10,7 @@ import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAut
 import { toast } from "@/hooks/use-toast";
 import { confirmDialog } from "@/lib/confirmDialog";
 import SupportTab from "./SupportTab";
+import { createOwnedRealtimeChannel } from "@/lib/ownedRealtimeChannel";
 
 const isUuid = (str?: string | null): boolean => !!str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 
@@ -198,7 +199,7 @@ function InboxTab({ userId }: { userId: string }) {
         }
       }
     })();
-    const ch = supabase.channel(`wa-contacts-${userId}`)
+    const ch = createOwnedRealtimeChannel(supabase.realtime, `wa-contacts-${userId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "wa_contacts", filter: `user_id=eq.${userId}` },
         (payload: any) => {
           setContacts(prev => {
@@ -242,7 +243,7 @@ function InboxTab({ userId }: { userId: string }) {
       // Reset unread
       await supabase.from("wa_contacts").update({ unread_count: 0 }).eq("id", active.id);
     })();
-    const ch = supabase.channel(`wa-msgs-${active.id}`)
+    const ch = createOwnedRealtimeChannel(supabase.realtime, `wa-msgs-${active.id}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "wa_messages", filter: `contact_id=eq.${active.id}` },
         (payload: any) => setMessages(prev => [...prev, payload.new as Message]))
       .subscribe();

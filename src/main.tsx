@@ -58,8 +58,9 @@ const shouldReloadForChunkError = (errorText: string, source?: string) => {
   );
 };
 
-window.addEventListener("vite:preloadError", (event) => {
-  event.preventDefault();
+window.addEventListener("vite:preloadError", () => {
+  // Vite resolves the import as undefined when this event is cancelled.
+  // Keep the rejection intact so lazyRetry can retry and report the real error.
   if (window.location.pathname !== "/vmix-control/switcher") {
     recoverFromChunkFailure();
   }

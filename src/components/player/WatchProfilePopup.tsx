@@ -21,6 +21,7 @@ interface WatchProfilePopupProps {
   onClose: () => void;
   onEditProfile?: () => void;
   onSwitchProfile?: () => void;
+  onAvatarChange?: (url: string | null) => void;
   onLogout?: () => void;
 }
 
