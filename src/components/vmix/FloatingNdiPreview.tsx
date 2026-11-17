@@ -1,14 +1,11 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AlertTriangle, Maximize2, Minimize2, MonitorPlay, RefreshCw, Settings, X } from "lucide-react";
 
-type VideoDevice = { deviceId: string; label: string };
 type NdiNetworkSource = { name: string; address: string };
+const NDI_ORIGIN = "http://127.0.0.1:8765";
+const SOURCE_KEY = "housemix:ndi-preview-network-source:v1";
 
-export default function FloatingNdiPreview({
-  baseUrl: _baseUrl,
-  targetSelector = "#custom-buttons-panel",
-  onRefreshSources,
-}: {
+export default function FloatingNdiPreview({ targetSelector = "#custom-buttons-panel", onRefreshSources }: {
   inputs: { key: string; number: string; title: string; type: string }[];
   baseUrl: string;
   targetSelector?: string;
@@ -16,110 +13,57 @@ export default function FloatingNdiPreview({
 }) {
   const [visible, setVisible] = useState(true);
   const [expanded, setExpanded] = useState(false);
-  const [setupOpen, setSetupOpen] = useState(() => {
-    try { return !window.localStorage.getItem("housemix:ndi-preview-device:v1") && !window.localStorage.getItem("housemix:ndi-preview-network-source:v1"); } catch { return true; }
-  });
+  const [setupOpen, setSetupOpen] = useState(true);
   const [rightOffset, setRightOffset] = useState(16);
-  const [devices, setDevices] = useState<VideoDevice[]>([]);
-  const [networkSources, setNetworkSources] = useState<NdiNetworkSource[]>([]);
-  const [networkDiscoveryMessage, setNetworkDiscoveryMessage] = useState("");
-  const [loadingNetworkSources, setLoadingNetworkSources] = useState(false);
-  const [selectedNetworkSource, setSelectedNetworkSource] = useState(() => { try { return window.localStorage.getItem("housemix:ndi-preview-network-source:v1") || ""; } catch { return ""; } });
-  const storageKey = "housemix:ndi-preview-device:v1";
-  const [selectedDevice, setSelectedDevice] = useState(() => {
-    try { return window.localStorage.getItem(storageKey) || ""; } catch { return ""; }
-  });
-  const [stream, setStream] = useState<MediaStream | null>(null);
-  const [error, setError] = useState("");
+  const [sources, setSources] = useState<NdiNetworkSource[]>([]);
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const refreshNetworkSources = async () => {
-    setLoadingNetworkSources(true);
-    try {
-      const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), 5000);
-      const response = await fetch("http://127.0.0.1:8765/ndi/sources", { cache: "no-store", signal: controller.signal }).finally(() => window.clearTimeout(timeout));
-      const payload = await response.json();
-      if (!response.ok || !payload.available) {
-        setNetworkSources([]);
-        setNetworkDiscoveryMessage(payload.message || "Não foi possível descobrir fontes NDI da rede. Verifique se o Nexo Bridge está aberto neste computador.");
-        return;
-      }
-      const sources = Array.isArray(payload.sources) ? payload.sources as NdiNetworkSource[] : [];
-      setNetworkSources(sources);
-      setNetworkDiscoveryMessage(sources.length ? "" : "Nenhuma fonte NDI encontrada na rede.");
-      setSelectedNetworkSource((current) => {
-        const saved = (() => { try { return window.localStorage.getItem("housemix:ndi-preview-network-source:v1") || ""; } catch { return ""; } })();
-        const next = [saved, current].find((name) => name && sources.some((source) => source.name === name)) || "";
-        return next;
-      });
-    } catch {
-      setNetworkSources([]);
-      setNetworkDiscoveryMessage("Abra o Nexo Bridge neste computador para descobrir todas as fontes NDI visíveis na rede.");
-    } finally {
-      setLoadingNetworkSources(false);
-    }
-  };
-
-  const handleNetworkSourceChange = (name: string) => {
-    setSelectedNetworkSource(name);
-    try {
-      if (name) window.localStorage.setItem("housemix:ndi-preview-network-source:v1", name);
-      else window.localStorage.removeItem("housemix:ndi-preview-network-source:v1");
-    } catch { /* storage may be disabled */ }
-  };
-
-  const refreshDevices = async () => {
-    void refreshNetworkSources();
-    if (!navigator.mediaDevices?.getUserMedia || !navigator.mediaDevices?.enumerateDevices) {
-      setError("Este navegador não permite acesso à câmera. Abra o House Mix no Chrome ou Edge atualizado, usando HTTPS.");
-      return;
-    }
+  const [previewError, setPreviewError] = useState(false);
+  const [previewReady, setPreviewReady] = useState(false);
+  const [previewRevision, setPreviewRevision] = useState(0);
+  const [selectedSource, setSelectedSource] = useState(() => {
+    try { return localStorage.getItem(SOURCE_KEY) || ""; } catch { return ""; }
+  });
+  const inFlight = useRef<AbortController | null>(null);
+  const mounted = useRef(false);
+  const refreshSources = useCallback(async () => {
+    if (inFlight.current) return;
+    const controller = new AbortController();
+    inFlight.current = controller;
     setLoading(true);
-    setError("");
+    const timeout = window.setTimeout(() => controller.abort(), 5000);
     try {
-      // A permissão revela os nomes dos dispositivos virtuais, inclusive NDI Webcam Input.
-      const permissionStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-      permissionStream.getTracks().forEach((track) => track.stop());
-      const list = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = list
-        .filter((device) => device.kind === "videoinput")
-        .map((device, index) => ({
-          deviceId: device.deviceId,
-          label: device.label || "Câmera local " + (index + 1),
-        }));
-      setDevices(videoDevices);
-      await refreshNetworkSources();
-      const ndiDevice = videoDevices.find((device) => /ndi webcam input/i.test(device.label));
-      const savedDevice = (() => {
-        try { return window.localStorage.getItem(storageKey) || ""; } catch { return ""; }
-      })();
-      const nextSelected = savedDevice && videoDevices.some((device) => device.deviceId === savedDevice)
-        ? savedDevice
-        : selectedDevice && videoDevices.some((device) => device.deviceId === selectedDevice)
-          ? selectedDevice
-          : ndiDevice?.deviceId || videoDevices[0]?.deviceId || "";
-      setSelectedDevice(nextSelected);
-      if (nextSelected) {
-        try { window.localStorage.setItem(storageKey, nextSelected); } catch { /* storage may be disabled */ }
-      }
-      if (!videoDevices.length) setError("Nenhuma câmera local foi encontrada. Instale e abra o NDI Webcam Input e selecione uma fonte NDI nele.");
-    } catch (cause) {
-      const name = cause instanceof DOMException ? cause.name : "";
-      setError(name === "NotAllowedError"
-        ? "Permita o acesso à câmera para o House Mix nas configurações do navegador."
-        : "Não foi possível listar as câmeras locais. Verifique a permissão do navegador e tente novamente.");
+      const response = await fetch(`${NDI_ORIGIN}/ndi/sources`, { cache: "no-store", signal: controller.signal });
+      const payload = await response.json();
+      if (!response.ok || !payload.available) throw new Error(payload.message || "Serviço NDI indisponível. Reinicie o House Mix Desktop.");
+      if (!mounted.current) return;
+      const next = Array.isArray(payload.sources) ? payload.sources.filter((s: NdiNetworkSource) => typeof s.name === "string") : [];
+      setSources(next);
+      setMessage(next.length ? "" : "Nenhuma fonte NDI encontrada. Verifique a rede e se a saída NDI está habilitada no emissor.");
+    } catch (error) {
+      if (mounted.current) setMessage(error instanceof Error && error.name !== "AbortError" && error.message !== "Failed to fetch"
+        ? error.message : "Serviço NDI indisponível. Reinicie o House Mix Desktop.");
     } finally {
-      setLoading(false);
+      window.clearTimeout(timeout);
+      inFlight.current = null;
+      if (mounted.current) setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    void onRefreshSources?.();
-    void refreshNetworkSources();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
+  useEffect(() => {
+    mounted.current = true;
+    if (!visible) return () => { mounted.current = false; };
+    let timer: number;
+    let cancelled = false;
+    const poll = async () => { await refreshSources(); if (!cancelled) timer = window.setTimeout(poll, 5000); };
+    void poll();
+    void onRefreshSources?.();
+    return () => { cancelled = true; mounted.current = false; window.clearTimeout(timer); inFlight.current?.abort(); };
+  }, [refreshSources, visible]);
+  useEffect(() => { setPreviewError(false); setPreviewReady(false); }, [selectedSource, previewRevision, visible]);
+  const selectSource = (name: string) => {
+    setSelectedSource(name);
+    try { if (name) localStorage.setItem(SOURCE_KEY, name); else localStorage.removeItem(SOURCE_KEY); } catch {}
+  };
   useEffect(() => {
     const updateAnchor = () => {
       const target = document.querySelector(targetSelector);
@@ -141,108 +85,37 @@ export default function FloatingNdiPreview({
     };
   }, [targetSelector]);
 
-  useEffect(() => {
-    if (!selectedDevice || !navigator.mediaDevices?.getUserMedia) {
-      setStream(null);
-      return;
-    }
-    let cancelled = false;
-    let nextStream: MediaStream | null = null;
-    setError("");
-    navigator.mediaDevices.getUserMedia({
-      video: { deviceId: { exact: selectedDevice } },
-      audio: false,
-    }).then((result) => {
-      if (cancelled) {
-        result.getTracks().forEach((track) => track.stop());
-        return;
-      }
-      nextStream = result;
-      setStream(result);
-    }).catch((cause: unknown) => {
-      const name = cause instanceof DOMException ? cause.name : "";
-      setStream(null);
-      setError(name === "NotAllowedError"
-        ? "Permita o acesso à câmera nas configurações do navegador."
-        : "Não foi possível abrir este dispositivo. Verifique se ele está disponível e tente atualizar a lista.");
-    });
-    return () => {
-      cancelled = true;
-      nextStream?.getTracks().forEach((track) => track.stop());
-    };
-  }, [selectedDevice]);
 
-  const handleDeviceChange = (deviceId: string) => {
-    setSelectedDevice(deviceId);
-    try {
-      if (deviceId) window.localStorage.setItem(storageKey, deviceId);
-      else window.localStorage.removeItem(storageKey);
-    } catch { /* storage may be disabled */ }
-  };
-
-  const selectedLabel = devices.find((device) => device.deviceId === selectedDevice)?.label || "";
-
-  if (!visible) {
-    return (
-      <button type="button" onClick={() => setVisible(true)} className="fixed bottom-16 z-[60] flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold text-white shadow-xl" style={{ right: rightOffset + "px", background: "#17243d", borderColor: "#315078" }}>
-        <MonitorPlay size={15} /> Preview
-      </button>
-    );
-  }
-
+  if (!visible) return <button type="button" onClick={() => setVisible(true)} className="fixed bottom-16 z-[60] flex items-center gap-2 rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-xs font-bold text-white shadow-xl" style={{ right: rightOffset }}><MonitorPlay size={15} /> Preview</button>;
   return (
-    <aside className="fixed bottom-16 z-[60] overflow-hidden rounded-xl shadow-2xl" style={{ right: rightOffset + "px", width: expanded ? "min(640px, calc(100vw - 32px))" : "min(340px, calc(100vw - 32px))", background: "#111b2d", border: "1px solid #314766", boxShadow: "0 18px 50px #0008" }} aria-label="Preview">
-      <header className="flex items-center gap-2 px-3 py-2" style={{ background: "#17243d", borderBottom: "1px solid #314766" }}>
-        <span className="h-2 w-2 rounded-full" style={{ background: stream ? "#8bcf38" : "#64748b" }} />
+    <aside className="fixed bottom-16 z-[60] overflow-hidden rounded-xl border border-[#314766] bg-[#111b2d] shadow-2xl" style={{ right: rightOffset, width: expanded ? "min(640px, calc(100vw - 32px))" : "min(340px, calc(100vw - 32px))" }} aria-label="Preview NDI">
+      <header className="flex items-center gap-2 border-b border-[#314766] bg-[#17243d] px-3 py-2">
+        <span className={`h-2 w-2 rounded-full ${previewReady && !previewError ? "bg-lime-400" : "bg-slate-500"}`} />
         <span className="flex-1 text-[10px] font-black uppercase tracking-wider text-white">Preview</span>
-        <button type="button" onClick={() => void refreshDevices()} title="Atualizar dispositivos de vídeo" aria-label="Atualizar dispositivos de vídeo" className="rounded p-1 text-slate-300 hover:bg-white/10"><RefreshCw size={13} /></button>
-        <button type="button" onClick={() => setSetupOpen((value) => !value)} title="Selecionar dispositivo" aria-label="Selecionar dispositivo" className={"rounded p-1 hover:bg-white/10 " + (setupOpen ? "text-white" : "text-slate-300")}><Settings size={13} /></button>
-        <button type="button" onClick={() => setExpanded((value) => !value)} title={expanded ? "Reduzir preview" : "Expandir preview"} className="rounded p-1 text-slate-300 hover:bg-white/10">{expanded ? <Minimize2 size={13} /> : <Maximize2 size={13} />}</button>
-        <button type="button" onClick={() => setVisible(false)} title="Ocultar preview" className="rounded p-1 text-slate-300 hover:bg-white/10"><X size={13} /></button>
+        <button type="button" onClick={() => { void refreshSources(); setPreviewRevision(v => v + 1); }} aria-label="Atualizar fontes NDI" title="Atualizar fontes NDI" className="rounded p-1 text-slate-300 hover:bg-white/10"><RefreshCw size={13} className={loading ? "animate-spin" : ""} /></button>
+        <button type="button" onClick={() => setSetupOpen(v => !v)} aria-label="Selecionar fonte NDI" className="rounded p-1 text-slate-300 hover:bg-white/10"><Settings size={13} /></button>
+        <button type="button" onClick={() => setExpanded(v => !v)} aria-label={expanded ? "Reduzir preview" : "Expandir preview"} className="rounded p-1 text-slate-300 hover:bg-white/10">{expanded ? <Minimize2 size={13} /> : <Maximize2 size={13} />}</button>
+        <button type="button" onClick={() => setVisible(false)} aria-label="Ocultar preview" className="rounded p-1 text-slate-300 hover:bg-white/10"><X size={13} /></button>
       </header>
       <div className="p-2">
-        {setupOpen && <>
-          <div className="mb-2 flex flex-col gap-1.5">
-            <div className="flex gap-1.5">
-              <select value={selectedNetworkSource} onChange={(event) => handleNetworkSourceChange(event.target.value)} className="h-8 min-w-0 flex-1 rounded-md border px-2 text-[10px] text-white outline-none" style={{ background: "#0c1525", borderColor: "#314766" }} aria-label="Fonte NDI disponivel na rede">
-                <option value="">{loadingNetworkSources ? "Buscando fontes NDI na rede..." : "Selecione uma fonte NDI da rede..."}</option>
-                {networkSources.map((source) => <option key={`${source.name}-${source.address}`} value={source.name}>{source.name}{source.address ? ` - ${source.address}` : ""}</option>)}
-              </select>
-              <button type="button" onClick={() => void refreshNetworkSources()} disabled={loadingNetworkSources} title="Atualizar fontes NDI da rede" className="shrink-0 rounded-md border border-white/20 px-2 text-[9px] font-bold text-white hover:bg-white/10 disabled:opacity-50">{loadingNetworkSources ? "..." : "NDI"}</button>
-            </div>
-            {networkDiscoveryMessage && <p className="px-1 text-[9px] leading-snug text-slate-400">{networkDiscoveryMessage}</p>}
-          </div>
-          <div className="mb-2 flex gap-1.5">
-            <select value={selectedDevice} onChange={(event) => handleDeviceChange(event.target.value)} className="h-8 min-w-0 flex-1 rounded-md border px-2 text-[10px] text-white outline-none" style={{ background: "#0c1525", borderColor: "#314766" }}>
-              <option value="">Selecione a câmera NDI…</option>
-              {devices.map((device) => <option key={device.deviceId} value={device.deviceId}>{device.label}</option>)}
-            </select>
-            <button type="button" onClick={() => void refreshDevices()} disabled={loading} className="shrink-0 rounded-md border border-white/20 px-2 text-[9px] font-bold text-white hover:bg-white/10 disabled:opacity-50">{loading ? "…" : "Listar"}</button>
-          </div>
-        </>}
-        <div className="relative aspect-video overflow-hidden rounded-md" style={{ background: "#05080e", border: "1px solid #25344b" }}>
-          {stream ? (
-            <VideoStream stream={stream} label={selectedLabel} />
-          ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-5 text-center text-slate-400">
-              {error ? <AlertTriangle size={25} className="text-amber-400" /> : <MonitorPlay size={25} />}
-              <span className="text-[10px] font-semibold">{error || "Para ver uma fonte NDI sem Bridge, abra o NDI Webcam Input no computador, selecione nele a fonte da rede e depois escolha esse dispositivo aqui."}</span>
-              <button type="button" onClick={() => void refreshDevices()} disabled={loading} className="rounded-md border border-white/20 px-2 py-1 text-[9px] font-bold text-white hover:bg-white/10 disabled:opacity-50">{loading ? "Carregando…" : "Ativar e listar câmeras"}</button>
-            </div>
-          )}
+        {setupOpen && <div className="mb-2">
+          <select value={selectedSource} onChange={e => selectSource(e.target.value)} aria-label="Fonte NDI disponível na rede" className="h-9 w-full min-w-0 rounded-md border border-[#314766] bg-[#0c1525] px-2 text-[11px] text-white outline-none">
+            <option value="">{loading && !sources.length ? "Buscando fontes NDI na rede..." : "Selecione uma fonte NDI da rede..."}</option>
+            {selectedSource && !sources.some(s => s.name === selectedSource) && <option value={selectedSource}>{selectedSource} (aguardando rede)</option>}
+            {sources.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
+          </select>
+          {message && <p role="status" className="mt-1 px-1 text-[10px] leading-snug text-slate-400">{message}</p>}
+        </div>}
+        <div className="relative aspect-video overflow-hidden rounded-md border border-[#25344b] bg-[#05080e]">
+          {selectedSource && !previewError && <img key={`${selectedSource}-${previewRevision}`} crossOrigin="anonymous" src={`${NDI_ORIGIN}/ndi/preview?source=${encodeURIComponent(selectedSource)}&revision=${previewRevision}`} onLoad={() => setPreviewReady(true)} onError={() => { setPreviewError(true); setPreviewReady(false); }} alt={`Preview NDI: ${selectedSource}`} className="absolute inset-0 h-full w-full object-contain" />}
+          {(!selectedSource || previewError) && <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4 text-center text-slate-300">
+            {previewError ? <AlertTriangle size={25} className="text-amber-400" /> : <MonitorPlay size={25} />}
+            <span className="text-[10px] font-semibold">{previewError ? "Não foi possível receber vídeo desta fonte. Verifique o emissor e atualize o preview." : "Selecione uma fonte NDI da rede para visualizar."}</span>
+          </div>}
         </div>
-        {(selectedNetworkSource || selectedLabel) && <p className="mt-1.5 truncate text-[9px] font-bold text-slate-400">{selectedNetworkSource ? `NDI da rede: ${selectedNetworkSource}` : selectedLabel}</p>}
+        {selectedSource && <p className="mt-1.5 truncate text-[9px] font-bold text-slate-400" title={selectedSource}>{selectedSource}</p>}
+        <a href="https://ndi.video/" target="_blank" rel="noreferrer" className="mt-1 block text-[9px] text-slate-500">NDI®</a>
       </div>
     </aside>
   );
-}
-
-function VideoStream({ stream, label }: { stream: MediaStream; label: string }) {
-  const ref = (element: HTMLVideoElement | null) => {
-    if (element && element.srcObject !== stream) {
-      element.srcObject = stream;
-      void element.play().catch(() => {});
-    }
-  };
-  return <video ref={ref} autoPlay playsInline muted aria-label={label || "Preview de vídeo"} className="absolute inset-0 h-full w-full object-contain" />;
 }

@@ -6,6 +6,7 @@ const { app, BrowserWindow, dialog, shell, protocol, net, Notification, ipcMain 
 const { spawn } = require("node:child_process");
 const { createWindowOptions, isAllowedExternalUrl, resolveRendererRequestPath } = require("./runtime.cjs");
 const { startLocalApiHost } = require("./local-api-host.cjs");
+const { startNdiBridge } = require("./ndi-bridge.cjs");
 const { fetchVmixApi } = require("./vmix-api.cjs");
 
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
@@ -23,6 +24,7 @@ protocol.registerSchemesAsPrivileged([{
 
 let mainWindow;
 let localApiHost;
+let ndiBridge;
 let isQuitting = false;
 let desktopAutoUpdater = null;
 let updateCheckInFlight = false;
@@ -622,6 +624,7 @@ app.whenReady().then(async () => {
     await registerRendererProtocol();
     await initializeLocalAssetFolders();
     await startLocalRuntime();
+    ndiBridge = startNdiBridge({ executablePath: path.join(app.isPackaged ? process.resourcesPath : __dirname, "runtime", "ndi-bridge", "NexoHubBridge.exe") });
     createMainWindow();
     const startupOAuthCallback = process.argv.find((arg) => arg.startsWith("housemix://desktop/oauth-callback"));
     if (startupOAuthCallback) forwardPlayerOAuthCallback(startupOAuthCallback);
@@ -639,6 +642,7 @@ app.whenReady().then(async () => {
 });
 
 app.on("before-quit", (event) => {
+  ndiBridge?.stop();
   if (updateCheckTimer) clearInterval(updateCheckTimer);
   if (isQuitting || !localApiHost) return;
   event.preventDefault();

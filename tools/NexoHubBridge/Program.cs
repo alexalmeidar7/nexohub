@@ -21,7 +21,23 @@ internal static class Program {
  static readonly string ConfigPath=Path.Combine(AppContext.BaseDirectory,"appsettings.json");
  static readonly Version CurrentVersion=typeof(Program).Assembly.GetName().Version ?? new Version(1,0,0);
  static readonly Uri UpdateManifestUri=new("https://housemix.nexobrasil.net/downloads/nexohub-bridge/latest.json");
- public static async Task<int> Main() {
+ public static async Task<int> Main(string[] args) {
+  // The bundled HMD worker is local-only: no console prompt, relay or self-update.
+  if(args.Contains("--ndi-only")) {
+   using var localStop=new CancellationTokenSource();
+   Console.CancelKeyPress+=(_,e)=>{e.Cancel=true;localStop.Cancel();};
+   var parentArg=Array.IndexOf(args,"--parent-pid");
+   if(parentArg>=0 && parentArg+1<args.Length && int.TryParse(args[parentArg+1],out var parentPid)) {
+    _=Task.Run(async ()=>{
+     try { using var parent=Process.GetProcessById(parentPid); await parent.WaitForExitAsync(localStop.Token); }
+     catch(ArgumentException) { /* parent already exited */ }
+     catch(OperationCanceledException) { return; }
+     localStop.Cancel();
+    });
+   }
+   await NdiNetworkDiscovery.RunAsync(localStop.Token);
+   return 0;
+  }
   Console.Title="NexoHub Bridge"; Console.WriteLine($"NexoHub Bridge v{CurrentVersion} - conector local do vMix e descoberta NDI");
   await CheckForUpdatesAsync();
   using var stop=new CancellationTokenSource();

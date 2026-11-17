@@ -14,6 +14,12 @@ if ($hasCertificate) {
 }
 if ($ValidateOnly) { return }
 
+foreach ($file in @('NexoHubBridge.exe', 'Processing.NDI.Lib.x64.dll', 'Processing.NDI.Lib.Licenses.txt')) {
+  if (-not (Test-Path -LiteralPath (Join-Path $PSScriptRoot "../desktop/runtime/ndi-bridge/$file"))) {
+    throw "The integrated NDI runtime is incomplete: $file. Run scripts/bundle-ndi-bridge.ps1 first."
+  }
+}
+
 $builderArguments = @('exec', 'electron-builder', '--', '--win', 'nsis', '--x64', '--publish', 'never')
 if ($hasCertificate) { $builderArguments += '-c.forceCodeSigning=true' }
 & npm @builderArguments

@@ -1,0 +1,5 @@
+NDI is a registered trademark of Vizrt NDI AB.
+NDI technology: https://ndi.video/
+NDI Runtime is included for local source discovery and preview reception.
+Third-party notices: Processing.NDI.Lib.Licenses.txt, distributed alongside the runtime.
+NDI license terms: https://ndi.video/for-developers/ndi-sdk/ndi-sdk-license-agreement/

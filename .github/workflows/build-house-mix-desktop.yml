@@ -44,7 +44,11 @@ jobs:
           New-Item -ItemType Directory -Force -Path "desktop/runtime/provisioner/schema" | Out-Null
           Copy-Item "infra/offline-first/schema/*.sql" "desktop/runtime/provisioner/schema/" -Force
       - name: Bundle local API runtime
+        # The same integrated worker is included in manual and release installers.
         run: npm run desktop:bundle-local-api
+      - name: Bundle NDI discovery and preview worker
+        shell: pwsh
+        run: ./scripts/bundle-ndi-bridge.ps1
       - name: Test Desktop shell security
         run: node --test desktop/runtime.test.cjs desktop/local-api-host.test.cjs
       - name: Build Desktop frontend

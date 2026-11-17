@@ -19,7 +19,7 @@ import {
   Monitor, Radio, Disc, RefreshCw, Loader2, CheckCircle, XCircle,
   ExternalLink, Volume2, VolumeX, Play, Square, Camera, Tv,
   Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi, WifiOff, HelpCircle, Activity, AlertTriangle, Shield, Clock, Keyboard,
-  ScrollText, ChevronDown, ChevronUp, ChevronLeft, ArrowLeft, ArrowRight, Lock, Download, Upload, Network, Zap, Layout, Cpu, Copy, Mic, Music2, Pencil, Settings, Smartphone, Tablet, Trophy
+  ScrollText, ChevronDown, ChevronUp, ChevronLeft, ArrowLeft, ArrowRight, Lock, Download, Upload, Network, Zap, Layout, Cpu, Copy, Mic, Music2, Pencil, Settings, Trophy
 } from "lucide-react";
 
 import {
@@ -5246,11 +5246,7 @@ function SwitcherUI({
                       </div>
                     </div>
                     <div className="flex items-center gap-1" style={{ display: isButtonDevicePreview ? "none" : undefined }}>
-                      <div className="flex items-center gap-1 mr-1" aria-label="Visualizar botões por dispositivo">
-                        <button type="button" onClick={() => openButtonDevicePreview("mobile")} title="Abrir visualização de celular em nova aba" aria-label="Visualização celular" className="flex h-7 w-7 items-center justify-center rounded-md border border-white/10 transition-colors hover:bg-white/10" style={{ color: "#D1D5DB", backgroundColor: buttonPreviewMode === "mobile" ? "#0756C9" : "#ffffff08" }}><Smartphone size={14} /></button>
-                        <button type="button" onClick={() => openButtonDevicePreview("tablet")} title="Abrir visualização de tablet em nova aba" aria-label="Visualização tablet" className="flex h-7 w-7 items-center justify-center rounded-md border border-white/10 transition-colors hover:bg-white/10" style={{ color: "#D1D5DB", backgroundColor: buttonPreviewMode === "tablet" ? "#0756C9" : "#ffffff08" }}><Tablet size={14} /></button>
-                        <button type="button" onClick={() => openButtonDevicePreview("desktop")} title="Abrir visualização de desktop em nova aba" aria-label="Visualização desktop" className="flex h-7 w-7 items-center justify-center rounded-md border border-white/10 transition-colors hover:bg-white/10" style={{ color: "#D1D5DB", backgroundColor: buttonPreviewMode === "desktop" ? "#0756C9" : "#ffffff08" }}><Monitor size={14} /></button>
-                      </div>
+
                       <button
                         onClick={() => setEditingCustomButtonId("new")}
                         className="flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-white transition-all hover:brightness-110"

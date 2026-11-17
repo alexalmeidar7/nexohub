@@ -154,6 +154,11 @@
     },
     "extraResources": [
       {
+        "from": "desktop/runtime/ndi-bridge",
+        "to": "runtime/ndi-bridge",
+        "filter": ["**/*"]
+      },
+      {
         "from": "desktop/runtime/local-api-host",
         "to": "runtime/local-api-host",
         "filter": [

@@ -31,3 +31,7 @@ scratch/
 tmp/
 test-results/
 playwright-report/
+
+# Native Bridge build outputs
+tools/NexoHubBridge/bin/
+tools/NexoHubBridge/obj/

@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace NexoHubBridge;
 
-internal static class NdiNetworkDiscovery
+internal static partial class NdiNetworkDiscovery
 {
     private const string ListenerPrefix = "http://127.0.0.1:8765/";
     private const string NdiLibrary = "Processing.NDI.Lib.x64.dll";
@@ -42,6 +42,8 @@ internal static class NdiNetworkDiscovery
             var candidates = new[]
             {
                 Path.Combine(AppContext.BaseDirectory, NdiLibrary),
+                Path.Combine(Environment.GetEnvironmentVariable("NDI_RUNTIME_DIR_V6") ?? AppContext.BaseDirectory, NdiLibrary),
+                Path.Combine(programFiles, "NDI", "NDI 6 Tools", "Runtime", NdiLibrary),
                 Path.Combine(programFiles, "NDI", "NDI 6 Runtime", NdiLibrary),
                 Path.Combine(programFiles, "NDI", "NDI 5 Runtime", NdiLibrary),
                 Path.Combine(programFiles, "NDI", "NDI 6 SDK", "Bin", "x64", NdiLibrary),
@@ -118,6 +120,17 @@ internal static class NdiNetworkDiscovery
                 return;
             }
 
+            if (context.Request.HttpMethod == "GET" && context.Request.Url?.AbsolutePath == "/ndi/preview")
+            {
+                if (!IsAllowedOrigin(origin) && context.Request.Headers["Sec-Fetch-Site"] != "same-origin")
+                {
+                    await WriteJsonAsync(context, 403, new { error = "Origin not allowed" }, token);
+                    return;
+                }
+                await StreamPreviewAsync(context, token);
+                return;
+            }
+
             if (context.Request.HttpMethod != "GET" ||
                 !string.Equals(context.Request.Url?.AbsolutePath, "/ndi/sources", StringComparison.OrdinalIgnoreCase))
             {
@@ -148,7 +161,15 @@ internal static class NdiNetworkDiscovery
             || uri.Host.EndsWith(".lovable.dev", StringComparison.OrdinalIgnoreCase);
     }
 
+    private static readonly object DiscoveryLock = new();
+    private static IntPtr persistentFinder;
+
     private static SourcesDto DiscoverSources()
+    {
+        lock (DiscoveryLock) return DiscoverSourcesLocked();
+    }
+
+    private static SourcesDto DiscoverSourcesLocked()
     {
         try
         {
@@ -156,13 +177,15 @@ internal static class NdiNetworkDiscovery
                 return new SourcesDto(false, "NDI Runtime", "O NDI Runtime não conseguiu inicializar neste computador.", Array.Empty<SourceDto>());
 
             var settings = new FindCreate { ShowLocalSources = true, Groups = IntPtr.Zero, ExtraIps = IntPtr.Zero };
-            var finder = NDIlib_find_create_v2(ref settings);
+            var firstScan = persistentFinder == IntPtr.Zero;
+            var finder = persistentFinder;
+            if (firstScan) persistentFinder = finder = NDIlib_find_create_v2(ref settings);
             if (finder == IntPtr.Zero)
                 return new SourcesDto(false, "NDI Runtime", "Não foi possível iniciar a descoberta NDI.", Array.Empty<SourceDto>());
 
             try
             {
-                _ = NDIlib_find_wait_for_sources(finder, 1200);
+                _ = NDIlib_find_wait_for_sources(finder, firstScan ? 1200u : 0u);
                 var ptr = NDIlib_find_get_current_sources(finder, out var count);
                 var sources = new List<SourceDto>();
                 var stride = Marshal.SizeOf<NdiSource>();
@@ -179,11 +202,11 @@ internal static class NdiNetworkDiscovery
                     sources.DistinctBy(s => s.name, StringComparer.OrdinalIgnoreCase)
                            .OrderBy(s => s.name, StringComparer.OrdinalIgnoreCase).ToArray());
             }
-            finally { NDIlib_find_destroy(finder); }
+            finally { /* Keep discovery alive so slow/new sources appear on later scans. */ }
         }
         catch (DllNotFoundException)
         {
-            return new SourcesDto(false, "NDI Runtime", "NDI Runtime não encontrado. Instale o NDI Runtime oficial neste computador e reinicie o NexoHub Bridge.", Array.Empty<SourceDto>());
+            return new SourcesDto(false, "NDI Runtime", "Componente NDI indisponível. Repare a instalação do House Mix Desktop.", Array.Empty<SourceDto>());
         }
         catch (EntryPointNotFoundException)
         {

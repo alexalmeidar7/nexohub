@@ -1,16 +1,13 @@
-# NexoHub Bridge — vMix e descoberta NDI
+# NexoHub Bridge integrado ao HMD
 
-Agente Windows x64 para conexão local com o vMix e descoberta real de fontes NDI anunciadas na rede.
+O instalador do HMD inclui NexoHubBridge.exe, o runtime oficial NDI x64 e seus avisos. O HMD inicia `--ndi-only` oculto e encerra o processo ao sair. Não exige pareamento, NDI Tools ou NDI Webcam para descoberta e preview.
 
-## Descoberta local
-- O Bridge inicia um endpoint somente local em `http://127.0.0.1:8765/ndi/sources`.
-- A lista é obtida pelo NDI Finder API do NDI Runtime instalado no computador; não usa sugestões ou nomes fictícios.
-- Instale o NDI Runtime oficial (x64) no computador do vMix e reinicie o Bridge.
-- O endpoint só permite CORS para o domínio House Mix e previews conhecidos do Lovable.
-- Se o Runtime estiver ausente, o endpoint retorna erro explícito em vez de inventar fontes.
+`GET http://127.0.0.1:8765/ndi/sources` lista fontes reais da rede. O finder permanece ativo para atualizar fontes que aparecem depois. `GET /ndi/preview?source=<nome>` recebe diretamente a fonte selecionada e entrega MJPEG ao preview. Há no máximo um receptor, com largura máxima de 640 px e até 10 quadros/s; ocultar o preview interrompe a recepção. A descoberta não adiciona inputs nem altera o vMix.
 
-## Relay remoto vMix
-O relay usa pareamento temporário e token do Supabase. Para o controle remoto funcionar, as funções e a migração do PR #23 precisam estar implantadas e o Bridge precisa ser pareado.
+O worker escuta apenas em loopback. O instalador reserva essa URL para usuários locais, sem exigir execução do HMD como administrador. Apenas origens autorizadas podem abrir o preview.
 
-## Limitação do preview
-A descoberta retorna fontes reais, mas o endpoint MJPEG do vMix só mostra inputs já adicionados ao vMix. O vMix HTTP API padrão não permite adicionar inputs NDI pela API. Para exibir no preview uma fonte de rede que ainda não esteja carregada no vMix, será necessário um receiver NDI local que retransmita vídeo para o navegador; a lista de descoberta e o preview de vídeo são partes distintas.
+O modo standalone sem `--ndi-only` mantém o relay remoto e o pareamento existentes. O worker empacotado é atualizado junto do HMD e não executa o atualizador standalone.
+
+Para empacotar: `./scripts/bundle-ndi-bridge.ps1`. O build baixa o redistribuível oficial, verifica a assinatura do fornecedor e inclui DLL e licenças. Em desenvolvimento, `-RuntimeDirectory` pode apontar para um runtime oficial já instalado.
+
+NDI® é marca registrada de Vizrt NDI AB. Tecnologia e distribuição: https://ndi.video/ e https://docs.ndi.video/all/developing-with-ndi/sdk/software-distribution
