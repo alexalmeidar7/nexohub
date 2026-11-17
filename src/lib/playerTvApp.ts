@@ -5,7 +5,12 @@ export function getTvAppLoginPath(slug?: string, userAgent = navigator.userAgent
 /** Presentation capability only; never used to authorize a listener or a profile. */
 export function isPlayerTvApp() {
   if (typeof window === "undefined") return false;
+  // Keep an explicitly selected preview mode across SPA routes, never across
+  // browser documents or in authentication/session storage.
+  const requested = new URLSearchParams(window.location.search).get("tv");
+  if (requested === "1") document.documentElement.dataset.ottTvPreview = "true";
+  else if (requested === "0") delete document.documentElement.dataset.ottTvPreview;
   return /NexoPlayerTV\//i.test(navigator.userAgent)
     || document.documentElement.dataset.tvApp === "true"
-    || new URLSearchParams(window.location.search).get("tv") === "1";
+    || document.documentElement.dataset.ottTvPreview === "true";
 }

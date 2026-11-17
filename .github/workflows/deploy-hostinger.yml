@@ -71,82 +71,14 @@ jobs:
           FTP_SERVER_DIR: ${{ secrets.FTP_SERVER_DIR }}
         run: python3 scripts/ci/hostinger_ftp_target.py resolve
 
-      - name: Deploy Hostinger via FTPS/FTP resiliente
+      - name: Deploy assets before SPA entry point
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
           FTP_SERVER_DIR: ${{ steps.ftpdir.outputs.server_dir }}
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          import os
-          import posixpath
-          import time
-          from ftplib import FTP, FTP_TLS, error_perm
-          from pathlib import Path
-
-          root = Path('dist').resolve()
-          host = os.environ['FTP_SERVER']
-          user = os.environ['FTP_USERNAME']
-          password = os.environ['FTP_PASSWORD']
-          remote_root = os.environ['FTP_SERVER_DIR'].strip('/')
-
-          def connect(tls):
-              if tls:
-                  ftp = FTP_TLS(timeout=90)
-                  ftp.connect(host, 21)
-                  ftp.login(user, password)
-                  ftp.prot_p()
-              else:
-                  ftp = FTP(timeout=90)
-                  ftp.connect(host, 21)
-                  ftp.login(user, password)
-              ftp.set_pasv(True)
-              return ftp
-
-          def ensure_dir(ftp, path, login_dir):
-              ftp.cwd(login_dir)
-              for part in [p for p in path.split('/') if p and p != '.']:
-                  if part == '..':
-                      ftp.cwd('..')
-                      continue
-                  try:
-                      ftp.cwd(part)
-                  except error_perm:
-                      ftp.mkd(part)
-                      ftp.cwd(part)
-
-          def upload(tls):
-              ftp = connect(tls)
-              try:
-                  login_dir = ftp.pwd()
-                  for local in sorted(root.rglob('*')):
-                      if not local.is_file():
-                          continue
-                      rel = local.relative_to(root).as_posix()
-                      remote_dir = posixpath.join(remote_root, posixpath.dirname(rel))
-                      ensure_dir(ftp, remote_dir, login_dir)
-                      print(f'Enviando {rel}')
-                      with local.open('rb') as fh:
-                          ftp.storbinary(f'STOR {posixpath.basename(rel)}', fh, blocksize=1024*64)
-                  print(f'Deploy concluído via {"FTPS" if tls else "FTP"}.')
-              finally:
-                  try: ftp.quit()
-                  except Exception: ftp.close()
-
-          last = None
-          for tls in (True, False):
-              for attempt in (1, 2):
-                  try:
-                      upload(tls)
-                      raise SystemExit(0)
-                  except Exception as exc:
-                      last = exc
-                      print(f'Falha {"FTPS" if tls else "FTP"} tentativa {attempt}/2: {exc}')
-                      if attempt == 1: time.sleep(15)
-          raise SystemExit(f'Deploy Hostinger falhou após FTPS e FTP: {last}')
-          PY
+          DEPLOY_SHA: ${{ github.sha }}
+        run: python3 -u scripts/ci/hostinger_static_deploy.py
 
       - name: Confirmar versão publicada
         env:

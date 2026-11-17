@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { getTvAppLoginPath, isPlayerTvApp } from "./playerTvApp";
 
-afterEach(() => { vi.restoreAllMocks(); delete document.documentElement.dataset.tvApp; history.replaceState(null, "", "/"); });
+afterEach(() => { vi.restoreAllMocks(); delete document.documentElement.dataset.tvApp; delete document.documentElement.dataset.ottTvPreview; history.replaceState(null, "", "/"); });
 describe("shared online Player inside Fire TV", () => {
   it("uses the existing web QR login only for the TV app", () => {
     expect(getTvAppLoginPath("positivafm", "Android TV FireTV NexoPlayerTV/1.1.0")).toBe("/positivafm/player/tv");
@@ -24,5 +24,9 @@ describe("shared online Player inside Fire TV", () => {
     history.replaceState(null, "", "/positivafm/player?tv=1");
     expect(isPlayerTvApp()).toBe(true);
     expect(getTvAppLoginPath("positivafm")).toBeNull();
+    history.replaceState(null, "", "/positivafm/player/tv");
+    expect(isPlayerTvApp()).toBe(true);
+    history.replaceState(null, "", "/positivafm/player?tv=0");
+    expect(isPlayerTvApp()).toBe(false);
   });
 });
