@@ -15,7 +15,7 @@
     return Array.from(scope.querySelectorAll(selector)).filter(visible);
   }
   function ensureFocus() {
-    if (!document.activeElement || document.activeElement === document.body || !document.activeElement.isConnected) {
+    if (!document.activeElement || document.activeElement === document.body || !document.activeElement.isConnected || !document.activeElement.matches(selector)) {
       var first = nodes()[0];
       if (first) first.focus({ preventScroll: true });
     }
@@ -26,7 +26,13 @@
     scheduled = true;
     requestAnimationFrame(function () { scheduled = false; ensureFocus(); });
   }).observe(document.body, { childList: true, subtree: true });
+  window.addEventListener('focus', function () { setTimeout(ensureFocus, 0); });
+  document.addEventListener('focusin', function () { setTimeout(ensureFocus, 0); });
   window.addEventListener('keydown', function (event) {
+    if ((event.key === 'Enter' || event.key === 'Select') && (!(event.target instanceof Element) || !event.target.matches(selector))) {
+      setTimeout(function () { if (!event.defaultPrevented) { ensureFocus(); var el = document.activeElement; if (el && el.matches(selector)) el.click(); } }, 0);
+      return;
+    }
     if (!/^Arrow(Up|Down|Left|Right)$/.test(event.key)) return;
     setTimeout(function () {
       if (event.defaultPrevented || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) return;

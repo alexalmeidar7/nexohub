@@ -1,4 +1,5 @@
 import { playerSupabase } from "@/integrations/supabase/playerClient";
+import { getTvAppLoginPath } from "@/lib/playerTvApp";
 
 const RESULT_KEY = "nexohub:player:oauth-popup-result";
 const CHANNEL_NAME = "nexohub-player-oauth";
@@ -6,6 +7,12 @@ const CHANNEL_NAME = "nexohub-player-oauth";
 /** Starts Google OAuth in a popup and resolves with the authenticated Player user id. */
 export async function startPlayerGoogleLogin(): Promise<string> {
   if (window.houseMixDesktop) return startDesktopPlayerGoogleLogin();
+  const tvSlug = window.location.pathname.match(/^\/(?:user\/)?([^/]+)\/(?:nexohub\/)?player(?:\/|$)/)?.[1];
+  const tvLogin = getTvAppLoginPath(tvSlug);
+  if (tvLogin) {
+    window.location.assign(tvLogin);
+    return await new Promise<string>(() => {});
+  }
 
   const flowId = typeof crypto.randomUUID === "function"
     ? crypto.randomUUID()

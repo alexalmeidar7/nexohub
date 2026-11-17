@@ -745,7 +745,7 @@ function HeroBanner({
         </button>
 
         {nowPlaying && (nowPlaying.musica || nowPlaying.artista) && (
-          <div className="flex min-w-0 max-w-[min(420px,38vw)] items-center gap-4 self-end text-white drop-shadow-lg">
+          <div data-tv-now-playing className="flex min-w-0 max-w-[min(420px,38vw)] items-center gap-4 self-end text-white drop-shadow-lg">
             {nowPlaying.capa ? (
               <img
                 src={nowPlaying.capa}

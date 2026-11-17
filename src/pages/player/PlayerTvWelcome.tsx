@@ -9,7 +9,7 @@ import { getStationLogoFallback } from "@/lib/playerBranding";
 import { upgradeArtistImageResolution } from "@/lib/artistImageCache";
 import PlayerBrandCorner from "@/components/player/PlayerBrandCorner";
 
-const CANONICAL_PAIR_ORIGIN = "https://nexobrasil.net";
+const CANONICAL_PAIR_ORIGIN = "https://housemix.nexobrasil.net";
 
 /**
  * QR e link manual devem sempre levar o ouvinte ao domínio público da Nexo.
@@ -415,15 +415,15 @@ export default function PlayerTvWelcome() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/20" />
       </div>
       <PlayerBrandCorner radioUserId={radioUserId} logoUrl={radioLogo} logoAlt={radioName || "Emissora"} className="absolute right-[4.5vw] top-[3vh] z-10" />
-      <section className="absolute left-[6vw] top-[9.3vh] z-10 flex min-h-[50vh] max-h-[62vh] w-[min(320px,38vw)] flex-col overflow-hidden rounded-[30px] bg-white px-[30px] pb-[30px] pt-[34px] text-black shadow-2xl">
-        <div className="mx-auto flex w-full max-w-[250px] items-center justify-center bg-white">
+      <section data-tv-pair-card className="absolute left-[6vw] top-[9.3vh] z-10 flex min-h-[50vh] max-h-[62vh] w-[min(320px,38vw)] flex-col overflow-hidden rounded-[30px] bg-white px-[30px] pb-[30px] pt-[34px] text-black shadow-2xl">
+        <div data-tv-pair-qr className="mx-auto flex w-full max-w-[250px] items-center justify-center bg-white">
           {code ? <div className={expired ? "relative opacity-35 grayscale" : "relative"}>
             <QRCodeSVG value={pairUrl} size={250} level="M" includeMargin />
             {expired && <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl bg-white/85"><AlertTriangle className="h-10 w-10 text-red-600" /><span className="font-bold">C&oacute;digo expirado</span></div>}
           </div> : <div className="flex h-[250px] w-[250px] flex-col items-center justify-center gap-3"><Loader2 className="h-10 w-10 animate-spin text-slate-500" /><span className="text-sm text-slate-600">Gerando QR code...</span></div>}
         </div>
-        <p className="mt-5 text-[clamp(17px,1.35vw,25px)] leading-[1.08] text-black">escaneie o codigo<br />no seu celular e<br />fa&ccedil;a login</p>
-        <div className="mt-6 rounded-[22px] border-2 border-black px-4 pb-3 pt-2"><div className="text-[clamp(11px,0.78vw,15px)] leading-none">c&oacute;digo de pareamento</div><div className={"mt-1 flex min-h-[60px] items-center justify-center text-center text-[clamp(46px,3.7vw,72px)] font-bold leading-none tracking-[0.18em] " + (expired ? "text-neutral-400 line-through" : "text-black")}>{displayCode || "----"}</div></div>
+        <p data-tv-pair-help className="mt-5 text-[clamp(17px,1.35vw,25px)] leading-[1.08] text-black">escaneie o codigo<br />no seu celular e<br />fa&ccedil;a login</p>
+        <div className="mt-6 rounded-[22px] border-2 border-black px-4 pb-3 pt-2"><div className="text-[clamp(11px,0.78vw,15px)] leading-none">c&oacute;digo de pareamento</div><div data-tv-pair-code className={"mt-1 flex min-h-[60px] items-center justify-center text-center text-[clamp(46px,3.7vw,72px)] font-bold leading-none tracking-[0.18em] " + (expired ? "text-neutral-400 line-through" : "text-black")}>{displayCode || "----"}</div></div>
         {error && <div className="mt-3 rounded-lg bg-red-50 p-2 text-xs text-red-700">{error}<button type="button" onClick={generateCode} className="ml-2 font-bold underline">Tentar novamente</button></div>}
         {expired && <button type="button" onClick={generateCode} data-tv-focusable className="mt-3 rounded-xl bg-black px-4 py-2 text-sm font-bold text-white">Gerar novo c&oacute;digo</button>}
         {claimedName && <div className="mt-3 text-center text-sm font-bold text-emerald-700">Pareado com {claimedName}. Entrando...</div>}
