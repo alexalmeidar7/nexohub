@@ -19,6 +19,7 @@ export class VmixRemoteRoom {
   readonly actorId = crypto.randomUUID();
   state: VmixRemoteState = { joined: false, available: false, hostId: null, studioName: "", xml: "", error: "", lastAction: "" };
   private listeners = new Set<() => void>();
+  private mediaListeners = new Set<(message: any) => void>();
   private pending = new Map<string, { hostId: string; resolve: (value: string) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }>();
   private seen = new Map<string, { at: number; result: Promise<{ body?: string; error?: string }> }>();
   private executor: VmixHostExecutor | null = null;
@@ -31,7 +32,11 @@ export class VmixRemoteRoom {
   private expiryTimer: ReturnType<typeof setInterval>;
 
   constructor(private channel: RealtimeChannel) {
-    channel.on("broadcast", { event: "vmix-message" }, ({ payload }) => this.receive(payload))
+    channel.on("broadcast", { event: "vmix-media" }, ({ payload }) => {
+      if (!this.closed && payload && typeof payload === "object" && payload.sender !== this.actorId &&
+        (!payload.target || payload.target === this.actorId) && typeof payload.sender === "string" &&
+        Number.isFinite(payload.at) && Math.abs(Date.now() - payload.at) < 30_000) this.mediaListeners.forEach(fn => fn(payload));
+    }).on("broadcast", { event: "vmix-message" }, ({ payload }) => this.receive(payload))
       .on("presence", { event: "sync" }, () => this.syncPresence())
       .on("presence", { event: "join" }, () => { if (this.executor) void this.announce(this.hostXml, this.hostName, true); })
       .subscribe(status => {
@@ -50,6 +55,11 @@ export class VmixRemoteRoom {
   }
 
   listen(callback: () => void) { this.listeners.add(callback); callback(); return () => { this.listeners.delete(callback); }; }
+  listenMedia(callback: (message: any) => void) { this.mediaListeners.add(callback); return () => { this.mediaListeners.delete(callback); }; }
+  sendMedia(message: object) {
+    if (this.closed || !this.state.joined) return Promise.resolve("error");
+    return this.channel.send({ type: "broadcast", event: "vmix-media", payload: { ...message, sender: this.actorId, at: Date.now() } });
+  }
   private notify() { this.listeners.forEach(fn => fn()); }
   private send(payload: object) { return this.channel.send({ type: "broadcast", event: "vmix-message", payload }); }
   private syncPresence() {
@@ -161,5 +171,6 @@ export class VmixRemoteRoom {
     this.pending.forEach(p => { clearTimeout(p.timer); p.reject(new Error("Estúdio desconectado. Comando sem confirmação.")); });
     this.pending.clear();
     this.listeners.clear();
+    this.mediaListeners.clear();
   }
 }

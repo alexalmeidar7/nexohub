@@ -118,6 +118,9 @@ verify_jwt = false
 [functions.vmix-bridge-status]
 verify_jwt = false
 
+[functions.vmix-preview-ice]
+verify_jwt = false
+
 [functions.serve-xml-broadcast]
 verify_jwt = false
 

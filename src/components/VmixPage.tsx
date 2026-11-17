@@ -13,7 +13,7 @@ import { confirmDialog } from "@/lib/confirmDialog";
 import { Button } from "@/components/ui/button";
 import { useVmixCategories, VmixCategoryCreator, VmixCategoryPanel } from "@/components/vmix/VmixCategories";
 import NdiWebrtcMonitor from "@/components/vmix/NdiWebrtcMonitor";
-import FloatingNdiPreview from "@/components/vmix/FloatingNdiPreview";
+import StudioPreview from "@/components/vmix/StudioPreview";
 
 import {
   Monitor, Radio, Disc, RefreshCw, Loader2, CheckCircle, XCircle,
@@ -5917,7 +5917,7 @@ function SwitcherUI({
       )}
 
       {isAutomationRoute && !isButtonDevicePreview && (
-        <FloatingNdiPreview inputs={inputs} baseUrl={savedUrl || vmixUrl} targetSelector="#custom-buttons-panel" onRefreshSources={reloadInputsAndSources} />
+        <StudioPreview connectionId={selectedConnectionId} remote={connectionMode === "remote"} inputs={inputs} baseUrl={savedUrl || vmixUrl} targetSelector="#custom-buttons-panel" onRefreshSources={reloadInputsAndSources} />
       )}
 
       {/* ── Command Log Panel (hidden in device previews) ── */}

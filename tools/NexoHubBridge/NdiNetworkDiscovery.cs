@@ -120,14 +120,15 @@ internal static partial class NdiNetworkDiscovery
                 return;
             }
 
-            if (context.Request.HttpMethod == "GET" && context.Request.Url?.AbsolutePath == "/ndi/preview")
+            if (context.Request.HttpMethod == "GET" && context.Request.Url?.AbsolutePath is "/ndi/preview" or "/ndi/audio")
             {
                 if (!IsAllowedOrigin(origin) && context.Request.Headers["Sec-Fetch-Site"] != "same-origin")
                 {
                     await WriteJsonAsync(context, 403, new { error = "Origin not allowed" }, token);
                     return;
                 }
-                await StreamPreviewAsync(context, token);
+                if (context.Request.Url.AbsolutePath == "/ndi/audio") await StreamAudioAsync(context, token);
+                else await StreamPreviewAsync(context, token);
                 return;
             }
 
