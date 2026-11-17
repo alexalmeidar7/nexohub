@@ -1,24 +1,34 @@
 export const PREVIEW_VIDEO_RATES = [300, 500, 900] as const;
 export type PreviewVideoRate = typeof PREVIEW_VIDEO_RATES[number];
+export const PREVIEW_FRAME_RATE = 20;
 export const previewRate = (value: unknown): PreviewVideoRate => PREVIEW_VIDEO_RATES.includes(value as PreviewVideoRate) ? value as PreviewVideoRate : 500;
 
 export async function limitPreviewSender(sender: RTCRtpSender, rate: PreviewVideoRate) {
   const parameters = sender.getParameters();
   if (!parameters.encodings?.length) throw new Error("O navegador não disponibilizou o controle de qualidade do retorno.");
+  if (sender.track?.kind === "video") parameters.degradationPreference = "maintain-framerate";
   parameters.encodings.forEach(encoding => {
     encoding.maxBitrate = sender.track?.kind === "audio" ? 64_000 : previewRate(rate) * 1000;
-    if (sender.track?.kind === "video") encoding.maxFramerate = 10;
+    if (sender.track?.kind === "video") encoding.maxFramerate = PREVIEW_FRAME_RATE;
   });
   await sender.setParameters(parameters);
 }
 
 /** Only a selected NDI source is captured. No microphone, desktop or webcam permissions. */
-export async function captureNdiPreview(image: HTMLImageElement, audioSource: string, signal: AbortSignal) {
+export async function captureNdiPreview(image: HTMLImageElement, audioSource: string, signal: AbortSignal, rate: PreviewVideoRate = 500) {
   const canvas = document.createElement("canvas");
-  canvas.width = 640; canvas.height = 360;
+  const width = previewRate(rate) === 900 ? 640 : previewRate(rate) === 300 ? 426 : 480;
+  canvas.width = width; canvas.height = width === 640 ? 360 : width === 480 ? 270 : 240;
   const draw = canvas.getContext("2d");
   if (!draw) throw new Error("Não foi possível preparar o vídeo de referência.");
-  const video = canvas.captureStream(10);
+  let video = canvas.captureStream(0);
+  let videoTrack = video.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack;
+  if (typeof videoTrack.requestFrame !== "function") {
+    videoTrack.stop();
+    video = canvas.captureStream(PREVIEW_FRAME_RATE);
+    videoTrack = video.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack;
+  }
+  videoTrack.contentHint = "motion";
   const context = new AudioContext({ sampleRate: 48000 });
   const output = context.createMediaStreamDestination();
   const socket = new WebSocket(`ws://127.0.0.1:8765/ndi/audio?source=${encodeURIComponent(audioSource)}`);
@@ -73,10 +83,15 @@ export async function captureNdiPreview(image: HTMLImageElement, audioSource: st
         }
       };
     });
-    timer = window.setInterval(() => {
-      if (image.isConnected && image.naturalWidth > 0) draw.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const renderFrame = () => {
+      if (image.isConnected && image.naturalWidth > 0) {
+        draw.drawImage(image, 0, 0, canvas.width, canvas.height);
+        videoTrack.requestFrame?.(); // capture immediately after drawing, not on a competing clock
+      }
       else stop();
-    }, 100);
+    };
+    renderFrame();
+    timer = window.setInterval(renderFrame, 1000 / PREVIEW_FRAME_RATE);
     return { stream, stop, ended };
   } catch (error) { stop(); throw error; }
 }

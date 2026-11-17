@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.Net;
 using System.Runtime.InteropServices;
@@ -75,6 +76,12 @@ internal static partial class NdiNetworkDiscovery
             context.Response.ContentType = "multipart/x-mixed-replace; boundary=ndi-frame";
             context.Response.SendChunked = true;
             var lastFrame = DateTime.UtcNow;
+            var clock = Stopwatch.StartNew();
+            var nextFrameMs = 0d;
+            const double frameIntervalMs = 1000d / 20;
+            var jpegCodec = ImageCodecInfo.GetImageEncoders().First(codec => codec.FormatID == ImageFormat.Jpeg.Guid);
+            using var jpegParameters = new EncoderParameters(1);
+            jpegParameters.Param[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 65L);
             while (!token.IsCancellationRequested)
             {
                 var frame = new VideoFrame();
@@ -84,6 +91,21 @@ internal static partial class NdiNetworkDiscovery
                 {
                     if (DateTime.UtcNow - lastFrame > TimeSpan.FromSeconds(10)) break;
                     continue;
+                }
+                lastFrame = DateTime.UtcNow;
+                // Consume the source continuously; sleeping here queues old frames and adds latency.
+                if (clock.Elapsed.TotalMilliseconds < nextFrameMs)
+                {
+                    NDIlib_recv_free_video_v2(receiver, ref frame);
+                    continue;
+                }
+                // When the renderer was slow, keep only the newest available picture.
+                for (var queued = 0; queued < 8; queued++)
+                {
+                    var newer = new VideoFrame();
+                    if (NDIlib_recv_capture_v2(receiver, ref newer, IntPtr.Zero, IntPtr.Zero, 0) != 1) break;
+                    NDIlib_recv_free_video_v2(receiver, ref frame);
+                    frame = newer;
                 }
                 byte[] jpeg;
                 try
@@ -96,7 +118,7 @@ internal static partial class NdiNetworkDiscovery
                     using var thumbnail = new Bitmap(width, height);
                     using (var graphics = Graphics.FromImage(thumbnail)) graphics.DrawImage(bitmap, 0, 0, width, height);
                     using var memory = new MemoryStream();
-                    thumbnail.Save(memory, ImageFormat.Jpeg);
+                    thumbnail.Save(memory, jpegCodec, jpegParameters);
                     jpeg = memory.ToArray();
                 }
                 finally { NDIlib_recv_free_video_v2(receiver, ref frame); }
@@ -105,8 +127,9 @@ internal static partial class NdiNetworkDiscovery
                 await context.Response.OutputStream.WriteAsync(jpeg, token);
                 await context.Response.OutputStream.WriteAsync("\r\n"u8.ToArray(), token);
                 await context.Response.OutputStream.FlushAsync(token);
-                lastFrame = DateTime.UtcNow;
-                await Task.Delay(100, token); // cap encoding/transport at 10 fps
+                var nowMs = clock.Elapsed.TotalMilliseconds;
+                nextFrameMs += frameIntervalMs;
+                if (nextFrameMs < nowMs) nextFrameMs = nowMs; // no burst of catch-up frames
             }
         }
         catch (HttpListenerException) { /* viewer disconnected */ }

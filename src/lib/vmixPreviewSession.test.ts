@@ -63,7 +63,8 @@ describe("remote preview authorization and resource limits", () => {
     for (const rate of [300, 500, 900] as const) {
       const apply = vi.fn();
       await limitPreviewSender({ track: { kind: "video" }, getParameters: () => ({ encodings: [{}] }), setParameters: apply } as any, rate);
-      expect(apply.mock.calls[0][0].encodings[0]).toEqual({ maxBitrate: rate * 1000, maxFramerate: 10 });
+      expect(apply.mock.calls[0][0].encodings[0]).toEqual({ maxBitrate: rate * 1000, maxFramerate: 20 });
+      expect(apply.mock.calls[0][0].degradationPreference).toBe("maintain-framerate");
     }
     const apply = vi.fn();
     await limitPreviewSender({ track: { kind: "audio" }, getParameters: () => ({ encodings: [{}] }), setParameters: apply } as any, 900);

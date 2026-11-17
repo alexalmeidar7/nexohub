@@ -53,7 +53,7 @@ export default function StudioPreview({ connectionId, remote, ...previewProps }:
 
   useEffect(() => {
     if (!session || !host) return;
-    session.setPublisher(enabled && image && audioSource ? signal => captureNdiPreview(image, audioSource, signal) : null);
+    session.setPublisher(enabled && image && audioSource ? (signal, rate) => captureNdiPreview(image, audioSource, signal, rate) : null);
     setStatus(enabled ? image && audioSource ? "Envio habilitado · aguardando operador remoto." : "Selecione as fontes de vídeo e áudio para o envio." : "Envio remoto desligado.");
     return () => session.setPublisher(null);
   }, [session, host, enabled, image, audioSource]);

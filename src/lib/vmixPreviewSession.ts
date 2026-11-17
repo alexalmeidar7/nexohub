@@ -1,8 +1,8 @@
 import type { VmixRemoteRoom } from "./vmixRemoteRoom";
-import { limitPreviewSender, previewRate, type PreviewVideoRate } from "./vmixPreviewMedia";
+import { limitPreviewSender, PREVIEW_FRAME_RATE, previewRate, type PreviewVideoRate } from "./vmixPreviewMedia";
 
 type Capture = { stream: MediaStream; stop: () => void; ended?: Promise<void> };
-type Publisher = (signal: AbortSignal) => Promise<Capture>;
+type Publisher = (signal: AbortSignal, rate: PreviewVideoRate) => Promise<Capture>;
 export class VmixPreviewSession {
   private publisher: Publisher | null = null;
   private peer: RTCPeerConnection | null = null;
@@ -91,15 +91,15 @@ export class VmixPreviewSession {
       this.target = message.sender; this.session = message.session; this.lastKeepAlive = Date.now();
       this.status("Preparando vídeo e áudio da mesa…");
       const abort = this.abort = new AbortController();
-      const capture = await this.publisher(abort.signal);
+      const rate = this.rate = previewRate(message.rate);
+      const capture = await this.publisher(abort.signal, rate);
       if (abort.signal.aborted) { capture.stop(); return; }
       this.capture = capture;
       void capture.ended?.then(() => { if (this.capture === capture) this.fail(new Error("A fonte NDI do retorno foi interrompida.")); });
       const pc = this.makePeer(message.sender, message.session);
-      const rate = this.rate = previewRate(message.rate);
       for (const track of capture.stream.getTracks()) {
         const transceiver = pc.addTransceiver(track, { direction: "sendonly", streams: [capture.stream],
-          sendEncodings: [{ maxBitrate: track.kind === "audio" ? 64_000 : rate * 1000, ...(track.kind === "video" ? { maxFramerate: 10 } : {}) }] });
+          sendEncodings: [{ maxBitrate: track.kind === "audio" ? 64_000 : rate * 1000, ...(track.kind === "video" ? { maxFramerate: PREVIEW_FRAME_RATE } : {}) }] });
         if (track.kind === "audio") {
           const opus = RTCRtpSender.getCapabilities("audio")?.codecs.filter(c => c.mimeType.toLowerCase() === "audio/opus");
           if (opus?.length) transceiver.setCodecPreferences(opus);
