@@ -41,6 +41,7 @@ export default function SplashScreen({
 
   return (
     <div
+      data-player-splash
       className="fixed inset-0 z-50 overflow-hidden bg-black"
       style={{
         opacity: fadeOut ? 0 : 1,

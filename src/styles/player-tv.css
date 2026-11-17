@@ -1,0 +1,38 @@
+/* Same online Player, sized in CSS viewport pixels (including Fire TV density).
+   No page zoom, transforms or duplicate TV screens. */
+html[data-tv-app="true"] {
+  --tv-px: min(0.052083333vw, 0.092592593dvh);
+  font-size: clamp(8px, 1.48148148dvh, 24px);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overflow: hidden;
+}
+html[data-tv-app="true"] body { margin: 0; width: 100%; height: 100dvh; overflow: hidden; }
+html[data-tv-app="true"] .player-tv-home,
+html[data-tv-app="true"] .player-tv-watch { width: 100%; height: 100dvh; min-height: 0; }
+html[data-tv-app="true"] .player-tv-hero { height: 100dvh !important; min-height: 0 !important; }
+html[data-tv-app="true"] [data-player-login] { width: min(calc(320 * var(--tv-px)), 84vw); height: calc(62 * var(--tv-px)); min-height: 30px; }
+html[data-tv-app="true"] [data-player-login] > span { font-size: max(10px, calc(16 * var(--tv-px))); }
+html[data-tv-app="true"] [data-player-splash] img { width: calc(154 * var(--tv-px)); }
+html[data-tv-app="true"] .player-home-header { padding: 4.8dvh 6vw 0 !important; flex-wrap: nowrap !important; }
+html[data-tv-app="true"] .player-home-header nav { margin-left: calc(82 * var(--tv-px)); gap: calc(20 * var(--tv-px)) !important; flex-wrap: nowrap; }
+html[data-tv-app="true"] .player-home-header nav button { font-size: calc(25 * var(--tv-px)) !important; white-space: nowrap; }
+html[data-tv-app="true"] .player-home-header .player-home-profile-wrap,
+html[data-tv-app="true"] .player-home-header [data-home-profile] { width: calc(56 * var(--tv-px)) !important; height: calc(56 * var(--tv-px)) !important; }
+html[data-tv-app="true"] [data-home-listen],
+html[data-tv-app="true"] [data-home-watch] {
+  width: min(19.2vw, 34dvh) !important;
+  height: min(10.95vw, 19.45dvh) !important;
+  border-radius: calc(40 * var(--tv-px)) !important;
+}
+html[data-tv-app="true"] .text-tv-card-sub { font-size: calc(14 * var(--tv-px)); line-height: 1.4; }
+html[data-tv-app="true"] .text-tv-card-title { font-size: calc(18 * var(--tv-px)); line-height: 1.33; }
+html[data-tv-app="true"] .text-tv-body { font-size: calc(24 * var(--tv-px)); line-height: 1.5; }
+html[data-tv-app="true"] .text-tv-body-lg { font-size: calc(28 * var(--tv-px)); line-height: 1.43; }
+html[data-tv-app="true"] .text-tv-section { font-size: calc(32 * var(--tv-px)); line-height: 1.375; }
+html[data-tv-app="true"] .text-tv-header { font-size: calc(44 * var(--tv-px)); line-height: 1.27; }
+html[data-tv-app="true"] .text-tv-display { font-size: calc(64 * var(--tv-px)); line-height: 1.19; }
+html[data-tv-app="true"] .watch-layout-header .watch-profile > button { width: calc(56 * var(--tv-px)) !important; height: calc(56 * var(--tv-px)) !important; }
+html[data-tv-app="true"] [data-tv-program-card] { width: calc(368 * var(--tv-px)) !important; height: calc(384 * var(--tv-px)) !important; border-radius: calc(40 * var(--tv-px)) !important; }
+html[data-tv-app="true"] [role="dialog"] { max-width: 92vw; max-height: 90dvh; }
+html[data-tv-app="true"] [data-tv-focusable]:focus-visible { outline-width: max(2px, calc(3 * var(--tv-px))); outline-offset: calc(5 * var(--tv-px)); }

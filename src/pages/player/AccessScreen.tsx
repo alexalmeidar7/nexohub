@@ -4,6 +4,8 @@ import ElegantLoader from "@/components/player/ElegantLoader";
 import PlayerBrandCorner from "@/components/player/PlayerBrandCorner";
 import { toast } from "sonner";
 import { markPlayerSession } from "@/lib/playerSession";
+import { useNavigate, useParams } from "react-router-dom";
+import { getTvAppLoginPath } from "@/lib/playerTvApp";
 
 interface AccessScreenProps {
   logoUrl?: string | null;
@@ -15,8 +17,12 @@ interface AccessScreenProps {
 
 export default function AccessScreen({ logoUrl, backgroundUrl, music, radioUserId, onLoginSuccess }: AccessScreenProps) {
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { userSlug } = useParams();
 
   const handleGoogleAuth = async () => {
+    const tvLogin = getTvAppLoginPath(userSlug);
+    if (tvLogin) { navigate(tvLogin); return; }
     setLoading(true);
     try {
       const userId = await startPlayerGoogleLogin();
@@ -38,6 +44,8 @@ export default function AccessScreen({ logoUrl, backgroundUrl, music, radioUserI
         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/25" />
       </div>
       <button
+        data-tv-focusable
+        data-player-login
         type="button"
         onClick={handleGoogleAuth}
         disabled={loading}

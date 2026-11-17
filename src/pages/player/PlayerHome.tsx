@@ -638,7 +638,7 @@ function HeroBanner({
 
 
   return (
-    <div className="relative w-full overflow-hidden" style={{ height: "100dvh", minHeight: "560px", backgroundColor: "hsl(var(--player-bg))" }}>
+    <div className="player-tv-hero relative w-full overflow-hidden" style={{ height: "100dvh", minHeight: "560px", backgroundColor: "hsl(var(--player-bg))" }}>
       {/* Fullscreen background — mirror of WelcomeScreen (channel thumb ⇄ artist cover) */}
       <style>{`
         @keyframes ph-kenburns {
@@ -2219,7 +2219,7 @@ export default function PlayerHome({ onBackToAccess, tvGuestMode = false }: Play
 
   return (
     <div
-      className={`fixed inset-0 text-white flex flex-col antialiased transition-opacity duration-400 ease-in-out overflow-hidden ${fadeOut ? "opacity-0" : "opacity-100"}`}
+      className={`player-tv-home fixed inset-0 text-white flex flex-col antialiased transition-opacity duration-400 ease-in-out overflow-hidden ${fadeOut ? "opacity-0" : "opacity-100"}`}
       style={{ background: `hsl(var(--player-bg))` }}
     >
       <PlayerLoadingOverlay 
@@ -2247,7 +2247,7 @@ export default function PlayerHome({ onBackToAccess, tvGuestMode = false }: Play
               {/* Hero Banner with Top Nav inside */}
               <div className="relative overflow-hidden" id="section-home">
                 {!dataLoaded ? (
-                  <div style={{ height: "100dvh", minHeight: "560px" }} className="relative">
+                  <div style={{ height: "100dvh", minHeight: "560px" }} className="player-tv-hero relative">
                     <Skeleton className="absolute inset-0 bg-white/5" />
                     <div className="absolute bottom-16 left-12 space-y-3">
                       <Skeleton className="h-40 w-72 rounded-2xl bg-white/10" />

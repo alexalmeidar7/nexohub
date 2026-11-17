@@ -1,29 +1,49 @@
-# Nexo Player for Amazon Fire TV
+# Player online no Fire TV
 
-Dedicated Android WebView shell for Fire OS. Separate from House Mix Desktop and from the existing web player.
+A versão 1.1.0 executa o **mesmo Player publicado** em
+`https://housemix.nexobrasil.net/positivafm/player`. Não mantém cópias Android
+das telas de loading, login, perfil, home, catálogo ou `/player/watch`.
+Atualizações do Player web passam a aparecer no aplicativo.
 
-## First test device
-- Amazon Fire TV Stick HD (1st generation)
-- Fire OS 7.7.1.7
-- Initial station: Positiva FM (slug: positivafm)
+O Android fornece somente WebView em tela cheia, reprodução, tecla Voltar e
+foco pelo controle remoto. O botão Google abre o fluxo web de QR da própria
+rádio; o login continua pelo celular. Não abre OAuth dentro de WebView.
+Cookies e armazenamento do Player permanecem privados ao aplicativo.
 
-## Build
-Run the GitHub Actions workflow "Build Nexo Player Fire TV APK", or locally:
-    cd firetv
-    gradle :app:assembleDebug
+## Responsividade
 
-APK output: firetv/app/build/outputs/apk/debug/app-debug.apk
+O Fire TV informa resolução física e densidade. Por exemplo, 1920×1080 com
+densidade 320 usa viewport CSS de 960×540. `src/styles/player-tv.css` adapta
+fontes, espaçamentos e cards a essa viewport, sem ampliar a página com zoom ou
+transform. O layout e os componentes continuam sendo os do Player online.
+O controle respeita os handlers de navegação existentes e fornece foco espacial
+somente onde o componente ainda não tratou a tecla. Listas e diálogos continuam
+com rolagem interna quando necessária; o documento não ganha scroll horizontal.
 
-## Install over ADB
-With the Fire Stick and computer on the same network and ADB debugging authorized:
-    adb connect <FIRE_TV_IP>:5555
-    adb install -r app-debug.apk
+## Build e instalação
 
-## Change the default station
-Update PLAYER_START_URL in firetv/app/build.gradle.kts to the station's public Nexo Player TV route.
+Executar manualmente o workflow **Build Nexo Player Android Native APK**, com
+`station=positiva`. A versão/nome do artefato vêm do Gradle.
 
-## Notes
-- This first package is an online WebView shell and requires internet access.
-- It does not bundle station data, media, or a local/offline player runtime.
-- The debug APK is for controlled sideload testing. A signed release package and physical-device QA are still required before distribution.
-- Validate remote navigation, stream playback, chat, QR pairing, and screen-saver behavior on the actual Fire TV Stick.
+```powershell
+adb connect <IP_DO_FIRE_TV>:5555
+adb -s <IP_DO_FIRE_TV>:5555 install -r Radio-Positiva-Fire-Android-TV-v1.1.0.apk
+```
+
+O app novo se chama **Positiva FM**, pacote
+`br.com.nexobrasil.nexoplayer.positiva`. O app antigo **Positiva FM (Teste)**,
+pacote terminado em `.teste`, é separado e seus dados não são apagados.
+O workflow conserva a chave de debug em cache para atualizações de sideload;
+distribuição em loja exige uma identidade de assinatura de release gerenciada.
+
+## Arte do launcher
+
+`app/src/positiva/res/drawable-nodpi/tv_launcher.png` é a capa 16:9 fornecida pelo
+usuário, sem recorte ou redimensionamento destrutivo. A flavor Positiva usa essa
+arte como ícone e banner; o Fire TV faz a redução para o tamanho do bloco.
+
+## Validação no aparelho
+
+Conferir loading/login, QR, entrada na home, áudio/vídeo em `/watch`, foco por
+setas/OK, Voltar, retorno ao app e capa do launcher. Não desinstalar o pacote
+antigo nem limpar dados para contornar eventual conflito de assinatura.

@@ -279,8 +279,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
   const isYoutube = canal?.type === "video_youtube" || canal?.type === "youtube";
   const selectedVideoId = isCatalog ? (new URLSearchParams(window.location.search).get("vid")) : null;
-  const isTvExperience = new URLSearchParams(window.location.search).get("tv") === "1"
-    || /\/player\/app\/?$/.test(window.location.pathname);
+  const isTvExperience = !/NexoPlayerTV\//i.test(navigator.userAgent) && (
+    new URLSearchParams(window.location.search).get("tv") === "1"
+    || /\/player\/app\/?$/.test(window.location.pathname));
   const channelNumber = String(Math.max(0, liveChannels.findIndex((item) => item.id === canal?.id)) + 1).padStart(3, "0");
   const logoCandidates = useMemo(() => [empresaLogo, canal?.logo_url, getStationLogoFallback(userSlug), nexoPlayerLogo.url]
     .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
@@ -1386,7 +1387,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
   return (
     <div
-      className="relative h-screen w-screen overflow-hidden text-white select-none transition-all duration-500 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]"
+      className="player-tv-watch relative h-screen w-screen overflow-hidden text-white select-none transition-all duration-500 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]"
       style={{
         background: "#050810",
         fontFamily: "'Lufga', 'Inter', sans-serif",
@@ -1937,6 +1938,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               </div>
             )}
             <div
+              data-tv-program-card
               style={{
                 width: 368,
                 height: 384,

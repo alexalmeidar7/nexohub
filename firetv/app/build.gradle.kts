@@ -1,7 +1,6 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
@@ -12,8 +11,11 @@ android {
         applicationId = "br.com.nexobrasil.nexoplayer.positiva"
         minSdk = 23
         targetSdk = 28
-        versionCode = 10
-        versionName = "1.0.5"
+        versionCode = 11
+        versionName = "1.1.0"
+        manifestPlaceholders["appIcon"] = "@mipmap/ic_launcher"
+        manifestPlaceholders["appBanner"] = "@drawable/tv_banner"
+        buildConfigField("String", "PLAYER_ORIGIN", "\"https://housemix.nexobrasil.net\"")
         buildConfigField("String", "SUPABASE_URL", "\"https://qazvgmgdidjhbvcuinpy.supabase.co\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"sb_publishable_BzjxF3H_PSgFYVA3OQIaoA_Pytdg2V3\"")
         buildConfigField("String", "STATION_SLUG", "\"positivafm\"")
@@ -22,7 +24,6 @@ android {
     }
 
     buildFeatures {
-        compose = true
         buildConfig = true
     }
     compileOptions {
@@ -35,8 +36,10 @@ android {
     productFlavors {
         create("positiva") {
             dimension = "station"
-            applicationId = "br.com.nexobrasil.nexoplayer.positiva.teste"
-            resValue("string", "app_name", "Positiva FM (Teste)")
+            applicationId = "br.com.nexobrasil.nexoplayer.positiva"
+            resValue("string", "app_name", "Positiva FM")
+            manifestPlaceholders["appIcon"] = "@drawable/tv_launcher"
+            manifestPlaceholders["appBanner"] = "@drawable/tv_launcher"
         }
         create("interativa") {
             dimension = "station"
@@ -48,19 +51,4 @@ android {
     }
 
     dependenciesInfo { includeInApk = false }
-}
-
-dependencies {
-    val composeBom = platform("androidx.compose:compose-bom:2024.12.01")
-    implementation(composeBom)
-    androidTestImplementation(composeBom)
-    implementation("androidx.activity:activity-compose:1.10.0")
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.foundation:foundation")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
-    implementation("com.google.zxing:core:3.5.3")
-    debugImplementation("androidx.compose.ui:ui-tooling")
 }

@@ -2,6 +2,12 @@ name: Build Nexo Player Android Native APK
 
 on:
   workflow_dispatch:
+    inputs:
+      station:
+        description: Radio APK
+        type: choice
+        options: [positiva, interativa, both]
+        default: positiva
   push:
     branches:
       - "feature/nexo-player-fire-tv"
@@ -38,6 +44,11 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
+      - name: Keep sideload signing identity across builds
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: firetv-debug-signing-v1
       - name: Install image tooling
         run: sudo apt-get update && sudo apt-get install -y imagemagick
       - name: Install Positiva FM launcher artwork
@@ -47,18 +58,36 @@ jobs:
           convert public/logos/positiva.png -trim -resize 300x300 -gravity center -background none -extent 432x432 firetv/app/src/main/res/drawable-nodpi/ic_launcher_foreground.png
           convert public/logos/positiva.png -trim -resize 60x60 -gravity center -background '#D50000' -extent 72x72 firetv/app/src/main/res/mipmap-hdpi/ic_launcher.png
           convert public/logos/positiva.png -trim -resize 300x300 -gravity center -background none -extent 432x432 firetv/app/src/main/res/drawable-nodpi/positiva_logo.png
-      - name: Build debug APK
+      - name: Build shared online Player APK
         working-directory: firetv
-        run: gradle --no-daemon :app:assemblePositivaDebug :app:assembleInterativaDebug
+        env:
+          STATION: ${{ inputs.station || 'both' }}
+        run: |
+          case "$STATION" in
+            positiva) gradle --no-daemon :app:assemblePositivaDebug ;;
+            interativa) gradle --no-daemon :app:assembleInterativaDebug ;;
+            both) gradle --no-daemon :app:assemblePositivaDebug :app:assembleInterativaDebug ;;
+            *) exit 1 ;;
+          esac
+      - name: Read app version
+        id: version
+        run: |
+          version=$(sed -n 's/.*versionName = "\([^"]*\)".*/\1/p' firetv/app/build.gradle.kts)
+          test -n "$version"
+          echo "name=$version" >> "$GITHUB_OUTPUT"
       - name: Name versioned Positiva APK
         run: |
           mkdir -p dist
-          cp firetv/app/build/outputs/apk/positiva/debug/app-positiva-debug.apk dist/Radio-Positiva-Fire-Android-TV-v1.0.5.apk
-          cp firetv/app/build/outputs/apk/interativa/debug/app-interativa-debug.apk dist/Radio-Interativa-Fire-Android-TV-v1.0.5.apk
+          if test -f firetv/app/build/outputs/apk/positiva/debug/app-positiva-debug.apk; then
+            cp firetv/app/build/outputs/apk/positiva/debug/app-positiva-debug.apk dist/Radio-Positiva-Fire-Android-TV-v${{ steps.version.outputs.name }}.apk
+          fi
+          if test -f firetv/app/build/outputs/apk/interativa/debug/app-interativa-debug.apk; then
+            cp firetv/app/build/outputs/apk/interativa/debug/app-interativa-debug.apk dist/Radio-Interativa-Fire-Android-TV-v${{ steps.version.outputs.name }}.apk
+          fi
       - name: Upload versioned APKs
         uses: actions/upload-artifact@v4
         with:
-          name: Radio-Fire-Android-TV-v1.0.5
+          name: Radio-Fire-Android-TV-v${{ steps.version.outputs.name }}
           path: dist/*.apk
           if-no-files-found: error
           retention-days: 14
