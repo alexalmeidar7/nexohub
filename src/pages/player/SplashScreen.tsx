@@ -1,17 +1,21 @@
 import { useEffect, useState } from "react";
 import ElegantLoader from "@/components/player/ElegantLoader";
+import { isPlayerTvApp } from "@/lib/playerTvApp";
+import { OttFrame } from "@/components/player/tv/OttFrame";
 
 interface SplashScreenProps {
   onFinish: () => void;
   ready?: boolean;
   maxDurationMs?: number;
   progress?: number;
+  logoUrl?: string | null;
 }
 
 export default function SplashScreen({
   onFinish,
   ready = true,
   maxDurationMs = 3000,
+  logoUrl,
 }: SplashScreenProps) {
   const [fadeOut, setFadeOut] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -38,6 +42,8 @@ export default function SplashScreen({
   }, [fadeOut, reducedMotion, onFinish]);
 
   const fadeDuration = reducedMotion ? 150 : 650;
+
+  if (isPlayerTvApp()) return <OttFrame className="ott-black"><img className="ott-splash-mark" src={logoUrl || "/images/player-ott-seal-white.png"} alt="Logo da emissora" /><div className="ott-spinner" role="status" aria-label="Carregando" /></OttFrame>;
 
   return (
     <div

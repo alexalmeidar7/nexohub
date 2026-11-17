@@ -8,6 +8,8 @@ import { extractDominantPair } from "@/lib/dominantColors";
 import { getStationLogoFallback } from "@/lib/playerBranding";
 import { upgradeArtistImageResolution } from "@/lib/artistImageCache";
 import PlayerBrandCorner from "@/components/player/PlayerBrandCorner";
+import { isPlayerTvApp } from "@/lib/playerTvApp";
+import OttPair from "@/components/player/tv/OttPair";
 
 const CANONICAL_PAIR_ORIGIN = "https://housemix.nexobrasil.net";
 
@@ -403,6 +405,8 @@ export default function PlayerTvWelcome() {
       </div>
     );
   }
+
+  if (isPlayerTvApp()) return <OttPair radioName={radioName} logo={radioLogo || getStationLogoFallback(userSlug)} background={fallbackImg || loadedBg} code={displayCode} pairUrl={pairUrl} expired={expired} remaining={remainingLabel} error={error} claimed={claimedName} onRetry={()=>void generateCode()} onGuest={()=>navigate(`/${userSlug}/player?tvGuest=1&step=home`)} />;
 
   return (
     <main className="fixed inset-0 overflow-hidden bg-black text-white antialiased">

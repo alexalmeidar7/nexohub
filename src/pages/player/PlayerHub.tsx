@@ -339,6 +339,7 @@ export default function PlayerHub() {
     return (
       <div className={wrapperClass}>
         <SplashScreen
+          logoUrl={logoUrl}
           onFinish={onSplashFinish}
           ready={tvGuestMode ? true : !loading && dataReady}
           maxDurationMs={tvGuestMode ? 4200 : 5000}

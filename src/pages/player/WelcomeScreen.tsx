@@ -26,6 +26,9 @@ import { startPlayerGoogleLogin } from "@/lib/playerGoogleLogin";
 import { markPlayerSession } from "@/lib/playerSession";
 import PlayerBrandCorner from "@/components/player/PlayerBrandCorner";
 import { ANIVERSARIOS_CIDADES } from "@/data/aniversariosCidades";
+import { isPlayerTvApp } from "@/lib/playerTvApp";
+import OttProfiles, { type OttProfileData } from "@/components/player/tv/OttProfiles";
+import { OttFrame } from "@/components/player/tv/OttFrame";
 
 
 const AVATARS = [
@@ -89,6 +92,8 @@ export default function WelcomeScreen({
 }: WelcomeScreenProps) {
 
   const { user } = usePlayerAuth();
+  const [ottProfileReady, setOttProfileReady] = useState(false);
+  const [ottProfileError, setOttProfileError] = useState(false);
   const radioUserId = publicUserId || user?.id || null;
   // Mantém a sincronização da "música no ar" ativa também na tela de boas-vindas,
   // para que a imagem do artista (Deezer) apareça sem depender do PlayerHome.
@@ -185,6 +190,7 @@ export default function WelcomeScreen({
   const interactedRef = useRef(false);
   // Spatial keyboard navigation (arrows) + Enter/Space to activate
   useEffect(() => {
+    if (isPlayerTvApp()) return;
     const getNodes = () =>
       Array.from(document.querySelectorAll<HTMLElement>('[data-ws-focusable="true"]'))
         .filter(el => el.offsetParent !== null && !el.hasAttribute("disabled"));
@@ -420,6 +426,9 @@ export default function WelcomeScreen({
 
   useEffect(() => {
     if (!user || !radioUserId) return;
+    let cancelled = false;
+    setOttProfileReady(false);
+    setOttProfileError(false);
     // Foto da conta Google (identidade OAuth ou metadados do usuário)
     const gIdentity = (user as any)?.identities?.find?.((i: any) => i.provider === "google");
     const gData: any = gIdentity?.identity_data || {};
@@ -439,6 +448,7 @@ export default function WelcomeScreen({
         if ((res as any)?.exists) listener = (res as any).listener;
       } catch { /* ignore */ }
 
+      if (cancelled) return;
       setProfile({
         nome: listener?.nome || d.nome || userName,
         email: listener?.email || d.email || user.email || "",
@@ -453,7 +463,9 @@ export default function WelcomeScreen({
           ? (googlePhoto || d.avatar_url || "/avatars/usr-default.png")
           : d.avatar_url,
       });
-    });
+      setOttProfileReady(true);
+    }).catch(() => { if (!cancelled) setOttProfileError(true); });
+    return () => { cancelled = true; };
 
   }, [user, userName, radioUserId]);
 
@@ -647,17 +659,18 @@ export default function WelcomeScreen({
   }, [initialEditOpen]);
 
 
-  const handleSave = async () => {
+  const handleSave = async (nextProfile?: OttProfileData) => {
     if (!user) return;
+    const data = nextProfile || profile;
     setSaving(true);
     const { error } = await upsertPlayerListenerProfile(user.id, radioUserId || user.id, {
-      nome: profile.nome, email: profile.email,
-      cpf: profile.cpf || null,
-      whatsapp: profile.whatsapp, sexo: profile.sexo,
-      estado: profile.estado, cidade: profile.cidade,
-      setor: profile.setor || null,
-      data_nascimento: profile.data_nascimento || null,
-      avatar_url: profile.avatar_url,
+      nome: data.nome, email: data.email,
+      cpf: data.cpf || null,
+      whatsapp: data.whatsapp, sexo: data.sexo,
+      estado: data.estado, cidade: data.cidade,
+      setor: data.setor || null,
+      data_nascimento: data.data_nascimento || null,
+      avatar_url: data.avatar_url,
     } as any);
 
     // Atualiza a pontuação conforme as REGRAS DE PONTUAÇÃO do cadastro de ouvinte
@@ -667,10 +680,10 @@ export default function WelcomeScreen({
         body: {
           radio_user_id: radioUserId || user.id,
           profile: {
-            nome: profile.nome, email: profile.email, cpf: profile.cpf,
-            telefone: profile.whatsapp, sexo: profile.sexo,
-            data_nascimento: profile.data_nascimento,
-            estado: profile.estado, cidade: profile.cidade, setor: profile.setor,
+            nome: data.nome, email: data.email, cpf: data.cpf,
+            telefone: data.whatsapp, sexo: data.sexo,
+            data_nascimento: data.data_nascimento,
+            estado: data.estado, cidade: data.cidade, setor: data.setor,
           },
         },
       });
@@ -685,8 +698,10 @@ export default function WelcomeScreen({
       toast.success(
         novaPontuacao != null ? `Perfil atualizado! ${novaPontuacao} pts` : "Perfil atualizado!",
       );
+      setProfile(data);
       setEditOpen(false);
     }
+    return !error;
   };
 
 
@@ -748,6 +763,19 @@ export default function WelcomeScreen({
 
   const displayName = profile.nome || userName;
   const displayAvatar = profile.avatar_url || "/avatars/usr-default.png";
+
+  if (isPlayerTvApp() && user && !guestMode && !ottProfileReady) return <OttFrame className="ott-black">{ottProfileError ? <div className="ott-profile-load-error" role="alert"><p>Não foi possível carregar seu perfil.</p><button onClick={()=>window.location.reload()}>Tentar novamente</button><button onClick={onContinue}>Voltar ao player</button></div>:<div className="ott-spinner" role="status" aria-label="Carregando perfil" />}</OttFrame>;
+
+  if (isPlayerTvApp()) return <OttProfiles
+    profile={guestMode ? { ...profile, nome: "Visitante", avatar_url: "/avatars/usr-default.png" } : profile}
+    authenticated={!!user && !guestMode} background={backgroundUrl || artistImg} accent={avatarAccent}
+    initialEdit={initialEditOpen} profiles={guestMode ? [] : subProfiles} avatars={AVATARS}
+    onContinue={onContinue}
+    onSwitch={sp=>{setProfile(p=>({...p,nome:sp.name,avatar_url:sp.avatar_url}));emitProfileChanged({userId:user?.id ?? null,radioUserId,nome:sp.name,avatar_url:sp.avatar_url,reason:"switch"});onContinue();}}
+    onSave={async draft=>!!(await handleSave(draft))}
+    onAdd={async(name,avatar)=>{if(!user || guestMode)return; const next=[...subProfiles,{id:crypto.randomUUID(),name,avatar_url:avatar}];const {error}=await upsertPlayerListenerProfile(user.id,radioUserId || user.id,{sub_profiles:next as any});if(error)throw error;setSubProfiles(next);try{localStorage.setItem(`nexohub_sub_profiles_${user.id}_${radioUserId}`,JSON.stringify(next));}catch{}}}
+    onLogin={()=>window.location.assign(`/${userSlug}/player/tv`)} onLogout={confirmLogout}
+  />;
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden bg-black text-white">
@@ -1505,7 +1533,7 @@ export default function WelcomeScreen({
               cancelar
             </button>
             <button
-              onClick={handleSave}
+              onClick={() => void handleSave()}
               disabled={saving}
               className="px-6 h-10 rounded-full text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-60"
               style={{ backgroundColor: "#323431", color: "#d9d9d9", border: "1px solid #3d3f3c" }}

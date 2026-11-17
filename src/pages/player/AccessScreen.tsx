@@ -4,8 +4,8 @@ import ElegantLoader from "@/components/player/ElegantLoader";
 import PlayerBrandCorner from "@/components/player/PlayerBrandCorner";
 import { toast } from "sonner";
 import { markPlayerSession } from "@/lib/playerSession";
-import { useNavigate, useParams } from "react-router-dom";
-import { getTvAppLoginPath } from "@/lib/playerTvApp";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { getTvAppLoginPath, isPlayerTvApp } from "@/lib/playerTvApp";
 
 interface AccessScreenProps {
   logoUrl?: string | null;
@@ -34,6 +34,8 @@ export default function AccessScreen({ logoUrl, backgroundUrl, music, radioUserI
       setLoading(false);
     }
   };
+
+  if (isPlayerTvApp() && userSlug) return <Navigate to={`/${userSlug}/player/tv`} replace />;
 
   return (
     <main className="fixed inset-0 z-50 overflow-hidden bg-black text-white antialiased">

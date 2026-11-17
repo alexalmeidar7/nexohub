@@ -24,6 +24,8 @@ import { resolveEffectiveOnAir } from "@/lib/onAirResolver";
 import { playerSignOut } from "@/lib/playerSignOut";
 import { fetchStationDatabaseData } from "@/lib/stationDatabaseService";
 import { getStationLogoFallback } from "@/lib/playerBranding";
+import { isPlayerTvApp } from "@/lib/playerTvApp";
+import OttHome from "@/components/player/tv/OttHome";
 const MiniPlayerWidget = lazyRetry(() => import("@/components/player/MiniPlayerWidget"));
 const PlayerGradeDialog = lazyRetry(() => import("@/components/player/PlayerGradeDialog"));
 const CatalogDetailInline = lazyRetry(() => import("@/components/player/CatalogDetailInline"));
@@ -2215,6 +2217,8 @@ export default function PlayerHome({ onBackToAccess, tvGuestMode = false }: Play
   const heroChannel = streamingChannels[0];
   const { bgColors: top10Colors } = useBgPalette(heroChannel?.logo_url || undefined);
   const top10Gradient = `radial-gradient(ellipse at 20% 20%, ${top10Colors[0]} 0%, transparent 60%), radial-gradient(ellipse at 85% 90%, ${top10Colors[1]} 0%, transparent 65%), linear-gradient(135deg, ${top10Colors[0]} 0%, ${top10Colors[1]} 100%)`;
+
+  if (isPlayerTvApp() && visibleSection !== "catalog-detail" && visibleSection !== "top10") return <OttHome channels={channels} radioName={channelName} logo={logoUrl} background={currentProgram?.thumb || currentProgram?.capa || heroChannel?.cover_url || heroChannel?.background_url} program={currentProgram?.nome} presenter={currentPresenterName} loading={!dataLoaded} profileName={userName} avatar={profileAvatar} onProfile={()=>onBackToAccess?.(false)} onPlay={goToPlayer} onCatalog={goToCatalog} />;
 
 
   return (

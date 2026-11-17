@@ -22,6 +22,8 @@ import DjModeLayer from "@/components/player/DjModeLayer";
 import { toast } from "sonner";
 import { playerSignOut } from "@/lib/playerSignOut";
 import { getStationLogoFallback } from "@/lib/playerBranding";
+import { isPlayerTvApp } from "@/lib/playerTvApp";
+import OttWatch from "@/components/player/tv/OttWatch";
 
 const PlayerChat = lazyRetry(() => import("@/components/PlayerChat"));
 const PlayerGradeDialog = lazyRetry(() => import("@/components/player/PlayerGradeDialog"));
@@ -1260,6 +1262,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (t as any).isContentEditable === true;
     };
     const onKey = (e: KeyboardEvent) => {
+      if (isPlayerTvApp()) return;
       if (isTyping(e.target)) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       switch (e.code) {
@@ -1384,6 +1387,12 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     setTrackDrag(null);
     seekTrackTo(val);
   };
+
+  if (isPlayerTvApp() && !isCatalog) return <div className="ott-media-host">
+    <audio ref={audioRef} muted={muted} preload="none" className="hidden" />
+    <video ref={videoRef} className={isVideoChannel ? "ott-video-element":"hidden"} muted={muted} playsInline />
+    <OttWatch video={isVideoChannel} playing={playing} buffering={buffering} muted={muted} title={isVideoChannel ? currentProg?.nome || canal?.name || "Ao vivo":musicData?.titulo || currentProg?.nome || canal?.name || "Rádio ao vivo"} subtitle={isVideoChannel ? empresaNome || canal?.name:musicData?.artista || currentProg?.nome || empresaNome} radioName={empresaNome} logo={watchLogo} cover={musicData?.capa || currentProg?.thumb} liked={liked} programs={schedulePrograms} onPlay={onTogglePlay} onMute={()=>onSetMuted(!muted)} onLike={onToggleLike} onBack={handleBackHome} onChannel={navigateChannel} onProfile={onSwitchProfile} />
+  </div>;
 
   return (
     <div
