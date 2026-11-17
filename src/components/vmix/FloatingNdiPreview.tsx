@@ -6,12 +6,13 @@ type NdiNetworkSource = { name: string; address: string };
 const NDI_ORIGIN = "http://127.0.0.1:8765";
 const SOURCE_KEY = "housemix:ndi-preview-network-source:v1";
 
-export default function FloatingNdiPreview({ targetSelector = "#custom-buttons-panel", onRefreshSources, controls, onSources, onImage, onPreviewHidden }: {
+export default function FloatingNdiPreview({ targetSelector = "#custom-buttons-panel", onRefreshSources, controls, settings, onSources, onImage, onPreviewHidden }: {
   inputs: { key: string; number: string; title: string; type: string }[];
   baseUrl: string;
   targetSelector?: string;
   onRefreshSources?: () => Promise<unknown> | void;
   controls?: ReactNode;
+  settings?: ReactNode;
   onSources?: (sources: NdiNetworkSource[]) => void;
   onImage?: (image: HTMLImageElement | null) => void;
   onPreviewHidden?: () => void;
@@ -99,13 +100,14 @@ export default function FloatingNdiPreview({ targetSelector = "#custom-buttons-p
         <span className={`h-2 w-2 rounded-full ${previewReady && !previewError ? "bg-lime-400" : "bg-slate-500"}`} />
         <span className="flex-1 text-[10px] font-black uppercase tracking-wider text-white">Preview</span>
         <button type="button" onClick={() => { void refreshSources(); setPreviewRevision(v => v + 1); }} aria-label="Atualizar fontes NDI" title="Atualizar fontes NDI" className="rounded p-1 text-slate-300 hover:bg-white/10"><RefreshCw size={13} className={loading ? "animate-spin" : ""} /></button>
-        <button type="button" onClick={() => setSetupOpen(v => !v)} aria-label="Selecionar fonte NDI" className="rounded p-1 text-slate-300 hover:bg-white/10"><Settings size={13} /></button>
+        <button type="button" onClick={() => setSetupOpen(v => !v)} aria-label="Configurar fontes do preview" aria-expanded={setupOpen} className="rounded p-1 text-slate-300 hover:bg-white/10"><Settings size={13} /></button>
         <button type="button" onClick={() => setExpanded(v => !v)} aria-label={expanded ? "Reduzir preview" : "Expandir preview"} className="rounded p-1 text-slate-300 hover:bg-white/10">{expanded ? <Minimize2 size={13} /> : <Maximize2 size={13} />}</button>
         <button type="button" onClick={() => { onPreviewHidden?.(); setVisible(false); }} aria-label="Ocultar preview" className="rounded p-1 text-slate-300 hover:bg-white/10"><X size={13} /></button>
       </header>
       <div className="p-2">
         {controls}
         {setupOpen && <div className="mb-2">
+          {settings}
           <select value={selectedSource} onChange={e => selectSource(e.target.value)} aria-label="Fonte NDI disponível na rede" className="h-9 w-full min-w-0 rounded-md border border-[#314766] bg-[#0c1525] px-2 text-[11px] text-white outline-none">
             <option value="">{loading && !sources.length ? "Buscando fontes NDI na rede..." : "Selecione uma fonte NDI da rede..."}</option>
             {selectedSource && !sources.some(s => s.name === selectedSource) && <option value={selectedSource}>{selectedSource} (aguardando rede)</option>}

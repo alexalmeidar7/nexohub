@@ -20,6 +20,8 @@ concurrency:
 
 jobs:
   deploy:
+    # Desktop-only releases still run validation and publish the HMD installer.
+    if: ${{ github.event_name != 'push' || !contains(github.event.head_commit.message, '[hmd-only]') }}
     runs-on: ubuntu-latest
     environment:
       name: production

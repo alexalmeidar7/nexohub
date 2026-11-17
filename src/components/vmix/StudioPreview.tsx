@@ -73,6 +73,11 @@ export default function StudioPreview({ connectionId, remote, ...previewProps }:
       <span className="text-[10px] font-bold">Retorno remoto</span>
       <button type="button" aria-pressed={enabled} disabled={!enabled && (!session || !image || !audioSource)} onClick={() => setEnabled(v => !v)} className={`rounded px-2 py-1 text-[10px] font-bold disabled:opacity-40 ${enabled ? "bg-red-700" : "bg-blue-600"}`}>{enabled ? "Desligar envio" : "Habilitar envio"}</button>
     </div>
+    {status && <p role="status" className="mt-1 text-[10px] text-slate-300">{status}</p>}
+
+  </div> : undefined;
+
+  const sourceSettings = host ? <div className="mb-2">
     <label className="mt-2 block text-[10px] text-slate-300">Áudio da mesa · fonte NDI
       <select value={audioSource} onChange={event => {
         setAudioSource(event.target.value);
@@ -84,11 +89,10 @@ export default function StudioPreview({ connectionId, remote, ...previewProps }:
       </select>
     </label>
     <p className="mt-1 text-[9px] text-slate-400">Áudio 64 Kbps · vídeo 300, 500 ou 900 Kbps. Sem operador assistindo, não há envio.</p>
-    {status && <p role="status" className="mt-1 text-[10px] text-slate-300">{status}</p>}
     {!relayConfigured && <p className="mt-1 text-[9px] text-amber-200">Conexão direta disponível. Relay gratuito entre redes ainda não configurado.</p>}
   </div> : undefined;
 
-  if (!remote) return <FloatingNdiPreview {...previewProps} controls={controls} onSources={setSources} onImage={setImage} onPreviewHidden={() => setEnabled(false)} />;
+  if (!remote) return <FloatingNdiPreview {...previewProps} controls={controls} settings={sourceSettings} onSources={setSources} onImage={setImage} onPreviewHidden={() => setEnabled(false)} />;
   return <aside aria-label="Retorno remoto de vídeo e áudio" className="fixed bottom-16 right-4 z-[60] w-[min(340px,calc(100vw-32px))] overflow-hidden rounded-xl border border-[#314766] bg-[#111b2d] text-white shadow-2xl">
     <header className="flex items-center gap-2 border-b border-[#314766] bg-[#17243d] px-3 py-2">
       <span className={`h-2 w-2 rounded-full ${stream ? "bg-lime-400" : "bg-slate-500"}`} />

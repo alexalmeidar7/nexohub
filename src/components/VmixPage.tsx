@@ -2845,6 +2845,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       activeInput={activeInput}
       previewInput={previewInput}
       connectionMode={remoteMode ? "remote" : connectionMode}
+      remoteOperator={remoteMode}
       savedUrl={savedUrl}
       vmixFetch={vmixFetch}
       vmixUser={vmixUser}
@@ -3413,7 +3414,7 @@ function useAgendaPodcastTriggers({
 // Actual Switcher UI (used when effectiveConnected)
 
 function SwitcherUI({ 
-  inputs, activeInput, previewInput, connectionMode, savedUrl, vmixFetch, vmixUser, vmixPass,
+  inputs, activeInput, previewInput, connectionMode, remoteOperator, savedUrl, vmixFetch, vmixUser, vmixPass,
   connecting, connected, logoMixControl, studioName, selectedConnectionId,
   activeTab, setActiveTab, streaming, recording, overlays,
   setStreaming, setRecording, setOverlays, transitionStyle, setTransitionStyle,
@@ -5917,7 +5918,7 @@ function SwitcherUI({
       )}
 
       {isAutomationRoute && !isButtonDevicePreview && (
-        <StudioPreview connectionId={selectedConnectionId} remote={connectionMode === "remote"} inputs={inputs} baseUrl={savedUrl || vmixUrl} targetSelector="#custom-buttons-panel" onRefreshSources={reloadInputsAndSources} />
+        <StudioPreview connectionId={selectedConnectionId} remote={remoteOperator === true} inputs={inputs} baseUrl={savedUrl || vmixUrl} targetSelector="#custom-buttons-panel" onRefreshSources={reloadInputsAndSources} />
       )}
 
       {/* ── Command Log Panel (hidden in device previews) ── */}
