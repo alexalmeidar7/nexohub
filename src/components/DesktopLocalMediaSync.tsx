@@ -6,6 +6,8 @@ import { findClientAccountById } from "@/lib/clientAuthAccounts";
 import { localizeXmlImageUrls } from "@/lib/desktopLocalXml";
 import { cachePromotionBanners, rotateDesktopBanner, saveDesktopXml, BANNER_DURATION_MS, type PromotionBanner } from "@/lib/desktopPromotionBanners";
 import { createOwnedRealtimeChannel } from "@/lib/ownedRealtimeChannel";
+import { createDesktopXmlRefresh } from "@/lib/desktopXmlRefresh";
+import { MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
 import { toast } from "sonner";
 
 const XML_FEEDS = [
@@ -123,31 +125,21 @@ export default function DesktopLocalMediaSync() {
     const desktop = window.houseMixDesktop;
     if (!desktop || loading || !ownerId || !slug) return;
     let stopped = false;
-    let running = false;
+    let imagesRunning = false;
+    let lastImages = 0;
+    const localizing = new Set<string>();
 
     const sync = async () => {
-      if (running || stopped) return;
-      running = true;
+      if (stopped) return;
       try {
         await desktop.initializeLocalAssets(slug);
         const supabaseBase = import.meta.env.VITE_SUPABASE_URL;
         if (!supabaseBase) return;
 
         const syncXml = async () => {
-          let networkUnavailable = !navigator.onLine;
-          for (const [filename, fn, extra] of XML_FEEDS) {
+          await Promise.all(XML_FEEDS.map(async ([filename, fn, extra]) => {
             if (stopped) return;
-            const localizeCachedFeed = async () => {
-              const cachedXml = await desktop.readXml(slug, filename).catch(() => null);
-              if (cachedXml) {
-                const localXml = await localizeXmlImageUrls(cachedXml, slug, desktop, true).catch(() => cachedXml);
-                if (localXml !== cachedXml) await saveDesktopXml(desktop, slug, filename, localXml).catch(() => "");
-              }
-            };
-            if (networkUnavailable) {
-              await localizeCachedFeed();
-              continue;
-            }
+            if (!navigator.onLine) return;
             const params = new URLSearchParams({ user_id: ownerId });
             if (fn === "serve-xml-geral" || fn === "serve-xml-enquete" || fn === "serve-xml-quiz") params.set("slug", slug);
             if (fn === "serve-xml-cenarios-estudio") { params.delete("user_id"); params.set("uid", ownerId); }
@@ -155,18 +147,28 @@ export default function DesktopLocalMediaSync() {
             if (fn === "serve-xml-roteiro-estudio") params.set("estudio", "Estudio FM");
             try {
               const response = await fetch(`${supabaseBase}/functions/v1/${fn}?${params}`, { cache: "no-store", signal: AbortSignal.timeout(12000) });
-              if (!response.ok) continue;
+              if (!response.ok) throw new Error(`${filename}: HTTP ${response.status}`);
               const xml = (await response.text()).trim();
               if (xml.startsWith("<") && !xml.includes("<!DOCTYPE html>") && !xml.includes("<error>")) {
-                const localXml = await localizeXmlImageUrls(xml, slug, desktop);
+                // Publish current text immediately using already-cached artwork.
+                // Slow/missing image downloads must never hold back program changes.
+                const localXml = await localizeXmlImageUrls(xml, slug, desktop, true);
+                if (stopped) return;
                 await saveDesktopXml(desktop, slug, filename, localXml);
+                if (!localizing.has(filename)) {
+                  localizing.add(filename);
+                  void (async () => {
+                    const downloaded = await localizeXmlImageUrls(xml, slug, desktop);
+                    if (!stopped && downloaded !== localXml) refresh.request();
+                  })().catch(error => console.warn(`Local XML artwork ${filename}`, error))
+                    .finally(() => localizing.delete(filename));
+                }
               }
-            } catch {
-              // After one feed fails, treat the host as unavailable for the remaining local feeds.
-              networkUnavailable = true;
-              await localizeCachedFeed();
+            } catch (error) {
+              // One unavailable feed must not freeze any other XML file.
+              if (!stopped) console.warn(`Local XML refresh failed: ${filename}`, error);
             }
-          }
+          }));
         };
 
         const syncImages = async () => {
@@ -195,15 +197,41 @@ export default function DesktopLocalMediaSync() {
           await Promise.all(Array.from({ length: Math.min(4, items.length) }, worker));
         };
 
-        await Promise.all([syncXml(), syncImages()]);
-      } finally { running = false; }
+        if (!imagesRunning && Date.now() - lastImages >= 4 * 60 * 60 * 1000) {
+          imagesRunning = true;
+          void syncImages().then(() => { lastImages = Date.now(); })
+            .catch(error => console.warn("Local artwork refresh failed", error))
+            .finally(() => { imagesRunning = false; });
+        }
+        await syncXml();
+      } catch (error) { if (!stopped) console.warn("Local XML sync failed", error); }
     };
 
-    void sync();
-    const onOnline = () => void sync();
-    window.addEventListener("online", onOnline);
-    const timer = window.setInterval(() => void sync(), 4 * 60 * 60 * 1000);
-    return () => { stopped = true; window.removeEventListener("online", onOnline); window.clearInterval(timer); };
+    const refresh = createDesktopXmlRefresh(sync);
+    const onChange = () => refresh.request();
+    let lastMusic = "";
+    const onMusic = (event: Event) => {
+      const detail = (event as CustomEvent<{ userId?: string; data?: Record<string, unknown> }>).detail;
+      if (detail?.userId !== ownerId) return;
+      const data = detail.data || {};
+      const signature = JSON.stringify([data.titulo, data.artista, data.capa, data.deezer_artist_img]);
+      if (signature === lastMusic) return;
+      lastMusic = signature; refresh.request();
+    };
+    const channel = createOwnedRealtimeChannel(supabase.realtime, `desktop-local-xml-${ownerId}`);
+    for (const table of ["programas", "roteiros", "agenda_eventos", "apresentadores", "empresa_config", "user_settings", "logos_patrocinadores", "promocoes", "enquetes_agendadas", "quiz_agendados", "batalhas_agendadas", "musicas_tocadas", "cenario_estudio_grupos", "cenario_estudio_tvs"]) {
+      channel.on("postgres_changes", { event: "*", schema: "public", table, filter: `user_id=eq.${ownerId}` }, onChange);
+    }
+    channel.subscribe(status => { if (status === "SUBSCRIBED") refresh.request(); });
+    window.addEventListener("online", onChange);
+    window.addEventListener(MUSIC_DATA_EVENT, onMusic);
+    refresh.request();
+    return () => {
+      stopped = true; refresh.stop();
+      window.removeEventListener("online", onChange);
+      window.removeEventListener(MUSIC_DATA_EVENT, onMusic);
+      void supabase.removeChannel(channel);
+    };
   }, [loading, ownerId, slug]);
 
   return null;
