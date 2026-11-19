@@ -149,7 +149,7 @@ serve(async (req) => {
       step("batalha", sb.from("batalhas_agendadas").select("artista1_nome, artista1_musica, artista1_porcentagem, artista1_imagem, artista2_nome, artista2_musica, artista2_porcentagem, artista2_imagem, horario_inicio, horario_fim").eq("user_id", ownerId).eq("data_batalha", today).order("horario_inicio", { ascending: false })),
       step("enquetes", sb.from("enquetes_agendadas").select("pergunta, resposta1, resposta2, resposta3, resposta4, resposta_correta, horario_inicio, horario_fim").eq("user_id", ownerId).eq("data_enquete", today).order("horario_inicio", { ascending: false })),
       step("quiz", sb.from("quiz_agendados").select("pergunta, resposta1, resposta2, resposta3, resposta4, resposta_correta, horario_inicio, horario_fim, explicacao, imagem_resposta").eq("user_id", ownerId).eq("data_quiz", today).order("horario_inicio", { ascending: false })),
-      sb.from("noticias").select("titulo, descricao, url, criada_em").eq("user_id", ownerId).eq("ativo", true).order("criada_em", { ascending: false }).limit(10).then(r => r).catch(() => ({ data: [] })),
+      Promise.resolve(sb.from("noticias").select("titulo, descricao, url, criada_em").eq("user_id", ownerId).eq("ativo", true).order("criada_em", { ascending: false }).limit(10)).catch(() => ({ data: [] })),
     ]);
 
 
