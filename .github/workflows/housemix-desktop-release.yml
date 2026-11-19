@@ -15,14 +15,14 @@ concurrency:
 
 jobs:
   build-windows:
-    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main'
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main')
     runs-on: windows-latest
     timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && 'main' || github.event.workflow_run.head_sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -54,7 +54,9 @@ jobs:
             const currentParts = parse(pkg.version);
             const base = compare(currentParts, latestParts) >= 0 ? currentParts : latestParts;
             const [major = 1, minor = 0, patch = 0] = base;
-            core.setOutput('next', `${major}.${minor}.${patch + 1}`);
+            const manual = context.eventName === 'workflow_dispatch' ? context.payload.inputs?.version : null;
+            if (manual && !/^\d+\.\d+\.\d+$/.test(manual)) throw new Error('Invalid version');
+            core.setOutput('next', manual || `${major}.${minor}.${patch + 1}`);
 
       - name: Set release version
         shell: pwsh
@@ -109,7 +111,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ steps.version.outputs.next }}
-          TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
+          TARGET_SHA: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
         run: |
           $tag = "v$env:VERSION"
           $installer = "release/House-Mix-Desktop-$env:VERSION-Setup.exe"
@@ -118,4 +120,12 @@ jobs:
           foreach ($file in @($installer, $blockmap, $metadata)) {
             if (-not (Test-Path -LiteralPath $file)) { throw "Missing updater file: $file" }
           }
-          gh release create $tag $installer $blockmap $metadata --title $env:VERSION --notes "House Mix Desktop $env:VERSION" --target $env:TARGET_SHA
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag $installer $blockmap $metadata --clobber
+            if ($LASTEXITCODE -ne 0) { throw 'Release asset upload failed' }
+            gh release edit $tag --target $env:TARGET_SHA
+          } else {
+            gh release create $tag $installer $blockmap $metadata --title $env:VERSION --notes "House Mix Desktop $env:VERSION" --target $env:TARGET_SHA
+          }
+          if ($LASTEXITCODE -ne 0) { throw 'Release publish failed' }
