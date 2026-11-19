@@ -14,8 +14,8 @@ vi.mock("@/hooks/useAlbumColors", () => ({ useAlbumColors: () => [] }));
 vi.mock("@/lib/stationDatabaseService", () => ({ getStationDatabaseSync: () => null }));
 vi.mock("@/components/OnAirWidget", () => ({
   getProgramas: async () => [mocks.program],
-  getProgramasSync: () => [],
-  findCurrentProgram: () => null,
+  getProgramasSync: () => [mocks.program],
+  findCurrentProgram: () => ({ programa: mocks.program }),
 }));
 vi.mock("@/components/ApresentadorForm", () => ({ getApresentadores: async () => mocks.presenters }));
 vi.mock("@/lib/onAirPresenterResolver", () => ({
