@@ -20,7 +20,7 @@ vi.mock("@/components/OnAirWidget", () => ({
 vi.mock("@/components/ApresentadorForm", () => ({ getApresentadores: async () => mocks.presenters }));
 vi.mock("@/lib/onAirPresenterResolver", () => ({
   resolvePresenterForProgram: (program: { apresentador_id?: string; apresentadorId?: string }) =>
-    mocks.presenters.find(p => p.id === (program.apresentador_id || program.apresentadorId)) || null,
+    program ? mocks.presenters.find(p => p.id === (program.apresentador_id || program.apresentadorId)) || null : null,
   resolveSafePresenterPhoto: (photo: string) => photo || "",
 }));
 vi.mock("@/lib/onAirResolver", () => ({ resolveEffectiveOnAir: (programs: unknown[]) => ({ current: programs[0], next: null }) }));
