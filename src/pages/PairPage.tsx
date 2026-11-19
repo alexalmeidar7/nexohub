@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { clearSignOutFlag } from "@/hooks/useAuth";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getManagedOAuthRedirectUri, setOAuthReturnPath } from "@/lib/oauthReturn";
-import { AlertCircle, AlertTriangle, CheckCircle2, Loader2, RefreshCw, Tv } from "lucide-react";
+import { CheckCircle2, Loader2, Tv, ArrowRight, ShieldCheck } from "lucide-react";
 
 /**
  * Página mobile de pareamento com a TV. O usuário lê o QR code, faz login com
@@ -15,12 +15,13 @@ export default function PairPage() {
   const userSlug = (rawSlug || "").toLowerCase();
   const [sp] = useSearchParams();
   const initialCode = (sp.get("code") || "").replace(/\D/g, "").slice(0, 4);
-  const navigate = useNavigate();
+
   const { user, loading } = useAuth();
 
   const [code, setCode] = useState<string>(initialCode);
   const [signingIn, setSigningIn] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [completedAsGuest, setCompletedAsGuest] = useState(false);
   const [status, setStatus] = useState<{ kind: "idle" | "ok" | "error" | "expired"; message?: string }>({ kind: "idle" });
   const autoRunRef = useRef(false);
 
@@ -50,7 +51,7 @@ export default function PairPage() {
 
   const handleGuestContinue = async () => {
     if (!canConfirm) {
-      navigate(`/${userSlug}/player?tvGuest=1`);
+      setStatus({ kind: "error", message: "Digite o código exibido na TV para continuar como visitante." });
       return;
     }
     setConfirming(true);
@@ -69,7 +70,7 @@ export default function PairPage() {
         return;
       }
       setStatus({ kind: "ok", message: "Visitante confirmado! A TV vai abrir o splash e mostrar o perfil de visitante." });
-      navigate(`/${userSlug}/player?tvGuest=1`, { replace: true });
+      setCompletedAsGuest(true);
     } catch (e: any) {
       setStatus({ kind: "error", message: String(e?.message || e) });
     } finally {
@@ -125,100 +126,71 @@ export default function PairPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, user, canConfirm]);
 
+  const done = status.kind === "ok";
+  const displayName = completedAsGuest ? "Visitante" : String(user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Ouvinte");
+  const avatar = !completedAsGuest && (user?.user_metadata?.avatar_url || user?.user_metadata?.picture);
+
   return (
-    <main className="min-h-[100svh] w-full overflow-x-hidden bg-[#09030b] text-white flex items-center justify-center px-4 py-8">
-      <section className="w-full max-w-xl flex flex-col items-center text-center gap-5">
-        <div className="flex flex-col items-center gap-2">
-          <div className="text-[11px] font-bold uppercase tracking-[0.35em] text-white/55">NEXO PLAYER</div>
-          <div className="text-2xl sm:text-3xl font-extrabold tracking-tight">{userSlug.toUpperCase()}</div>
+    <main className="min-h-[100svh] bg-[#08090d] text-white px-5 py-8 flex items-center justify-center">
+      <section className="w-full max-w-[420px] space-y-7">
+        <header className="flex items-center justify-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-[#f20d0f] flex items-center justify-center"><Tv className="w-6 h-6" /></div>
+          <div><p className="text-[11px] tracking-[0.22em] font-bold text-white/55">NEXO PLAYER</p><p className="font-bold text-lg leading-tight">{userSlug.toUpperCase()}</p></div>
+        </header>
+
+        <div className="flex items-center justify-center gap-2" aria-label="Etapas do pareamento">
+          {["Login", "Código", "Concluído"].map((label, index) => {
+            const active = done ? 2 : user ? 1 : 0;
+            return <div key={label} className="flex items-center gap-2">
+              <span className={`w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center ${index <= active ? "bg-[#f20d0f] text-white" : "bg-white/10 text-white/40"}`}>{index < active ? "✓" : index + 1}</span>
+              <span className={`text-xs ${index === active ? "text-white" : "text-white/40"}`}>{label}</span>
+              {index < 2 && <span className="w-3 h-px bg-white/20" />}
+            </div>;
+          })}
         </div>
 
-        <div className="space-y-2">
-          <h1 className="text-2xl sm:text-4xl font-extrabold leading-tight">Estamos quase conectados!</h1>
-          <p className="text-sm sm:text-lg text-white/75 max-w-md mx-auto">
-            Faça login com sua conta Google e confirme o código que aparece na sua TV.
-          </p>
-        </div>
-
-        {!user ? (
-          <button
-            type="button"
-            onClick={handleGoogleLogin}
-            disabled={signingIn}
-            className="w-full max-w-lg min-h-24 rounded-[28px] bg-primary text-primary-foreground flex flex-col items-center justify-center gap-2 text-xl font-bold shadow-xl disabled:opacity-60"
-          >
-            {signingIn ? <Loader2 className="h-8 w-8 animate-spin" /> : (
-              <>
-                <svg width="30" height="30" viewBox="0 0 48 48" aria-hidden>
-                  <path fill="currentColor" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.6 2.4 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.3l7.8 6C12.3 13.2 17.7 9.5 24 9.5z"/>
-                  <path fill="currentColor" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.5 2.8-2.2 5.2-4.7 6.9l7.4 5.8c4.3-4 6.9-9.9 6.9-17.2z"/>
-                </svg>
-                <span>Login com Google</span>
-              </>
-            )}
-          </button>
+        {done ? (
+          <div className="text-center space-y-5" role="status">
+            <div className="mx-auto w-20 h-20 rounded-full bg-[#f20d0f]/15 flex items-center justify-center"><CheckCircle2 className="w-12 h-12 text-[#ff3638]" /></div>
+            <div><h1 className="text-3xl font-extrabold">Tudo pronto!</h1><p className="text-white/60 mt-2">Sua TV foi pareada com sucesso.</p></div>
+            <div className="bg-[#17191f] rounded-3xl p-6 flex flex-col items-center gap-3">
+              {avatar ? <img src={String(avatar)} alt="" className="w-16 h-16 rounded-full object-cover" /> : <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-2xl font-bold">{displayName.charAt(0).toUpperCase()}</div>}
+              <p className="text-xl font-bold">{displayName}</p><p className="text-sm text-white/55">Seu perfil está sendo exibido na TV.</p>
+            </div>
+            <p className="text-sm text-white/60">Pode fechar esta página e continuar pela televisão.</p>
+          </div>
         ) : (
-          <div className="w-full max-w-lg rounded-2xl bg-white/10 border border-white/15 p-4 flex items-center gap-3 text-left">
-            {user.user_metadata?.avatar_url ? (
-              <img src={user.user_metadata.avatar_url as string} alt="" className="h-12 w-12 rounded-full object-cover" />
-            ) : <div className="h-12 w-12 rounded-full bg-white/15" />}
-            <div className="min-w-0 flex-1">
-              <p className="font-semibold truncate">{(user.user_metadata?.full_name as string) || user.email}</p>
-              <p className="text-sm text-white/60 truncate">{user.email}</p>
+          <>
+            <div className="text-center space-y-2">
+              <h1 className="text-3xl font-extrabold tracking-tight">{user ? "Confirme sua TV" : "Conecte sua conta"}</h1>
+              <p className="text-white/60 text-sm leading-relaxed">{user ? "Confira o código de 4 dígitos exibido na televisão." : "Entre com sua conta Google para levar seu perfil ao Nexo Player na TV."}</p>
             </div>
-            <CheckCircle2 className="h-6 w-6 text-primary shrink-0" />
-          </div>
-        )}
-
-        <div className="w-full max-w-lg rounded-[30px] bg-white text-[#100914] px-5 py-5 sm:px-8 sm:py-7 shadow-2xl">
-          <label htmlFor="tv-pair-code" className="block text-xs font-bold uppercase tracking-[0.3em] text-black/50 mb-2">Código da sua TV</label>
-          <input
-            id="tv-pair-code"
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            autoComplete="one-time-code"
-            maxLength={4}
-            value={code}
-            onChange={(e) => {
-              setCode(e.target.value.replace(/\D/g, "").slice(0, 4));
-              if (status.kind === "expired" || status.kind === "error") setStatus({ kind: "idle" });
-              autoRunRef.current = false;
-            }}
-            placeholder="0000"
-            aria-label="Código de pareamento de quatro dígitos"
-            className="w-full min-w-0 bg-transparent text-center text-6xl sm:text-8xl font-black tracking-[0.12em] leading-none outline-none placeholder:text-black/15"
-          />
-        </div>
-
-        <button
-          type="button"
-          disabled={!user || !canConfirm || confirming || status.kind === "ok" || status.kind === "expired"}
-          onClick={handleConfirm}
-          className="w-full max-w-lg rounded-full bg-primary text-primary-foreground font-bold text-lg py-4 disabled:opacity-50 inline-flex items-center justify-center gap-2"
-        >
-          {confirming ? <><Loader2 className="h-5 w-5 animate-spin" /> Conectando à TV…</> : status.kind === "ok" ? <><CheckCircle2 className="h-5 w-5" /> Pareado com sucesso!</> : "Confirmar pareamento"}
-        </button>
-
-        {status.kind === "ok" && (
-          <div className="w-full max-w-lg text-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 font-bold">
-              <CheckCircle2 className="h-6 w-6" /> Uhu!! Pareado com sucesso!
+            {!user ? (
+              <button type="button" onClick={handleGoogleLogin} disabled={signingIn || loading} className="w-full h-14 rounded-2xl bg-white text-[#16181d] font-bold flex items-center justify-center gap-3 disabled:opacity-50">
+                {signingIn ? <Loader2 className="w-5 h-5 animate-spin" /> : <span className="font-extrabold text-xl text-[#4285f4]">G</span>}
+                Continuar com Google
+              </button>
+            ) : (
+              <div className="flex items-center gap-3 bg-[#17191f] p-4 rounded-2xl">
+                {avatar ? <img src={String(avatar)} alt="" className="w-11 h-11 rounded-full object-cover" /> : <div className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center font-bold">{displayName.charAt(0).toUpperCase()}</div>}
+                <div className="min-w-0 flex-1"><p className="font-semibold truncate">{displayName}</p><p className="text-xs text-white/50 truncate">{user.email}</p></div>
+                <CheckCircle2 className="w-5 h-5 text-[#ff3638]" />
+              </div>
+            )}
+            <div className="bg-[#17191f] rounded-3xl p-6 space-y-4">
+              <label htmlFor="tv-pair-code" className="block text-center text-xs font-semibold uppercase tracking-[0.15em] text-white/60">Código da televisão</label>
+              <input id="tv-pair-code" type="text" inputMode="numeric" pattern="[0-9]*" autoComplete="one-time-code" maxLength={4} value={code} onChange={(e) => { setCode(e.target.value.replace(/\D/g, "").slice(0,4)); setStatus({kind:"idle"}); autoRunRef.current=false; }} placeholder="0000" aria-label="Código de pareamento de quatro dígitos" className="w-full bg-transparent text-center text-5xl font-black tracking-[0.25em] outline-none placeholder:text-white/15" />
+              <p className="text-center text-xs text-white/40">O código aparece na tela de pareamento da TV.</p>
             </div>
-            <p className="mt-3 text-sm text-white/75">Você já pode fechar esta página. A TV entrará no player em instantes.</p>
-          </div>
+            <button type="button" onClick={handleConfirm} disabled={!user || !canConfirm || confirming || loading} className="w-full h-14 rounded-2xl bg-[#f20d0f] text-white font-bold flex items-center justify-center gap-2 disabled:opacity-40">
+              {confirming ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
+              {confirming ? "Conectando..." : "Confirmar pareamento"}
+            </button>
+            {(status.kind === "error" || status.kind === "expired") && <div role="alert" className="rounded-2xl bg-red-500/10 p-4 text-sm text-red-200">{status.message}<button type="button" className="block mt-2 font-semibold underline" onClick={() => {setStatus({kind:"idle"}); autoRunRef.current=false;}}>Tentar novamente</button></div>}
+            <button type="button" onClick={handleGuestContinue} disabled={confirming} className="w-full text-center text-sm font-semibold text-white/65 py-2">Entrar como visitante</button>
+          </>
         )}
-        {(status.kind === "error" || status.kind === "expired") && (
-          <div className="w-full max-w-lg rounded-2xl bg-white/10 border border-white/15 p-4 text-left">
-            <div className="font-bold">{status.kind === "expired" ? "Código expirado" : "Não foi possível parear"}</div>
-            <p className="mt-1 text-sm text-white/75">{status.message}</p>
-            <button type="button" onClick={() => { setStatus({ kind: "idle" }); if (status.kind === "expired") setCode(""); autoRunRef.current = false; }} className="mt-3 text-sm font-bold underline underline-offset-4">Tentar novamente</button>
-          </div>
-        )}
-
-        <button type="button" className="text-sm text-white/55 underline underline-offset-4" onClick={handleGuestContinue} disabled={confirming || status.kind === "expired"}>
-          Entrar como visitante
-        </button>
+        <footer className="flex items-center justify-center gap-2 text-xs text-white/35"><ShieldCheck className="w-4 h-4" /> Conexão segura com Nexo Player</footer>
       </section>
     </main>
   );
