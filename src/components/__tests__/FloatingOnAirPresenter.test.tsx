@@ -44,10 +44,12 @@ describe("apresentadores no ar", () => {
     await act(async () => { vi.advanceTimersByTime(2000); window.dispatchEvent(new Event("apresentadores-updated")); });
     await act(async () => { vi.advanceTimersByTime(1300); });
     expect(screen.getByAltText("Pessoa A")).toBeInTheDocument();
-    await act(async () => { vi.advanceTimersByTime(1700); });
+    await act(async () => { vi.advanceTimersByTime(1000); });
+    await act(async () => { vi.advanceTimersByTime(740); });
     expect(screen.getByAltText("Pessoa B")).toHaveAttribute("src", "https://example.invalid/b.png");
     expect(screen.getByTitle("Pessoa B")).toBeInTheDocument();
-    await act(async () => { vi.advanceTimersByTime(5000); });
+    await act(async () => { vi.advanceTimersByTime(4260); });
+    await act(async () => { vi.advanceTimersByTime(740); });
     expect(screen.getByAltText("Pessoa A")).toBeInTheDocument();
     mocks.program = { ...mocks.program, id: "program-2", apresentadoresIds: ["b"] };
     await act(async () => { window.dispatchEvent(new Event("apresentadores-updated")); });
