@@ -18,7 +18,7 @@ vi.mock("@/components/OnAirWidget", () => ({
   findCurrentProgram: () => null,
 }));
 vi.mock("@/components/ApresentadorForm", () => ({ getApresentadores: async () => mocks.presenters }));
-vi.mock("@/lib/onAirResolver", () => ({ resolveEffectiveOnAir: (programs: unknown[]) => ({ current: programs[0], next: null }) }));
+vi.mock("@/lib/onAirResolver", () => ({ getZonedNow: () => new Date("2026-11-19T09:00:00-03:00"), resolveEffectiveOnAir: (programs: unknown[]) => ({ current: programs[0], next: null }) }));
 vi.mock("@/integrations/supabase/client", () => {
   const channel = { on: () => channel, subscribe: () => channel };
   return { supabase: {
