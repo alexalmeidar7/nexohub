@@ -15,8 +15,7 @@ begin
   -- Compatível com o índice de unicidade já usado pelos leitores atuais.
   insert into public.musicas_tocadas(user_id,dia,horario,programa,artista,musica,created_at)
   values (p_user_id,v_day,v_time,'',v_artist,v_title,p_at)
-  on conflict (user_id,musica,artista,dia) do update
-    set horario=excluded.horario,created_at=excluded.created_at;
+  ;
 end $$;
 revoke all on function public.record_music_history_backend(uuid,text,text,timestamptz) from public, anon, authenticated;
 
