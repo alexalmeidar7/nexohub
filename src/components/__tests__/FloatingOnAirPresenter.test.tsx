@@ -18,6 +18,11 @@ vi.mock("@/components/OnAirWidget", () => ({
   findCurrentProgram: () => null,
 }));
 vi.mock("@/components/ApresentadorForm", () => ({ getApresentadores: async () => mocks.presenters }));
+vi.mock("@/lib/onAirPresenterResolver", () => ({
+  resolvePresenterForProgram: (program: { apresentador_id?: string; apresentadorId?: string }) =>
+    mocks.presenters.find(p => p.id === (program.apresentador_id || program.apresentadorId)) || null,
+  resolveSafePresenterPhoto: (photo: string) => photo || "",
+}));
 vi.mock("@/lib/onAirResolver", () => ({ resolveEffectiveOnAir: (programs: unknown[]) => ({ current: programs[0], next: null }) }));
 vi.mock("@/integrations/supabase/client", () => {
   const channel = { on: () => channel, subscribe: () => channel };
@@ -37,17 +42,17 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.useRealTimers(); });
 
 describe("apresentadores no ar", () => {
-  it("alterna foto e nome a cada quatro segundos e reinicia ao mudar de programa", async () => {
+  it("alterna foto e nome a cada cinco segundos e reinicia ao mudar de programa", async () => {
     render(<FloatingOnAirPresenter />);
     await act(async () => {});
     expect(screen.getByAltText("Pessoa A")).toHaveAttribute("src", "https://example.invalid/a.png");
     await act(async () => { vi.advanceTimersByTime(2000); window.dispatchEvent(new Event("apresentadores-updated")); });
-    await act(async () => { vi.advanceTimersByTime(1300); });
+    await act(async () => { vi.advanceTimersByTime(2300); });
     expect(screen.getByAltText("Pessoa A").parentElement).toHaveStyle({ transform: "translateX(-100%)" });
     await act(async () => { vi.advanceTimersByTime(700); });
     expect(screen.getByAltText("Pessoa B")).toHaveAttribute("src", "https://example.invalid/b.png");
     expect(screen.getByTitle("Pessoa B")).toBeInTheDocument();
-    await act(async () => { vi.advanceTimersByTime(4000); });
+    await act(async () => { vi.advanceTimersByTime(5000); });
     expect(screen.getByAltText("Pessoa A")).toBeInTheDocument();
     mocks.program = { ...mocks.program, id: "program-2", apresentadoresIds: ["b"] };
     await act(async () => { window.dispatchEvent(new Event("apresentadores-updated")); });
@@ -63,7 +68,7 @@ describe("apresentadores no ar", () => {
     try {
       render(<FloatingOnAirPresenter />);
       await act(async () => {});
-      await act(async () => { vi.advanceTimersByTime(4000); });
+      await act(async () => { vi.advanceTimersByTime(5000); });
       expect(screen.queryByAltText("Pessoa A")).not.toBeInTheDocument();
       expect(screen.getByTitle("Pessoa B")).toBeInTheDocument();
     } finally {
