@@ -186,14 +186,24 @@ serve(async (req) => {
     // Encontrar grupos vinculados ao programa no ar, separados por tamanho (2TVs / 4TVs)
     const findArte = (totalTvs: number): string => {
       if (!onAir) return "";
-      const grupo = (grupos || []).find(
-        (g: any) =>
+      const currentStorageHost = new URL(Deno.env.get("SUPABASE_URL")!).host;
+      const candidates = (grupos || [])
+        .filter((g: any) =>
           (g.rows || 1) * (g.cols || 1) === totalTvs &&
-          (g.programa_ids || []).includes(onAir.id),
-      );
+          (g.programa_ids || []).includes(onAir.id) &&
+          arteByGrupo[g.id]?.url,
+        )
+        .sort((a: any, b: any) => {
+          const score = (g: any) => {
+            const image = arteByGrupo[g.id]?.url || "";
+            try { return new URL(image).host === currentStorageHost ? 1 : 0; }
+            catch { return 0; }
+          };
+          return score(b) - score(a);
+        });
+      const grupo = candidates[0];
       if (!grupo) return "";
       const arte = arteByGrupo[grupo.id];
-      if (!arte || !arte.url) return "";
       return withCacheBuster(arte.url, arte.updatedAt || grupo.updated_at);
     };
 

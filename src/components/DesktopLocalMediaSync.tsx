@@ -159,7 +159,11 @@ export default function DesktopLocalMediaSync() {
                   localizing.add(filename);
                   void (async () => {
                     const downloaded = await localizeXmlImageUrls(xml, slug, desktop);
-                    if (!stopped && downloaded !== localXml) refresh.request();
+                    if (!stopped && downloaded !== localXml) {
+                      // Persist newly downloaded local file:// paths immediately, without
+                      // waiting for another remote XML request or Realtime event.
+                      await saveDesktopXml(desktop, slug, filename, downloaded);
+                    }
                   })().catch(error => console.warn(`Local XML artwork ${filename}`, error))
                     .finally(() => localizing.delete(filename));
                 }
