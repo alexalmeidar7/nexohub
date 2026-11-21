@@ -2,6 +2,8 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { authResilientFetch } from './authFetch';
+/* NEXO_CHAT_GOOGLE_RETURN_V3 */
+import { getChatOAuthReturn } from '@/lib/chatOAuthReturn';
 
 export { authResilientFetch } from './authFetch';
 
@@ -9,7 +11,9 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const isPlayerAuthRoute = typeof window !== "undefined" && (
   /^\/(?:[^/]+\/)?player(?:\/|$)/.test(window.location.pathname) ||
-  window.location.pathname.endsWith("/auth/popup-callback")
+  window.location.pathname.endsWith("/auth/popup-callback") ||
+  (/^\/[^/]+\/pair\/?$/.test(window.location.pathname) && new URLSearchParams(window.location.search).get("mode") === "chat") ||
+  (window.location.pathname === "/" && Boolean(getChatOAuthReturn()))
 );
 
 // Import the supabase client like this:
@@ -61,4 +65,4 @@ if (typeof window !== "undefined" && import.meta.env.DEV) {
     } catch {}
     return origFetch(input, init);
   }) as typeof window.fetch;
-}
+}

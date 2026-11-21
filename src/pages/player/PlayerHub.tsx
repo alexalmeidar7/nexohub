@@ -53,13 +53,25 @@ export default function PlayerHub() {
   // O vínculo é criado somente pelo login Google iniciado dentro desta tela/aba.
   const playerSessionUserId = getPlayerSessionUserId();
   const user = !tvGuestMode && authUser?.id === playerSessionUserId ? authUser : null;
+  const tvProfileKey = user && userSlug ? `nexohub_tv_profile:${user.id}:${userSlug}` : null;
+  const [tvSelection, setTvSelection] = useState<{ key: string; name: string; avatar: string | null } | null>(null);
+  let tvProfile: { name: string; avatar: string | null } | null = null;
+  if (tvProfileKey) {
+    if (tvSelection?.key === tvProfileKey) tvProfile = tvSelection;
+    else {
+      try {
+        const stored = JSON.parse(localStorage.getItem(tvProfileKey) || "null");
+        if (typeof stored?.name === "string") tvProfile = { name: stored.name, avatar: typeof stored.avatar === "string" ? stored.avatar : null };
+      } catch { /* Storage may be unavailable. */ }
+    }
+  }
   // Persistência: `?step=home` sobrevive a login/reload via localStorage por slug.
   const storageKey = `player-step-home:${userSlug || "root"}`;
   const skipToHome =
     tvGuestMode ||
     searchParams.get("step") === "home" ||
     (typeof window !== "undefined" && window.localStorage.getItem(storageKey) === "1");
-  const [step, setStep] = useState<Step>(skipToHome ? "home" : "login");
+  const [step, setStep] = useState<Step>(searchParams.get("step") === "profiles" ? "welcome" : skipToHome ? "home" : "login");
 
   // Se chegou com ?step=home, grava a preferência e reflete na URL de forma estável.
   useEffect(() => {
@@ -363,8 +375,17 @@ export default function PlayerHub() {
           logoUrl={logoUrl}
           avatarAccent={playerColors.homeAccent}
           onContinue={onWelcomeContinue}
+          onSelectTvProfile={(selection) => {
+            if (!tvProfileKey) return;
+            setTvSelection({ key: tvProfileKey, ...selection });
+            try { localStorage.setItem(tvProfileKey, JSON.stringify(selection)); } catch { /* Storage may be unavailable. */ }
+          }}
           onLoginSuccess={onLoginSuccess}
           onSignedOut={() => {
+            if (tvProfileKey) {
+              try { localStorage.removeItem(tvProfileKey); } catch { /* Storage may be unavailable. */ }
+              setTvSelection(null);
+            }
             clearPlayerSession();
             try { window.localStorage.removeItem(storageKey); } catch {}
             if (tvGuestMode) {
@@ -391,6 +412,7 @@ export default function PlayerHub() {
     <div className={wrapperClass}>
       <PlayerHome
         tvGuestMode={tvGuestMode}
+        tvProfile={tvProfile}
         onBackToAccess={(openEdit?: boolean) => {
           setWelcomeEditOnMount(!!openEdit);
           // "Trocar de perfil": limpa a persistência de step=home.
@@ -406,5 +428,3 @@ export default function PlayerHub() {
     </div>
   );
 }
-
-

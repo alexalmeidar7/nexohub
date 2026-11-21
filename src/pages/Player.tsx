@@ -1,4 +1,7 @@
-import { useEffect, useRef, useState, useCallback, useMemo, Suspense } from "react";
+import { createLiveMediaRecovery } from "@/lib/liveMediaRecovery";
+import { isPlayerTvApp } from "@/lib/playerTvApp";
+import { stopTvAudio } from "@/components/player/tv/tvAudio";
+import { useEffect, useLayoutEffect, useRef, useState, useCallback, useMemo, Suspense } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { toast } from "sonner";
 import type HlsType from "hls.js";
@@ -320,7 +323,7 @@ function useBufferingDetection(videoRef: React.RefObject<HTMLVideoElement | null
 
     const onWaiting = () => setBuffering(true);
     const onReady = () => setBuffering(false);
-    
+
     elements.forEach(el => {
       el.addEventListener("waiting", onWaiting);
       el.addEventListener("playing", onReady);
@@ -386,7 +389,14 @@ export default function PlayerPage() {
   const isWatchRoute = location.pathname.includes("/player/watch") || searchParams.get("step") === "watch";
   const isPublicMode = !!userSlug && !userSlug.startsWith(":");
   usePublicHead(isPublicMode ? userSlug : null, "Player");
-  const playerHomePath = useMemo(() => userSlug ? `/${userSlug}/player?step=home` : "/player?step=home", [userSlug]);
+  const playerHomePath = useMemo(() => {
+    const query = new URLSearchParams({ step: "home" });
+    const fromPath = (location.state as { fromPath?: string } | null)?.fromPath;
+    const previous = new URLSearchParams(fromPath?.split("?")[1] || "");
+    if (searchParams.get("tv") === "1" || previous.get("tv") === "1") query.set("tv", "1");
+    if (searchParams.get("tvGuest") === "1" || previous.get("tvGuest") === "1") query.set("tvGuest", "1");
+    return `${userSlug ? `/${userSlug}/player` : "/player"}?${query}`;
+  }, [userSlug, searchParams, location.state]);
   const playerWelcomePath = useMemo(() => userSlug ? `/${userSlug}/player` : "/player", [userSlug]);
   const clearHomeSkipFlag = useCallback(() => {
     try { window.localStorage.removeItem(`player-step-home:${userSlug || "root"}`); } catch {}
@@ -441,6 +451,7 @@ export default function PlayerPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [playing, setPlaying] = useState(false);
+  const tvUserPausedRef = useRef(false);
   const [muted, setMuted] = useState<boolean>(() => {
     try { return localStorage.getItem("player:lastMuted") === "1"; } catch { return false; }
   });
@@ -461,14 +472,14 @@ export default function PlayerPage() {
   const [fullscreen, setFullscreen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [streamLoading, setStreamLoading] = useState(false);
-  
+
   // Update streamLoading based on URL params to handle direct navigation
   useEffect(() => {
     const ch = searchParams.get("ch");
     const vid = searchParams.get("vid");
     const top10 = searchParams.get("top10") === "1";
     const isWatch = location.pathname.includes("/watch") || searchParams.get("step") === "watch";
-    
+
     if (isWatch && (ch || vid || top10)) {
       setStreamLoading(true);
     }
@@ -623,10 +634,15 @@ export default function PlayerPage() {
   }, [musicData?.artista, isAudio, isBreakTrack]);
   const isAutoplayChannel = useCallback((c?: Canal | null) => normalizeChannelNumber(c?.numero_canal) === "991-1", []);
   const autoPlayedRef = useRef(false);
-  
+
   const is991Channel = normalizeChannelNumber(canal?.numero_canal) === "991-1" || normalizeChannelNumber(canal?.numero_canal) === "991-2" || isCatalog;
 
   const handleHomeClick = useCallback(() => {
+    const tv = isPlayerTvApp();
+    if (tv) {
+      tvUserPausedRef.current = true;
+      playbackSessionRef.current++;
+    }
     clearMiniPlayerData();
     setStreamRequested(false);
     setPlaying(false);
@@ -639,6 +655,10 @@ export default function PlayerPage() {
     if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); }
     destroyMiniAudio();
+    if (tv) {
+      navigate(playerHomePath);
+      return;
+    }
     setPageFadeOut(true);
     setTimeout(() => navigate(playerHomePath), 400);
   }, [playerHomePath, navigate]);
@@ -659,7 +679,7 @@ export default function PlayerPage() {
       handleVolumeChange(40);
     }
 
-    
+
     const recordHistory = async () => {
       const { error } = await playerSupabase.from("watch_history").insert({
         user_id: userId,
@@ -934,14 +954,22 @@ export default function PlayerPage() {
   useEffect(() => { return () => { stopCCRecognition(); }; }, [stopCCRecognition]);
 
   // Music like state
-  const [liked, setLiked] = useState(false);
+  const [likedSongKeys, setLikedSongKeys] = useState<Set<string>>(() => new Set());
+  const savingLikes = useRef(new Set<string>());
+  const likedTitle = musicData?.titulo?.trim();
+  const likedArtist = musicData?.artista?.trim();
+  const songLikeKey = userId && profileRadioUserId && likedTitle && likedArtist
+    ? JSON.stringify([userId, profileRadioUserId, likedTitle, likedArtist])
+    : null;
+  const liked = songLikeKey !== null && likedSongKeys.has(songLikeKey);
+  const rememberLike = useCallback((key: string) => {
+    setLikedSongKeys(keys => keys.has(key) ? keys : new Set(keys).add(key));
+  }, []);
   const [likeAnimating, setLikeAnimating] = useState(false);
   const [floatingHearts, setFloatingHearts] = useState<{ id: number; x: number; delay: number }[]>([]);
-  
+
 
   useEffect(() => {
-    // Reset like state on every music change
-    setLiked(false);
     const musicKey = `${musicData?.titulo}||${musicData?.artista}`;
     if (musicKey !== prevMusicRef.current) {
       prevMusicRef.current = musicKey;
@@ -949,10 +977,44 @@ export default function PlayerPage() {
     }
   }, [musicData?.titulo, musicData?.artista]);
 
+  useEffect(() => {
+    if (liked || !songLikeKey || !userId || !profileRadioUserId || !likedTitle || !likedArtist) return;
+    let cancelled = false;
+    void playerSupabase.from("music_likes").select("id")
+      .eq("user_id", userId).eq("radio_user_id", profileRadioUserId)
+      .eq("titulo", likedTitle).eq("artista", likedArtist).limit(1)
+      .then(({ data }) => {
+        if (!cancelled && data?.length) rememberLike(songLikeKey);
+      });
+    return () => { cancelled = true; };
+  }, [liked, songLikeKey, userId, profileRadioUserId, likedTitle, likedArtist, rememberLike]);
+
   const toggleLike = useCallback(async () => {
-    if (!user || !profileRadioUserId || !musicData?.titulo || !musicData?.artista || liked) return;
-    await playerSupabase.from("music_likes").insert({ user_id: user.id, radio_user_id: profileRadioUserId, titulo: musicData.titulo, artista: musicData.artista, capa: musicData.capa || "" });
-    setLiked(true);
+    if (!user) {
+      toast.info("Entre com sua conta para salvar músicas curtidas.");
+      return false;
+    }
+    if (!profileRadioUserId || !songLikeKey || !likedTitle || !likedArtist || liked || savingLikes.current.has(songLikeKey)) return false;
+    savingLikes.current.add(songLikeKey);
+    let inserted: boolean | null;
+    try {
+      const { data, error } = await playerSupabase.rpc("save_player_music_like", {
+        p_radio_user_id: profileRadioUserId,
+        p_titulo: likedTitle,
+        p_artista: likedArtist,
+        p_capa: musicData?.capa || "",
+      });
+      if (error || typeof data !== "boolean") throw error;
+      inserted = data;
+      rememberLike(songLikeKey);
+    } catch {
+      toast.error("Não foi possível salvar a curtida. Tente novamente.");
+      return false;
+    } finally {
+      savingLikes.current.delete(songLikeKey);
+    }
+    if (!inserted) return false;
+    emitProfileChanged({ userId: user.id, radioUserId: profileRadioUserId });
     setLikeAnimating(true);
     setTimeout(() => setLikeAnimating(false), 600);
     const hearts = Array.from({ length: 6 }, (_, i) => ({ id: Date.now() + i, x: Math.random() * 40 - 20, delay: Math.random() * 0.3 }));
@@ -960,19 +1022,20 @@ export default function PlayerPage() {
     setTimeout(() => setFloatingHearts([]), 1500);
 
     // Fire-and-forget: pre-cache YouTube search for this song
-    const query = `${musicData.artista} ${musicData.titulo}`;
+    const query = `${likedArtist} ${likedTitle}`;
     playerSupabase.functions.invoke("youtube-search", { body: { queries: [query] } }).then(({ data }) => {
       if (data?.results?.[0]?.videoId) {
         playerSupabase.from("music_likes_youtube_cache" as any).upsert({
           user_id: user.id,
-          artista: musicData.artista,
-          titulo: musicData.titulo,
+          artista: likedArtist,
+          titulo: likedTitle,
           video_id: data.results[0].videoId,
           thumbnail: data.results[0].thumbnail || "",
         }, { onConflict: "user_id,artista,titulo" }).then(() => {});
       }
     }).catch(() => {});
-  }, [user, profileRadioUserId, musicData, liked]);
+    return true;
+  }, [user, profileRadioUserId, songLikeKey, likedTitle, likedArtist, musicData?.capa, liked, rememberLike]);
 
   // Fetch all initial data — 3 stages for fastest possible first paint
   useEffect(() => {
@@ -1712,6 +1775,7 @@ export default function PlayerPage() {
   // Play stream
   const playStream = useCallback(
     async (url: string, type: string, forceAutoplay?: boolean, userInitiated?: boolean) => {
+      if (isPlayerTvApp()) stopTvAudio();
       const sessionId = ++playbackSessionRef.current;
       destroyMiniAudio();
       if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
@@ -1740,7 +1804,7 @@ export default function PlayerPage() {
       const handlePlayStarted = () => {
         if (playbackSessionRef.current !== sessionId) return;
         if (!shouldStartMuted) autoplayMutedRef.current = false;
-        
+
         // Safety timeout to ensure loading screen stays for at least 3s total from start
         setTimeout(() => {
           if (playbackSessionRef.current !== sessionId) return;
@@ -1754,7 +1818,7 @@ export default function PlayerPage() {
         if (playbackSessionRef.current !== sessionId) return;
         console.warn(label, error);
         // If play was blocked and we weren't muted, retry muted (autoplay policy)
-        if (!shouldStartMuted && forceAutoplay) {
+        if (!isPlayerTvApp() && !shouldStartMuted && forceAutoplay && error instanceof DOMException && error.name === "NotAllowedError") {
           console.log("Retrying playback muted due to autoplay policy...");
           autoplayMutedRef.current = true;
           mutedRef.current = true;
@@ -2037,6 +2101,7 @@ export default function PlayerPage() {
   // Detect stream stall and auto-reconnect — conservative approach for live streams
   const streamStalledRef = useRef(false);
   useEffect(() => {
+    if (isPlayerTvApp()) return;
     if (!playing || !canal || canal.type === "youtube" || canal.type === "catalog") {
       setStreamStalled(false);
       streamStalledRef.current = false;
@@ -2166,13 +2231,26 @@ export default function PlayerPage() {
       setSelectedVideoId(null);
       setSidebarOpen(false);
     } else {
-      setTimeout(() => playStream(first.url, first.type, true), 120);
+      const pendingSession = playbackSessionRef.current;
+      const waitForTvMedia = isPlayerTvApp();
+      const needsAudio = first.type === "audio_live" || first.type === "audio";
+      const deadline = performance.now() + 15000;
+      const startWhenReady = () => {
+        if (playbackSessionRef.current !== pendingSession) return;
+        // The Fire TV may still be loading the lazy watch screen and its refs.
+        if (waitForTvMedia && !(needsAudio ? audioRef.current : videoRef.current)) {
+          if (performance.now() < deadline) setTimeout(startWhenReady, 100);
+          return;
+        }
+        void playStream(first.url, first.type, true);
+      };
+      setTimeout(startWhenReady, 120);
     }
   }, [canais, playing, playStream, prerollDone, isAutoplayChannel, requestedChannelId]);
 
   // Safety net: if stream was requested but playing never became true, auto-retry once
   useEffect(() => {
-    if (!canal || isYoutube || isCatalog || playing || !streamRequested) return;
+    if (isPlayerTvApp() || !canal || isYoutube || isCatalog || playing || !streamRequested) return;
     if (connectRetryRef.current.chId !== canal.id) {
       connectRetryRef.current = { chId: canal.id, n: 0 };
     }
@@ -2229,15 +2307,31 @@ export default function PlayerPage() {
 
   const handlePlayCanal = useCallback(() => {
     if (!canal) return;
-    if (playing) {
+    const media = canal.type === "audio_live" || canal.type === "audio" ? audioRef.current : videoRef.current;
+    const isTvStream = isPlayerTvApp() && canal.type !== "youtube" && media;
+    if (isTvStream ? !media.paused && !media.ended : playing) {
+      tvUserPausedRef.current = true;
       if (audioRef.current) audioRef.current.pause();
       if (videoRef.current) videoRef.current.pause();
       setPlaying(false);
       return;
     }
+    tvUserPausedRef.current = false;
     if (canal.type === "youtube") { setPlaying(true); setBuffering(false); return; }
     playStream(canal.url, canal.type, false, true);
   }, [canal, playing, playStream]);
+
+  const tvReconnectRef = useRef(playStream); tvReconnectRef.current = playStream;
+  useEffect(() => {
+    if (!isPlayerTvApp() || !canal || !["audio_live", "audio", "video_live"].includes(canal.type)) return;
+    const recovery = createLiveMediaRecovery({
+      startupGraceMs:16000,
+      media: () => isAudio ? audioRef.current : videoRef.current,
+      wanted: () => !tvUserPausedRef.current,
+      reconnect: () => tvReconnectRef.current(canal.url, canal.type, false),
+    });
+    return () => recovery.stop();
+  }, [canal?.id, isAudio]);
 
   const navigateChannel = useCallback((dir: 1 | -1) => {
     if (liveChannels.length === 0) return;
@@ -2254,6 +2348,8 @@ export default function PlayerPage() {
     setChannelNavDir(dir);
     setChannelAnimKey(prev => prev + 1);
     setCurrentIndex(nextIndex);
+    playbackSessionRef.current++;
+    tvUserPausedRef.current = false;
     setStreamRequested(false);
 
     // Stop any playing audio/video when switching channels — full cleanup
@@ -2717,9 +2813,11 @@ export default function PlayerPage() {
   }, [isAudio, playing]);
 
   // Destroy any lingering MiniPlayer audio & cleanup on unmount
-  useEffect(() => {
+  useLayoutEffect(() => {
+    stopTvAudio();
     destroyMiniAudio();
     return () => {
+      playbackSessionRef.current++;
       if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
       if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
       if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); }
@@ -3125,8 +3223,8 @@ export default function PlayerPage() {
 
   return (
     <div ref={containerRef} className={`relative h-screen w-screen bg-black overflow-hidden select-none cursor-default nexo-player-container ${pageFadeOut ? 'opacity-0 scale-95 transition-all duration-700' : 'opacity-100 scale-100'}`}>
-      <PlayerLoadingOverlay 
-        isLoading={loading || streamLoading} 
+      <PlayerLoadingOverlay
+        isLoading={loading || streamLoading}
         minDurationMs={3000}
       />
 

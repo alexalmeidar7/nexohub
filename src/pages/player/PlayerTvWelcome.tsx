@@ -1,3 +1,4 @@
+import { unlockTvRadio } from "@/components/player/tv/tvAudio";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
@@ -10,6 +11,8 @@ import { upgradeArtistImageResolution } from "@/lib/artistImageCache";
 import PlayerBrandCorner from "@/components/player/PlayerBrandCorner";
 import { isPlayerTvApp } from "@/lib/playerTvApp";
 import OttPair from "@/components/player/tv/OttPair";
+import { markPlayerSession } from "@/lib/playerSession";
+import { clearLinkedTv, saveLinkedTv } from "@/lib/nexoTvDevice";
 
 const CANONICAL_PAIR_ORIGIN = "https://housemix.nexobrasil.net";
 
@@ -27,8 +30,8 @@ function getPairOrigin() {
 
 /**
  * Tela de "Bem-vindo" para acesso via TV: gera um código de 4 dígitos e um
- * QR code que aponta para /:userSlug/pair?code=XXXX. Ao ser confirmado no
- * celular, um canal Realtime notifica esta tela para entrar no player.
+ * QR code que aponta para /:userSlug/pair?code=XXXX. A TV consulta o status
+ * vinculado ao aparelho até o celular confirmar ou o código expirar.
  */
 export default function PlayerTvWelcome() {
   const { userSlug: rawSlug } = useParams();
@@ -68,11 +71,75 @@ export default function PlayerTvWelcome() {
     }
   }, [userSlug]);
   const claimedRef = useRef(false);
+  const proofRef = useRef<{ secret: string; code: string } | null>(null);
+  const generating = useRef(false);
 
-  const handleClaimedRow = useCallback((row: any) => {
-    if (!row || claimedRef.current || row.status !== "claimed") return;
+  const handleClaimedRow = useCallback(async (row: any) => {
+    if (!row || generating.current || claimedRef.current || row.status !== "claimed") return;
     claimedRef.current = true;
     const isGuestClaim = !row.paired_user_id && !row.paired_email;
+
+    // Primeiro, tenta restaurar sessão sincronizada do celular
+    if (!isGuestClaim && row.paired_user_id) {
+      try {
+        // Verifica se há sessão sincronizada disponível
+        const { data: syncData, error: syncError } = await playerSupabase.functions.invoke(
+          "tv-pair-get-session",
+          { body: { pairedUserId: row.paired_user_id, userSlug } }
+        );
+
+        if (!syncError && syncData?.ok && syncData.sessionTokens) {
+          // Restaura sessão a partir dos tokens sincronizados
+          const { data: sessionData, error: sessionError } = await playerSupabase.auth.setSession({
+            access_token: syncData.sessionTokens.access_token,
+            refresh_token: syncData.sessionTokens.refresh_token,
+          });
+
+          if (!sessionError && sessionData?.session?.user?.id === row.paired_user_id) {
+            markPlayerSession(sessionData.session.user.id);
+
+            try {
+              localStorage.removeItem(`nexohub_tv_guest_${userSlug}`);
+              localStorage.removeItem(`player-step-home:${userSlug}`);
+            } catch { /* Storage may be unavailable. */ }
+
+            navigate(`/${userSlug}/player?tv=1&step=profiles`, { replace: true });
+            return;
+          }
+        }
+      } catch (syncError) {
+        console.warn("Falha ao restaurar sessão sincronizada:", syncError);
+        // Continua com o fluxo normal
+      }
+    }
+
+    // Fluxo original se não houver sessão sincronizada ou falhou
+    if (!isGuestClaim && proofRef.current) {
+      try {
+        const { code: pendingCode, secret } = proofRef.current;
+        const { data, error: redeemError } = await playerSupabase.functions.invoke("nexo-tv-device", {
+          body: { action: "redeem", code: pendingCode, proof: secret },
+        });
+        if (redeemError || !data?.ok) throw new Error("redeem_failed");
+        saveLinkedTv({ deviceId: data.deviceId, userId: row.paired_user_id, slug: userSlug });
+        const installed = await playerSupabase.auth.setSession({
+          access_token: data.access_token, refresh_token: data.refresh_token,
+        });
+        if (installed.error || installed.data.user?.id !== row.paired_user_id) throw new Error("session_mismatch");
+        markPlayerSession(installed.data.user.id);
+        try {
+          localStorage.removeItem(`nexohub_tv_guest_${userSlug}`);
+          localStorage.removeItem(`player-step-home:${userSlug}`);
+        } catch { /* Storage may be unavailable. */ }
+        navigate(`/${userSlug}/player?tv=1&step=profiles`, { replace: true });
+      } catch {
+        clearLinkedTv();
+        setError("Não foi possível conectar sua conta à TV. Gere um novo código e tente novamente.");
+      }
+      return;
+    }
+
+    // Fluxo para visitante
     try {
       const guest = {
         name: isGuestClaim ? "Visitante" : row.paired_name || row.paired_email || "Convidado",
@@ -83,6 +150,7 @@ export default function PlayerTvWelcome() {
       localStorage.setItem(`nexohub_tv_guest_${userSlug}`, JSON.stringify(guest));
       if (isGuestClaim) localStorage.removeItem(`player-step-home:${userSlug}`);
     } catch { /* ignore */ }
+
     setClaimedName(isGuestClaim ? "Visitante" : row.paired_name || row.paired_email || "Convidado");
     setTimeout(() => {
       navigate(`/${userSlug}/player?tvGuest=1&step=home`, { replace: true });
@@ -223,14 +291,30 @@ export default function PlayerTvWelcome() {
 
   // Gera código de pareamento.
   const generateCode = useCallback(async () => {
-    if (!userSlug) return;
+    if (!userSlug || generating.current) return;
+    generating.current = true;
+    claimedRef.current = false;
+    proofRef.current = null;
     setError(null);
     setCode(null);
     setDisplayCode(null);
     setExpiresAt(null);
-    const { data, error: fnErr } = await playerSupabase.functions.invoke("tv-pair-create", {
-      body: { userSlug, tvSessionId },
-    });
+    let data: any;
+    let fnErr: unknown;
+    try {
+      const hex = (bytes: Uint8Array) => Array.from(bytes, value => value.toString(16).padStart(2, "0")).join("");
+      const secret = hex(crypto.getRandomValues(new Uint8Array(32)));
+      const proofHash = crypto.subtle
+        ? hex(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(secret))))
+        : undefined;
+      const result = await playerSupabase.functions.invoke("tv-pair-create", { body: { userSlug, tvSessionId, proofHash } });
+      ({ data, error: fnErr } = result);
+      if (data?.devicePairing && data?.code) proofRef.current = { secret, code: data.code };
+    } catch (error) {
+      fnErr = error;
+    } finally {
+      generating.current = false;
+    }
     if (fnErr || !data?.ok) {
       setError("Não foi possível gerar o código. Verifique sua conexão e tente novamente.");
       return;
@@ -249,40 +333,28 @@ export default function PlayerTvWelcome() {
     return () => { cancelled = true; };
   }, [generateCode]);
 
-  // Escuta Realtime aguardando o claim.
-  useEffect(() => {
-    if (!code) return;
-    const channel = playerSupabase
-      .channel(`tv-pair-${code}`)
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "tv_pairing_codes", filter: `code=eq.${code}` },
-        (payload: any) => {
-          const row = payload?.new;
-          if (!row || claimedRef.current) return;
-          handleClaimedRow(row);
-        }
-      )
-      .subscribe();
-    return () => { playerSupabase.removeChannel(channel); };
-  }, [code, handleClaimedRow]);
-
-  // Fallback para TVs/navegadores que não recebem Realtime: consulta o status
-  // do código a cada 2s e entra assim que o celular confirmar.
+  // As tabelas de pareamento são privadas. Use a consulta autenticada pelo
+  // identificador do aparelho e aguarde cada resposta antes da próxima.
   useEffect(() => {
     if (!code) return;
     let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
     const poll = async () => {
-      if (claimedRef.current) return;
-      const { data } = await playerSupabase.functions.invoke("tv-pair-status", {
-        body: { code, tvSessionId },
-      });
-      if (!cancelled) handleClaimedRow(data?.ok ? data.row : null);
+      if (cancelled || claimedRef.current || (expiresAt && Date.now() >= Date.parse(expiresAt))) return;
+      let delay = 2000;
+      try {
+        const { data, error } = await playerSupabase.functions.invoke("tv-pair-status", { body: { code, tvSessionId } });
+        if (error) delay = 5000;
+        if (!cancelled) await handleClaimedRow(data?.ok ? data.row : null);
+      } catch {
+        delay = 5000;
+      } finally {
+        if (!cancelled && !claimedRef.current) timer = setTimeout(() => void poll(), delay);
+      }
     };
-    poll();
-    const iv = window.setInterval(poll, 2000);
-    return () => { cancelled = true; window.clearInterval(iv); };
-  }, [code, handleClaimedRow]);
+    void poll();
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [code, expiresAt, handleClaimedRow, tvSessionId]);
 
   // Countdown de expiração (mm:ss). Ao chegar em 0 marca como expirado (não
   // regenera automaticamente — usuário precisa clicar em "Gerar novo código").
@@ -406,7 +478,7 @@ export default function PlayerTvWelcome() {
     );
   }
 
-  if (isPlayerTvApp()) return <OttPair radioName={radioName} logo={radioLogo || getStationLogoFallback(userSlug)} background={fallbackImg || loadedBg} code={displayCode} pairUrl={pairUrl} expired={expired} remaining={remainingLabel} error={error} claimed={claimedName} onRetry={()=>void generateCode()} onGuest={()=>navigate(`/${userSlug}/player?tvGuest=1&step=home`)} />;
+  if (isPlayerTvApp()) return <OttPair onBack={()=>navigate(`/${userSlug}/player?tv=1&tvGuest=1&step=profiles`)} radioUserId={radioUserId} musicTitle={musicTitle} musicArtist={musicArtist} musicCover={musicCover} radioName={radioName} logo={radioLogo || getStationLogoFallback(userSlug)} background={fallbackImg || loadedBg} code={displayCode} pairUrl={pairUrl} expired={expired} remaining={remainingLabel} error={error} claimed={claimedName} onRetry={()=>void generateCode()} onGuest={()=>{unlockTvRadio();navigate(`/${userSlug}/player?tvGuest=1&step=home`);}} />;
 
   return (
     <main className="fixed inset-0 overflow-hidden bg-black text-white antialiased">

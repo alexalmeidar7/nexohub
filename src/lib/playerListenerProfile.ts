@@ -1,5 +1,6 @@
 import type { User } from "@supabase/supabase-js";
 import { playerSupabase } from "@/integrations/supabase/playerClient";
+import { readLinkedTv } from "@/lib/nexoTvDevice";
 
 export const PLAYER_DEFAULT_AVATAR = "/avatars/usr-default.png";
 
@@ -99,6 +100,10 @@ export async function upsertPlayerListenerProfile(
     ...patch,
     updated_at: new Date().toISOString(),
   } as any, { onConflict: "auth_user_id,radio_user_id" });
+
+  // A linked TV edits presentation profiles. Its registration is completed
+  // through the mobile enrollment endpoint, which owns field-credit accounting.
+  if (readLinkedTv()?.userId === authUserId) return result;
 
   // Reflete o cadastro na tabela `ouvintes` (CRM) — sem interromper o fluxo
   // caso o upsert do CRM falhe. Origem preserva a fonte original quando o

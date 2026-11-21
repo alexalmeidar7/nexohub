@@ -1,3 +1,5 @@
+import { useNavigate } from "react-router-dom";
+import { unlockTvRadio } from "@/components/player/tv/tvAudio";
 import { DateInput } from "@/components/ui/date-input";
 import { useState, useEffect, useRef } from "react";
 import { Pencil, Star, Plus } from "lucide-react";
@@ -22,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { fetchPlayerListenerProfile, upsertPlayerListenerProfile } from "@/lib/playerListenerProfile";
 import { playerSignOut } from "@/lib/playerSignOut";
+import { readLinkedTv } from "@/lib/nexoTvDevice";
 import { startPlayerGoogleLogin } from "@/lib/playerGoogleLogin";
 import { markPlayerSession } from "@/lib/playerSession";
 import PlayerBrandCorner from "@/components/player/PlayerBrandCorner";
@@ -64,6 +67,7 @@ interface WelcomeScreenProps {
   logoUrl?: string | null;
   avatarAccent?: string;
   onContinue: () => void;
+  onSelectTvProfile?: (profile: { name: string; avatar: string | null }) => void;
   onLoginSuccess?: () => void;
   onSignedOut?: () => void;
   initialEditOpen?: boolean;
@@ -83,6 +87,7 @@ export default function WelcomeScreen({
   logoUrl,
   avatarAccent = "#e00012",
   onContinue,
+  onSelectTvProfile,
   onLoginSuccess,
   onSignedOut,
   initialEditOpen = false,
@@ -91,6 +96,7 @@ export default function WelcomeScreen({
   guestMode = false,
 }: WelcomeScreenProps) {
 
+  const navigate = useNavigate();
   const { user } = usePlayerAuth();
   const [ottProfileReady, setOttProfileReady] = useState(false);
   const [ottProfileError, setOttProfileError] = useState(false);
@@ -238,7 +244,7 @@ export default function WelcomeScreen({
 
     const onKey = (e: KeyboardEvent) => {
       if (!["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Enter"," "].includes(e.key)) return;
-      
+
       const isProfileStep = document.querySelector('[data-ws-profile-main="true"]');
       if (isProfileStep && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
         const nodes = getNodes();
@@ -246,7 +252,7 @@ export default function WelcomeScreen({
         if (active && nodes.includes(active)) {
           const isMain = active.hasAttribute("data-ws-profile-main");
           const subId = active.getAttribute("data-ws-profile-sub");
-          
+
           if (e.key === "ArrowDown") {
             if (isMain && subProfiles.length > 0) {
               e.preventDefault();
@@ -441,7 +447,7 @@ export default function WelcomeScreen({
       const d = (data || {}) as any;
       // Dados do CADASTRO DE OUVINTE (fonte oficial) via função pública
       let listener: any = null;
-      try {
+      if (readLinkedTv()?.userId !== user.id) try {
         const { data: res } = await playerSupabase.functions.invoke("check-listener-registration", {
           body: { email: user.email, radio_user_id: radioUserId },
         });
@@ -663,19 +669,20 @@ export default function WelcomeScreen({
     if (!user) return;
     const data = nextProfile || profile;
     setSaving(true);
+    const presentationOnly = readLinkedTv()?.userId === user.id;
     const { error } = await upsertPlayerListenerProfile(user.id, radioUserId || user.id, {
-      nome: data.nome, email: data.email,
+      nome: data.nome, avatar_url: data.avatar_url,
+      ...(presentationOnly ? {} : { email: data.email,
       cpf: data.cpf || null,
       whatsapp: data.whatsapp, sexo: data.sexo,
       estado: data.estado, cidade: data.cidade,
       setor: data.setor || null,
-      data_nascimento: data.data_nascimento || null,
-      avatar_url: data.avatar_url,
+      data_nascimento: data.data_nascimento || null }),
     } as any);
 
     // Atualiza a pontuação conforme as REGRAS DE PONTUAÇÃO do cadastro de ouvinte
     let novaPontuacao: number | null = null;
-    try {
+    if (!presentationOnly && !error) try {
       const { data: res } = await playerSupabase.functions.invoke("sync-listener-points", {
         body: {
           radio_user_id: radioUserId || user.id,
@@ -768,13 +775,14 @@ export default function WelcomeScreen({
 
   if (isPlayerTvApp()) return <OttProfiles
     profile={guestMode ? { ...profile, nome: "Visitante", avatar_url: "/avatars/usr-default.png" } : profile}
-    authenticated={!!user && !guestMode} background={backgroundUrl || artistImg} accent={avatarAccent}
+    authenticated={!!user && !guestMode} logo={logoUrl} radioName={channelName} background={backgroundUrl || artistImg} accent={avatarAccent}
+    presentationOnly={!!user && readLinkedTv()?.userId === user.id}
     initialEdit={initialEditOpen} profiles={guestMode ? [] : subProfiles} avatars={AVATARS}
-    onContinue={onContinue}
-    onSwitch={sp=>{setProfile(p=>({...p,nome:sp.name,avatar_url:sp.avatar_url}));emitProfileChanged({userId:user?.id ?? null,radioUserId,nome:sp.name,avatar_url:sp.avatar_url,reason:"switch"});onContinue();}}
+    onContinue={()=>{if (user && !guestMode) onSelectTvProfile?.({ name: profile.nome, avatar: profile.avatar_url });unlockTvRadio();onContinue();}}
+    onSwitch={sp=>{if (user && !guestMode) onSelectTvProfile?.({ name: sp.name, avatar: sp.avatar_url });setProfile(p=>({...p,nome:sp.name,avatar_url:sp.avatar_url}));emitProfileChanged({userId:user?.id ?? null,radioUserId,nome:sp.name,avatar_url:sp.avatar_url,reason:"switch"});unlockTvRadio();onContinue();}}
     onSave={async draft=>!!(await handleSave(draft))}
     onAdd={async(name,avatar)=>{if(!user || guestMode)return; const next=[...subProfiles,{id:crypto.randomUUID(),name,avatar_url:avatar}];const {error}=await upsertPlayerListenerProfile(user.id,radioUserId || user.id,{sub_profiles:next as any});if(error)throw error;setSubProfiles(next);try{localStorage.setItem(`nexohub_sub_profiles_${user.id}_${radioUserId}`,JSON.stringify(next));}catch{}}}
-    onLogin={()=>window.location.assign(`/${userSlug}/player/tv`)} onLogout={confirmLogout}
+    onLogin={()=>navigate(`/${userSlug}/player/tv?tv=1`)} onLogout={confirmLogout}
   />;
 
   return (
@@ -1125,7 +1133,7 @@ export default function WelcomeScreen({
           ) : (
             <div className="w-full flex items-center justify-center gap-5">
               {[
-                
+
                 {
                   key: "google",
                   label: "entrar com google",

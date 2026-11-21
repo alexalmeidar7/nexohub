@@ -1,38 +1,24 @@
 import React from "react";
-import { ArrowLeft } from "lucide-react";
+import { Undo2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PlayerBackButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   className?: string;
   iconSize?: number;
 }
-
+/** Botão Voltar padronizado para todas as janelas do Nexo Player. */
 export const PlayerBackButton = React.forwardRef<HTMLButtonElement, PlayerBackButtonProps>(
-  ({ className, iconSize = 22, ...props }, ref) => {
-    return (
-      <button
-        ref={ref}
-        className={cn(
-          "w-16 h-16 rounded-full flex items-center justify-center bg-white/8 hover:bg-white/15 active:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--player-accent))] border border-white/10 transition shrink-0 relative group",
-          className
-        )}
-        data-focusable
-        {...props}
-      >
-        <div 
-          className="absolute inset-[-4px] rounded-full border-2 border-transparent group-hover:border-white/20 transition-all duration-300 pointer-events-none" 
-          style={{
-            background: "linear-gradient(var(--player-accent, #00BFF0), var(--player-accent-hover, #C6F03C)) border-box",
-            WebkitMask: "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
-            WebkitMaskComposite: "destination-out",
-            maskComposite: "exclude",
-            animation: "interactSpin 3s linear infinite"
-          }} 
-        />
-        <ArrowLeft size={iconSize} className="relative z-10" />
-      </button>
-    );
-  }
+  ({ className, iconSize = 22, style, ...props }, ref) => (
+    <button
+      ref={ref}
+      type="button"
+      className={cn("flex items-center justify-center w-12 h-12 rounded-full bg-[#303030] text-white border-0 shadow-none hover:bg-[#404040] focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-colors shrink-0", className)}
+      style={{ backgroundColor: "#303030", color: "#fff", boxShadow: "none", ...style }}
+      data-focusable
+      {...props}
+    >
+      <Undo2 size={iconSize} strokeWidth={2.5} aria-hidden="true" />
+    </button>
+  ),
 );
-
 PlayerBackButton.displayName = "PlayerBackButton";

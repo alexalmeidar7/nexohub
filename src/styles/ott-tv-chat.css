@@ -1,0 +1,125 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+/* Escopo da experiência Player, sem modificar a tipografia do painel House Mix. */
+.nexo-tv, .nexo-tv *, .ott-tv-chat, .ott-tv-chat * { font-family: 'Montserrat', Arial, sans-serif !important; }
+.nexo-tv .ott-interactivity-panel-chat {
+  position: absolute; inset: 0; width: auto; height: auto; max-height: none;
+  margin: 0; padding: 0; border: 0; border-radius: 0; box-shadow: none;
+  background: transparent !important; backdrop-filter: none !important;
+  overflow: visible; z-index: 40; pointer-events: none;
+}
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat { pointer-events: auto; }
+.ott-tv-chat {
+  --chat-unit: min(.052083333vw, .092592593vh);
+  --chat-accent: var(--ott-accent, var(--player-dominant-color, #ef202b));
+  position: absolute; right: calc(40 * var(--chat-unit)); top: calc(126 * var(--chat-unit));
+  width: calc(380 * var(--chat-unit)); height: calc(760 * var(--chat-unit));
+  max-height: calc(100vh - calc(145 * var(--chat-unit)));
+  display: flex; flex-direction: column; align-items: stretch;
+  color: #e8e8e8; background: transparent; z-index: 10;
+  font-size: calc(22 * var(--chat-unit));
+}
+.ott-tv-chat-top { height: calc(75 * var(--chat-unit)); display:flex; justify-content:flex-end; align-items:flex-start; flex-shrink:0; }
+.nexo-tv .ott-tv-chat-back {
+  width: calc(55 * var(--chat-unit)); height:calc(55 * var(--chat-unit)); border-radius:50%;
+  background:#303030; border:0; display:flex; align-items:center; justify-content:center;
+  color:#fff; cursor:pointer;
+}
+.ott-tv-chat-back svg { width: calc(27 * var(--chat-unit)); height: calc(27 * var(--chat-unit)); }
+.nexo-tv .ott-tv-chat-join {
+  display:flex; align-items:center; justify-content:center; gap:calc(17 * var(--chat-unit));
+  flex-shrink:0; width:100%; height:calc(84 * var(--chat-unit));
+  background:#fff; color:var(--chat-accent); border:calc(5 * var(--chat-unit)) solid var(--chat-accent);
+  border-radius:calc(46 * var(--chat-unit)); font-weight:800; white-space:nowrap;
+  font-size:calc(23 * var(--chat-unit)); line-height:1;
+}
+.nexo-tv .ott-tv-chat-join:disabled { opacity:.65; }
+.ott-tv-chat-join svg { width:calc(34 * var(--chat-unit)); height:calc(34 * var(--chat-unit)); fill:var(--chat-accent); stroke:#fff; }
+.ott-tv-chat-messages {
+  min-height:0; display:flex; flex-direction:column; justify-content:flex-end;
+  gap:calc(12 * var(--chat-unit)); margin-top:calc(13 * var(--chat-unit));
+  flex: 1; overflow:hidden;
+}
+.ott-tv-chat-message {
+  display:flex; align-items:flex-start; gap:calc(12 * var(--chat-unit));
+  border-radius:calc(31 * var(--chat-unit)); background:#383838;
+  padding:calc(16 * var(--chat-unit)) calc(21 * var(--chat-unit));
+  min-height:calc(105 * var(--chat-unit)); max-height:calc(105 * var(--chat-unit));
+  width:100%; overflow:hidden; flex-shrink:0;
+}
+.ott-tv-chat-message img,.ott-tv-chat-initial {
+  width:calc(34 * var(--chat-unit)); height:calc(34 * var(--chat-unit));
+  border-radius:50%; object-fit:cover; flex-shrink:0;
+}
+.ott-tv-chat-initial { background:var(--chat-accent); display:grid; place-items:center; color:#fff; font-weight:700; font-size:calc(17 * var(--chat-unit)); }
+.ott-tv-chat-message > div { min-width:0; flex:1; overflow:hidden; }
+.ott-tv-chat-message strong { display:block; font-size:calc(23 * var(--chat-unit)); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.25; }
+.ott-tv-chat-message p { font-size:calc(21 * var(--chat-unit)); line-height:1.4; font-weight:400; margin-top:calc(5 * var(--chat-unit)); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:anywhere; }
+.ott-tv-chat-empty,.ott-tv-chat-error { font-size:calc(17 * var(--chat-unit)); color:#ddd; text-align:center; }
+.ott-tv-chat-error { margin-top:calc(12 * var(--chat-unit)); }
+.ott-tv-chat-error svg { display:inline; width:calc(18 * var(--chat-unit)); height:calc(18 * var(--chat-unit)); }
+.ott-tv-chat-qr { border-radius:calc(28 * var(--chat-unit)); background:#323232; padding:calc(25 * var(--chat-unit)); text-align:center; display:flex; flex-direction:column; align-items:center; gap:calc(18 * var(--chat-unit)); }
+.ott-tv-chat-qr h2 { font-size:calc(26 * var(--chat-unit)); font-weight:700; }
+.ott-tv-chat-qr p { font-size:calc(18 * var(--chat-unit)); line-height:1.4; }
+.ott-tv-chat-qr-code { background:#fff; border-radius:calc(15 * var(--chat-unit)); padding:calc(10 * var(--chat-unit)); }
+.ott-tv-chat-qr-code svg { display:block; width:calc(255 * var(--chat-unit)); height:calc(255 * var(--chat-unit)); }
+.nexo-tv .ott-tv-chat-qr-return { background:#fff; color:#111; border-radius:999px; padding:calc(14 * var(--chat-unit)) calc(24 * var(--chat-unit)); font-size:calc(19 * var(--chat-unit)); }
+
+/* Mesmo botão Voltar nas janelas internas, sem degradê, sombra nem animação. */
+.nexo-tv .ott-standard-back, .nexo-tv .ott-interactivity-panel > header .ott-standard-back {
+  width:calc(55 * var(--ott-u)); height:calc(55 * var(--ott-u));
+  border-radius:50%; border:0; padding:0; background:#303030; color:#fff;
+  display:flex; align-items:center; justify-content:center;
+}
+.nexo-tv .ott-standard-back svg { width:calc(27 * var(--ott-u)); height:calc(27 * var(--ott-u)); }
+
+/* Voltar padronizado nas outras janelas do Nexo Player TV. */
+.nexo-tv .ott-header button[aria-label="Voltar"],
+.nexo-tv .ott-edit-header button[aria-label="Voltar"],
+.nexo-tv .ott-pair-back {
+  width:calc(55 * var(--ott-u)); min-width:calc(55 * var(--ott-u));
+  height:calc(55 * var(--ott-u)); min-height:calc(55 * var(--ott-u));
+  padding:0; margin:0; display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; border:0; border-radius:50%; background:#303030 !important;
+  color:#fff; box-shadow:none !important;
+}
+.nexo-tv .ott-pair-back span { display:none; }
+.nexo-tv .ott-header button[aria-label="Voltar"] svg,
+.nexo-tv .ott-edit-header button[aria-label="Voltar"] svg,
+.nexo-tv .ott-pair-back svg { width:calc(27 * var(--ott-u)); height:calc(27 * var(--ott-u)); }
+
+/* NEXO_FIX_QR_TAMANHO_255_V1: inicio */
+/* O player-ott.css tem .nexo-tv svg global; esta regra mais especifica
+   impede que o QR Code seja reduzido ao tamanho de um icone. */
+.nexo-tv .ott-tv-chat-qr-code svg,
+.nexo-tv .ott-tv-chat-qr-code canvas {
+  display: block;
+  width: calc(255 * var(--chat-unit)) !important;
+  height: calc(255 * var(--chat-unit)) !important;
+  max-width: none !important;
+  max-height: none !important;
+  flex-shrink: 0;
+}
+/* NEXO_FIX_QR_TAMANHO_255_V1: fim */
+/* NEXO_CHAT_ALINHAMENTO_BOTOES_20261121_V1: inicio */
+/* Alinha horizontalmente o chat com a area do controle Interatividade.
+   Conserva a largura suficiente para as mensagens e para o QR Code. */
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat {
+  right: calc(22 * var(--chat-unit));
+  width: calc(340 * var(--chat-unit));
+  max-width: calc(100vw - calc(35 * var(--chat-unit)));
+}
+/* Botao voltar: branco com 20% de opacidade, inclusive nas janelas internas. */
+.nexo-tv .ott-tv-chat-back,
+.nexo-tv .ott-standard-back,
+.nexo-tv .ott-interactivity-panel > header .ott-standard-back,
+.nexo-tv .ott-header button[aria-label="Voltar"],
+.nexo-tv .ott-edit-header button[aria-label="Voltar"],
+.nexo-tv .ott-pair-back {
+  background: rgba(255, 255, 255, 0.20) !important;
+}
+/* Entrar na conversa: manter o botao branco, sem borda de destaque vermelha. */
+.nexo-tv .ott-tv-chat-join {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+/* NEXO_CHAT_ALINHAMENTO_BOTOES_20261121_V1: fim */

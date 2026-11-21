@@ -1,9 +1,15 @@
 import { playerSupabase } from "@/integrations/supabase/playerClient";
 import { clearPlayerSession } from "@/lib/playerSession";
+import { endLinkedTvSession, readLinkedTv } from "@/lib/nexoTvDevice";
 
 /** Ends only the Player's local Supabase session and returns to its login screen. */
 export async function playerSignOut(loginPath?: string) {
-  try { await playerSupabase.auth.signOut({ scope: "local" }); } catch { /* local cleanup below still applies */ }
+  const linked = readLinkedTv();
+  const session = linked ? (await playerSupabase.auth.getSession()).data.session : null;
+  const ended = linked && await endLinkedTvSession(session?.user.id);
+  if (!ended) {
+    try { await playerSupabase.auth.signOut({ scope: "local" }); } catch { /* local cleanup below still applies */ }
+  }
   clearPlayerSession();
   try {
     Object.keys(localStorage)

@@ -18,6 +18,7 @@ interface WatchProfilePopupProps {
   radioName?: string;
   radioUserId?: string | null;
   openToRight?: boolean;
+  embedded?: boolean;
   onClose: () => void;
   onEditProfile?: () => void;
   onSwitchProfile?: () => void;
@@ -25,9 +26,7 @@ interface WatchProfilePopupProps {
   onLogout?: () => void;
 }
 
-function computeFanRating(likes: number, hours: number, messages: number, vodCount: number): number {
-  // Score: likes*1 + hours*2 + messages*0.5 + vod*1, mapped to 0-5 stars
-  const score = likes + hours * 2 + messages * 0.5 + vodCount;
+function computeFanRating(score: number): number {
   if (score >= 100) return 5;
   if (score >= 50) return 4;
   if (score >= 20) return 3;
@@ -53,6 +52,7 @@ export default function WatchProfilePopup({
   radioName,
   radioUserId,
   openToRight = false,
+  embedded = false,
   onClose,
   onEditProfile,
   onSwitchProfile,
@@ -60,6 +60,7 @@ export default function WatchProfilePopup({
 }: WatchProfilePopupProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [likedSongs, setLikedSongs] = useState<LikedSong[]>([]);
+  const [likePoints, setLikePoints] = useState<number | null>(null);
   const [lastVod, setLastVod] = useState<{ name: string; logo: string | null } | null>(null);
   const [totalHours, setTotalHours] = useState(0);
   const [chatCount, setChatCount] = useState(0);
@@ -132,7 +133,9 @@ export default function WatchProfilePopup({
         ? fetchPlayerListenerProfile({ id: userId } as any, radioUserId)
         : playerSupabase.from("profiles").select("nome, avatar_url").eq("user_id", userId).maybeSingle().then(({ data }) => data || null);
 
-      const [likesRes, vodRes, hoursRes, profileRes] = await Promise.all([likesP, vodP, hoursP, profileP]);
+      const pointsP = playerSupabase.rpc("get_player_music_like_points", { p_radio_user_id: radioUserId || null });
+      const [likesRes, vodRes, hoursRes, profileRes, pointsRes] = await Promise.all([likesP, vodP, hoursP, profileP, pointsP]);
+      setLikePoints(typeof pointsRes.data === "number" ? pointsRes.data : null);
 
       if (likesRes.data) {
         setLikedSongs(likesRes.data.map(r => ({
@@ -165,14 +168,16 @@ export default function WatchProfilePopup({
     fetchAll();
   }, [userId, radioUserId, refreshTick]);
 
-  const stars = computeFanRating(likedSongs.length, totalHours, chatCount, lastVod ? 1 : 0);
+  const savedLikes = likePoints ?? likedSongs.length;
+  const score = savedLikes + totalHours * 2 + chatCount * 0.5 + (lastVod ? 1 : 0);
+  const stars = computeFanRating(score);
   const label = fanLabel(stars);
 
   return (
     <div
       ref={ref}
-      className={`absolute ${openToRight ? "left-0 right-auto" : "right-0"} top-[calc(100%+8px)] z-[60] animate-fade-in`}
-      style={{ width: "min(356px, calc(100vw - 24px))", maxHeight: "80vh" }}
+      className={embedded ? "ott-watch-profile" : `absolute ${openToRight ? "left-0 right-auto" : "right-0"} top-[calc(100%+8px)] z-[60] animate-fade-in`}
+      style={embedded ? undefined : { width: "min(356px, calc(100vw - 24px))", maxHeight: "80vh" }}
     >
       <div
         className="rounded-2xl flex flex-col overflow-hidden"
@@ -188,6 +193,7 @@ export default function WatchProfilePopup({
           <button
             type="button"
             onClick={onClose}
+            autoFocus={embedded}
             aria-label="Fechar perfil"
             className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] text-white/75 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
           >
@@ -196,6 +202,7 @@ export default function WatchProfilePopup({
           <div className="min-w-0">
             <span className="block truncate text-base font-bold leading-tight text-white">{displayName}</span>
             {displayEmail && <span className="mt-1 block truncate text-[11px] text-white/65">{displayEmail}</span>}
+            {!loading && <span className="mt-1 block text-xs text-white/75">Pontuação: {score.toLocaleString("pt-BR")} pontos</span>}
             <div className="mt-2 flex items-center gap-1" aria-label={`${stars} de 5 estrelas, ${label}`}>
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star key={i} size={13} fill={i < stars ? "#ffffff" : "transparent"} style={{ color: i < stars ? "#ffffff" : "rgba(255,255,255,0.3)" }} />
@@ -213,7 +220,7 @@ export default function WatchProfilePopup({
           </div>
           <div className="flex flex-col items-center gap-0.5">
             <Heart size={14} fill="#ffffff" style={{ color: "#ffffff" }} />
-            <span className="text-xs font-bold text-white">{likedSongs.length}</span>
+            <span className="text-xs font-bold text-white">{savedLikes}</span>
             <span className="text-[9px] text-white/40">curtidas</span>
           </div>
           <div className="flex flex-col items-center gap-0.5">
@@ -261,7 +268,7 @@ export default function WatchProfilePopup({
           ) : likedSongs.length === 0 ? (
             <p className="text-[10px] text-white/30">Nenhuma curtida ainda</p>
           ) : (
-            <div className="space-y-0.5 max-h-[180px] overflow-y-auto scrollbar-hide">
+            <div className="space-y-0.5 max-h-[180px] overflow-y-auto scrollbar-hide" tabIndex={embedded ? 0 : undefined} data-ott-scroll={embedded || undefined}>
               {likedSongs.map((song, i) => (
                 <div key={`${song.artista}-${song.titulo}-${i}`} className="flex items-center gap-2 py-0.5 rounded-lg">
                   {song.capa ? (

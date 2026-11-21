@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { playerSignOut } from "@/lib/playerSignOut";
 import { getStationLogoFallback } from "@/lib/playerBranding";
 import { isPlayerTvApp } from "@/lib/playerTvApp";
+import { todayInBrasilia } from "@/lib/brasiliaDate";
 import OttWatch from "@/components/player/tv/OttWatch";
 
 const PlayerChat = lazyRetry(() => import("@/components/PlayerChat"));
@@ -50,7 +51,7 @@ export interface AudioPlayerScreenProps {
   onSetMuted: (v: boolean) => void;
   onSetVolume: (v: number) => void;
   liked: boolean;
-  onToggleLike: () => void;
+  onToggleLike: () => Promise<boolean>;
   chatOpen: boolean;
   setChatOpen: (v: boolean) => void;
   gradeOpen: boolean;
@@ -261,6 +262,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     isVideoChannel = false,
     isCatalog = false,
   } = props;
+  const isOttWatch = isPlayerTvApp() && !isCatalog;
+  const getAudioMedia = useCallback(() => audioRef.current, [audioRef]);
   const lyricsBeforePollRef = useRef(false);
   const handlePollVisibilityChange = useCallback((isOpen: boolean) => {
     if (isOpen) {
@@ -298,15 +301,27 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const scheduleSlideTimerRef = useRef<number | null>(null);
   const todayShort = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"][new Date().getDay()] || "";
   const todayFull = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][new Date().getDay()] || "";
-  const schedulePrograms = useMemo(() => {
+  const broadcastDate = todayInBrasilia();
+  const broadcastWeekday = new Date(`${broadcastDate}T12:00:00Z`).getUTCDay();
+  const { schedulePrograms, tvSchedulePrograms } = useMemo(() => {
     const sameStudio = canal?.estudio ? programas.filter((program) => program.estudio === canal.estudio) : programas;
     const active = sameStudio.filter((program) => program.ativo !== false);
-    const today = active.filter((program) => {
+    const matchesWeekday = (program: (typeof programas)[number], short: string, full: string) => {
       const days = Array.isArray(program.dias_semana) ? program.dias_semana : [];
-      return days.length === 0 || days.includes(todayShort) || days.includes(todayFull);
-    });
-    return [...(today.length ? today : active)].sort((a, b) => String(a.horario_inicio || "").localeCompare(String(b.horario_inicio || "")));
-  }, [programas, canal?.estudio, todayShort, todayFull]);
+      return days.length === 0 || days.includes(short) || days.includes(full);
+    };
+    const today = active.filter(program => matchesWeekday(program, todayShort, todayFull));
+    const tvShort = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"][broadcastWeekday];
+    const tvFull = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][broadcastWeekday];
+    const sortByStart = (a: (typeof programas)[number], b: (typeof programas)[number]) =>
+      String(a.horario_inicio || "").localeCompare(String(b.horario_inicio || ""));
+    return {
+      schedulePrograms: [...(today.length ? today : active)].sort(sortByStart),
+      tvSchedulePrograms: active.filter(program => program.variavel
+        ? program.data_variavel === broadcastDate
+        : matchesWeekday(program, tvShort, tvFull)).sort(sortByStart),
+    };
+  }, [programas, canal?.estudio, todayShort, todayFull, broadcastDate, broadcastWeekday]);
   useEffect(() => setSelectedScheduleId(null), [canal?.id, currentProg?.id]);
   const currentScheduleIndex = Math.max(0, schedulePrograms.findIndex((program) => program.id === currentProg?.id));
   const selectedScheduleIndex = selectedScheduleId
@@ -341,7 +356,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const handleBackHome = useCallback(() => {
     if (exiting) return;
     setExiting(true);
-    const media: HTMLMediaElement | null = (videoRef.current as HTMLMediaElement | null) || (audioRef.current as HTMLMediaElement | null);
+    const media = isVideoChannel ? videoRef.current : audioRef.current;
     const FADE_MS = 600;
     if (media && !media.paused) {
       const startVol = media.volume;
@@ -357,7 +372,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       requestAnimationFrame(step);
     }
     setTimeout(() => onBackHome(), FADE_MS);
-  }, [exiting, onBackHome, audioRef, videoRef]);
+  }, [exiting, onBackHome, audioRef, videoRef, isVideoChannel]);
 
 
   // ---- Curtir PROGRAMA (independente do like da música) ----
@@ -476,6 +491,14 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     if (!currentProg?.apresentador_id) return null;
     return apresentadores.find((a) => a.id === currentProg.apresentador_id) || null;
   }, [currentProg, apresentadores]);
+
+  const ottPresenters = useMemo(() => {
+    const ids: string[] = Array.isArray(currentProg?.apresentadores_ids) && currentProg.apresentadores_ids.length
+      ? currentProg.apresentadores_ids : currentProg?.apresentador_id ? [currentProg.apresentador_id] : [];
+    return ids.map(id => apresentadores.find(a => a.id === id)).filter(Boolean);
+  }, [currentProg, apresentadores]);
+  const ottPresenter = ottPresenters[0] || apresentador;
+  const ottPresenterPhotos = [...new Set(ottPresenters.map(a => a.foto).filter((foto): foto is string => !!foto))];
 
   const locutorFoto: string | null = apresentador?.foto || currentProg?.capa || currentProg?.thumb || null;
   const palette = useCoverPalette(locutorFoto);
@@ -704,6 +727,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   // ---- Histórico (últimas 50) ----
   const [history, setHistory] = useState<HistoryTrack[]>([]);
   const coverCacheRef = useRef<Map<string, string>>(new Map());
+  const pendingCoverRequests = useRef(new Map<string, Promise<string | undefined>>());
   // Cache de imagens já decodificadas (warm cache) para crossfade instantâneo
   const decodedCoversRef = useRef<Set<string>>(new Set());
   const warmCover = (url?: string | null) => {
@@ -728,29 +752,35 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       if (cached) warmCover(cached);
       return cached || undefined;
     }
-    try {
-      const q = encodeURIComponent(`${artista} ${musica}`.trim());
-      const controller = new AbortController();
-      // Mantém a troca de faixa responsiva: caso o provedor externo demore,
-      // usamos rapidamente os fallbacks já disponíveis em vez de segurar a capa anterior.
-      const timeoutId = window.setTimeout(() => controller.abort(), 1200);
-      const r = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&limit=1`, { signal: controller.signal });
-      window.clearTimeout(timeoutId);
-      if (!r.ok) throw new Error("itunes fail");
-      const j = await r.json();
-      let url = j?.results?.[0]?.artworkUrl100?.replace("100x100", "600x600") || "";
-      if (!url) {
-        url = await fetchArtistImageCached(artista) || "";
+    const existing = pendingCoverRequests.current.get(key);
+    if (existing) return existing;
+    const request = (async () => {
+      try {
+        const q = encodeURIComponent(`${artista} ${musica}`.trim());
+        const controller = new AbortController();
+        // Mantém a troca de faixa responsiva: caso o provedor externo demore,
+        // usamos rapidamente os fallbacks já disponíveis em vez de segurar a capa anterior.
+        const timeoutId = window.setTimeout(() => controller.abort(), 1200);
+        const r = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&limit=1`, { signal: controller.signal });
+        window.clearTimeout(timeoutId);
+        if (!r.ok) throw new Error("itunes fail");
+        const j = await r.json();
+        let url = j?.results?.[0]?.artworkUrl100?.replace("100x100", "600x600") || "";
+        if (!url) {
+          url = await fetchArtistImageCached(artista) || "";
+        }
+        coverCacheRef.current.set(key, url);
+        if (url) warmCover(url);
+        return url || undefined;
+      } catch {
+        const fallback = getArtistImageSync(artista) || await fetchArtistImageCached(artista) || "";
+        coverCacheRef.current.set(key, fallback);
+        if (fallback) warmCover(fallback);
+        return fallback || undefined;
       }
-      coverCacheRef.current.set(key, url);
-      if (url) warmCover(url);
-      return url || undefined;
-    } catch {
-      const fallback = getArtistImageSync(artista) || await fetchArtistImageCached(artista) || "";
-      coverCacheRef.current.set(key, fallback);
-      if (fallback) warmCover(fallback);
-      return fallback || undefined;
-    }
+    })().finally(() => pendingCoverRequests.current.delete(key));
+    pendingCoverRequests.current.set(key, request);
+    return request;
   };
 
   const currentHistoryTrack = useCallback((cover?: string): HistoryTrack | null => {
@@ -789,12 +819,12 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
     // FIX (bug capa travada no canal de áudio):
     // Forçamos o recarregamento da capa sempre que o artista ou título mudar.
-    // Se o XML enviar uma capa (musicData.capa), usamos como placeholder, 
-    // mas o fetchCover (iTunes/Deezer) sempre tem prioridade e sobrescreve 
-    // para garantir que a imagem corresponda à música atual, corrigindo o bug 
+    // Se o XML enviar uma capa (musicData.capa), usamos como placeholder,
+    // mas o fetchCover (iTunes/Deezer) sempre tem prioridade e sobrescreve
+    // para garantir que a imagem corresponda à música atual, corrigindo o bug
     // onde a capa ficava travada na música anterior.
     const cached = coverCacheRef.current.get(key);
-    
+
     // Se temos no cache, usamos; se não, usamos o que veio no musicData (se vier)
     const initialCover = cached || musicData?.capa || "";
     setResolvedMusicCover(initialCover);
@@ -805,7 +835,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     fetchCover(artista, musica).then((cover) => {
       if (cancelled) return;
       if (!cover) return;
-      
+
       // Atualiza o estado e o histórico com a capa confirmada.
       // A comparação de prev === cover evita re-renders desnecessários se a capa for a mesma.
       setResolvedMusicCover((prev) => (prev === cover ? prev : cover));
@@ -816,6 +846,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   }, [musicData?.titulo, musicData?.artista, musicData?.capa, ensureCurrentAtFront]);
 
   useEffect(() => {
+    if (isOttWatch) return;
     let cancelled = false;
     const load = async () => {
       if (!effectiveUserId) return;
@@ -908,7 +939,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     // a subscription do realtime (janela em que INSERTs podiam ser perdidos) e permitia que um load()
     // concorrente sobrescrevesse o histórico com uma resposta vazia transitória.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [effectiveUserId]);
+  }, [effectiveUserId, isOttWatch]);
 
   // Quando a música ao vivo muda, apenas garante que ela apareça no topo — sem refazer subscription/load.
   useEffect(() => {
@@ -1388,10 +1419,19 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     seekTrackTo(val);
   };
 
-  if (isPlayerTvApp() && !isCatalog) return <div className="ott-media-host">
-    <audio ref={audioRef} muted={muted} preload="none" className="hidden" />
+  if (isOttWatch) return <div className="ott-media-host">
+    <audio ref={audioRef} crossOrigin="anonymous" preload="none" className="hidden" />
     <video ref={videoRef} className={isVideoChannel ? "ott-video-element":"hidden"} muted={muted} playsInline />
-    <OttWatch video={isVideoChannel} playing={playing} buffering={buffering} muted={muted} title={isVideoChannel ? currentProg?.nome || canal?.name || "Ao vivo":musicData?.titulo || currentProg?.nome || canal?.name || "Rádio ao vivo"} subtitle={isVideoChannel ? empresaNome || canal?.name:musicData?.artista || currentProg?.nome || empresaNome} radioName={empresaNome} logo={watchLogo} cover={musicData?.capa || currentProg?.thumb} liked={liked} programs={schedulePrograms} onPlay={onTogglePlay} onMute={()=>onSetMuted(!muted)} onLike={onToggleLike} onBack={handleBackHome} onChannel={navigateChannel} onProfile={onSwitchProfile} />
+    <OttWatch musicTitle={musicData?.titulo} musicArtist={musicData?.artista} avatar={watchAvatar} channelKey={canal?.id} programKey={currentProg?.id} currentProgram={currentProg} presenterName={ottPresenter?.nome} presenterSocial={ottPresenter?.instagram} guest={!user} presenterPhotos={ottPresenterPhotos} audioMedia={getAudioMedia} radioUserId={radioUserId || effectiveUserId} presenterPhoto={locutorFoto} video={isVideoChannel} playing={playing} buffering={buffering} muted={muted} title={isVideoChannel ? currentProg?.nome || canal?.name || "Ao vivo":musicData?.titulo || currentProg?.nome || canal?.name || "Rádio ao vivo"} subtitle={isVideoChannel ? empresaNome || canal?.name:musicData?.artista || currentProg?.nome || empresaNome} radioName={empresaNome} logo={watchLogo} cover={musicData?.capa} programSeal={currentProg?.selo} liked={liked} programs={tvSchedulePrograms} loadHistoryCover={fetchCover} onPlay={onTogglePlay} onMute={()=>onSetMuted(!muted)} onLike={onToggleLike} onBack={onBackHome} onChannel={navigateChannel} onProfile={onSwitchProfile}
+      renderProfile={user ? close => (
+       <Suspense fallback={<p role="status">Carregando perfil...</p>}>
+        <WatchProfilePopup embedded userId={user.id} userName={userDisplayName}
+         userEmail={userEmail ?? user.email} avatarUrl={watchAvatar}
+         radioName={empresaNome || undefined} radioUserId={radioUserId || effectiveUserId}
+         onClose={close} onEditProfile={onEditProfile} onSwitchProfile={onSwitchProfile}/>
+       </Suspense>
+      ) : undefined}
+    />
   </div>;
 
   return (
@@ -1461,7 +1501,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
 
       {/* Media elements (owned by parent HLS) */}
-      <audio ref={audioRef} muted={muted} preload="none" className="hidden" />
+      <audio ref={audioRef} crossOrigin="anonymous" preload="none" className="hidden" />
       <video ref={videoRef} className="hidden" muted playsInline />
 
 
@@ -3474,7 +3514,7 @@ function InteractivityMenu({
   return (
     <div ref={wrapRef} className="relative">
       {/* Botão principal — icon-only com borda animada */}
-      <div 
+      <div
         className={`relative flex items-center transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${
           isVideoChannel && !controlsVisible && !open && !autoShowVisible
             ? "opacity-0 translate-y-8 pointer-events-none"
@@ -3532,7 +3572,7 @@ function InteractivityMenu({
         </button>
 
         {/* Botões que surgem acima no mouseover */}
-        <div 
+        <div
           className={`absolute bottom-full left-0 right-0 mb-4 flex flex-col items-center gap-3 transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] ${
             open ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-8 pointer-events-none"
           }`}
@@ -3550,7 +3590,7 @@ function InteractivityMenu({
             <BarChart3 size={24} />
             {hasNotif && <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-black" />}
           </button>
-          
+
           {showKaraoke && (
             <button
               onClick={() => { onToggleKaraoke(); setOpen(false); }}
@@ -3560,7 +3600,7 @@ function InteractivityMenu({
               <Mic size={24} />
             </button>
           )}
-          
+
           <button
             type="button"
             onClick={(event) => {
@@ -3821,6 +3861,3 @@ function PollDialog({
     document.body
   );
 }
-
-
-

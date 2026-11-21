@@ -1,3 +1,6 @@
+/* NEXO_PAIR_CHAT_MESCLADO_V6: pareamento completo TV + chat separado */
+import TvChatPhone from "@/components/player/tv/TvChatPhone";
+import { useParams as useNexoChatSlug, useSearchParams as useNexoChatQuery } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { clearSignOutFlag } from "@/hooks/useAuth";
 import { useParams, useSearchParams } from "react-router-dom";
@@ -10,7 +13,7 @@ import { CheckCircle2, Loader2, Tv, ArrowRight, ShieldCheck } from "lucide-react
  * Página mobile de pareamento com a TV. O usuário lê o QR code, faz login com
  * Google, digita/valida o código de 4 dígitos e confirma o pareamento.
  */
-export default function PairPage() {
+function PairPage() {
   const { userSlug: rawSlug } = useParams();
   const userSlug = (rawSlug || "").toLowerCase();
   const [sp] = useSearchParams();
@@ -194,4 +197,13 @@ export default function PairPage() {
       </section>
     </main>
   );
+}
+
+export default function NexoPairPageRoute() {
+  const { userSlug: rawSlug } = useNexoChatSlug();
+  const [chatQuery] = useNexoChatQuery();
+  if (chatQuery.get("mode") === "chat") {
+    return <TvChatPhone userSlug={(rawSlug || "").toLowerCase()} />;
+  }
+  return <PairPage />;
 }

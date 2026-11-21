@@ -45,6 +45,8 @@ interface PlayerChatProps {
   shopOpen?: boolean;
   radioUserId?: string | null;
   sideBySide?: boolean;
+  embedded?: boolean;
+  onJoinStateChange?: (joined: boolean) => void;
 }
 
 function formatMsgTime(iso: string): string {
@@ -60,7 +62,7 @@ function formatMsgTime(iso: string): string {
   }
 }
 
-export default function PlayerChat({ channelId, onClose, radioUserId, sideBySide = false }: PlayerChatProps) {
+export default function PlayerChat({ channelId, onClose, radioUserId, sideBySide = false, embedded = false, onJoinStateChange }: PlayerChatProps) {
   const [joined, setJoined] = useState(false);
   const [nome, setNome] = useState("");
   const [cidade, setCidade] = useState("");
@@ -74,6 +76,7 @@ export default function PlayerChat({ channelId, onClose, radioUserId, sideBySide
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [showEmoji, setShowEmoji] = useState(false);
+  const embeddedBackRef = useRef<HTMLButtonElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const shouldFollowLatestMessage = useRef(true);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -174,6 +177,11 @@ export default function PlayerChat({ channelId, onClose, radioUserId, sideBySide
     return () => { cancelled = true; };
   }, [radioUserId, chatPreferencesKey]);
 
+  useEffect(() => {
+    if (embedded) embeddedBackRef.current?.focus({ preventScroll: true });
+    onJoinStateChange?.(joined);
+  }, [embedded, joined, onJoinStateChange]);
+
   // Load messages + realtime + polling fallback
   useEffect(() => {
     if (!joined) return;
@@ -181,21 +189,14 @@ export default function PlayerChat({ channelId, onClose, radioUserId, sideBySide
     const fetchMessages = async () => {
       const expirationDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-      // Mantém o chat efêmero: toda mensagem expira 24 horas após o envio.
-      await playerSupabase
-        .from("player_chat_messages")
-        .delete()
-        .eq("channel_id", channelId)
-        .lt("created_at", expirationDate);
-
       const { data } = await playerSupabase
         .from("player_chat_messages")
         .select("*")
         .eq("channel_id", channelId)
         .gte("created_at", expirationDate)
-        .order("created_at", { ascending: true })
+        .order("created_at", { ascending: false })
         .limit(100);
-      if (data) setMessages(data);
+      if (data) setMessages(data.reverse());
     };
     fetchMessages();
 
@@ -278,6 +279,7 @@ export default function PlayerChat({ channelId, onClose, radioUserId, sideBySide
   }, []);
 
   useEffect(() => {
+    if (embedded) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         if (showEmoji) {
@@ -291,10 +293,11 @@ export default function PlayerChat({ channelId, onClose, radioUserId, sideBySide
     };
     document.addEventListener("keydown", onKey, true);
     return () => document.removeEventListener("keydown", onKey, true);
-  }, [onClose, showEmoji, showSuggestions]);
+  }, [embedded, onClose, showEmoji, showSuggestions]);
 
   const handleJoin = () => {
     if (!nome.trim() || !cidade.trim()) return;
+    if (embedded) saveChatPreferences({ neighborhood: neighborhood.trim() });
     setJoined(true);
   };
 
@@ -336,28 +339,13 @@ export default function PlayerChat({ channelId, onClose, radioUserId, sideBySide
         message: msg,
       });
     }
-    const expirationDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    await playerSupabase
-      .from("player_chat_messages")
-      .delete()
-      .eq("channel_id", channelId)
-      .lt("created_at", expirationDate);
-
-    const { data: allMsgs } = await playerSupabase
-      .from("player_chat_messages")
-      .select("id")
-      .eq("channel_id", channelId)
-      .gte("created_at", expirationDate)
-      .order("created_at", { ascending: true });
-    if (allMsgs && allMsgs.length > 100) {
-      const idsToDelete = allMsgs.slice(0, allMsgs.length - 100).map((m) => m.id);
-      await playerSupabase.from("player_chat_messages").delete().in("id", idsToDelete);
-    }
   }, [input, channelId, nome, chatCity, soundEnabled, avatarUrl]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.nativeEvent.isComposing) return;
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
+      if (embedded) e.stopPropagation();
       handleSend();
     }
   };
@@ -369,11 +357,10 @@ export default function PlayerChat({ channelId, onClose, radioUserId, sideBySide
 
   // Login popup
   if (!joined) {
-    return createPortal(
-      <div className="fixed inset-0 z-[9999] flex items-center justify-end p-8 pointer-events-none animate-in fade-in duration-300">
+    const entry = (
         <div
-          className="relative z-10 w-[min(360px,calc(100vw-48px))] flex flex-col gap-6 pointer-events-auto animate-scale-in"
-          style={{
+          className={embedded ? "ott-player-chat-entry relative flex flex-col gap-6" : "relative z-10 w-[min(360px,calc(100vw-48px))] flex flex-col gap-6 pointer-events-auto animate-scale-in"}
+          style={embedded ? undefined : {
             padding: "28px 26px 24px",
             borderRadius: 32,
             background: "rgba(35,35,38,0.95)",
@@ -389,6 +376,7 @@ export default function PlayerChat({ channelId, onClose, radioUserId, sideBySide
               <h3 className="text-white font-bold text-xl tracking-tight">Entrar no chat</h3>
             </div>
             <PlayerBackButton
+              ref={embedded ? embeddedBackRef : undefined}
               onClick={onClose}
               className="w-8 h-8"
               iconSize={14}
@@ -399,17 +387,20 @@ export default function PlayerChat({ channelId, onClose, radioUserId, sideBySide
             <div className="space-y-1">
               <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1">Como quer ser chamado?</label>
               <input
+                aria-label="Como quer ser chamado?"
                 placeholder="Seu nome"
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
                 className="player-chat-entry-input w-full rounded-2xl text-white px-5 py-4 text-sm placeholder:text-white/25 focus:outline-none transition-all"
                 style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}
-                autoFocus
+                autoFocus={!embedded}
               />
             </div>
+            <div className={embedded ? "ott-chat-location-fields" : undefined}>
             <div className="space-y-1 relative">
-              <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1">Sua localização</label>
+              <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1">{embedded ? "Cidade" : "Sua localização"}</label>
               <input
+                aria-label={embedded ? "Cidade" : "Sua localização"}
                 placeholder="Ex: São Paulo, SP"
                 value={cidade}
                 onChange={(e) => setCidade(e.target.value)}
@@ -418,12 +409,12 @@ export default function PlayerChat({ channelId, onClose, radioUserId, sideBySide
                 style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}
               />
               {showSuggestions && suggestions.length > 0 && (
-                <div 
+                <div
                   ref={suggestionsRef}
                   className="absolute left-0 right-0 top-full mt-2 z-[70] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
-                  style={{ 
-                    background: "rgba(35,35,38,0.98)", 
-                    borderRadius: 20, 
+                  style={{
+                    background: "rgba(35,35,38,0.98)",
+                    borderRadius: 20,
                     border: "1px solid rgba(255,255,255,0.12)",
                     boxShadow: "0 10px 40px -10px rgba(0,0,0,0.8)"
                   }}
@@ -443,28 +434,36 @@ export default function PlayerChat({ channelId, onClose, radioUserId, sideBySide
                 </div>
               )}
             </div>
+            {embedded && <label className="space-y-1">
+              <span className="block text-[10px] uppercase tracking-wider text-white/40 ml-1">Bairro</span>
+              <input
+                aria-label="Bairro"
+                placeholder="Seu bairro"
+                value={neighborhood}
+                onChange={event => setNeighborhood(event.target.value)}
+                className="player-chat-entry-input w-full rounded-2xl text-white px-5 py-4 text-sm placeholder:text-white/25 focus:outline-none transition-all"
+                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}
+              />
+            </label>}
+            </div>
           </div>
           <button
             onClick={handleJoin}
             disabled={!nome.trim() || !cidade.trim()}
-            className="w-full py-4 rounded-2xl text-sm font-bold tracking-wide transition-all disabled:opacity-30 hover:scale-[1.02] active:scale-[0.98]"
+            className="player-chat-join w-full py-4 rounded-2xl text-sm font-bold tracking-wide transition-all disabled:opacity-30 hover:scale-[1.02] active:scale-[0.98]"
             style={{ background: "#fff", color: "#000" }}
           >
             Participar da conversa
           </button>
         </div>
-      </div>,
+    );
+    return embedded ? entry : createPortal(
+      <div className="fixed inset-0 z-[9999] flex items-center justify-end p-8 pointer-events-none animate-in fade-in duration-300">{entry}</div>,
       document.body,
     );
   }
 
-  return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-end justify-end p-8 pointer-events-none animate-in fade-in duration-300">
-      <div
-        className="relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-500 pointer-events-none"
-        style={{ width: sideBySide ? "min(360px, calc((100vw - 104px) / 2))" : "360px", height: "clamp(280px, calc(100vh - 250px), 620px)", marginBottom: "calc(6vh + 35px)", marginRight: "20px" }}
-      >
-
+  const conversation = (
       <div className="w-full h-full flex flex-col pointer-events-auto">
         {/* Header */}
         <div className="flex items-center justify-between px-2 py-2 mb-2">
@@ -486,6 +485,7 @@ export default function PlayerChat({ channelId, onClose, radioUserId, sideBySide
               <Settings2 size={15} />
             </button>
             <PlayerBackButton
+              ref={embedded ? embeddedBackRef : undefined}
               onClick={onClose}
               className="w-8 h-8 focus-visible:ring-offset-2"
               iconSize={14}
@@ -496,7 +496,7 @@ export default function PlayerChat({ channelId, onClose, radioUserId, sideBySide
 
         {showChatSettings && (
           <div
-            className="absolute top-12 right-0 z-30 w-[min(320px,calc(100vw-64px))] max-h-[min(520px,65vh)] overflow-y-auto rounded-2xl p-4 text-white"
+            className="player-chat-settings absolute top-12 right-0 z-30 w-[min(320px,calc(100vw-64px))] max-h-[min(520px,65vh)] overflow-y-auto rounded-2xl p-4 text-white"
             style={{ background: "rgba(35,35,38,0.98)", border: "1px solid rgba(255,255,255,0.10)", backdropFilter: "blur(18px)" }}
           >
             <div className="flex items-center justify-between mb-4">
@@ -548,6 +548,7 @@ export default function PlayerChat({ channelId, onClose, radioUserId, sideBySide
             <button
               type="button"
               onClick={() => saveChatPreferences({ soundEnabled: !soundEnabled })}
+              aria-pressed={soundEnabled}
               className="w-full flex items-center justify-between rounded-xl px-3 py-2.5 text-left hover:bg-white/5 transition-colors"
               style={{ border: "1px solid rgba(255,255,255,0.08)" }}
             >
@@ -564,7 +565,10 @@ export default function PlayerChat({ channelId, onClose, radioUserId, sideBySide
           ref={scrollRef}
           onScroll={handleMessagesScroll}
           className="flex-1 min-h-0 overflow-y-auto px-1 scrollbar-hide pb-4"
-          style={{ maxHeight: "min(500px, calc(100vh - 390px))" }}
+          tabIndex={embedded ? 0 : undefined}
+          data-ott-scroll={embedded || undefined}
+          aria-label={embedded ? "Mensagens do chat" : undefined}
+          style={embedded ? undefined : { maxHeight: "min(500px, calc(100vh - 390px))" }}
         >
           <div className="min-h-full flex flex-col justify-end gap-2.5">
             {messages.length === 0 && (
@@ -576,7 +580,7 @@ export default function PlayerChat({ channelId, onClose, radioUserId, sideBySide
               const isMe = msg.nome === nome && (msg.cidade === cidade || msg.cidade === chatCity);
               return (
                 <div key={msg.id} className="flex flex-col gap-1.5 animate-in slide-in-from-bottom-2 duration-300">
-                <div 
+                <div
                   className="rounded-[24px] px-4 py-3 flex items-start gap-3"
                   style={{
                     background: "rgba(35,35,38,0.85)",
@@ -627,14 +631,14 @@ export default function PlayerChat({ channelId, onClose, radioUserId, sideBySide
                 border: "1px solid rgba(255,255,255,0.10)",
               }}
             >
-              <EmojiPicker onEmojiClick={onEmojiClick} theme={Theme.DARK} width={310} height={300} searchPlaceholder="Buscar emoji..." skinTonesDisabled previewConfig={{ showPreview: false }} />
+              <EmojiPicker onEmojiClick={onEmojiClick} theme={Theme.DARK} width={embedded ? "100%" : 310} height={300} searchPlaceholder="Buscar emoji..." skinTonesDisabled previewConfig={{ showPreview: false }} />
             </div>
           </div>
         )}
 
         {/* Input */}
         <div className="mt-2 px-1 py-1 flex items-end gap-2">
-          <div 
+          <div
             className="flex-1 flex items-center gap-2 rounded-[20px] px-3 py-2"
             style={{
               background: "rgba(255,255,255,0.10)",
@@ -643,7 +647,7 @@ export default function PlayerChat({ channelId, onClose, radioUserId, sideBySide
               boxShadow: "none"
             }}
           >
-            <button onClick={() => setShowEmoji(!showEmoji)} className={`w-7 h-7 shrink-0 self-center flex items-center justify-center transition-colors ${showEmoji ? "text-white" : "text-white/40 hover:text-white"}`}>
+            <button aria-label="Emojis" onClick={() => setShowEmoji(!showEmoji)} className={`w-7 h-7 shrink-0 self-center flex items-center justify-center transition-colors ${showEmoji ? "text-white" : "text-white/40 hover:text-white"}`}>
               <Smile size={18} />
             </button>
             <textarea
@@ -656,17 +660,24 @@ export default function PlayerChat({ channelId, onClose, radioUserId, sideBySide
               }}
               onKeyDown={handleKeyDown}
               rows={1}
+              aria-label="Mensagem"
               placeholder="Participar da conversa..."
               className="flex-1 min-w-0 min-h-12 max-h-36 resize-none overflow-y-auto bg-transparent border rounded-lg shadow-none appearance-none px-2.5 py-1.5 text-white text-[13px] leading-5 placeholder:text-white/35 focus:outline-none focus:ring-0"
               style={{ height: "48px", border: "1px solid rgba(255,255,255,0.22)", borderRadius: "8px", outline: "none", boxShadow: "none" }}
             />
-            <button onClick={handleSend} disabled={!input.trim()} className="w-7 h-7 shrink-0 self-center flex items-center justify-center text-white/40 hover:text-white disabled:opacity-20 transition-all">
+            <button aria-label="Enviar mensagem" onClick={handleSend} disabled={!input.trim()} className="w-7 h-7 shrink-0 self-center flex items-center justify-center text-white/40 hover:text-white disabled:opacity-20 transition-all">
               <Send size={16} />
             </button>
           </div>
         </div>
       </div>
-      </div>
+  );
+  return embedded ? <div className="ott-player-chat-conversation relative h-full">{conversation}</div> : createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-end justify-end p-8 pointer-events-none animate-in fade-in duration-300">
+      <div
+        className="relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-500 pointer-events-none"
+        style={{ width: sideBySide ? "min(360px, calc((100vw - 104px) / 2))" : "360px", height: "clamp(280px, calc(100vh - 250px), 620px)", marginBottom: "calc(6vh + 35px)", marginRight: "20px" }}
+      >{conversation}</div>
     </div>,
     document.body,
   );

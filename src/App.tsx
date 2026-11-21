@@ -2,11 +2,15 @@ import { Suspense, Component, Fragment, useEffect, useState, type ReactNode } fr
 import { Maximize2, Minimize2 } from "lucide-react";
 import { Toaster } from "@/components/ui/toaster";
 import RouteProgress from "@/components/RouteProgress";
+import TvDeviceGuard from "@/components/player/TvDeviceGuard";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate, useLocation } from "react-router-dom";
 import { consumeOAuthReturnPath } from "@/lib/oauthReturn";
+import { getChatOAuthReturn } from "@/lib/chatOAuthReturn";
+/* NEXO_CHAT_GOOGLE_RETURN_V3 */
+import ChatOAuthLanding from "@/components/player/tv/ChatOAuthLanding";
 
 // Redirect helper that interpolates :userSlug from the current URL params.
 // Plain <Navigate to="/:userSlug/..."> does NOT substitute params and would
@@ -37,6 +41,9 @@ function OAuthReturnHandler() {
 
   useEffect(() => {
     if (location.pathname === "/auth/popup-callback") return;
+    // NEXO_CHAT_OAUTH_GUARD_V5: retorno do ouvinte nao e login administrativo.
+    if ((location.pathname === "/" && getChatOAuthReturn()) ||
+        (/^\/[^/]+\/pair\/?$/.test(location.pathname) && new URLSearchParams(location.search).get("mode") === "chat")) return;
     const target = consumeOAuthReturnPath();
     if (!target) return;
     if (target === `${location.pathname}${location.search}${location.hash}`) return;
@@ -304,7 +311,7 @@ const App = () => (
       <InlineNotification mode="fixed" />
       <LayoutVersionGuard />
       <DailyUpdateGuard />
-      
+
       <AuthProvider>
         <DesktopLocalMediaSync />
         <DesktopVmixHost />
@@ -312,10 +319,11 @@ const App = () => (
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <DesktopWindowControls />
           <OAuthReturnHandler />
+          <TvDeviceGuard />
           <NavigationErrorBoundary>
           <Suspense fallback={<RouteProgress />}>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<ChatOAuthLanding><Index /></ChatOAuthLanding>} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/auth/callback" element={<OAuthCallbackRedirect />} />
             <Route path="/auth/popup-callback" element={<OAuthPopupCallback />} />

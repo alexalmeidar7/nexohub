@@ -91,6 +91,14 @@ const formatTrackText = (value?: string | null) => {
     .join("");
 };
 
+/* ─── Saudação do usuário ─── */
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour >= 6 && hour < 12) return "Bom dia";
+  if (hour >= 12 && hour < 18) return "Boa tarde";
+  return "Boa noite";
+};
+
 /* ─── Keyboard Key Cap (used in help tooltip) ─── */
 function KeyCap({ children, small, wide }: { children: React.ReactNode; small?: boolean; wide?: boolean }) {
   const size = small ? "h-6 min-w-[24px] text-[10px]" : "h-8 min-w-[32px] text-sm";
@@ -242,7 +250,7 @@ function TopNavBar({
 
   return (
     <header className={`absolute top-0 left-0 right-0 z-30 flex items-center flex-wrap px-4 sm:px-8 md:px-12 pt-4 sm:pt-8 pb-4 gap-3 sm:gap-6 md:gap-8 ${homeLayout ? "player-home-header" : ""}`}>
-      {homeLayout && <style>{`.player-home-header{padding:4.8vh 6vw 0!important;gap:0!important;flex-wrap:nowrap!important}.player-home-header nav{margin-left:82px;gap:20px!important}.player-home-header nav button{font-size:clamp(16px,1.4vw,25px)!important}.player-home-header nav [data-tv-topnav]:focus-visible{transform:none!important;outline:none!important;outline-offset:0!important;box-shadow:none!important;border-radius:0!important;z-index:auto!important}.player-home-header .player-home-profile-wrap{position:absolute!important;left:6vw;top:6.7vh;width:56px;height:56px}.player-home-header [data-home-profile]{position:absolute;inset:0;width:56px;height:56px;border-radius:50%!important;background:linear-gradient(135deg,var(--player-dominant-color,#111214) 0%,color-mix(in srgb,var(--player-dominant-color,#111214) 68%,#111214) 100%)!important;border:0!important;box-shadow:none!important}.player-home-header [data-home-profile] img{border-radius:50%}.player-home-header [data-home-profile] svg{display:block;color:white;width:25px;height:25px}.player-home-header .player-home-profile-wrap>div[class*="absolute"]{left:0!important;right:auto!important;top:calc(100% + 8px)!important}.player-home-header .player-home-search{display:block!important;margin-left:18px!important}.player-home-header .player-home-right{gap:20px!important}.player-home-header .player-home-logo{width:112px!important;height:92px!important}.player-home-tools{display:none!important}@media(max-width:700px){.player-home-header{padding:22px 20px 0!important}.player-home-header .player-home-profile-wrap{left:20px;top:66px;width:40px;height:40px}.player-home-header [data-home-profile]{width:40px;height:40px}.player-home-header nav{margin-left:50px;gap:12px!important}.player-home-header nav button{font-size:14px!important}.player-home-header .player-home-search{margin-left:10px!important}.player-home-header .player-home-logo{width:60px!important;height:54px!important}}`}</style>}
+      {homeLayout && <style>{`.player-home-header{padding:4.8vh 6vw 0!important;gap:0!important;flex-wrap:nowrap!important;justify-content:space-between!important}.player-home-header nav{margin-left:82px;gap:20px!important}.player-home-header nav button{font-size:clamp(16px,1.4vw,25px)!important}.player-home-header nav [data-tv-topnav]:focus-visible{transform:none!important;outline:none!important;outline-offset:0!important;box-shadow:none!important;border-radius:0!important;z-index:auto!important}.player-home-header .player-home-profile-wrap{position:relative!important;left:auto!important;top:auto!important;width:56px;height:56px;order:3!important}.player-home-header [data-home-profile]{position:relative;width:56px;height:56px;border-radius:50%!important;background:linear-gradient(135deg,var(--player-dominant-color,#111214) 0%,color-mix(in srgb,var(--player-dominant-color,#111214) 68%,#111214) 100%)!important;border:0!important;box-shadow:none!important}.player-home-header [data-home-profile] img{border-radius:50%}.player-home-header [data-home-profile] svg{display:block;color:white;width:25px;height:25px}.player-home-header .player-home-profile-wrap>div[class*="absolute"]{left:auto!important;right:0!important;top:calc(100% + 8px)!important}.player-home-header .player-home-search{display:block!important;margin-left:18px!important}.player-home-header .player-home-right{gap:20px!important;display:flex!important;align-items:center!important;order:2!important;margin-left:auto!important}.player-home-header .player-home-clock-weather{display:flex!important;align-items:center!important;gap:12px!important}.player-home-header .player-home-greeting{color:white!important;font-family:'Lufga',system-ui,sans-serif!important;font-size:clamp(16px,1.4vw,22px)!important;font-weight:500!important;white-space:nowrap!important}.player-home-header .player-home-logo{width:112px!important;height:92px!important}.player-home-tools{display:none!important}@media(max-width:700px){.player-home-header{padding:22px 20px 0!important}.player-home-header .player-home-profile-wrap{width:40px;height:40px}.player-home-header [data-home-profile]{width:40px;height:40px}.player-home-header nav{margin-left:50px;gap:12px!important}.player-home-header nav button{font-size:14px!important}.player-home-header .player-home-search{margin-left:10px!important}.player-home-header .player-home-right{gap:8px!important}.player-home-header .player-home-greeting{font-size:14px!important}.player-home-header .player-home-logo{width:60px!important;height:54px!important}}`}</style>}
       {/* Nav links */}
       <nav className="flex items-center flex-wrap gap-3 sm:gap-6 md:gap-10">
         {items.map((item, idx) => {
@@ -449,11 +457,17 @@ function TopNavBar({
         );
       })()}
 
-      <div className="hidden md:block flex-1" />
+      {/* Seção direita: relógio + temperatura + saudação + avatar */}
+      <div className={`flex items-center gap-3 sm:gap-6 ml-auto ${homeLayout ? "player-home-right" : ""}`}>
+        {/* Relógio e temperatura */}
+        <div className={`flex items-center gap-3 ${homeLayout ? "player-home-clock-weather" : ""}`}>
+          <PlayerClockWeather radioUserId={radioUserId} compact />
+        </div>
 
-      {/* Right: avatar (rounded square) + station logo */}
-      <div className={`flex items-center gap-2 sm:gap-4 ml-auto ${homeLayout ? "player-home-right" : ""}`}>
-        <PlayerClockWeather radioUserId={radioUserId} compact />
+        {/* Saudação */}
+        <div className={`${homeLayout ? "player-home-greeting" : "text-white font-medium text-lg"}`}>
+          {getGreeting()}
+        </div>
 
         <div ref={profileRef} className={`relative ${homeLayout ? "player-home-profile-wrap" : ""}`}>
           <button
@@ -1411,6 +1425,7 @@ function HistoryCard({ item, onClick }: { item: { channel_name: string; channel_
 interface PlayerHomeProps {
   onBackToAccess?: (openEdit?: boolean) => void;
   tvGuestMode?: boolean;
+  tvProfile?: { name: string; avatar: string | null } | null;
 }
 
 /* ─── Local cache helpers ─── */
@@ -1433,7 +1448,7 @@ function writeCache(cacheId: string, data: Record<string, any>) {
   } catch {}
 }
 
-export default function PlayerHome({ onBackToAccess, tvGuestMode = false }: PlayerHomeProps = {}) {
+export default function PlayerHome({ onBackToAccess, tvGuestMode = false, tvProfile = null }: PlayerHomeProps = {}) {
   const { user, loading: authLoading } = usePlayerAuth();
   useGlobalMusicSync(undefined, true, true);
 
@@ -1740,6 +1755,12 @@ export default function PlayerHome({ onBackToAccess, tvGuestMode = false }: Play
   }, [user, userSlug]);
 
   const userName = profileName || user?.email?.split("@")[0] || "Visitante";
+  const tvUser = tvGuestMode ? null : user;
+  const tvGoogleProfile = tvUser?.identities?.find(identity => identity.provider === "google")?.identity_data;
+  const tvGoogleName = tvGoogleProfile?.full_name || tvGoogleProfile?.name || tvUser?.user_metadata.full_name || tvUser?.user_metadata.name;
+  const tvGoogleAvatar = tvGoogleProfile?.avatar_url || tvGoogleProfile?.picture || tvUser?.user_metadata.avatar_url || tvUser?.user_metadata.picture;
+  const tvDisplayName = tvUser ? tvProfile?.name || (typeof tvGoogleName === "string" ? tvGoogleName : null) || tvUser.email?.split("@")[0] || "Visitante" : "Visitante";
+  const tvAvatar = tvUser ? tvProfile?.avatar || (typeof tvGoogleAvatar === "string" ? tvGoogleAvatar : null) : null;
 
   // Fetch data
   useEffect(() => {
@@ -2026,12 +2047,12 @@ export default function PlayerHome({ onBackToAccess, tvGuestMode = false }: Play
     if (channelId) params.set("ch", channelId);
     if (videoId) params.set("vid", videoId);
     // Carry TV mode from the QR/guest entry screen into the actual player route.
-    if (new URLSearchParams(location.search).get("tvGuest") === "1") params.set("tv", "1");
+    if (new URLSearchParams(location.search).get("tvGuest") === "1") { params.set("tv", "1"); params.set("tvGuest", "1"); }
     const qs = params.toString() ? `?${params.toString()}` : "";
-    
+
     // Mostramos o loading overlay imediatamente se possível, ou apenas aguardamos o fadeOut
     // O AudioPlayerScreen no destino cuidará do streamLoading=true baseado no param da URL
-    
+
     setTimeout(() => {
       const watchPath = userSlug ? `/user/${userSlug}/nexohub/player/watch` : "/user/nexohub/player/watch";
       const fromParams = new URLSearchParams(location.search);
@@ -2218,7 +2239,7 @@ export default function PlayerHome({ onBackToAccess, tvGuestMode = false }: Play
   const { bgColors: top10Colors } = useBgPalette(heroChannel?.logo_url || undefined);
   const top10Gradient = `radial-gradient(ellipse at 20% 20%, ${top10Colors[0]} 0%, transparent 60%), radial-gradient(ellipse at 85% 90%, ${top10Colors[1]} 0%, transparent 65%), linear-gradient(135deg, ${top10Colors[0]} 0%, ${top10Colors[1]} 100%)`;
 
-  if (isPlayerTvApp() && visibleSection !== "catalog-detail" && visibleSection !== "top10") return <OttHome channels={channels} radioName={channelName} logo={logoUrl} background={currentProgram?.thumb || currentProgram?.capa || heroChannel?.cover_url || heroChannel?.background_url} program={currentProgram?.nome} presenter={currentPresenterName} loading={!dataLoaded} profileName={userName} avatar={profileAvatar} onProfile={()=>onBackToAccess?.(false)} onPlay={goToPlayer} onCatalog={goToCatalog} />;
+  if (isPlayerTvApp() && visibleSection !== "catalog-detail" && visibleSection !== "top10") return <OttHome radioUserId={ownerUserId} channels={channels} radioName={channelName} logo={logoUrl} background={currentProgram?.thumb || currentProgram?.capa || heroChannel?.cover_url || heroChannel?.background_url || currentPresenterFoto} program={currentProgram?.nome} nextProgram={nextProgram} nowPlaying={nowPlaying} presenter={currentPresenterName} presenterPhoto={currentPresenterFoto} loading={!dataLoaded} profileName={tvDisplayName} avatar={tvAvatar} onProfile={()=>onBackToAccess?.(false)} onPlay={goToPlayer} onCatalog={goToCatalog} />;
 
 
   return (
@@ -2226,8 +2247,8 @@ export default function PlayerHome({ onBackToAccess, tvGuestMode = false }: Play
       className={`player-tv-home fixed inset-0 text-white flex flex-col antialiased transition-opacity duration-400 ease-in-out overflow-hidden ${fadeOut ? "opacity-0" : "opacity-100"}`}
       style={{ background: `hsl(var(--player-bg))` }}
     >
-      <PlayerLoadingOverlay 
-        isLoading={!dataLoaded || fadeOut} 
+      <PlayerLoadingOverlay
+        isLoading={!dataLoaded || fadeOut}
         minDurationMs={2500}
         progress={loadProgress}
       />
@@ -2502,4 +2523,3 @@ export default function PlayerHome({ onBackToAccess, tvGuestMode = false }: Play
     </div>
   );
 }
-

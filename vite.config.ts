@@ -1,3 +1,4 @@
+import { nexoChatLanOriginPlugin } from "./vite-plugins/nexoChatLanOriginPlugin";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
@@ -13,7 +14,7 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
-  plugins: [react(), dynamicXmlPlugin(), logoTransformPlugin()],
+  plugins: [nexoChatLanOriginPlugin(), react(), dynamicXmlPlugin(), logoTransformPlugin()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -21,7 +22,7 @@ export default defineConfig(({ mode }) => ({
     dedupe: ["react", "react-dom", "react/jsx-runtime", "@tanstack/react-query"],
   },
   optimizeDeps: {
-    include: ["@tanstack/react-query", "react", "react-dom", "react-router-dom"],
+    include: ["@tanstack/react-query", "react", "react-dom", "react-router-dom", "emoji-picker-react"],
   },
   build: {
     target: "chrome86",

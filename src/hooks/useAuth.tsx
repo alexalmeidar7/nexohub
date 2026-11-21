@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, createContext, useContext, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+/* NEXO_CHAT_GOOGLE_RETURN_V3 */
+import { getChatOAuthReturn } from "@/lib/chatOAuthReturn";
 import type { User, Session } from "@supabase/supabase-js";
 import { ensureMusicScopeForUser } from "@/lib/musicStorageKeys";
 
@@ -100,7 +102,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // anywhere in Player routes (including its Google OAuth callback popup).
     const isPlayerRoute = typeof window !== "undefined" && (
       /^\/(?:[^/]+\/)?player(?:\/|$)/.test(window.location.pathname) ||
-      window.location.pathname.endsWith("/auth/popup-callback")
+      window.location.pathname.endsWith("/auth/popup-callback") ||
+      (/^\/[^/]+\/pair\/?$/.test(window.location.pathname) && new URLSearchParams(window.location.search).get("mode") === "chat") ||
+      (window.location.pathname === "/" && Boolean(getChatOAuthReturn()))
     );
     if (isPlayerRoute) {
       lastGoodSessionRef.current = null;
@@ -317,7 +321,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .getSession()
         .then(({ data: { session }, error }) => {
           if (!mounted) return;
-          
+
           if (error || !session) {
             // If we have a backed-up session, restore it
             if (lastGoodSessionRef.current?.access_token) {
@@ -430,11 +434,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // If idle for more than 1 min, refresh now to ensure tokens are valid
       if (idleMs > 1 * 60 * 1000) void proactiveRefresh("visibility");
     };
-    const onOnline = () => { 
-      reconnectRealtime(); 
-      void proactiveRefresh("online"); 
+    const onOnline = () => {
+      reconnectRealtime();
+      void proactiveRefresh("online");
     };
-    
+
     // Check session health every minute instead of 20min
     const refreshInterval = setInterval(() => {
       if (!document.hidden) {
