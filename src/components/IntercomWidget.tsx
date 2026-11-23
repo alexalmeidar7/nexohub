@@ -662,20 +662,20 @@ export default function IntercomWidget() {
             {isActive && (
               <>
                 <div className="absolute inset-0 rounded-full animate-ping"
-                  style={{ border: `2px solid ${talking ? "#ef4444" : "#00BFF0"}`, animationDuration: "1.5s" }} />
+                  style={{ border: `2px solid ${talking ? "#ef4444" : "#0055ff"}`, animationDuration: "1.5s" }} />
                 <div className="absolute -inset-1 rounded-full animate-ping"
-                  style={{ border: `1px solid ${talking ? "rgba(239,68,68,0.3)" : "rgba(0,191,240,0.3)"}`, animationDuration: "2.5s" }} />
+                  style={{ border: `1px solid ${talking ? "rgba(239,68,68,0.3)" : "rgba(0,85,255,0.3)"}`, animationDuration: "2.5s" }} />
               </>
             )}
             <div className="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg border hover:scale-110 bg-black"
               style={{
-                borderColor: talking ? "#ef4444" : receiving ? "#00BFF0" : "rgba(0,191,240,0.4)",
-                boxShadow: isActive ? `0 0 20px ${talking ? "rgba(239,68,68,0.4)" : "rgba(0,191,240,0.4)"}` : "0 4px 8px rgba(0,0,0,0.3)"
+                borderColor: talking ? "#ef4444" : receiving ? "#0055ff" : "rgba(0,85,255,0.4)",
+                boxShadow: isActive ? `0 0 20px ${talking ? "rgba(239,68,68,0.4)" : "rgba(0,85,255,0.4)"}` : "0 4px 8px rgba(0,0,0,0.3)"
               }}>
               {talking ? (
                 <Mic size={18} className="text-white" style={{ animation: "intercomIconPulse 0.8s ease-in-out infinite" }} />
               ) : receiving ? (
-                <Volume2 size={18} className="text-[#00BFF0]" style={{ animation: "intercomIconPulse 0.8s ease-in-out infinite" }} />
+                <Volume2 size={18} className="text-[#0055ff]" style={{ animation: "intercomIconPulse 0.8s ease-in-out infinite" }} />
               ) : role === "speaker" ? (
                 <Mic size={18} className="text-white/40" />
               ) : (
@@ -741,7 +741,7 @@ export default function IntercomWidget() {
           <div className="flex items-center justify-between px-4 pt-3 pb-2">
             <div className="flex items-center gap-2">
               <div className="relative flex h-8 w-8 items-center justify-center rounded-xl" style={{ background: "#0A2540" }}>
-                <Radio size={14} className="text-[#C6F03C]" />
+                <Radio size={14} className="text-white" />
                 <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-400" />
               </div>
               <div>
@@ -766,8 +766,8 @@ export default function IntercomWidget() {
               style={{ background: "#0055ff" }}
               title="Intercom — falar com ouvintes"
             >
-              <span className="absolute -right-5 -top-5 h-20 w-20 rounded-full bg-[#00BFF0]/15 transition-transform duration-300 group-hover:scale-125" />
-              <span className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-[#00BFF0] text-white shadow-md shadow-cyan-500/30">
+              <span className="absolute -right-5 -top-5 h-20 w-20 rounded-full bg-[#0055ff]/15 transition-transform duration-300 group-hover:scale-125" />
+              <span className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-[#0055ff] text-white shadow-md shadow-cyan-500/30">
                 <Mic size={17} />
               </span>
               <span className="relative">
@@ -778,12 +778,12 @@ export default function IntercomWidget() {
 
             <button
               onClick={() => setRole("listener")}
-              className="group relative flex min-h-[112px] flex-col items-start justify-between overflow-hidden rounded-2xl border p-3 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-[#00BFF0]/45 hover:shadow-lg active:scale-[0.98]"
+              className="group relative flex min-h-[112px] flex-col items-start justify-between overflow-hidden rounded-2xl border p-3 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-[#0055ff]/45 hover:shadow-lg active:scale-[0.98]"
               style={{ background: "#152447", borderColor: "rgba(72,117,255,0.24)" }}
               title="Ouvinte — receber áudio"
             >
-              <span className="absolute -right-5 -top-5 h-20 w-20 rounded-full bg-[#C6F03C]/25 transition-transform duration-300 group-hover:scale-125" />
-              <span className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-[#C6F03C] text-[#0A2540] shadow-md shadow-lime-400/30">
+              <span className="absolute -right-5 -top-5 h-20 w-20 rounded-full bg-[#0055ff]/25 transition-transform duration-300 group-hover:scale-125" />
+              <span className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-[#0055ff] text-[#0A2540] shadow-md shadow-lime-400/30">
                 <Headphones size={17} />
               </span>
               <span className="relative">
@@ -808,45 +808,45 @@ export default function IntercomWidget() {
     return (
       <div className="fixed z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...floatingPanelStyle, width: 280 }}>
         <div className="flex items-center gap-2 px-4 py-3">
-          <button onClick={handleBack} className="text-[#002132]/50 hover:text-[#00BFF0] p-1 rounded-lg hover:bg-[#00BFF0]/12 transition-all">
+          <button onClick={handleBack} className="text-white/60 hover:text-[#0055ff] p-1 rounded-lg hover:bg-[#0055ff]/12 transition-all">
             <ArrowLeft size={14} />
           </button>
           <Headphones size={16} className="text-green-400" />
-          <span className="text-[#002132] text-xs font-bold">Identificação</span>
+          <span className="text-white text-xs font-bold">Identificação</span>
           <div className="flex-1" />
-          <button onClick={handleClose} className="text-[#002132]/50 hover:text-[#00BFF0] p-1 rounded-lg hover:bg-[#00BFF0]/12 transition-all">
+          <button onClick={handleClose} className="text-white/60 hover:text-[#0055ff] p-1 rounded-lg hover:bg-[#0055ff]/12 transition-all">
             <X size={14} />
           </button>
         </div>
         <div className="px-4 pb-4">
-          <p className="text-[#002132]/50 text-[10px] mb-2">Digite seu nome para entrar como ouvinte:</p>
+          <p className="text-white/60 text-[10px] mb-2">Digite seu nome para entrar como ouvinte:</p>
           <input
             value={nameInput}
             onChange={(e) => setNameInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") confirmListenerName(); }}
             placeholder="Seu nome..."
-            className="w-full px-3 py-2 rounded-lg text-xs text-[#002132] bg-[#00BFF0]/8 border border-[#00BFF0]/25 outline-none focus:border-[#00BFF0]/50 placeholder:text-[#002132]/30 font-medium"
+            className="w-full px-3 py-2 rounded-lg text-xs text-white bg-white/10 border border-[#0055ff]/25 outline-none focus:border-[#0055ff]/50 placeholder:text-white/30 font-medium"
             autoFocus
           />
           {/* URL da página de áudio (para inserir no navegador do vMix) */}
-          <div className="mt-3 p-2 rounded-lg" style={{ backgroundColor: "rgba(0,191,240,0.07)", border: "1px dashed rgba(0,191,240,0.35)" }}>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-[#00BFF0] mb-1">Página só de áudio (vMix)</p>
+          <div className="mt-3 p-2 rounded-lg" style={{ backgroundColor: "rgba(0,85,255,0.07)", border: "1px dashed rgba(0,85,255,0.35)" }}>
+            <p className="text-[9px] font-bold uppercase tracking-wider text-[#0055ff] mb-1">Página só de áudio (vMix)</p>
             <div className="flex items-center gap-2">
-              <span className="flex-1 min-w-0 truncate text-[10px] text-[#002132]/70 font-mono">{listenerPageUrl}</span>
+              <span className="flex-1 min-w-0 truncate text-[10px] text-white/70 font-mono">{listenerPageUrl}</span>
               <button
                 onClick={copyListenerPageUrl}
                 title="Copiar URL para o navegador do vMix"
                 className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg transition-all hover:brightness-95"
-                style={{ backgroundColor: copiedUrl ? "#C6F03C" : "rgba(0,191,240,0.15)" }}
+                style={{ backgroundColor: copiedUrl ? "#0055ff" : "rgba(0,85,255,0.15)" }}
               >
-                {copiedUrl ? <Check size={13} className="text-[#002132]" /> : <Copy size={13} className="text-[#00BFF0]" />}
+                {copiedUrl ? <Check size={13} className="text-white" /> : <Copy size={13} className="text-[#0055ff]" />}
               </button>
             </div>
           </div>
 
           <button onClick={confirmListenerName} disabled={!nameInput.trim()}
             className="w-full mt-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all disabled:opacity-30"
-            style={{ backgroundColor: "rgba(34,197,94,0.15)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
+            style={{ backgroundColor: "#0055ff", color: "#ffffff", border: "1px solid #0055ff" }}>
             Entrar como ouvinte
           </button>
         </div>
@@ -867,19 +867,19 @@ export default function IntercomWidget() {
             {receiving && (
               <>
                 <div className="absolute inset-0 rounded-full animate-ping"
-                  style={{ border: "2px solid rgba(0,191,240,0.3)", animationDuration: "1.5s" }} />
+                  style={{ border: "2px solid rgba(0,85,255,0.3)", animationDuration: "1.5s" }} />
                 <div className="absolute -inset-1 rounded-full animate-ping"
-                  style={{ border: "1px solid rgba(0,191,240,0.18)", animationDuration: "2.5s" }} />
+                  style={{ border: "1px solid rgba(0,85,255,0.18)", animationDuration: "2.5s" }} />
               </>
             )}
             <div className="w-9 h-9 rounded-full flex items-center justify-center relative z-10 transition-all duration-300"
               style={{
-                backgroundColor: receiving ? "rgba(0,191,240,0.28)" : "rgba(34,197,94,0.15)",
-                border: `1.5px solid ${receiving ? "rgba(0,191,240,0.55)" : "rgba(34,197,94,0.2)"}`,
-                boxShadow: receiving ? "0 0 20px rgba(0,191,240,0.3), inset 0 0 8px rgba(0,191,240,0.18)" : "none",
+                backgroundColor: receiving ? "rgba(0,85,255,0.28)" : "rgba(34,197,94,0.15)",
+                border: `1.5px solid ${receiving ? "rgba(0,85,255,0.55)" : "rgba(34,197,94,0.2)"}`,
+                boxShadow: receiving ? "0 0 20px rgba(0,85,255,0.3), inset 0 0 8px rgba(0,85,255,0.18)" : "none",
               }}>
               {receiving ? (
-                <Volume2 size={15} className="text-[#00BFF0]" style={{ animation: "intercomIconPulse 0.8s ease-in-out infinite" }} />
+                <Volume2 size={15} className="text-[#0055ff]" style={{ animation: "intercomIconPulse 0.8s ease-in-out infinite" }} />
               ) : (
                 <Headphones size={15} className="text-green-400" />
               )}
@@ -887,11 +887,11 @@ export default function IntercomWidget() {
           </div>
 
           <div className="flex-1 min-w-0">
-            <p className="text-[#002132] text-xs font-bold truncate">{listenerName}</p>
+            <p className="text-white text-xs font-bold truncate">{listenerName}</p>
             <div className="flex items-center gap-1 mt-0.5">
               <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors"
-                style={{ backgroundColor: receiving ? "#00BFF0" : speakerOnline ? "#22c55e" : "#555" }} />
-              <span className="text-[#002132]/50 text-[10px] truncate">
+                style={{ backgroundColor: receiving ? "#0055ff" : speakerOnline ? "#22c55e" : "#555" }} />
+              <span className="text-white/60 text-[10px] truncate">
                 {receiving ? "Recebendo áudio" : speakerOnline ? "Speaker online" : "Speaker offline"}
               </span>
             </div>
@@ -903,7 +903,7 @@ export default function IntercomWidget() {
               {[0.5, 0.8, 1, 0.7, 0.9, 0.6, 0.85].map((h, i) => (
                 <div key={i} className="w-[3px] rounded-full"
                   style={{
-                    backgroundColor: "#00BFF0",
+                    backgroundColor: "#0055ff",
                     height: `${h * 100}%`,
                     animation: `intercomBar 0.${3 + i * 2}s ease-in-out infinite alternate`,
                     opacity: 0.8,
@@ -913,20 +913,20 @@ export default function IntercomWidget() {
           )}
 
           <button onClick={handleMinimize}
-            className="bg-[#00BFF0] text-white hover:brightness-110 p-1.5 rounded-lg transition-all shadow-[0_4px_14px_-4px_rgba(0,191,240,0.55)]" title="Minimizar">
+            className="bg-[#0055ff] text-white hover:brightness-110 p-1.5 rounded-lg transition-all shadow-[0_4px_14px_-4px_rgba(0,85,255,0.55)]" title="Minimizar">
             <ChevronDown size={14} />
           </button>
 
           <button onClick={handleClose}
-            className="text-[#002132]/50 hover:text-red-500 hover:bg-red-500/12 rounded-lg p-1.5 transition-all" title="Desligar">
+            className="text-white/60 hover:text-red-500 hover:bg-red-500/12 rounded-lg p-1.5 transition-all" title="Desligar">
             <X size={14} />
           </button>
         </div>
 
         {/* Volume control */}
-        <div className="px-3 pb-2.5 pt-1" style={{ borderTop: "1px solid rgba(0,33,50,0.08)" }}>
+        <div className="px-3 pb-2.5 pt-1" style={{ borderTop: "1px solid rgba(255,255,255,0.09)" }}>
           <div className="flex items-center gap-2">
-            <Volume2 size={12} className="text-[#002132]/60 flex-shrink-0" />
+            <Volume2 size={12} className="text-white/60 flex-shrink-0" />
             <input
               type="range"
               min={0}
@@ -937,10 +937,10 @@ export default function IntercomWidget() {
               onClick={(e) => e.stopPropagation()}
               className="flex-1 h-1 rounded-full appearance-none cursor-pointer intercom-volume-slider"
               style={{
-                background: `linear-gradient(to right, #00BFF0 0%, #00BFF0 ${listenerVolume * 100}%, rgba(0,33,50,0.12) ${listenerVolume * 100}%, rgba(0,33,50,0.12) 100%)`,
+                background: `linear-gradient(to right, #0055ff 0%, #0055ff ${listenerVolume * 100}%, rgba(255,255,255,0.14) ${listenerVolume * 100}%, rgba(255,255,255,0.14) 100%)`,
               }}
             />
-            <span className="text-[10px] text-[#002132]/60 font-mono tabular-nums w-7 text-right">
+            <span className="text-[10px] text-white/60 font-mono tabular-nums w-7 text-right">
               {Math.round(listenerVolume * 100)}
             </span>
           </div>
@@ -955,7 +955,7 @@ export default function IntercomWidget() {
         </div>
 
         {/* Disconnect Option */}
-        <div className="px-3 pb-3" style={{ borderTop: "1px solid rgba(0,33,50,0.08)" }}>
+        <div className="px-3 pb-3" style={{ borderTop: "1px solid rgba(255,255,255,0.09)" }}>
           <button 
             onClick={() => {
               setRole("none");
@@ -983,7 +983,7 @@ export default function IntercomWidget() {
 
         {receiving && (
           <div className="h-[2px] w-full" style={{
-            background: "linear-gradient(90deg, transparent 0%, #00BFF0 30%, #00BFF0 70%, transparent 100%)",
+            background: "linear-gradient(90deg, transparent 0%, #0055ff 30%, #0055ff 70%, transparent 100%)",
             animation: "intercomGlowPulse 2s ease-in-out infinite",
           }} />
         )}
@@ -1007,16 +1007,16 @@ export default function IntercomWidget() {
             height: 12px;
             border-radius: 50%;
             background: #fff;
-            border: 2px solid #00BFF0;
+            border: 2px solid #0055ff;
             cursor: pointer;
-            box-shadow: 0 0 6px rgba(0,191,240,0.4);
+            box-shadow: 0 0 6px rgba(0,85,255,0.4);
           }
           .intercom-volume-slider::-moz-range-thumb {
             width: 12px;
             height: 12px;
             border-radius: 50%;
             background: #fff;
-            border: 2px solid #00BFF0;
+            border: 2px solid #0055ff;
             cursor: pointer;
           }
         `}</style>
@@ -1038,8 +1038,8 @@ export default function IntercomWidget() {
           disabled={onlineListeners.length === 0}
           className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:scale-110 active:scale-95 disabled:opacity-30"
           style={{
-            backgroundColor: talking ? "#ef4444" : "#00BFF0",
-            boxShadow: talking ? "0 0 16px rgba(239,68,68,0.4)" : "0 0 8px rgba(0,191,240,0.3)",
+            backgroundColor: talking ? "#ef4444" : "#0055ff",
+            boxShadow: talking ? "0 0 16px rgba(239,68,68,0.4)" : "0 0 8px rgba(0,85,255,0.3)",
           }}
           title={talking ? "Transmitindo..." : "Pressione para falar"}>
           {talking ? <MicOff size={15} className="text-white" /> : <Mic size={15} className="text-white" />}
@@ -1047,9 +1047,9 @@ export default function IntercomWidget() {
 
         <div className="flex-1 min-w-0 overflow-hidden">
           <div className="flex items-center gap-1.5">
-            <p className="text-[#002132] text-xs font-bold truncate">Intercom</p>
+            <p className="text-white text-xs font-bold truncate">Intercom</p>
             {hotkey && !talking && (
-              <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#00BFF0]/12 text-[#002132]/50 font-mono flex-shrink-0">
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#0055ff]/12 text-white/60 font-mono flex-shrink-0">
                 {formatKeyName(hotkey)}
               </span>
             )}
@@ -1057,7 +1057,7 @@ export default function IntercomWidget() {
           <div className="flex items-center gap-1 mt-0.5">
             <div className="w-1.5 h-1.5 rounded-full flex-shrink-0"
               style={{ backgroundColor: talking ? "#ef4444" : onlineListeners.length > 0 ? "#22c55e" : "#555" }} />
-            <span className="text-[#002132]/50 text-[10px] truncate">
+            <span className="text-white/60 text-[10px] truncate">
               {talking
                 ? connectionState === "connected" ? "Conectado" : "Transmitindo..."
                 : onlineListeners.length > 0 ? `${onlineListeners.length} ouvinte(s)` : "Nenhum ouvinte"}
@@ -1075,7 +1075,7 @@ export default function IntercomWidget() {
                 <div key={i} className="flex-1 rounded-sm transition-all duration-75"
                   style={{
                     height: "100%",
-                    backgroundColor: active ? barColor : "rgba(0,33,50,0.10)",
+                    backgroundColor: active ? barColor : "rgba(255,255,255,0.12)",
                     opacity: active ? 0.9 : 0.3,
                   }} />
               );
@@ -1084,32 +1084,32 @@ export default function IntercomWidget() {
         )}
 
         <button onClick={() => setSettingHotkey(true)}
-          className="text-[#002132]/50 hover:text-[#00BFF0] hover:bg-[#00BFF0]/12 rounded-lg p-1.5 transition-all"
+          className="text-white/60 hover:text-[#0055ff] hover:bg-[#0055ff]/12 rounded-lg p-1.5 transition-all"
           title={settingHotkey ? "Pressione uma tecla..." : hotkey ? `Atalho: ${formatKeyName(hotkey)}` : "Definir atalho"}>
           <Keyboard size={14} className={settingHotkey ? "text-yellow-400 animate-pulse" : ""} />
         </button>
 
         <button onClick={handleMinimize}
-          className="bg-[#00BFF0] text-white hover:brightness-110 p-1.5 rounded-lg transition-all shadow-[0_4px_14px_-4px_rgba(0,191,240,0.55)]" title="Minimizar">
+          className="bg-[#0055ff] text-white hover:brightness-110 p-1.5 rounded-lg transition-all shadow-[0_4px_14px_-4px_rgba(0,85,255,0.55)]" title="Minimizar">
           <ChevronDown size={14} />
         </button>
 
         <button onClick={handleBack}
 
-          className="text-[#002132]/50 hover:text-[#00BFF0] hover:bg-[#00BFF0]/12 rounded-lg p-1.5 transition-all" title="Voltar">
+          className="text-white/60 hover:text-[#0055ff] hover:bg-[#0055ff]/12 rounded-lg p-1.5 transition-all" title="Voltar">
           <ArrowLeft size={14} />
         </button>
 
         <button onClick={handleClose}
-          className="text-[#002132]/50 hover:text-red-500 hover:bg-red-500/12 rounded-lg p-1.5 transition-all" title="Desligar">
+          className="text-white/60 hover:text-red-500 hover:bg-red-500/12 rounded-lg p-1.5 transition-all" title="Desligar">
           <X size={14} />
         </button>
       </div>
 
       {/* Online listeners list */}
       {onlineListeners.length > 0 && !talking && (
-        <div className="px-3 pb-2" style={{ borderTop: "1px solid rgba(0,33,50,0.08)" }}>
-          <p className="text-[9px] text-[#002132]/40 uppercase tracking-wider py-1.5 flex items-center gap-1">
+        <div className="px-3 pb-2" style={{ borderTop: "1px solid rgba(255,255,255,0.09)" }}>
+          <p className="text-[9px] text-white/50 uppercase tracking-wider py-1.5 flex items-center gap-1">
             <Users size={10} /> Ouvintes online
           </p>
           <div className="flex flex-wrap gap-1">
@@ -1135,7 +1135,7 @@ export default function IntercomWidget() {
       )}
 
       {/* Disconnect Option */}
-      <div className="px-3 pb-3" style={{ borderTop: "1px solid rgba(0,33,50,0.08)" }}>
+      <div className="px-3 pb-3" style={{ borderTop: "1px solid rgba(255,255,255,0.09)" }}>
         <button 
           onClick={() => {
             stopTalking();

@@ -132,3 +132,4 @@ verify_jwt = false
 
 [functions.serve-xml-vmix-live]
 verify_jwt = false
+\n[functions.count-stream-listeners]\nverify_jwt = false # handler enforces user JWT or service-role token\n\n[functions.count-video-viewers]\nverify_jwt = false # handler enforces user JWT or service-role token\n
