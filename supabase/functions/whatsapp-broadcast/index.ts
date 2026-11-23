@@ -1,5 +1,6 @@
 // Broadcast a WhatsApp message to a filtered audience of wa_contacts
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { loadStationWhatsAppToken } from "../_shared/whatsapp-credentials.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,7 +10,6 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN") || "";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -22,7 +22,6 @@ Deno.serve(async (req) => {
   if (userErr || !userData.user) return json({ error: "Unauthorized" }, 401);
   const userId = userData.user.id;
 
-  if (!ACCESS_TOKEN) return json({ error: "WHATSAPP_ACCESS_TOKEN ausente" }, 500);
 
   let body: any;
   try { body = await req.json(); } catch { return json({ error: "Bad JSON" }, 400); }
@@ -30,17 +29,24 @@ Deno.serve(async (req) => {
   if (!broadcast_id) return json({ error: "broadcast_id obrigatório" }, 400);
 
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
+  const { data: member } = await admin.from("sub_users").select("parent_user_id")
+    .eq("auth_user_id", userId).eq("ativo", true).maybeSingle();
+  const ownerId = member?.parent_user_id || userId;
 
-  const { data: bc, error: bErr } = await admin.from("wa_broadcasts").select("*").eq("id", broadcast_id).eq("user_id", userId).maybeSingle();
+  const { data: bc, error: bErr } = await admin.from("wa_broadcasts").select("*").eq("id", broadcast_id).eq("user_id", ownerId).maybeSingle();
   if (bErr || !bc) return json({ error: "Campanha não encontrada" }, 404);
   if (bc.status === "sending" || bc.status === "done") return json({ error: `Campanha já está ${bc.status}` }, 400);
 
-  const { data: cfg } = await admin.from("wa_config").select("phone_number_id").eq("user_id", userId).eq("active", true).maybeSingle();
+  const { data: cfg } = await admin.from("wa_config").select("phone_number_id").eq("user_id", ownerId).eq("active", true).maybeSingle();
   if (!cfg?.phone_number_id) return json({ error: "Nenhum número WhatsApp configurado" }, 400);
+
+  const token = await loadStationWhatsAppToken(admin, ownerId).catch(() => null);
+  if (!token) return json({ error: "WhatsApp da emissora não está conectado" }, 409);
+  const version = Deno.env.get("META_GRAPH_VERSION") || "v24.0";
 
   // Build audience
   const filter = bc.audience_filter || {};
-  let q = admin.from("wa_contacts").select("id, phone").eq("user_id", userId).eq("blocked", false);
+  let q = admin.from("wa_contacts").select("id, phone").eq("user_id", ownerId).eq("blocked", false);
   if (filter.tags && Array.isArray(filter.tags) && filter.tags.length) q = q.overlaps("tags", filter.tags);
   const { data: contacts } = await q;
   const list = contacts || [];
@@ -54,9 +60,9 @@ Deno.serve(async (req) => {
     let sent = 0, fail = 0;
     for (const c of list) {
       try {
-        const res = await fetch(`https://graph.facebook.com/v20.0/${cfg.phone_number_id}/messages`, {
+        const res = await fetch(`https://graph.facebook.com/${version}/${cfg.phone_number_id}/messages`, {
           method: "POST",
-          headers: { Authorization: `Bearer ${ACCESS_TOKEN}`, "Content-Type": "application/json" },
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             messaging_product: "whatsapp", to: c.phone, type: "text",
             text: { body: bc.message, preview_url: true },
@@ -65,7 +71,7 @@ Deno.serve(async (req) => {
         const data = await res.json();
         const waId = data?.messages?.[0]?.id ?? null;
         await admin.from("wa_messages").insert({
-          user_id: userId, contact_id: c.id, direction: "out", type: "text",
+          user_id: ownerId, contact_id: c.id, direction: "out", type: "text",
           body: bc.message, wa_message_id: waId,
           status: res.ok ? "sent" : "failed",
           error: res.ok ? null : (data?.error?.message || `HTTP ${res.status}`),

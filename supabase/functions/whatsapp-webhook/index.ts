@@ -2,6 +2,7 @@
 // GET  → verification handshake
 // POST → message events (validated via HMAC of x-hub-signature-256)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { loadStationWhatsAppToken } from "../_shared/whatsapp-credentials.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,14 +12,13 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const VERIFY_TOKEN = Deno.env.get("WHATSAPP_VERIFY_TOKEN") || "";
-const ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN") || "";
 const APP_SECRET = Deno.env.get("WHATSAPP_APP_SECRET") || "";
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
 
 // ---------- HMAC signature check ----------
 async function verifySignature(rawBody: string, header: string | null): Promise<boolean> {
-  if (!APP_SECRET) return true; // if not set yet, don't block during setup
+  if (!APP_SECRET) return false; // fail closed: never accept unsigned webhooks
   if (!header?.startsWith("sha256=")) return false;
   const expected = header.slice(7);
   const key = await crypto.subtle.importKey(
@@ -31,11 +31,13 @@ async function verifySignature(rawBody: string, header: string | null): Promise<
 }
 
 // ---------- Send helper (used by flow runner) ----------
-async function sendText(phoneNumberId: string, to: string, text: string) {
-  if (!ACCESS_TOKEN) { console.warn("No WHATSAPP_ACCESS_TOKEN configured"); return null; }
-  const res = await fetch(`https://graph.facebook.com/v20.0/${phoneNumberId}/messages`, {
+async function sendText(userId: string, phoneNumberId: string, to: string, text: string) {
+  const token = await loadStationWhatsAppToken(admin, userId).catch(() => null);
+  if (!token) { console.warn("No WhatsApp business token for station"); return null; }
+  const version = Deno.env.get("META_GRAPH_VERSION") || "v24.0";
+  const res = await fetch(`https://graph.facebook.com/${version}/${phoneNumberId}/messages`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${ACCESS_TOKEN}`, "Content-Type": "application/json" },
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       messaging_product: "whatsapp",
       to,
@@ -144,7 +146,7 @@ async function runFlow(opts: {
 }
 
 async function sendAndLog(userId: string, phoneNumberId: string, contact: any, body: string) {
-  const resp = await sendText(phoneNumberId, contact.phone, body);
+  const resp = await sendText(userId, phoneNumberId, contact.phone, body);
   const waId = resp?.messages?.[0]?.id ?? null;
   await admin.from("wa_messages").insert({
     user_id: userId,
