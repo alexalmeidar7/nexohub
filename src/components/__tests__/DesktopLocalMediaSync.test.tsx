@@ -11,6 +11,7 @@ vi.mock("@/lib/clientAuthAccounts", () => ({ findClientAccountById: () => null }
 vi.mock("@/lib/desktopLocalXml", () => ({ localizeXmlImageUrls: mocks.localize }));
 vi.mock("@/lib/desktopPromotionBanners", () => ({
   cachePromotionBanners: vi.fn().mockResolvedValue({ failed: [] }), rotateDesktopBanner: vi.fn().mockResolvedValue(undefined),
+  hasRotatingPromotionBanners: vi.fn().mockReturnValue(false),
   saveDesktopXml: (...args: unknown[]) => mocks.save(...args), BANNER_DURATION_MS: 5000,
 }));
 vi.mock("@/lib/ownedRealtimeChannel", () => ({ createOwnedRealtimeChannel: () => mocks.channel }));
