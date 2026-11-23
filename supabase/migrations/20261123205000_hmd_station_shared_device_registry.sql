@@ -85,7 +85,7 @@ create or replace function public.housemix_rename_station_device(
   p_station_id uuid, p_device_id uuid, p_display_name text
 )
 returns void language plpgsql security definer set search_path = ''
-as $
+as $$
 declare v_name text := btrim(coalesce(p_display_name, ''));
 begin
   if not public.housemix_is_station_member(p_station_id) then
@@ -100,7 +100,7 @@ begin
       and (registered_by=auth.uid() or auth.uid()=p_station_id);
   if not found then raise exception 'device_rename_denied' using errcode='42501'; end if;
 end;
-$;
+$$;
 revoke all on function public.housemix_rename_station_device(uuid,uuid,text) from public;
 grant execute on function public.housemix_rename_station_device(uuid,uuid,text) to authenticated;
 
