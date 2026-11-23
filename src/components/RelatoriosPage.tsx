@@ -349,7 +349,7 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
       }
       await poll();
       if (cancelled) return;
-      interval = setInterval(() => { void poll(); }, 30_000);
+      interval = setInterval(() => { void poll(); }, 60_000);
     };
     void initialize();
     return () => {
@@ -652,7 +652,7 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
                     <div className="rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-white p-4">
                       <div className="mb-3 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-wider text-emerald-700"><Radio size={15} /> Audiência ao vivo · programa no ar</div>
                       {liveAudience ? <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-                        <div className="min-w-0 flex-1"><div className="text-lg font-black text-slate-900">{liveAudience.program}</div><div className="mt-1 text-[10px] text-slate-500">{liveAudience.configured ? `Atualizado às ${new Date(liveAudience.updatedAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })} · atualização automática a cada 30 segundos` : "Cadastre as URLs dos streamings de áudio e/ou vídeo em Configurações para iniciar a leitura."}</div></div>
+                        <div className="min-w-0 flex-1"><div className="text-lg font-black text-slate-900">{liveAudience.program}</div><div className="mt-1 text-[10px] text-slate-500">{liveAudience.configured ? `Atualizado às ${new Date(liveAudience.updatedAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })} · atualização automática a cada minuto` : "Cadastre as URLs dos streamings de áudio e/ou vídeo em Configurações para iniciar a leitura."}</div></div>
                         <div className="grid grid-cols-3 gap-2 lg:min-w-[390px]">
                           <div className="rounded-xl border border-white bg-white px-3 py-2"><div className="text-[9px] font-bold uppercase text-slate-400">Áudio</div><div className="mt-1 text-xl font-black text-blue-700">{liveAudience.audio === null ? "—" : liveAudience.audio.toLocaleString("pt-BR")}</div></div>
                           <div className="rounded-xl border border-white bg-white px-3 py-2"><div className="text-[9px] font-bold uppercase text-slate-400">Vídeo</div><div className="mt-1 text-xl font-black text-violet-700">{liveAudience.video === null ? "—" : liveAudience.video.toLocaleString("pt-BR")}</div></div>

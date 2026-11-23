@@ -40,6 +40,6 @@ jobs:
           PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
         run: |
           set -euo pipefail
-          for function_name in serve-xml-geral serve-xml-tempo serve-xml-roteiro-estudio serve-xml-cenarios-estudio serve-xml-broadcast serve-xml-vmix-live serve-xml-logos serve-xml-enquete serve-xml-batalha serve-xml-quiz collect-audience update-weather-xml public-cenario-data public-player-data get-music-curiosity; do
+          for function_name in serve-xml-geral serve-xml-tempo serve-xml-roteiro-estudio serve-xml-cenarios-estudio serve-xml-broadcast serve-xml-vmix-live serve-xml-logos serve-xml-enquete serve-xml-batalha serve-xml-quiz collect-audience count-stream-listeners count-video-viewers update-weather-xml public-cenario-data public-player-data get-music-curiosity; do
             supabase functions deploy "$function_name" --project-ref "$PROJECT_REF" --use-api
           done

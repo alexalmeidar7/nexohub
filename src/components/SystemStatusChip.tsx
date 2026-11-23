@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle2, AlertCircle, Bell, ArrowUpFromLine, ArrowDownToLine, Database } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { dismissStatusNotice, useActivityStatus, type StatusTone } from "@/lib/activityStatus";
@@ -73,9 +74,20 @@ export default function SystemStatusChip() {
           "background-color 300ms ease, border-color 300ms ease, box-shadow 300ms ease",
       }}
     >
-      <span className="inline-flex min-w-0 flex-1 items-center gap-2">
-        <Icon className={`w-3.5 h-3.5 shrink-0 ${pulse ? "animate-pulse" : "opacity-80"}`} />
-        <span className="min-w-0 truncate" style={{ opacity: tone === "idle" ? 0.75 : 1 }}>{text}</span>
+      <span className="relative flex min-w-0 flex-1 items-center overflow-hidden">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.span
+            key={`${tone}:${text}`}
+            className="inline-flex min-w-0 w-full items-center gap-2"
+            initial={{ opacity: 0, x: 8 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -8 }}
+            transition={{ duration: 0.18, ease: "easeInOut" }}
+          >
+            <Icon className={`w-3.5 h-3.5 shrink-0 ${pulse ? "animate-pulse" : "opacity-80"}`} />
+            <span className="min-w-0 truncate" style={{ opacity: tone === "idle" ? 0.75 : 1 }}>{text}</span>
+          </motion.span>
+        </AnimatePresence>
       </span>
     </div>
   );
