@@ -34,6 +34,7 @@ interface Window {
     openExternal: (url: string) => Promise<boolean>;
     onPlayerOAuthCallback: (callback: (url: string) => void) => () => void;
     getAppVersion: () => Promise<string>;
+    getDeviceIdentity?: () => Promise<{ deviceId: string; deviceName: string }>;
     getLanRole?: (stationId: string) => Promise<{selected:"principal"|"secondary"; effective:"cloud"|"lan"; lanActive:boolean; transport:string; message:string}>;
     setLanRole?: (stationId:string, role:"principal"|"secondary") => Promise<{selected:"principal"|"secondary"; effective:"cloud"|"lan"; lanActive:boolean; transport:string; message:string}>;
     onLanRoleChanged?: (callback:(status:{stationId:string;selected:"principal"|"secondary";effective:"cloud"|"lan";lanActive:boolean;transport:string;message:string})=>void)=>()=>void;
