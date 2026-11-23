@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserSlug } from "@/hooks/useUserSlug";
 import { findClientAccountById } from "@/lib/clientAuthAccounts";
 import { localizeXmlImageUrls } from "@/lib/desktopLocalXml";
-import { cachePromotionBanners, rotateDesktopBanner, saveDesktopXml, BANNER_DURATION_MS, type PromotionBanner } from "@/lib/desktopPromotionBanners";
+import { cachePromotionBanners, rotateDesktopBanner, hasRotatingPromotionBanners, saveDesktopXml, BANNER_DURATION_MS, type PromotionBanner } from "@/lib/desktopPromotionBanners";
 import { createOwnedRealtimeChannel } from "@/lib/ownedRealtimeChannel";
 import { createDesktopXmlRefresh } from "@/lib/desktopXmlRefresh";
 import { MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
@@ -56,7 +56,10 @@ export default function DesktopLocalMediaSync() {
     let lastWarning = "";
     const rotate = async () => {
       try {
-        await Promise.all(["broadcast.xml", "geral.xml"].map(file => rotateDesktopBanner(desktop, slug, file).catch(() => {})));
+        if (hasRotatingPromotionBanners(slug)) {
+          await Promise.all(["broadcast.xml", "geral.xml"].map(file =>
+            rotateDesktopBanner(desktop, slug, file).catch(() => {})));
+        }
       } finally {
         if (!stopped) rotationTimer = setTimeout(() => void rotate(), BANNER_DURATION_MS - Date.now() % BANNER_DURATION_MS);
       }

@@ -1,6 +1,33 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
+// Transport-level events come from the native Desktop bridge only. These are
+// local filesystem operations, NOT cloud synchronization or Supabase writes.
+const activitySubscribers = new Set();
+let activitySeq = 0;
+function dispatchLocalActivity(event) {
+  for (const listener of activitySubscribers) {
+    try { listener(event); } catch { /* one listener cannot break a file operation */ }
+  }
+}
+ipcRenderer.on("housemix:local-activity", (_event, activity) => dispatchLocalActivity(activity));
+async function trackedLocalInvoke(operation, channel, ...args) {
+  const id = "native-" + ++activitySeq;
+  dispatchLocalActivity({ id, phase: "start", operation });
+  try {
+    const value = await ipcRenderer.invoke(channel, ...args);
+    dispatchLocalActivity({ id, phase: "end", operation, ok: true });
+    return value;
+  } catch (error) {
+    dispatchLocalActivity({ id, phase: "end", operation, ok: false });
+    throw error;
+  }
+}
 contextBridge.exposeInMainWorld("houseMixDesktop", Object.freeze({
+  onLocalActivity: (callback) => {
+    if (typeof callback !== "function") return () => {};
+    activitySubscribers.add(callback);
+    return () => activitySubscribers.delete(callback);
+  },
   isDesktop: true,
   fetchVmixApi: (base, apiPath, username, password) => ipcRenderer.invoke("housemix:vmix-api", base, apiPath, username, password),
   platform: process.platform,
@@ -25,11 +52,11 @@ contextBridge.exposeInMainWorld("houseMixDesktop", Object.freeze({
   initializeLocalAssets: (slug) => ipcRenderer.invoke("housemix:assets-init", slug),
   getXmlPath: (slug, filename) => ipcRenderer.invoke("housemix:xml-path", slug, filename),
   saveXml: (slug, filename, content) => ipcRenderer.invoke("housemix:xml-save", slug, filename, content),
-  readXml: (slug, filename) => ipcRenderer.invoke("housemix:xml-read", slug, filename),
+  readXml: (slug, filename) => trackedLocalInvoke("read", "housemix:xml-read", slug, filename),
   cacheImage: (url, hint, slug, refresh = false) => ipcRenderer.invoke("housemix:image-cache", url, hint, slug, refresh),
   cacheImageFileUrl: (url, hint, slug) => ipcRenderer.invoke("housemix:image-cache-file-url", url, hint, slug),
-  getCachedImageFileUrl: (url, hint, slug) => ipcRenderer.invoke("housemix:image-cached-file-url", url, hint, slug),
-  saveLocalImage: (slug, bytes, contentType, hint) => ipcRenderer.invoke("housemix:image-save-local", slug, bytes, contentType, hint),
+  getCachedImageFileUrl: (url, hint, slug) => trackedLocalInvoke("read", "housemix:image-cached-file-url", url, hint, slug),
+  saveLocalImage: (slug, bytes, contentType, hint) => trackedLocalInvoke("write", "housemix:image-save-local", slug, bytes, contentType, hint),
   getWindowState: () => ipcRenderer.invoke("housemix:window-state"),
   toggleFullscreen: () => ipcRenderer.invoke("housemix:window-fullscreen")
 }));

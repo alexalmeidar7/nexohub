@@ -1071,7 +1071,11 @@ export default function PromocoesKiosk() {
 
     const load = isPublicMode ? loadPublic : loadAuth;
     load().finally(() => setLoading(false));
-    const interval = setInterval(load, 10000);
+    // Realtime events drive refresh. Ten-minute fallback only while visible
+    // protects users if a Realtime notification is missed.
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") void load();
+    }, 10 * 60_000);
     // Atualização instantânea: qualquer alteração nas tabelas da página recarrega do banco.
     let debounce: ReturnType<typeof setTimeout> | null = null;
     const trigger = () => { if (debounce) clearTimeout(debounce); debounce = setTimeout(() => { load(); }, 400); };
@@ -1081,6 +1085,7 @@ export default function PromocoesKiosk() {
       .on("postgres_changes", { event: "*", schema: "public", table: "promocoes" }, trigger)
       .on("postgres_changes", { event: "*", schema: "public", table: "programas" }, trigger)
       .on("postgres_changes", { event: "*", schema: "public", table: "logos_patrocinadores" }, trigger)
+
       .subscribe();
     const onVisible = () => { if (document.visibilityState === "visible") load(); };
     document.addEventListener("visibilitychange", onVisible);

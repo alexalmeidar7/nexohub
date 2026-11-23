@@ -29,6 +29,15 @@ function readBanners(slug: string): LocalBanner[] {
   return [];
 }
 
+/** The 5-second disk timer is needed only for multiple eligible local banners. */
+export function hasRotatingPromotionBanners(slug: string, now = Date.now()) {
+  const today = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(now);
+  return readBanners(slug).filter(b => (!b.start || b.start <= today) &&
+    (!b.end || b.end >= today)).length > 1;
+}
+
 /** Downloads every registered image; only dedicated Banner L images enter the loop. */
 export async function cachePromotionBanners(
   promotions: PromotionBanner[], ownerId: string, slug: string,
@@ -70,7 +79,10 @@ export async function cachePromotionBanners(
   }));
   banners.sort((a, b) => a.id.localeCompare(b.id));
   snapshots.set(slug, banners);
-  try { localStorage.setItem(key(slug), JSON.stringify(banners)); } catch { /* Keep memory snapshot. */ }
+  try {
+    const serialized = JSON.stringify(banners);
+    if (localStorage.getItem(key(slug)) !== serialized) localStorage.setItem(key(slug), serialized);
+  } catch { /* Keep memory snapshot. */ }
   return { registered: rows.filter(p => p.banner_l_url?.trim()).length, cached: banners.length, failed };
 }
 

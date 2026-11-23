@@ -68,10 +68,12 @@ export async function mergeUserDashboardItems(userId: string, patch: JsonRecord)
       throw readError;
     }
 
-    const mergedDashboardItems = deepMerge(
-      normalizeDashboardItems(existing?.dashboard_items),
-      patch,
-    );
+    const before = normalizeDashboardItems(existing?.dashboard_items);
+    const mergedDashboardItems = deepMerge(before, patch);
+
+    // Same JSON = no actual database change. Avoid bumping updated_at,
+    // generating a Realtime event and invalidating every reader cache.
+    if (existing && JSON.stringify(before) === JSON.stringify(mergedDashboardItems)) return;
 
     const nowIso = new Date().toISOString();
 

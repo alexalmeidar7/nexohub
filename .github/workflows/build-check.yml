@@ -38,6 +38,12 @@ jobs:
           node --check infra/offline-first/api/local-operator-routes.mjs
           node --test infra/offline-first/api/tests/local-operator-password.test.mjs
 
+      - name: Testar gravação local somente quando XML muda
+        run: node --test desktop/local-xml-write.test.cjs
+
+      - name: Testar identificação e leitura/gravação por origem
+        run: bunx vitest run src/lib/activityStatus.test.ts src/lib/userSettings.test.ts src/lib/desktopPromotionBanners.test.ts
+
       - name: Testar transporte remoto do Desktop
         run: node --test desktop/runtime.test.cjs desktop/vmix-api.test.cjs desktop/ndi-bridge.test.cjs
 

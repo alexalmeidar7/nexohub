@@ -16,6 +16,12 @@ interface Window {
   showOpenFilePicker?: (options?: any) => Promise<FileSystemFileHandle[]>;
   houseMixDesktop?: {
     isDesktop: true;
+    onLocalActivity?: (callback: (event: {
+      id: string | number;
+      phase: "start" | "end";
+      operation: "read" | "write";
+      ok?: boolean;
+    }) => void) => () => void;
     fetchVmixApi?: (base: string, path: string, username?: string, password?: string) => Promise<string>;
     platform: string;
     version: string;
