@@ -55,8 +55,8 @@ Deno.serve(async (req) => {
     status: "sending", total_count: list.length, sent_count: 0, fail_count: 0, started_at: new Date().toISOString(),
   }).eq("id", broadcast_id);
 
-  // Fire in background so response returns fast
-  (async () => {
+  // Keep the sending task alive until completion in Supabase Edge Functions.
+  const delivery = (async () => {
     let sent = 0, fail = 0;
     for (const c of list) {
       try {
@@ -91,6 +91,9 @@ Deno.serve(async (req) => {
       status: "done", sent_count: sent, fail_count: fail, finished_at: new Date().toISOString(),
     }).eq("id", broadcast_id);
   })();
+  const edge = (globalThis as unknown as { EdgeRuntime?: { waitUntil: (promise: Promise<void>) => void } }).EdgeRuntime;
+  if (edge?.waitUntil) edge.waitUntil(delivery);
+  else await delivery; // Other runtimes must not silently discard queued work.
 
   return json({ ok: true, queued: list.length });
 });
