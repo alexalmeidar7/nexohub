@@ -261,24 +261,11 @@ export default function DesktopLocalMediaSync() {
     channel.subscribe(status => { if (status === "SUBSCRIBED") refresh.request(); });
     window.addEventListener("online", onChange);
     window.addEventListener(MUSIC_DATA_EVENT, onMusic);
-    // Weather XML is generated asynchronously by the existing cron job.
-    // Make one delayed refresh after the city is saved, instead of polling
-    // every few seconds or waiting for the 15-minute integrity repair.
-    let weatherRefreshTimer: ReturnType<typeof setTimeout> | undefined;
-    const onWeatherCitySaved = (event: Event) => {
-      const changedOwner = (event as CustomEvent<{ userId?: string }>).detail?.userId;
-      if (changedOwner !== ownerId) return;
-      clearTimeout(weatherRefreshTimer);
-      weatherRefreshTimer = setTimeout(() => { if (!stopped) refresh.request(); }, 90_000);
-    };
-    window.addEventListener("weather:city-saved", onWeatherCitySaved);
     refresh.request();
     return () => {
       stopped = true; refresh.stop();
-      clearTimeout(weatherRefreshTimer);
       window.removeEventListener("online", onChange);
       window.removeEventListener(MUSIC_DATA_EVENT, onMusic);
-      window.removeEventListener("weather:city-saved", onWeatherCitySaved);
       void supabase.removeChannel(channel);
     };
   }, [loading, ownerId, slug]);
