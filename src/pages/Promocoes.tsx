@@ -1085,8 +1085,7 @@ export default function PromocoesKiosk() {
       .on("postgres_changes", { event: "*", schema: "public", table: "promocoes" }, trigger)
       .on("postgres_changes", { event: "*", schema: "public", table: "programas" }, trigger)
       .on("postgres_changes", { event: "*", schema: "public", table: "logos_patrocinadores" }, trigger)
-      .on("postgres_changes", { event: "*", schema: "public", table: "user_settings" }, trigger)
-      .on("postgres_changes", { event: "*", schema: "public", table: "empresa_config" }, trigger)
+
       .subscribe();
     const onVisible = () => { if (document.visibilityState === "visible") load(); };
     document.addEventListener("visibilitychange", onVisible);
