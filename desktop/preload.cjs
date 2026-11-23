@@ -44,6 +44,14 @@ contextBridge.exposeInMainWorld("houseMixDesktop", Object.freeze({
     return () => ipcRenderer.removeListener("housemix:player-oauth-callback", listener);
   },
   getAppVersion: () => ipcRenderer.invoke("housemix:app-version"),
+  getLanRole: (stationId) => ipcRenderer.invoke("housemix:lan-role-get", stationId),
+  setLanRole: (stationId, role) => ipcRenderer.invoke("housemix:lan-role-set", stationId, role),
+  onLanRoleChanged: (callback) => {
+    if (typeof callback !== "function") return () => {};
+    const listener = (_event, status) => callback(status);
+    ipcRenderer.on("housemix:lan-role-changed", listener);
+    return () => ipcRenderer.removeListener("housemix:lan-role-changed", listener);
+  },
   getStartWithWindows: () => ipcRenderer.invoke("housemix:get-start-with-windows"),
   setStartWithWindows: (enabled) => ipcRenderer.invoke("housemix:set-start-with-windows", enabled),
   getUpdateStatus: () => ipcRenderer.invoke("housemix:update-status"),
