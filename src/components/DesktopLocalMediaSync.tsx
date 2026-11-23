@@ -7,6 +7,7 @@ import { localizeXmlImageUrls } from "@/lib/desktopLocalXml";
 import { cachePromotionBanners, rotateDesktopBanner, hasRotatingPromotionBanners, saveDesktopXml, BANNER_DURATION_MS, type PromotionBanner } from "@/lib/desktopPromotionBanners";
 import { createOwnedRealtimeChannel } from "@/lib/ownedRealtimeChannel";
 import { createDesktopXmlRefresh } from "@/lib/desktopXmlRefresh";
+import { expireAseguirXml, readAseguirPulseTimes } from "@/lib/desktopAseguirPulse";
 import { missingXmlPlaceholder, isUsableXml } from "@/lib/desktopXmlHealth";
 import { MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
 import { toast } from "sonner";
@@ -171,6 +172,9 @@ export default function DesktopLocalMediaSync() {
                 const localXml = await localizeXmlImageUrls(xml, slug, desktop, true);
                 if (stopped) return;
                 await saveDesktopXml(desktop, slug, filename, localXml);
+                if (filename === "broadcast.xml") {
+                  window.dispatchEvent(new CustomEvent("broadcast:xml-local-updated", { detail: { userId: ownerId, xml: localXml } }));
+                }
                 if (!localizing.has(filename)) {
                   localizing.add(filename);
                   void (async () => {
@@ -179,6 +183,9 @@ export default function DesktopLocalMediaSync() {
                       // Persist newly downloaded local file:// paths immediately, without
                       // waiting for another remote XML request or Realtime event.
                       await saveDesktopXml(desktop, slug, filename, downloaded);
+                      if (filename === "broadcast.xml") {
+                        window.dispatchEvent(new CustomEvent("broadcast:xml-local-updated", { detail: { userId: ownerId, xml: downloaded } }));
+                      }
                     }
                   })().catch(error => console.warn(`Local XML artwork ${filename}`, error))
                     .finally(() => localizing.delete(filename));
@@ -258,6 +265,91 @@ export default function DesktopLocalMediaSync() {
       window.removeEventListener("online", onChange);
       window.removeEventListener(MUSIC_DATA_EVENT, onMusic);
       void supabase.removeChannel(channel);
+    };
+  }, [loading, ownerId, slug]);
+
+  // Precise A Seguir delivery: refresh at the server's next event time, and
+  // clear the locally cached file at expiry, without polling Supabase per second.
+  useEffect(() => {
+    const desktop = window.houseMixDesktop;
+    if (!desktop || loading || !ownerId || !slug) return;
+    let stopped = false;
+    let nextTimer: ReturnType<typeof setTimeout> | undefined;
+    let clearTimer: ReturnType<typeof setTimeout> | undefined;
+    let fetchRunning = false;
+    let fetchPending = false;
+    const refreshPulse = async () => {
+      if (stopped || !navigator.onLine) return;
+      if (fetchRunning) { fetchPending = true; return; }
+      fetchRunning = true;
+      try {
+        const base = import.meta.env.VITE_SUPABASE_URL;
+        if (!base) return;
+        const response = await fetch(`${base}/functions/v1/serve-xml-broadcast?user_id=${encodeURIComponent(ownerId)}`, {
+          cache: "no-store", signal: AbortSignal.timeout(12000),
+        });
+        if (!response.ok) throw new Error("Broadcast HTTP " + response.status);
+        const xml = (await response.text()).trim();
+        if (!isUsableXml(xml)) throw new Error("Broadcast XML indisponível");
+        const localXml = await localizeXmlImageUrls(xml, slug, desktop, true);
+        if (stopped) return;
+        await saveDesktopXml(desktop, slug, "broadcast.xml", localXml);
+        scheduleFile(localXml);
+      } catch (error) {
+        if (!stopped) console.warn("Falha ao sincronizar disparo A Seguir", error);
+      } finally {
+        fetchRunning = false;
+        if (fetchPending && !stopped) {
+          fetchPending = false;
+          void refreshPulse();
+        }
+      }
+    };
+    const scheduleFile = (xml: string) => {
+      clearTimeout(nextTimer);
+      clearTimeout(clearTimer);
+      const { expiresAt, nextTriggerAt } = readAseguirPulseTimes(xml);
+      const now = Date.now();
+      if (expiresAt) {
+        const clear = async () => {
+          if (stopped) return;
+          const saved = await desktop.readXml(slug, "broadcast.xml");
+          if (!saved || readAseguirPulseTimes(saved).expiresAt !== expiresAt) return;
+          await saveDesktopXml(desktop, slug, "broadcast.xml", expireAseguirXml(saved));
+        };
+        if (expiresAt <= now) void clear().catch(console.warn);
+        else clearTimer = setTimeout(() => void clear().catch(console.warn),
+          Math.min(2_147_000_000, Math.max(0, expiresAt - now + 60)));
+      }
+      if (nextTriggerAt && nextTriggerAt > now) {
+        nextTimer = setTimeout(() => void refreshPulse(),
+          Math.min(2_147_000_000, nextTriggerAt - now + 120));
+      }
+    };
+    const onXml = (event: Event) => {
+      const detail = (event as CustomEvent<{ userId?: string; xml?: string }>).detail;
+      if (detail?.userId === ownerId && detail.xml) scheduleFile(detail.xml);
+    };
+    const onManual = (event: Event) => {
+      const detail = (event as CustomEvent<{ userId?: string }>).detail;
+      if (detail?.userId === ownerId) void refreshPulse();
+    };
+    const realtime = createOwnedRealtimeChannel(supabase.realtime, `desktop-aseguir-${ownerId}`)
+      .on("postgres_changes", {
+        event: "*", schema: "public", table: "broadcast_aseguir_pulses",
+        filter: `user_id=eq.${ownerId}`,
+      }, () => { void refreshPulse(); })
+      .subscribe();
+    window.addEventListener("broadcast:xml-local-updated", onXml);
+    window.addEventListener("broadcast:aseguir-triggered", onManual);
+    void desktop.readXml(slug, "broadcast.xml").then(xml => { if (!stopped && xml) scheduleFile(xml); }).catch(() => {});
+    return () => {
+      stopped = true;
+      clearTimeout(nextTimer);
+      clearTimeout(clearTimer);
+      window.removeEventListener("broadcast:xml-local-updated", onXml);
+      window.removeEventListener("broadcast:aseguir-triggered", onManual);
+      void supabase.removeChannel(realtime);
     };
   }, [loading, ownerId, slug]);
 
