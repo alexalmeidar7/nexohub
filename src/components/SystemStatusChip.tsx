@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { CheckCircle2, AlertCircle, Bell, ArrowUpFromLine, ArrowDownToLine, Database } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { dismissStatusNotice, useActivityStatus, type StatusTone } from "@/lib/activityStatus";
@@ -12,6 +12,7 @@ const TONES: Record<StatusTone, { bg: string; border: string; color: string }> =
 
 export default function SystemStatusChip() {
   const { notice, active, lastByOrigin } = useActivityStatus();
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     document.body.classList.add("nexo-status-chip-on");
@@ -78,11 +79,11 @@ export default function SystemStatusChip() {
         <AnimatePresence mode="wait" initial={false}>
           <motion.span
             key={`${tone}:${text}`}
-            className="inline-flex min-w-0 w-full items-center gap-2"
-            initial={{ opacity: 0, x: 8 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -8 }}
-            transition={{ duration: 0.18, ease: "easeInOut" }}
+            className="inline-flex min-w-0 w-full items-center gap-2 will-change-transform"
+            initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 6, x: 6, filter: "blur(3px)" }}
+            animate={reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0, x: 0, filter: "blur(0px)" }}
+            exit={reducedMotion ? { opacity: 0 } : { opacity: 0, y: -6, x: -6, filter: "blur(2px)" }}
+            transition={{ duration: reducedMotion ? 0.1 : 0.25, ease: [0.22, 1, 0.36, 1] }}
           >
             <Icon className={`w-3.5 h-3.5 shrink-0 ${pulse ? "animate-pulse" : "opacity-80"}`} />
             <span className="min-w-0 truncate" style={{ opacity: tone === "idle" ? 0.75 : 1 }}>{text}</span>
@@ -92,10 +93,10 @@ export default function SystemStatusChip() {
     </div>
   );
 
-  if (!showSyncTooltip) return chip;
-
+  // Keep Tooltip/Trigger mounted for every status; switching between a bare
+  // chip and a Tooltip remounts the animated content and hides exit transitions.
   return (
-    <Tooltip>
+    <Tooltip open={showSyncTooltip ? undefined : false}>
       <TooltipTrigger asChild>{chip}</TooltipTrigger>
       <TooltipContent side="bottom">
         {syncLabel.map(label => <p key={label} className="text-xs">{label}</p>)}
