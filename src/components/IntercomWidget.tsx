@@ -592,24 +592,26 @@ export default function IntercomWidget() {
   }, [listenerVolume]);
 
   const glassStyle = {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#0b1632",
     backdropFilter: "none",
     WebkitBackdropFilter: "none",
-    boxShadow: "0 10px 30px rgba(0,33,50,0.12), 0 0 0 1px rgba(0,191,240,0.08)",
-    border: "1px solid rgba(0,191,240,0.15)",
+    boxShadow: "0 12px 26px rgba(0,0,0,0.24)",
+    border: "1px solid rgba(72,117,255,0.28)",
+    color: "#f8fafc",
   } as const;
 
   const anchorStyle = (() => {
     const fallback = { top: 72, left: 72, width: 36, height: 36 };
     const rect = anchorRect ?? fallback;
     const viewportWidth = typeof window === "undefined" ? 1280 : window.innerWidth;
-    const isCompact = viewportWidth < 1024;
+    const viewportHeight = typeof window === "undefined" ? 768 : window.innerHeight;
     const panelWidth = 300;
     const gap = 8;
     const maxLeft = Math.max(gap, viewportWidth - panelWidth - gap);
-    const preferredLeft = isCompact ? rect.left : rect.left + rect.width + gap;
+    // Always open beneath the actual microphone button; never to the left of the page.
+    const preferredLeft = rect.left + rect.width / 2 - panelWidth / 2;
     return {
-      top: isCompact ? rect.top + rect.height + gap : rect.top,
+      top: Math.min(Math.max(gap, viewportHeight - 360), rect.top + rect.height + gap),
       left: Math.min(maxLeft, Math.max(gap, preferredLeft)),
       width: rect.width,
       height: rect.height,
@@ -725,15 +727,15 @@ export default function IntercomWidget() {
     return (
       <div
         id="intercom-selection-menu"
-        className="nexo-scope fixed z-[100] animate-in fade-in slide-in-from-left-2 zoom-in-95 duration-300 ease-out"
+        className="nexo-scope fixed z-[100] animate-in fade-in slide-in-from-top-2 duration-200 ease-out"
         style={{ top: anchorStyle.top, left: anchorStyle.left, width: 288 }}
       >
         <div
           className="overflow-hidden rounded-2xl border shadow-xl"
           style={{
-            background: "linear-gradient(145deg, #ffffff 0%, #f4fbfd 100%)",
-            borderColor: "rgba(0,191,240,0.22)",
-            boxShadow: "0 18px 42px rgba(0,33,50,0.18), 0 0 0 1px rgba(255,255,255,0.8) inset",
+            background: "#0b1632",
+            borderColor: "rgba(0,85,255,0.24)",
+            boxShadow: "0 12px 26px rgba(0,0,0,0.24)",
           }}
         >
           <div className="flex items-center justify-between px-4 pt-3 pb-2">
@@ -743,14 +745,14 @@ export default function IntercomWidget() {
                 <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-400" />
               </div>
               <div>
-                <p className="text-xs font-black tracking-tight text-[#002132]">Intercom</p>
-                <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[#002132]/45">Escolha como entrar</p>
+                <p className="text-xs font-black tracking-tight text-white">Intercom</p>
+                <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-white/55">Escolha como entrar</p>
               </div>
             </div>
             <button
               onClick={handleClose}
               aria-label="Fechar intercom"
-              className="flex h-8 w-8 items-center justify-center rounded-xl text-[#002132]/40 transition-all hover:scale-105 hover:bg-red-500/10 hover:text-red-500 active:scale-95"
+              className="flex h-8 w-8 items-center justify-center rounded-xl text-white/60 transition-colors hover:bg-white/10 hover:text-white"
               title="Fechar"
             >
               <X size={15} />
@@ -761,7 +763,7 @@ export default function IntercomWidget() {
             <button
               onClick={() => setRole("speaker")}
               className="group relative flex min-h-[112px] flex-col items-start justify-between overflow-hidden rounded-2xl p-3 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.98]"
-              style={{ background: "#0A2540", boxShadow: "0 8px 18px rgba(10,37,64,0.18)" }}
+              style={{ background: "#0055ff" }}
               title="Intercom — falar com ouvintes"
             >
               <span className="absolute -right-5 -top-5 h-20 w-20 rounded-full bg-[#00BFF0]/15 transition-transform duration-300 group-hover:scale-125" />
@@ -777,7 +779,7 @@ export default function IntercomWidget() {
             <button
               onClick={() => setRole("listener")}
               className="group relative flex min-h-[112px] flex-col items-start justify-between overflow-hidden rounded-2xl border p-3 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-[#00BFF0]/45 hover:shadow-lg active:scale-[0.98]"
-              style={{ background: "#ffffff", borderColor: "rgba(0,191,240,0.18)", boxShadow: "0 8px 18px rgba(0,33,50,0.06)" }}
+              style={{ background: "#152447", borderColor: "rgba(72,117,255,0.24)" }}
               title="Ouvinte — receber áudio"
             >
               <span className="absolute -right-5 -top-5 h-20 w-20 rounded-full bg-[#C6F03C]/25 transition-transform duration-300 group-hover:scale-125" />
@@ -785,15 +787,15 @@ export default function IntercomWidget() {
                 <Headphones size={17} />
               </span>
               <span className="relative">
-                <span className="block text-xs font-black text-[#002132]">Ouvir</span>
-                <span className="mt-0.5 block text-[9px] font-medium text-[#002132]/50">Receber o áudio ao vivo</span>
+                <span className="block text-xs font-black text-white">Ouvir</span>
+                <span className="mt-0.5 block text-[9px] font-medium text-white/60">Receber o áudio ao vivo</span>
               </span>
             </button>
           </div>
 
-          <div className="flex items-center gap-1.5 border-t px-4 py-2" style={{ borderColor: "rgba(0,33,50,0.07)", background: "rgba(0,191,240,0.035)" }}>
+          <div className="flex items-center gap-1.5 border-t px-4 py-2" style={{ borderColor: "rgba(255,255,255,0.09)", background: "rgba(0,85,255,0.09)" }}>
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            <span className="text-[9px] font-semibold text-[#002132]/45">Conexão segura em tempo real</span>
+            <span className="text-[9px] font-semibold text-white/65">Conexão em tempo real</span>
           </div>
         </div>
       </div>

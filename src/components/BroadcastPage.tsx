@@ -827,8 +827,8 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
         } catch {}
       }
 
-      // Merge the browser's last saved configuration as well: toggles must survive a reload
-      // even if the remote settings record is temporarily stale or sync has not finished.
+      // Remote settings are authoritative across multiple HMD/HMO sessions.
+      // Browser cache is only a fallback if the server has no saved configuration.
       let localBroadcastConfig: any = null;
       try {
         const localSaved =
@@ -838,10 +838,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
       } catch {}
 
       if (loadedConfig || localBroadcastConfig) {
-        const mergedConfig = {
-          ...(loadedConfig || {}),
-          ...(localBroadcastConfig || {}),
-        };
+        const mergedConfig = loadedConfig || localBroadcastConfig || {};
         setData((prev) => ({ ...defaultBroadcast, ...prev, ...mergedConfig }));
         setManualInserts(Array.isArray(mergedConfig.manualInserts) ? mergedConfig.manualInserts : []);
       }
@@ -1177,9 +1174,10 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
         const existing = (cur?.cenario_config && typeof cur.cenario_config === "object")
           ? cur.cenario_config as Record<string, any>
           : {};
+        // Never reapply an old renderer snapshot over a saved user toggle.
+        // In particular, the scheduled ticker must not turn "A Seguir" off.
         const broadcast = {
           ...(existing.broadcast || {}),
-          ...latestDataRef.current,
           tickerUpdatedAt: new Date().toISOString(),
         };
         const { error: saveError } = await supabase

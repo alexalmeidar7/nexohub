@@ -7,6 +7,7 @@ import { localizeXmlImageUrls } from "@/lib/desktopLocalXml";
 import { cachePromotionBanners, rotateDesktopBanner, hasRotatingPromotionBanners, saveDesktopXml, BANNER_DURATION_MS, type PromotionBanner } from "@/lib/desktopPromotionBanners";
 import { createOwnedRealtimeChannel } from "@/lib/ownedRealtimeChannel";
 import { createDesktopXmlRefresh } from "@/lib/desktopXmlRefresh";
+import { missingXmlPlaceholder, isUsableXml } from "@/lib/desktopXmlHealth";
 import { MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
 import { toast } from "sonner";
 
@@ -149,10 +150,22 @@ export default function DesktopLocalMediaSync() {
             if (extra) new URLSearchParams(extra).forEach((value, key) => params.set(key, value));
             if (fn === "serve-xml-roteiro-estudio") params.set("estudio", "Estudio FM");
             try {
-              const response = await fetch(`${supabaseBase}/functions/v1/${fn}?${params}`, { cache: "no-store", signal: AbortSignal.timeout(12000) });
-              if (!response.ok) throw new Error(`${filename}: HTTP ${response.status}`);
-              const xml = (await response.text()).trim();
-              if (xml.startsWith("<") && !xml.includes("<!DOCTYPE html>") && !xml.includes("<error>")) {
+              // Retry the specific missing/failing feed without delaying healthy files.
+              let xml = "";
+              for (let attempt = 0; attempt < 3; attempt++) {
+                if (stopped) return;
+                try {
+                  const response = await fetch(`${supabaseBase}/functions/v1/${fn}?${params}`, { cache: "no-store", signal: AbortSignal.timeout(12000) });
+                  if (!response.ok) throw new Error(`${filename}: HTTP ${response.status}`);
+                  xml = (await response.text()).trim();
+                  if (!isUsableXml(xml)) throw new Error(`${filename}: XML inválido ou indisponível`);
+                  break;
+                } catch (error) {
+                  if (attempt === 2) throw error;
+                  await new Promise(resolve => setTimeout(resolve, (attempt + 1) * 500));
+                }
+              }
+              if (isUsableXml(xml)) {
                 // Publish current text immediately using already-cached artwork.
                 // Slow/missing image downloads must never hold back program changes.
                 const localXml = await localizeXmlImageUrls(xml, slug, desktop, true);
@@ -172,8 +185,15 @@ export default function DesktopLocalMediaSync() {
                 }
               }
             } catch (error) {
-              // One unavailable feed must not freeze any other XML file.
-              if (!stopped) console.warn(`Local XML refresh failed: ${filename}`, error);
+              // Keep the last valid XML. On first installation create a recognizable
+              // safe placeholder so no expected path is silently missing.
+              if (!stopped) {
+                console.warn(`Local XML refresh failed: ${filename}`, error);
+                const current = await desktop.readXml(slug, filename).catch(() => null);
+                if (!isUsableXml(current)) {
+                  await saveDesktopXml(desktop, slug, filename, missingXmlPlaceholder(filename));
+                }
+              }
             }
           }));
         };

@@ -1143,8 +1143,10 @@ export default function HouseMixHeader({
                         : "bg-[#0055ff] hover:bg-[#0042cc] text-white"
                     }`}
                     title="Intercomunicador"
+                    data-intercom-anchor
+                    aria-label="Intercomunicador"
                   >
-                    <Radio className="w-3.5 h-3.5 text-white" />
+                    <Mic className="w-3.5 h-3.5 text-white" />
                     {(intercomState.talking || intercomState.receiving) && (
                       <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#10b981] border-2 border-white animate-pulse" />
                     )}
