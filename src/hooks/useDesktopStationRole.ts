@@ -38,7 +38,7 @@ export function useDesktopStationRole(stationId?: string | null): DesktopStation
         if (devices.error) throw devices.error;
         if (primary.error) throw primary.error;
         const resolved = resolveHmdBadge(
-          (devices.data || []) as StationDevice[], (primary.data as any)?.device_id || null, deviceId,
+          (devices.data || []) as unknown as StationDevice[], (primary.data as any)?.device_id || null, deviceId,
         );
         if (active) setStatus({ ready: true, ...resolved });
       } catch (error) {
