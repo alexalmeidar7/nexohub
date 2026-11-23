@@ -614,99 +614,185 @@ function BroadcastTab({ userId }: { userId: string }) {
   );
 }
 
-/* ------------------------- SETTINGS ------------------------- */
+/* ------------------ CONEXÃO WHATSAPP OFICIAL ------------------ */
+type MetaConnectStatus = {
+  ready: boolean; connected: boolean; pending_activation: boolean;
+  app_id: string; config_id: string; graph_version: string; display_phone: string;
+};
+const WHATSAPP_WEB_SETTINGS_URL = "https://housemix.nexobrasil.net/home?page=chatbot";
 function SettingsTab({ userId }: { userId: string }) {
-  const [cfg, setCfg] = useState<any>(null);
-  const [phoneNumberId, setPhoneNumberId] = useState("");
-  const [displayPhone, setDisplayPhone] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<MetaConnectStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const sdkRef = useRef(false);
+  const { user } = useAuth();
+  const canConfigure = !!userId && user?.id === userId;
 
-  const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/whatsapp-webhook`;
+  async function reload() {
+    if (!isUuid(userId)) { setLoading(false); return; }
+    setLoading(true);
+    const { data, error: loadError } = await supabase.functions.invoke(
+      "whatsapp-connect?owner_id=" + encodeURIComponent(userId), { method: "GET" },
+    );
+    if (loadError || !data) { setStatus(null); setError("Integração ainda não disponível. A configuração oficial da Meta precisa ser concluída."); }
+    else { setStatus(data as MetaConnectStatus); setError(""); }
+    setLoading(false);
+  }
+  useEffect(() => { void reload(); }, [userId]);
 
   useEffect(() => {
-    if (!userId || !isUuid(userId)) return;
-    (async () => {
-      const { data } = await supabase.from("wa_config").select("*").eq("user_id", userId).maybeSingle();
-      if (data) { setCfg(data); setPhoneNumberId(data.phone_number_id); setDisplayPhone(data.display_phone || ""); }
-    })();
-  }, [userId]);
+    if (!status?.ready || !status?.app_id || window.houseMixDesktop?.isDesktop) return;
+    const init = () => {
+      const fb = (window as any).FB;
+      if (!fb || sdkRef.current) return;
+      fb.init({ appId: status.app_id, autoLogAppEvents: false, xfbml: false, version: status.graph_version });
+      sdkRef.current = true;
+    };
+    (window as any).fbAsyncInit = init;
+    if ((window as any).FB) { init(); return; }
+    const existing = document.getElementById("housemix-meta-sdk");
+    if (existing) return;
+    const script = document.createElement("script");
+    script.id = "housemix-meta-sdk"; script.src = "https://connect.facebook.net/pt_BR/sdk.js";
+    script.async = true; script.defer = true; script.crossOrigin = "anonymous";
+    script.onerror = () => setError("Não foi possível carregar a autenticação da Meta. Verifique sua conexão.");
+    document.head.appendChild(script);
+  }, [status?.ready, status?.app_id, status?.graph_version]);
 
-  async function save() {
-    if (!phoneNumberId.trim() || !userId || !isUuid(userId)) return;
-    setSaving(true);
-    const payload = { user_id: userId, phone_number_id: phoneNumberId.trim(), display_phone: displayPhone.trim() || null, active: true };
-    const { error } = cfg
-      ? await supabase.from("wa_config").update(payload).eq("id", cfg.id)
-      : await supabase.from("wa_config").insert(payload);
-    if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
-    else { toast({ title: "Configuração salva ✓" }); const { data } = await supabase.from("wa_config").select("*").eq("user_id", userId).maybeSingle(); setCfg(data); }
-    setSaving(false);
+  function launch() {
+    if (!status?.ready || !canConfigure || busy) return;
+    if (window.houseMixDesktop?.isDesktop) {
+      void window.houseMixDesktop.openExternal(WHATSAPP_WEB_SETTINGS_URL);
+      toast({ title: "Conexão WhatsApp", description: "Conclua a autorização no navegador. Depois retorne ao HMD." });
+      return;
+    }
+    const fb = (window as any).FB;
+    if (!fb || !sdkRef.current) {
+      setError("A autenticação da Meta ainda não está carregada. Tente novamente.");
+      return;
+    }
+    setError(""); setBusy(true);
+    let code = "", waba = "", phoneId = "", coexistence = false, sent = false;
+    const cleanup = () => window.removeEventListener("message", onMessage);
+    const complete = async () => {
+      if (!code || !waba || !phoneId || sent) return;
+      sent = true; cleanup();
+      try {
+        const { data, error: connectError } = await supabase.functions.invoke("whatsapp-connect", {
+          body: { action: "finish", owner_id: userId, code, waba_id: waba, phone_number_id: phoneId, coexistence },
+        });
+        if (connectError || !data?.ok) throw new Error(data?.error || "A Meta não concluiu a vinculação.");
+        if (data.pending_activation) {
+          toast({ title: "Número autorizado", description: "Falta a ativação final do número na Meta." });
+        } else {
+          toast({ title: "WhatsApp conectado ✓", description: "O número da emissora foi vinculado com sucesso." });
+        }
+        await reload();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Não foi possível concluir a conexão.");
+      } finally { setBusy(false); }
+    };
+    const onMessage = (event: MessageEvent) => {
+      let host = "";
+      try { host = new URL(event.origin).hostname.toLowerCase(); } catch { return; }
+      if (host !== "facebook.com" && !host.endsWith(".facebook.com")) return;
+      let payload: any;
+      try { payload = typeof event.data === "string" ? JSON.parse(event.data) : event.data; } catch { return; }
+      if (payload?.type !== "WA_EMBEDDED_SIGNUP") return;
+      if (String(payload.event || "").startsWith("FINISH")) {
+        waba = String(payload.data?.waba_id || "");
+        phoneId = String(payload.data?.phone_number_id || "");
+        coexistence = payload.event === "FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING";
+        void complete();
+      } else if (payload.event === "CANCEL" || payload.event === "ERROR") {
+        cleanup(); setBusy(false);
+        setError("A autorização foi cancelada ou não foi concluída. Você pode tentar novamente.");
+      }
+    };
+    window.addEventListener("message", onMessage);
+    fb.login((response: any) => {
+      code = String(response?.authResponse?.code || "");
+      if (!code && !sent) {
+        cleanup(); setBusy(false);
+        setError("A Meta não autorizou o acesso. Tente novamente.");
+        return;
+      }
+      void complete();
+    }, {
+      config_id: status.config_id,
+      response_type: "code",
+      override_default_response_type: true,
+      extras: { setup: {} },
+    });
   }
-
+  async function manage(action: "activate" | "disconnect") {
+    if (!canConfigure || busy) return;
+    if (action === "disconnect" && !window.confirm("Desconectar o número WhatsApp desta emissora?")) return;
+    setBusy(true); setError("");
+    try {
+      const { data, error: requestError } = await supabase.functions.invoke("whatsapp-connect", {
+        body: { owner_id: userId, action },
+      });
+      if (requestError || !data?.ok) throw new Error(data?.error || "Não foi possível concluir.");
+      toast({ title: action === "activate" ? "WhatsApp ativado ✓" : "WhatsApp desconectado" });
+      await reload();
+    } catch (e) {
+      setError(action === "activate"
+        ? "A Meta ainda não concluiu o registro do número. Verifique a conta comercial ou tente conectar novamente."
+        : (e instanceof Error ? e.message : "Falha ao desconectar."));
+    } finally { setBusy(false); }
+  }
   return (
-    <div className="w-full max-w-none p-6">
-      <div className="text-lg font-bold mb-1" style={{ color: "#002132" }}>Configuração da integração</div>
-      <div className="text-xs mb-6" style={{ color: "#002132", opacity: 0.6 }}>
-        Passo a passo para conectar seu número WhatsApp Business à Meta Cloud API.
-      </div>
-
-      <div className="p-4 rounded-2xl mb-4" style={{ background: "#fff", border: "1px solid rgba(0,191,240,0.2)" }}>
-        <div className="text-xs font-bold mb-2" style={{ color: "#002132" }}>1. Configure o Webhook no Meta App</div>
-        <div className="text-[11px] mb-2" style={{ color: "#002132", opacity: 0.7 }}>
-          Acesse <b>developers.facebook.com</b> → Seu App → WhatsApp → Configuration → Webhooks. Cole:
+    <div className="mx-auto w-full max-w-3xl p-5 sm:p-8">
+      <div className="mb-6 flex items-center gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#0055ff]/10">
+          <MessageCircle size={22} className="text-[#0055ff]"/>
         </div>
-        <Field label="Callback URL" value={webhookUrl} />
-        <div className="text-[11px] mt-2 mb-1" style={{ color: "#002132", opacity: 0.7 }}>
-          Como <b>Verify Token</b>, cole o valor do secret <code>WHATSAPP_VERIFY_TOKEN</code> (gerado automaticamente aqui na Lovable).
-          Depois assine os eventos <b>messages</b> e <b>message_status</b>.
+        <div><h3 className="text-lg font-extrabold text-slate-900">Conectar WhatsApp</h3>
+          <p className="text-xs text-slate-500">Integração oficial com a Meta, sem configuração de webhooks ou tokens pelo usuário.</p>
         </div>
       </div>
-
-      <div className="p-4 rounded-2xl mb-4" style={{ background: "#fff", border: "1px solid rgba(0,191,240,0.2)" }}>
-        <div className="text-xs font-bold mb-2" style={{ color: "#002132" }}>2. Vincule seu número</div>
-        <div className="text-[11px] mb-3" style={{ color: "#002132", opacity: 0.7 }}>
-          Pegue o <b>Phone Number ID</b> em WhatsApp → API Setup.
+      <div className="rounded-2xl bg-white p-5 sm:p-6">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <div><span className="text-sm font-extrabold text-slate-900">WhatsApp Business da rádio</span>
+            <p className="mt-1 text-xs text-slate-500">{status?.display_phone || "Nenhum número vinculado"}</p></div>
+          <span className={`rounded-full px-3 py-1.5 text-[11px] font-semibold ${status?.connected ? "bg-green-50 text-green-700" : status?.pending_activation ? "bg-amber-50 text-amber-700" : "bg-slate-100 text-slate-600"}`}>
+            {loading ? "Verificando..." : status?.connected ? "Conectado" : status?.pending_activation ? "Ativação pendente" : "Não conectado"}
+          </span>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <div className="text-[10px] font-bold mb-1" style={{ color: "#002132" }}>Phone Number ID</div>
-            <input value={phoneNumberId} onChange={e => setPhoneNumberId(e.target.value)} placeholder="ex: 123456789012345"
-              className="w-full px-3 py-2 rounded-lg text-xs outline-none" style={{ background: "#D6F4FB", color: "#002132" }} />
-          </div>
-          <div>
-            <div className="text-[10px] font-bold mb-1" style={{ color: "#002132" }}>Número exibido (opcional)</div>
-            <input value={displayPhone} onChange={e => setDisplayPhone(e.target.value)} placeholder="ex: +55 11 99999-0000"
-              className="w-full px-3 py-2 rounded-lg text-xs outline-none" style={{ background: "#D6F4FB", color: "#002132" }} />
-          </div>
+        {!status?.connected && !status?.pending_activation && <div className="mb-5 space-y-3 text-sm text-slate-700">
+          <p><strong className="text-[#0055ff]">1.</strong> Clique em Conectar WhatsApp.</p>
+          <p><strong className="text-[#0055ff]">2.</strong> Entre na sua conta Meta e selecione o número da rádio.</p>
+          <p><strong className="text-[#0055ff]">3.</strong> Confirme a autorização e o número no celular, se solicitado.</p>
+          <p><strong className="text-[#0055ff]">4.</strong> As mensagens novas aparecerão na Caixa de Entrada após a ativação.</p>
+        </div>}
+        {!canConfigure && <p className="mb-4 text-xs text-amber-700">Somente a conta principal da emissora pode vincular ou desconectar o número.</p>}
+        {!status?.ready && !loading && <p className="mb-4 text-xs text-amber-700">O cadastro oficial da Meta ainda está em configuração. O botão será liberado quando estiver disponível.</p>}
+        {error && <p role="alert" className="mb-4 rounded-lg bg-red-50 p-3 text-xs text-red-700">{error}</p>}
+        <div className="flex flex-wrap gap-2">
+          {!status?.connected && !status?.pending_activation &&
+            <button type="button" disabled={loading || busy || !status?.ready || !canConfigure}
+              onClick={launch} className="flex min-h-11 items-center gap-2 rounded-xl bg-[#0055ff] px-5 text-sm font-bold text-white hover:bg-[#0047d7] disabled:cursor-not-allowed disabled:opacity-40">
+              {busy ? <Loader2 size={16} className="animate-spin"/> : <MessageCircle size={16}/>} Conectar WhatsApp
+            </button>}
+          {status?.pending_activation && <button type="button" disabled={busy || !canConfigure}
+            onClick={() => void manage("activate")} className="rounded-xl bg-[#0055ff] px-5 py-3 text-xs font-bold text-white disabled:opacity-50">
+            Concluir ativação
+          </button>}
+          {(status?.connected || status?.pending_activation) &&
+            <button type="button" disabled={busy || !canConfigure} onClick={() => void manage("disconnect")}
+              className="rounded-xl bg-slate-100 px-5 py-3 text-xs font-bold text-slate-700 disabled:opacity-50">Desconectar</button>}
+          <button type="button" onClick={() => void reload()} disabled={busy || loading}
+            className="rounded-xl bg-slate-100 px-4 py-3 text-xs font-semibold text-slate-600 disabled:opacity-50">
+            Atualizar status
+          </button>
         </div>
-        <button onClick={save} disabled={saving || !phoneNumberId.trim()}
-          className="mt-3 px-5 py-2 rounded-full text-xs font-bold flex items-center gap-1.5 disabled:opacity-50"
-          style={{ background: "#00BFF0", color: "#fff" }}>
-          {saving && <Loader2 size={12} className="animate-spin"/>} Salvar
-        </button>
       </div>
-
-      <div className="p-4 rounded-2xl" style={{ background: "#fff9e6", border: "1px solid #ffe097" }}>
-        <div className="text-xs font-bold mb-1" style={{ color: "#002132" }}>3. Secrets pendentes</div>
-        <div className="text-[11px]" style={{ color: "#002132" }}>
-          Preciso que você me forneça <b>WHATSAPP_ACCESS_TOKEN</b> (token permanente) e <b>WHATSAPP_APP_SECRET</b> (App Secret do seu App na Meta) —
-          me avise no chat que eu abro os campos seguros para você colar. Sem eles não conseguimos enviar nem validar mensagens recebidas.
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div className="text-[10px] font-bold mb-1" style={{ color: "#002132" }}>{label}</div>
-      <div className="flex gap-2">
-        <input readOnly value={value} className="flex-1 px-3 py-2 rounded-lg text-[11px] font-mono outline-none"
-          style={{ background: "#eafaff", color: "#002132" }} />
-        <button onClick={() => { navigator.clipboard.writeText(value); toast({ title: "Copiado ✓" }); }}
-          className="px-3 py-2 rounded-lg text-xs font-bold" style={{ background: "#00BFF0", color: "#fff" }}>Copiar</button>
-      </div>
+      <p className="mt-4 text-xs leading-relaxed text-slate-500">
+        A autorização ocorre pela própria Meta. A conta comercial pode precisar de validação, registro do número e método de pagamento.
+        Mensagens podem ter custos conforme as regras da plataforma.
+      </p>
     </div>
   );
 }
