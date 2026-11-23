@@ -648,11 +648,9 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
           }, { onConflict: "user_id" });
         }
       } else {
-        await supabase.from("user_settings").upsert({
-          user_id: dataUserId,
-          music_xml_url: DEFAULT_XML_URL,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: "user_id" });
+        // A URL padrão é vazia: não criar/atualizar user_settings apenas
+        // porque a página foi aberta sem URL de origem online.
+        setXmlUrl(DEFAULT_XML_URL);
       }
       // Restore local filename from DB (persists across computers)
       const di = data?.dashboard_items as any;
@@ -1405,8 +1403,8 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
       // Storage RLS requires foldername[1] = auth.uid() for INSERT and
       // owner = auth.uid() for UPDATE. Prefix path with the authenticated
       // user's id (independent of effectiveUserId used for multi-tenant reads).
-      const { data: authData } = await supabase.auth.getUser();
-      const authUid = authData?.user?.id;
+      const { data: authData } = await supabase.auth.getSession();
+      const authUid = authData?.session?.user?.id;
       if (!authUid) throw new Error("not authenticated");
       const utf8Blob = new Blob([new TextEncoder().encode(text)], { type: "application/xml" });
       const filePath = `${authUid}/local-xml-${uid}.xml`;
@@ -1557,6 +1555,7 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
     let isCancelled = false;
     const restoreHandle = async () => {
       if (window.houseMixDesktop?.getLocalMusicSource && dataUserId) {
+        nativeSourceRef.current = false;
         try {
           const local = await window.houseMixDesktop.getLocalMusicSource(dataUserId);
           if (isCancelled || !local.configured) return;
@@ -1770,8 +1769,8 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
         // Ler somente o arquivo sincronizado pelo leitor no Storage.
         // (O antigo caminho estático /xml/<slug>/local.xml podia estar congelado
         // com uma faixa antiga e era a causa da alternância.)
-        const { data: authData } = await supabase.auth.getUser();
-        const authUid = authData?.user?.id || dataUserId;
+        const { data: authData } = await supabase.auth.getSession();
+        const authUid = authData?.session?.user?.id || dataUserId;
         const candidates = [
           `${authUid}/local-xml-${dataUserId}.xml`,
           `local-xml-${dataUserId}.xml`,
