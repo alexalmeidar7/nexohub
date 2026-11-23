@@ -86,6 +86,7 @@ jobs:
           apply_migration "20261123182000" "restore_audience_collector_official" "supabase/migrations/20261123182000_restore_audience_collector_official.sql"
           apply_migration "20261123184500" "broadcast_aseguir_45_second_pulses" "supabase/migrations/20261123184500_broadcast_aseguir_45_second_pulses.sql"
           apply_migration "20261123191500" "whatsapp_business_onboarding_credentials" "supabase/migrations/20261123191500_whatsapp_business_onboarding_credentials.sql"
+          apply_migration "20261123205000" "hmd_station_shared_device_registry" "supabase/migrations/20261123205000_hmd_station_shared_device_registry.sql"
 
       - name: Deploy XML Edge Functions
         env:

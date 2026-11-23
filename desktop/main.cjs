@@ -13,6 +13,7 @@ const { transcribeLocalAudio } = require("./local-whisper.cjs");
 const { appendTranscription, listTranscriptions } = require("./local-transcription-store.cjs");
 const { writeXmlIfChanged } = require("./local-xml-write.cjs");
 const { readStationRole, writeStationRole } = require("./lan-role-preference.cjs");
+const { getDesktopDeviceIdentity } = require("./device-identity.cjs");
 const { createLocalMusicSourceManager } = require("./local-music-source.cjs");
 const { nextDailyInstallAt, saveVmixUpdateRestore, takeVmixUpdateRestore } = require("./auto-update-schedule.cjs");
 
@@ -373,6 +374,11 @@ function configureDesktopIpc() {
     return getLocalMusicSources().read(stationId);
   });
   ipcMain.handle("housemix:app-version", () => app.getVersion());
+  // Native identity is stable per installation; never use a browser-generated ID.
+  ipcMain.handle("housemix:device-identity", (event) => {
+    if (!isTrustedDesktopRenderer(event)) throw new Error("untrusted_renderer");
+    return getDesktopDeviceIdentity(app.getPath("userData"));
+  });
   ipcMain.handle("housemix:lan-role-get", (_event, stationId) => readStationRole(app.getPath("userData"), stationId));
   ipcMain.handle("housemix:lan-role-set", (_event, stationId, role) => {
     const status = writeStationRole(app.getPath("userData"), stationId, role);

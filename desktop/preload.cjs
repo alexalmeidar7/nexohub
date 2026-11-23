@@ -44,6 +44,7 @@ contextBridge.exposeInMainWorld("houseMixDesktop", Object.freeze({
     return () => ipcRenderer.removeListener("housemix:player-oauth-callback", listener);
   },
   getAppVersion: () => ipcRenderer.invoke("housemix:app-version"),
+  getDeviceIdentity: () => ipcRenderer.invoke("housemix:device-identity"),
   getLanRole: (stationId) => ipcRenderer.invoke("housemix:lan-role-get", stationId),
   setLanRole: (stationId, role) => ipcRenderer.invoke("housemix:lan-role-set", stationId, role),
   onLanRoleChanged: (callback) => {
