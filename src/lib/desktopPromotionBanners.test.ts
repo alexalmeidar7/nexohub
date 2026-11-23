@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { applyLocalPromotionBanner, cachePromotionBanners, rotateDesktopBanner, saveDesktopXml } from "./desktopPromotionBanners";
+import { applyLocalPromotionBanner, cachePromotionBanners, hasRotatingPromotionBanners, rotateDesktopBanner, saveDesktopXml } from "./desktopPromotionBanners";
 
 const owner = "station-owner";
 const date = Date.parse("2026-11-16T15:00:00Z");
@@ -26,6 +26,16 @@ describe("desktop promotion banners", () => {
     expect(frames.every(xml => xml.includes("file:///C:/House%20Mix/imagens/banners/"))).toBe(true);
     expect(applyLocalPromotionBanner("<items><banner_l/></items>", "all-ten", date + 4999)).toBe(frames[0]);
     expect(applyLocalPromotionBanner("<items><banner_l/></items>", "all-ten", date + 50000)).toBe(frames[0]);
+  });
+
+  it("does not poll the local XML every five seconds if there are zero or one active banners", async () => {
+    const desktop = bridge();
+    await cachePromotionBanners([], owner, "empty-rotation", desktop);
+    expect(hasRotatingPromotionBanners("empty-rotation", date)).toBe(false);
+    await cachePromotionBanners(promos(1), owner, "single-rotation", desktop);
+    expect(hasRotatingPromotionBanners("single-rotation", date)).toBe(false);
+    await cachePromotionBanners(promos(2), owner, "multi-rotation", desktop);
+    expect(hasRotatingPromotionBanners("multi-rotation", date)).toBe(true);
   });
 
   it("skips inaccessible files without empty frames, isolates tenants and excludes expired promotions", async () => {
