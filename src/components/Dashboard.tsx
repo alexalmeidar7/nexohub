@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, Suspense, startTransition } f
 import type React from "react";
 
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe, Play, Pause, Gift, Siren, Layers, Building2, Bot, Smartphone, Palette, CloudRain, DollarSign, Package, MessageCircle, DatabaseBackup } from "lucide-react";
+import { Link2, Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe, Play, Pause, Gift, Siren, Layers, Building2, Bot, Smartphone, Palette, CloudRain, DollarSign, Package, MessageCircle, DatabaseBackup } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -90,6 +90,7 @@ const FloatingMiniPlayer = lazyRetry(() => import("./FloatingMiniPlayer"));
 const FloatingOnAirPresenter = lazyRetry(() => import("./FloatingOnAirPresenter"));
 const BackupPage = lazyRetry(() => import("./BackupPage"));
 const NexoPluginsPage = lazyRetry(() => import("./NexoPluginsPage"));
+const LinkBioPage = lazyRetry(() => import("./LinkBioPage"));
 
 
 
@@ -104,7 +105,7 @@ import HouseMixHeader from "./HouseMixHeader";
 import HouseMixWindow from "./HouseMixWindow";
 import ServerClock from "./ServerClock";
 
-type Page = "nexoplugins" | "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz" | "clientes" | "modulos" | "subusuarios" | "pacotes" | "admininfomusic" | "financeiro" | "chatbot" | "housemix" | "produtos" | "backup" | "relatorios";
+type Page = "linkbio" | "nexoplugins" | "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz" | "clientes" | "modulos" | "subusuarios" | "pacotes" | "admininfomusic" | "financeiro" | "chatbot" | "housemix" | "produtos" | "backup" | "relatorios";
 
 // Sidebar structured menu
 interface MenuChild {
@@ -179,6 +180,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: Scissors, label: "editor de vídeo", page: "cortevideo" },
       { icon: DatabaseBackup, label: "backup / importar", page: "backup" },
       { icon: Package, label: "downloads", page: "nexoplugins" },
+      { icon: Link2, label: "link bio", page: "linkbio" },
       { icon: ExternalLink, label: "abrir TP externo", page: undefined as unknown as Page },
     ]
   },
@@ -323,6 +325,7 @@ const KNOWN_MODULE_KEYS = new Set([...collectModuleKeys(adminModulosGroups as an
 
 const pageTitle: Record<Page, string> = {
   nexoplugins: "Downloads",
+  linkbio: "Ferramentas — Link Bio",
   dashboard: "Home",
   previsao: "Cidade Tempo",
   noticias: "Roteiro de Programa",
@@ -381,6 +384,7 @@ const HOUSEMIX_MODULE_DISPLAY_NAMES: Partial<Record<Page, string>> = {
   quiz: "Quiz",
   cortevideo: "Editor de Vídeo",
   nexoplugins: "Downloads",
+  linkbio: "Link Bio",
   sorteios: "Sorteios",
   blitz: "Blitz Promocionais",
   noticias: "Roteiro de Programa",
@@ -487,6 +491,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
 
   // Modo Janela para House Mix (Cadastros, Sorteios, Blitz, Roteiro, Música no Ar, Agenda, Gestor de Site, Player, Comercial, vMix, Ferramentas, Configurações, Chatbot)
   const HOUSEMIX_WINDOW_PAGES: Page[] = [
+    "linkbio",
     "nexoplugins",
     "clientes",
     "apresentadores",
@@ -1553,7 +1558,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
                   currentPage === "agenda" ? "agenda" :
                   (currentPage === "dashboard" && isAdmin) ? "dashboard" :
                   (currentPage === "curtidas" || currentPage === "fans") ? "table" :
-                  ["apresentadores", "programas", "ouvintes", "noticias", "sorteios", "promocoes", "testemunhais", "shopping", "preroll", "cortevideo", "enquete", "quiz", "tp", "configtelapromo", "site"].includes(currentPage) ? "form" :
+                  ["apresentadores", "programas", "ouvintes", "noticias", "sorteios", "promocoes", "testemunhais", "shopping", "preroll", "cortevideo", "linkbio", "enquete", "quiz", "tp", "configtelapromo", "site"].includes(currentPage) ? "form" :
                   "list"
                 }
               />
@@ -1866,6 +1871,28 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
           {/* end max-w wrapper */}
           </div>
         </div>
+
+        {/* House Mix Window Mode - Link Bio */}
+        {!isAdmin && (currentPage === "linkbio" || (minimizedModules.includes("linkbio") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – LINK BIO"
+            wide
+            isOpen={currentPage === "linkbio"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "linkbio"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => prev.includes("linkbio") ? prev : [...prev, "linkbio"]);
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<ModulePageSkeleton variant="form" />}>
+              <LinkBioPage effectiveUserId={targetStationUserId}/>
+            </Suspense>
+          </HouseMixWindow>
+        )}
 
         {/* House Mix Window Mode - Nexo Plugins */}
         {!isAdmin && (currentPage === "nexoplugins" || (minimizedModules.includes("nexoplugins") && (currentPage === "dashboard" || isWindowMode))) && (

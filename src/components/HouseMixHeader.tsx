@@ -6,7 +6,7 @@ import {
   User, Mail, X, Building2,
   FileText, Gift, Siren, Tag, MonitorPlay, Film, Mic2, Globe, CalendarDays, Home,
   Scissors, ShoppingCart, MessageSquareQuote, HelpCircle, Swords, ExternalLink,
-  Mic, Headphones, MessagesSquare, RefreshCw, Download
+  Mic, Headphones, MessagesSquare, RefreshCw, Download, Link2
 } from "lucide-react";
 import { format, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -1025,7 +1025,7 @@ export default function HouseMixHeader({
                       className={`text-[9px] xl:text-[10px] 2xl:text-[11px] font-semibold flex items-center gap-1 ${itemPaddingClass} py-1.5 rounded-full outline-none cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
                         openDropdown === "ferramentas"
                           ? "bg-black text-white shadow-sm"
-                          : ["cortevideo", "tp", "nexoplugins"].includes(currentPage)
+                          : ["cortevideo", "tp", "nexoplugins", "linkbio"].includes(currentPage)
                           ? "text-black font-bold bg-slate-100/80"
                           : "text-slate-700 hover:text-black hover:bg-slate-100/70"
                       }`}
@@ -1072,6 +1072,16 @@ export default function HouseMixHeader({
                           >
                             <Download size={13} className="text-white/70" />
                             <span>downloads</span>
+                          </button>
+                          <button
+                            type="button"
+                            onMouseEnter={() => prefetchPage("linkbio")}
+                            onClick={() => handleNavigate("linkbio")}
+                            className={"flex w-full cursor-pointer select-none items-center gap-2 rounded-xl px-3.5 py-2 text-left text-xs font-semibold transition-colors duration-75 " +
+                              (currentPage === "linkbio" ? "bg-[#0055ff] font-bold text-white" : "text-white/85 hover:bg-[#0055ff] hover:text-white")}
+                          >
+                            <Link2 size={13} className="text-white/70"/>
+                            <span>link bio</span>
                           </button>
                         </div>
                       </div>
