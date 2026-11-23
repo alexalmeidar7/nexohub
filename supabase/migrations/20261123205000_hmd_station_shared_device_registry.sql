@@ -48,7 +48,8 @@ drop policy if exists "housemix_station_primary_read" on public.housemix_station
 create policy "housemix_station_primary_read" on public.housemix_station_primary
   for select to authenticated using (public.housemix_is_station_member(station_id));
 
--- Register / rename only one's own HMD, except station owner can rename any.
+-- Register an HMD, or update only its heartbeat on subsequent opens.
+-- A custom name must never revert to the Windows hostname after relaunch.
 create or replace function public.housemix_register_station_device(
   p_station_id uuid, p_device_id uuid, p_display_name text
 )
@@ -67,7 +68,7 @@ begin
     (station_id,device_id,display_name,registered_by)
   values (p_station_id,p_device_id,v_name,auth.uid())
   on conflict (station_id,device_id) do update
-    set display_name=excluded.display_name, last_seen_at=now()
+    set last_seen_at=now()
     where housemix_station_devices.registered_by=auth.uid()
        or auth.uid()=p_station_id
   returning device_id into v_updated;
@@ -78,6 +79,30 @@ end;
 $$;
 revoke all on function public.housemix_register_station_device(uuid,uuid,text) from public;
 grant execute on function public.housemix_register_station_device(uuid,uuid,text) to authenticated;
+
+-- Rename explicitly; registration/heartbeat does not overwrite a saved name.
+create or replace function public.housemix_rename_station_device(
+  p_station_id uuid, p_device_id uuid, p_display_name text
+)
+returns void language plpgsql security definer set search_path = ''
+as $
+declare v_name text := btrim(coalesce(p_display_name, ''));
+begin
+  if not public.housemix_is_station_member(p_station_id) then
+    raise exception 'station_access_denied' using errcode='42501';
+  end if;
+  if char_length(v_name) not between 2 and 64 or v_name ~ '[[:cntrl:]]' then
+    raise exception 'invalid_device_name' using errcode='22023';
+  end if;
+  update public.housemix_station_devices
+    set display_name=v_name,last_seen_at=now()
+    where station_id=p_station_id and device_id=p_device_id
+      and (registered_by=auth.uid() or auth.uid()=p_station_id);
+  if not found then raise exception 'device_rename_denied' using errcode='42501'; end if;
+end;
+$;
+revoke all on function public.housemix_rename_station_device(uuid,uuid,text) from public;
+grant execute on function public.housemix_rename_station_device(uuid,uuid,text) to authenticated;
 
 -- A PRIMARY KEY on station_id serializes concurrent promotions.
 -- Last committed promotion wins; all non-elected devices are automatically secondary.

@@ -106,7 +106,7 @@ export default function DesktopLanRoleSection({ stationId }: { stationId: string
     if (value.length < 2 || value.length > 64) { toast.error("Use um nome de 2 a 64 caracteres."); return; }
     setBusy(true);
     try {
-      const result = await db.rpc("housemix_register_station_device", {
+      const result = await db.rpc("housemix_rename_station_device", {
         p_station_id: ownerId, p_device_id: identity.deviceId, p_display_name: value,
       });
       if (result.error) throw result.error;

@@ -12,7 +12,8 @@ function getDesktopDeviceIdentity(userData) {
   } catch (error) { if (error.code !== "ENOENT") throw error; }
   const identity = {
     deviceId: crypto.randomUUID(),
-    deviceName: (os.hostname() || "Computador HMD").trim().slice(0, 64) || "Computador HMD",
+    deviceName: (os.hostname() || "").trim().length >= 2
+      ? os.hostname().trim().slice(0, 64) : "Computador HMD",
   };
   fs.mkdirSync(userData, { recursive: true });
   // Exclusive create guards against a second instance replacing an existing ID.
