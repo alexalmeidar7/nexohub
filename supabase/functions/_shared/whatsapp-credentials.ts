@@ -28,9 +28,10 @@ export async function unsealWhatsAppToken(ciphertext: string): Promise<{access_t
   if (typeof parsed?.access_token !== "string" || !parsed.access_token) throw new Error("invalid_encrypted_token");
   return parsed;
 }
-export async function loadStationWhatsAppToken(admin: any, ownerId: string): Promise<string> {
-  const { data, error } = await admin.from("wa_private_credentials").select("token_ciphertext")
+export async function loadStationWhatsAppToken(admin: any, ownerId: string, phoneNumberId?: string): Promise<string> {
+  const { data, error } = await admin.from("wa_private_credentials").select("token_ciphertext,phone_number_id")
     .eq("user_id", ownerId).maybeSingle();
-  if (error || !data?.token_ciphertext) throw new Error("station_whatsapp_not_connected");
+  if (error || !data?.token_ciphertext || (phoneNumberId && data.phone_number_id !== phoneNumberId))
+    throw new Error("station_whatsapp_not_connected");
   return (await unsealWhatsAppToken(data.token_ciphertext)).access_token;
 }

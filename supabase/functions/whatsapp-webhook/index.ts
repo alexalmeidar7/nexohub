@@ -32,7 +32,7 @@ async function verifySignature(rawBody: string, header: string | null): Promise<
 
 // ---------- Send helper (used by flow runner) ----------
 async function sendText(userId: string, phoneNumberId: string, to: string, text: string) {
-  const token = await loadStationWhatsAppToken(admin, userId).catch(() => null);
+  const token = await loadStationWhatsAppToken(admin, userId, phoneNumberId).catch(() => null);
   if (!token) { console.warn("No WhatsApp business token for station"); return null; }
   const version = Deno.env.get("META_GRAPH_VERSION") || "v24.0";
   const res = await fetch(`https://graph.facebook.com/${version}/${phoneNumberId}/messages`, {
@@ -200,9 +200,13 @@ Deno.serve(async (req) => {
         if (!phoneNumberId) continue;
 
         // Find owner
+        const { data: station } = await admin.from("wa_private_credentials")
+          .select("user_id").eq("phone_number_id", phoneNumberId).maybeSingle();
+        if (!station?.user_id) continue;
         const { data: cfg } = await admin.from("wa_config")
-          .select("user_id").eq("phone_number_id", phoneNumberId).eq("active", true).maybeSingle();
-        if (!cfg?.user_id) { console.warn("No wa_config for phone_number_id", phoneNumberId); continue; }
+          .select("user_id").eq("user_id", station.user_id).eq("phone_number_id", phoneNumberId)
+          .eq("active", true).maybeSingle();
+        if (!cfg?.user_id) continue;
         const userId = cfg.user_id;
 
         // ---- Status updates ----

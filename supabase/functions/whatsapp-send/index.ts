@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
   const { data: cfg } = await admin.from("wa_config").select("phone_number_id").eq("user_id", stationOwnerId).eq("active", true).maybeSingle();
   if (!cfg?.phone_number_id) return json({ error: "Nenhum número WhatsApp configurado. Cadastre em Configurações do Chatbot." }, 400);
 
-  const token = await loadStationWhatsAppToken(admin, stationOwnerId).catch(() => null);
+  const token = await loadStationWhatsAppToken(admin, stationOwnerId, cfg.phone_number_id).catch(() => null);
   if (!token) return json({ error: "WhatsApp da emissora não está conectado." }, 409);
   const version = Deno.env.get("META_GRAPH_VERSION") || "v24.0";
   // Send
