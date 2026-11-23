@@ -186,91 +186,6 @@ function timeToSeconds(hhmm: string | null | undefined): number {
   return Number.isFinite(total) ? total : -1;
 }
 
-interface NextProgramInfo {
-  current: any | null;
-  next: any | null;
-  nextStartSeconds: number;
-  secondsUntilStart: number;
-  windowOpenSeconds: number;
-  windowCloseSeconds: number;
-  actualDurationSeconds: number;
-  isInWindow: boolean;
-  isForced: boolean;
-  forcedRemainingSeconds: number;
-}
-
-
-function computeNextProgramInfo(allProgs: any[], timezone: string | null | undefined, leadSeconds: number, forceUntilIso?: string): NextProgramInfo | null {
-  const z = getZonedInfo(new Date(), timezone);
-  const now = new Date();
-  const nowSeconds = z.seconds;
-
-  const current = allProgs.find((p) => {
-    if (p.variavel && p.data_variavel !== z.dateStr) return false;
-    if (!p.variavel && !(p.dias_semana || []).includes(z.dayName)) return false;
-    const start = timeToSeconds(p.horario_inicio);
-    const end = timeToSeconds(p.horario_fim);
-    if (start < 0 || end < 0) return false;
-    const crosses = end <= start;
-    if (!crosses) return nowSeconds >= start && nowSeconds < end;
-    return nowSeconds >= start || nowSeconds < end;
-  }) || null;
-
-  const curEndSec = current ? timeToSeconds(current.horario_fim) : -1;
-  const refSeconds = curEndSec > nowSeconds ? curEndSec : nowSeconds;
-
-  let next: any | null = null;
-  let nextStartSeconds = -1;
-
-  for (let offset = 0; offset <= 7; offset++) {
-    const refDate = new Date(now.getTime() + offset * 24 * 60 * 60 * 1000);
-    const refInfo = getZonedInfo(refDate, timezone);
-    const candidates = allProgs
-      .map((p) => ({ p, start: timeToSeconds(p.horario_inicio) }))
-      .filter(({ p, start }) => {
-        if (start < 0) return false;
-        if (current && p.id && current.id && p.id === current.id) return false;
-        const runs = p.variavel ? p.data_variavel === refInfo.dateStr : (p.dias_semana || []).includes(refInfo.dayName);
-        if (!runs) return false;
-        return offset > 0 ? true : start >= refSeconds;
-      })
-      .sort((a, b) => a.start - b.start);
-
-    if (candidates.length > 0) {
-      next = candidates[0].p;
-      nextStartSeconds = candidates[0].start;
-      break;
-    }
-  }
-
-  if (!next || nextStartSeconds < 0) return null;
-
-  let secondsUntilStart = nextStartSeconds - nowSeconds;
-  if (secondsUntilStart < 0) secondsUntilStart += 24 * 60 * 60;
-
-  // A informação permanece no XML até o horário de início do programa.
-  const windowOpenSeconds = Math.max(0, secondsUntilStart - leadSeconds);
-  const windowCloseSeconds = 0;
-  const actualDurationSeconds = leadSeconds;
-  const isInWindow = secondsUntilStart <= leadSeconds;
-  const isForced = !!forceUntilIso && new Date(forceUntilIso).getTime() > Date.now();
-  const forcedRemainingSeconds = isForced
-    ? Math.max(0, Math.floor((new Date(forceUntilIso).getTime() - Date.now()) / 1000))
-    : 0;
-
-  return { current, next, nextStartSeconds, secondsUntilStart, windowOpenSeconds, windowCloseSeconds, actualDurationSeconds, isInWindow, isForced, forcedRemainingSeconds };
-
-}
-
-function formatCountdown(totalSeconds: number): string {
-  const seconds = Math.max(0, totalSeconds);
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  if (m > 0) return `${m} min ${String(s).padStart(2, "0")} s`;
-  return `${s} s`;
-}
-
-
 interface SocialItem {
   tipo: string;
   valor: string;
@@ -334,7 +249,6 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
   const [videoStreamUrl, setVideoStreamUrl] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState<number>(() => Date.now());
   const [timezone, setTimezone] = useState<string | null>("America/Sao_Paulo");
-  const [nextProgramInfo, setNextProgramInfo] = useState<NextProgramInfo | null>(null);
   const [scheduleClock, setScheduleClock] = useState<number>(() => Date.now());
   const [aseguirManualPulse, setAseguirManualPulse] = useState<AseguirManual | null>(null);
   const [aseguirSending, setAseguirSending] = useState<AseguirMode | null>(null);
@@ -1452,24 +1366,6 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
     const timer = window.setInterval(() => setScheduleClock(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, []);
-
-  // A Seguir countdown
-  useEffect(() => {
-    if (!user) return;
-    const tick = () => {
-      if (allProgramasFull.length === 0) return;
-      const info = computeNextProgramInfo(
-        allProgramasFull,
-        timezone,
-        Number(data.aSeguirLeadSeconds) || 300,
-        data.aSeguirForceUntil,
-      );
-      setNextProgramInfo(info);
-    };
-    tick();
-    const t = setInterval(tick, 1000);
-    return () => clearInterval(t);
-  }, [user, allProgramasFull, timezone, data.aSeguirLeadSeconds, data.aSeguirForceUntil]);
 
   const aSeguirPulsePreview = resolveBroadcastAseguir(
     allProgramasFull, new Date(scheduleClock), timezone || "America/Sao_Paulo",
