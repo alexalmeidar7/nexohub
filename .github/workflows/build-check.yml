@@ -38,6 +38,8 @@ jobs:
           node --check infra/offline-first/api/local-operator-routes.mjs
           node --test infra/offline-first/api/tests/local-operator-password.test.mjs
 
+      - name: Validar provedores de IA locais (sem chamadas pagas)
+        run: node --test desktop/local-free-ai.test.cjs desktop/local-whisper.test.cjs desktop/local-transcription-store.test.cjs
       - name: Testar transporte remoto do Desktop
         run: node --test desktop/runtime.test.cjs desktop/vmix-api.test.cjs desktop/ndi-bridge.test.cjs
 

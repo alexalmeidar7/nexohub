@@ -16,6 +16,11 @@ interface Window {
   showOpenFilePicker?: (options?: any) => Promise<FileSystemFileHandle[]>;
   houseMixDesktop?: {
     isDesktop: true;
+    generateLocalText?: (system: string, prompt: string) => Promise<string>;
+    transcribeLocalAudio?: (streamUrl: string) => Promise<string>;
+    listLocalTranscriptions?: (stationId: string) => Promise<Array<{id:string; texto_transcrito:string; timestamp_inicio:string; timestamp_fim:string|null}>>;
+    appendLocalTranscription?: (stationId: string, text: string, start: string, end: string) =>
+      Promise<{id:string; texto_transcrito:string; timestamp_inicio:string; timestamp_fim:string|null}>;
     fetchVmixApi?: (base: string, path: string, username?: string, password?: string) => Promise<string>;
     platform: string;
     version: string;

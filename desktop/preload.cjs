@@ -2,6 +2,11 @@ const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("houseMixDesktop", Object.freeze({
   isDesktop: true,
+  generateLocalText: (system, prompt) => ipcRenderer.invoke("housemix:local-ai", { system, prompt }),
+  transcribeLocalAudio: (streamUrl) => ipcRenderer.invoke("housemix:local-transcribe", streamUrl),
+  listLocalTranscriptions: (stationId) => ipcRenderer.invoke("housemix:local-transcripts-read", stationId),
+  appendLocalTranscription: (stationId, text, start, end) =>
+    ipcRenderer.invoke("housemix:local-transcripts-append", stationId, text, start, end),
   fetchVmixApi: (base, apiPath, username, password) => ipcRenderer.invoke("housemix:vmix-api", base, apiPath, username, password),
   platform: process.platform,
   version: process.env.npm_package_version || "0.0.0",

@@ -70,10 +70,33 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
   const captureRef = useRef(false);
 
   const userId = effectiveUserId || null;
+  const localDesktop = typeof window !== "undefined" &&
+    Boolean(window.houseMixDesktop?.transcribeLocalAudio && window.houseMixDesktop?.appendLocalTranscription &&
+      window.houseMixDesktop?.listLocalTranscriptions);
 
   useEffect(() => {
     if (!userId || !open) return;
-    supabase
+    const key = "housemix:transcription-audio-channels:" + userId;
+    let cached: AudioChannel[] = [];
+    let cachedAt = 0;
+    if (localDesktop) {
+      try {
+        const record = JSON.parse(localStorage.getItem(key) || "null");
+        if (Array.isArray(record?.channels) && record.channels.length <= 64) {
+          cached = record.channels.filter((c: AudioChannel) =>
+            c && typeof c.id === "string" && typeof c.name === "string" &&
+            typeof c.url === "string" && /^https?:\/\//i.test(c.url));
+          cachedAt = Number(record.at) || 0;
+          setChannels(cached);
+          setChannelId((current) => current && cached.some(item => item.id === current) ? current : (cached[0]?.id || ""));
+        }
+      } catch {}
+      // A local station doesn't need to re-read unchanged channel URLs on every view.
+      if (cached.length && Date.now() - cachedAt < 24 * 60 * 60 * 1000) return;
+      if (!navigator.onLine && cached.length) return;
+    }
+    let cancelled = false;
+    void supabase
       .from("streaming_channels")
       .select("id, name, url")
       .eq("user_id", userId)
@@ -81,15 +104,20 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
       .eq("type", "audio_live")
       .order("numero_canal")
       .then(({ data, error }) => {
+        if (cancelled) return;
         if (error) {
-          setCaptureError("Não foi possível carregar os canais de áudio.");
+          if (!cached.length) setCaptureError("Não foi possível carregar os canais de áudio.");
           return;
         }
         const next = (data || []) as AudioChannel[];
         setChannels(next);
-        setChannelId((current) => current && next.some((item) => item.id === current) ? current : (next[0]?.id || ""));
+        setChannelId((current) => current && next.some(item => item.id === current) ? current : (next[0]?.id || ""));
+        if (localDesktop) {
+          try { localStorage.setItem(key, JSON.stringify({ at: Date.now(), channels: next })); } catch {}
+        }
       });
-  }, [userId, open]);
+    return () => { cancelled = true; };
+  }, [userId, open, localDesktop]);
 
   // Carga inicial
   useEffect(() => {
@@ -97,6 +125,17 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
     let cancel = false;
     setLoading(true);
     (async () => {
+      if (localDesktop && window.houseMixDesktop?.listLocalTranscriptions) {
+        try {
+          const saved = await window.houseMixDesktop.listLocalTranscriptions(userId);
+          if (!cancel) setRows(saved);
+        } catch {
+          if (!cancel) toast.error("Falha ao carregar o histórico local de transcrição");
+        } finally {
+          if (!cancel) setLoading(false);
+        }
+        return;
+      }
       const { data, error } = await supabase
         .from("transcricoes_streaming")
         .select("id, texto_transcrito, timestamp_inicio, timestamp_fim")
@@ -112,11 +151,11 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
       setLoading(false);
     })();
     return () => { cancel = true; };
-  }, [userId, open]);
+  }, [userId, open, localDesktop]);
 
   // Realtime
   useEffect(() => {
-    if (!userId || !open) return;
+    if (!userId || !open || localDesktop) return;
     const channel = supabase
       .channel(`transcricoes-streaming-${userId}`)
       .on(
@@ -133,7 +172,7 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
       setLive(false);
       supabase.removeChannel(channel);
     };
-  }, [userId, open]);
+  }, [userId, open, localDesktop]);
 
   const filteredRows = useMemo(() => {
     const term = busca.trim().toLowerCase();
@@ -244,12 +283,30 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
     toast.success("Transcrição do streaming iniciada");
 
     while (captureRef.current) {
-      const { data, error } = await supabase.functions.invoke("transcribe-stream", {
-        body: { userId, channelId },
-      });
-      if (!captureRef.current) break;
-      if (error || data?.ok === false) {
-        const message = data?.error || error?.message || "Falha ao transcrever o streaming";
+      try {
+        if (localDesktop) {
+          const desktop = window.houseMixDesktop;
+          const streamUrl = channels.find(c => c.id === channelId)?.url;
+          if (!desktop?.transcribeLocalAudio || !desktop?.appendLocalTranscription || !streamUrl) {
+            throw new Error("Canal local não configurado.");
+          }
+          const startedAt = new Date().toISOString();
+          const text = await desktop.transcribeLocalAudio(streamUrl);
+          if (!captureRef.current) break;
+          if (text.trim()) {
+            const row = await desktop.appendLocalTranscription(userId, text, startedAt, new Date().toISOString());
+            if (captureRef.current) setRows(previous => previous.some(r => r.id === row.id) ? previous : [...previous, row]);
+          }
+        } else {
+          const { data, error } = await supabase.functions.invoke("transcribe-stream", {
+            body: { userId, channelId },
+          });
+          if (!captureRef.current) break;
+          if (error || data?.ok === false) throw new Error(data?.error || error?.message || "Falha ao transcrever o streaming");
+        }
+      } catch (error) {
+        if (!captureRef.current) break;
+        const message = error instanceof Error ? error.message : "Falha na transcrição local";
         setCaptureError(message);
         captureRef.current = false;
         setCapturing(false);
@@ -257,7 +314,7 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
         break;
       }
     }
-  }, [channelId, userId]);
+  }, [channelId, userId, channels, localDesktop]);
 
   useEffect(() => () => {
     captureRef.current = false;
@@ -289,7 +346,7 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
                   MONITOR DE TRANSCRIÇÃO DO STREAMING
                 </h3>
                 <span style={{ fontSize: 10, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 1 }}>
-                  Transcreve o canal de áudio e atualiza o texto em tempo real
+                  {localDesktop ? "Transcrição local por Whisper.cpp — sem ElevenLabs e sem enviar áudio à nuvem" : "Transcreve o canal de áudio e atualiza o texto em tempo real"}
                 </span>
               </div>
             </div>
@@ -308,7 +365,7 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
                 {live && <span className="absolute inline-flex h-full w-full rounded-full animate-ping opacity-75" style={{ backgroundColor: NEXO_LIME }} />}
                 <span className="relative inline-flex h-2 w-2 rounded-full" style={{ backgroundColor: live ? NEXO_LIME : "#94A3B8" }} />
               </span>
-              {live ? "Ao vivo" : "Offline"}
+              {localDesktop ? (capturing ? "Local ativo" : "Local") : live ? "Ao vivo" : "Offline"}
             </span>
             {open && (
               <button
