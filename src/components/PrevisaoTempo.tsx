@@ -207,27 +207,34 @@ function savePrimaryCityToStorage(keys: string[], city: PrimaryCity | null, owne
     window.dispatchEvent(new CustomEvent("weather:primary-city-changed", { detail: city }));
   } catch {}
 
-  // Sync to database
-  if (ownerId) {
-    const nowIso = new Date().toISOString();
-    supabase
-      .from("user_settings")
-      .update({
-        weather_city: city?.name || null,
-        weather_lat: city?.lat ?? null,
-        weather_lon: city?.lon ?? null,
-        updated_at: nowIso,
-      })
-      .eq("user_id", ownerId)
-      .then(() => {}, () => {});
+  // Local state is only a UI cache; persistent writes are awaited separately
+  // so a failed update cannot be presented as a successfully saved primary city.
+}
 
-    mergeUserDashboardItems(ownerId, {
-      cidade_tempo_primary: city,
-      weather_city: city?.name || null,
-      weather_lat: city?.lat ?? null,
-      weather_lon: city?.lon ?? null,
-    }).catch(() => {});
+async function persistPrimaryWeatherCity(ownerId: string, city: PrimaryCity | null): Promise<void> {
+  const fields = {
+    weather_city: city?.name || null,
+    weather_lat: city?.lat ?? null,
+    weather_lon: city?.lon ?? null,
+    updated_at: new Date().toISOString(),
+  };
+  const { data, error } = await supabase.from("user_settings")
+    .update(fields).eq("user_id", ownerId).select("user_id");
+  if (error) throw error;
+  if (!data?.length) {
+    const { data: created, error: createError } = await supabase.from("user_settings")
+      .upsert({ user_id: ownerId, ...fields }, { onConflict: "user_id" }).select("user_id");
+    if (createError) throw createError;
+    if (!created?.length) throw new Error("Não foi possível gravar a cidade na conta da emissora.");
   }
+  // Supplementary dashboard cache should not be a prerequisite for the weather XML.
+  void mergeUserDashboardItems(ownerId, {
+    cidade_tempo_primary: city,
+    weather_city: fields.weather_city,
+    weather_lat: fields.weather_lat,
+    weather_lon: fields.weather_lon,
+  }).catch(error => console.warn("[PrevisaoTempo] Falha no cache do painel", error));
+  window.dispatchEvent(new CustomEvent("weather:city-saved", { detail: { userId: ownerId } }));
 }
 
 export default function PrevisaoTempo({ effectiveUserId }: PrevisaoTempoProps = {}) {
@@ -526,6 +533,13 @@ export default function PrevisaoTempo({ effectiveUserId }: PrevisaoTempoProps = 
   const setAsPrimaryCity = async () => {
     if (!weather || !ownerId) return;
     const pc: PrimaryCity = { name: weather.city, lat: weather.lat, lon: weather.lon };
+    try {
+      await persistPrimaryWeatherCity(ownerId, pc);
+    } catch (error) {
+      console.warn("[PrevisaoTempo] Falha ao salvar cidade principal", error);
+      toast.error("A cidade não foi salva online. Verifique a conexão e tente novamente.");
+      return;
+    }
     savePrimaryCityToStorage(lookupKeys, pc, ownerId);
     setPrimaryCity(pc);
 
@@ -541,6 +555,13 @@ export default function PrevisaoTempo({ effectiveUserId }: PrevisaoTempoProps = 
 
   const clearPrimaryCity = async () => {
     if (!ownerId) return;
+    try {
+      await persistPrimaryWeatherCity(ownerId, null);
+    } catch (error) {
+      console.warn("[PrevisaoTempo] Falha ao limpar cidade principal", error);
+      toast.error("Não foi possível remover a cidade do banco. Tente novamente.");
+      return;
+    }
     savePrimaryCityToStorage(lookupKeys, null, ownerId);
     setPrimaryCity(null);
     toast.info("Cidade principal removida.");
@@ -554,6 +575,13 @@ export default function PrevisaoTempo({ effectiveUserId }: PrevisaoTempoProps = 
   const setFavoriteAsPrimary = async (f: FavoriteCity) => {
     if (!ownerId) return;
     const pc: PrimaryCity = { name: f.name, lat: f.lat, lon: f.lon };
+    try {
+      await persistPrimaryWeatherCity(ownerId, pc);
+    } catch (error) {
+      console.warn("[PrevisaoTempo] Falha ao trocar cidade principal", error);
+      toast.error("Não foi possível salvar a cidade no banco. Tente novamente.");
+      return;
+    }
     savePrimaryCityToStorage(lookupKeys, pc, ownerId);
     setPrimaryCity(pc);
     const updated = favorites.filter(fav => fav.name !== f.name);
