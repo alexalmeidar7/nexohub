@@ -670,7 +670,11 @@ serve(async (req) => {
         .gte("expires_at", new Date().toISOString())
         .maybeSingle();
       if (!pulseError && (manual?.mode === "next" || manual?.mode === "later")) {
-        manualAseguir = manual as typeof manualAseguir;
+        manualAseguir = {
+          mode: manual.mode === "later" ? "later" : "next",
+          triggered_at: String(manual.triggered_at),
+          expires_at: String(manual.expires_at),
+        };
       }
     }
 
@@ -1284,11 +1288,7 @@ serve(async (req) => {
     lines.push(`      <nome_programa>${esc(aSeguirNome)}</nome_programa>`);
     lines.push(`      <programa_logo>${esc(aSeguirLogo)}</programa_logo>`);
     lines.push(`      <locutor_nome>${esc(aSeguirLocutorNome)}</locutor_nome>`);
-    lines.push(`      <locutor_foto>${esc(
-      !aSeguirLocutorFoto || aSeguirLocutorFoto.includes("sem-loc") || aSeguirLocutorNome === "Automático" || aSeguirLocutorNome === "—"
-        ? ""
-        : ensurePngExtension(aSeguirLocutorFoto)
-    )}</locutor_foto>`);
+    lines.push("      <locutor_foto></locutor_foto>");
     lines.push(`      <horario>${esc(aSeguirHorario)}</horario>`);
     lines.push(`      <texto>${esc(aSeguirTexto)}</texto>`);
     lines.push(`      <intervalo_atualizacao>${aSeguirRefreshSeconds}</intervalo_atualizacao>`);
