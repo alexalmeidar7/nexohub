@@ -41,6 +41,7 @@ interface HouseMixHeaderProps {
   empresaNome?: string;
   empresaLogo?: string;
   empresaTimezone?: string | null;
+  stationId?: string | null;
   playerState?: {
     isPlaying: boolean;
     isLoading: boolean;
@@ -64,6 +65,7 @@ export default function HouseMixHeader({
   empresaNome = "",
   empresaLogo = "",
   empresaTimezone = null,
+  stationId = null,
   playerState = { isPlaying: false, isLoading: false, hasChannel: false },
   allowedPages = null,
   pageTitle,
@@ -1267,7 +1269,7 @@ export default function HouseMixHeader({
 
             {/* Server Clock */}
             <div className="hidden sm:flex items-center pl-1 shrink-0">
-              <ServerClock timezone={empresaTimezone} />
+              <ServerClock timezone={empresaTimezone} stationId={stationId} />
             </div>
           </div>
         </div>

@@ -1341,6 +1341,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
             empresaNome={empresa.nome}
             empresaLogo={empresa.logo}
             empresaTimezone={empresaTimezone}
+            stationId={targetStationUserId}
             playerState={playerState}
             allowedPages={null}
             showBots={subUserModules === null}
@@ -1387,7 +1388,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
           >
             <LogOut size={10} /> Sair
           </button>
-          <ServerClock timezone={empresaTimezone} />
+          <ServerClock timezone={empresaTimezone} stationId={targetStationUserId} />
         </div>
 
         {/* Mobile menu overlay */}
