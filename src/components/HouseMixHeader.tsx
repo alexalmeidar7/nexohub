@@ -6,7 +6,7 @@ import {
   User, Mail, X, Building2,
   FileText, Gift, Siren, Tag, MonitorPlay, Film, Mic2, Globe, CalendarDays, Home,
   Scissors, ShoppingCart, MessageSquareQuote, HelpCircle, Swords, ExternalLink,
-  Mic, Headphones, MessagesSquare, RefreshCw
+  Mic, Headphones, MessagesSquare, RefreshCw, Download
 } from "lucide-react";
 import { format, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -1023,7 +1023,7 @@ export default function HouseMixHeader({
                       className={`text-[9px] xl:text-[10px] 2xl:text-[11px] font-semibold flex items-center gap-1 ${itemPaddingClass} py-1.5 rounded-full outline-none cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
                         openDropdown === "ferramentas"
                           ? "bg-black text-white shadow-sm"
-                          : ["cortevideo", "tp"].includes(currentPage)
+                          : ["cortevideo", "tp", "nexoplugins"].includes(currentPage)
                           ? "text-black font-bold bg-slate-100/80"
                           : "text-slate-700 hover:text-black hover:bg-slate-100/70"
                       }`}
@@ -1068,8 +1068,8 @@ export default function HouseMixHeader({
                             }}
                             className="w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 text-white/85 hover:bg-[#0055ff] hover:text-white cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out"
                           >
-                            <MonitorPlay size={13} className="text-white/70" />
-                            <span>Nexo Plugins</span>
+                            <Download size={13} className="text-white/70" />
+                            <span>downloads</span>
                           </button>
                         </div>
                       </div>

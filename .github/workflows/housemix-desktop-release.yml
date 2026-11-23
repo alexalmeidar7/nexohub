@@ -126,6 +126,14 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw 'Release asset upload failed' }
             gh release edit $tag --target $env:TARGET_SHA
           } else {
-            gh release create $tag $installer $blockmap $metadata --title $env:VERSION --notes "House Mix Desktop $env:VERSION" --target $env:TARGET_SHA
+            gh release create $tag $installer $blockmap $metadata --title $env:VERSION --generate-notes --target $env:TARGET_SHA
           }
           if ($LASTEXITCODE -ne 0) { throw 'Release publish failed' }
+
+      - name: Manter versão atual e dois backups HMD
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PUBLISHED_TAG: v${{ steps.version.outputs.next }}
+        run: node scripts/cleanup-hmd-releases.mjs --published $env:PUBLISHED_TAG --apply
+
