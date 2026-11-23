@@ -6,7 +6,7 @@ import {
   User, Mail, X, Building2,
   FileText, Gift, Siren, Tag, MonitorPlay, Film, Mic2, Globe, CalendarDays, Home,
   Scissors, ShoppingCart, MessageSquareQuote, HelpCircle, Swords, ExternalLink,
-  Mic, Headphones, MessagesSquare, RefreshCw, Download
+  Mic, Headphones, MessagesSquare, RefreshCw, Download, Link2
 } from "lucide-react";
 import { format, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -37,9 +37,11 @@ interface HouseMixHeaderProps {
   onNavigate: (page: any) => void;
   onLogout?: () => void;
   userEmail?: string;
+  desktopDeviceBadge?: string | null;
   empresaNome?: string;
   empresaLogo?: string;
   empresaTimezone?: string | null;
+  stationId?: string | null;
   playerState?: {
     isPlaying: boolean;
     isLoading: boolean;
@@ -59,9 +61,11 @@ export default function HouseMixHeader({
   onNavigate,
   onLogout,
   userEmail = "",
+  desktopDeviceBadge = null,
   empresaNome = "",
   empresaLogo = "",
   empresaTimezone = null,
+  stationId = null,
   playerState = { isPlaying: false, isLoading: false, hasChannel: false },
   allowedPages = null,
   pageTitle,
@@ -1023,7 +1027,7 @@ export default function HouseMixHeader({
                       className={`text-[9px] xl:text-[10px] 2xl:text-[11px] font-semibold flex items-center gap-1 ${itemPaddingClass} py-1.5 rounded-full outline-none cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
                         openDropdown === "ferramentas"
                           ? "bg-black text-white shadow-sm"
-                          : ["cortevideo", "tp", "nexoplugins"].includes(currentPage)
+                          : ["cortevideo", "tp", "nexoplugins", "linkbio"].includes(currentPage)
                           ? "text-black font-bold bg-slate-100/80"
                           : "text-slate-700 hover:text-black hover:bg-slate-100/70"
                       }`}
@@ -1070,6 +1074,16 @@ export default function HouseMixHeader({
                           >
                             <Download size={13} className="text-white/70" />
                             <span>downloads</span>
+                          </button>
+                          <button
+                            type="button"
+                            onMouseEnter={() => prefetchPage("linkbio")}
+                            onClick={() => handleNavigate("linkbio")}
+                            className={"flex w-full cursor-pointer select-none items-center gap-2 rounded-xl px-3.5 py-2 text-left text-xs font-semibold transition-colors duration-75 " +
+                              (currentPage === "linkbio" ? "bg-[#0055ff] font-bold text-white" : "text-white/85 hover:bg-[#0055ff] hover:text-white")}
+                          >
+                            <Link2 size={13} className="text-white/70"/>
+                            <span>link bio</span>
                           </button>
                         </div>
                       </div>
@@ -1255,7 +1269,7 @@ export default function HouseMixHeader({
 
             {/* Server Clock */}
             <div className="hidden sm:flex items-center pl-1 shrink-0">
-              <ServerClock timezone={empresaTimezone} />
+              <ServerClock timezone={empresaTimezone} stationId={stationId} />
             </div>
           </div>
         </div>
@@ -1424,11 +1438,17 @@ export default function HouseMixHeader({
           {/* User Email: aligned to the right with the menu clock */}
           {displayEmail && (
             <div
-              className="hidden sm:flex items-center select-none shrink-0 rounded-full px-3 py-2"
+              className="relative hidden sm:flex max-w-[280px] items-center select-none shrink-0 rounded-full px-3 py-2"
               style={{ border: "1px solid rgba(255,255,255,0.16)", background: "transparent" }}
-              title={`Conectado como: ${displayEmail}`}
+              title={`Conectado como: ${displayEmail}${desktopDeviceBadge ? " · HMD " + desktopDeviceBadge : ""}`}
             >
-              <span className="text-xs font-semibold text-slate-300/85 tracking-tight">{displayEmail}</span>
+              <span className="truncate text-xs font-semibold tracking-tight text-slate-300/85">{displayEmail}</span>
+              {desktopDeviceBadge && (
+                <span
+                  aria-label={desktopDeviceBadge === "P" ? "HMD principal" : "HMD secundário " + desktopDeviceBadge}
+                  className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#0055ff] px-1 text-[10px] font-extrabold leading-none text-white"
+                >{desktopDeviceBadge}</span>
+              )}
             </div>
           )}
           </div>

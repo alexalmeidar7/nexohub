@@ -121,6 +121,7 @@ const CenarioEstudioWebTela = lazyRetry(() => import("./pages/CenarioEstudioWebT
 const IntercomListener = lazyRetry(() => import("./pages/IntercomListener"));
 const VmixAssunto = lazyRetry(() => import("./pages/VmixAssunto"));
 const XmlPublicEndpoint = lazyRetry(() => import("./pages/XmlPublicEndpoint"));
+const LinkBioPublic = lazyRetry(() => import("./pages/LinkBioPublic"));
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -331,6 +332,7 @@ const App = () => (
 
             {/* Main routes */}
             <Route path="/home" element={<MasterViewHome />} />
+            <Route path="/b/:slug" element={<LinkBioPublic />} />
             <Route path="/telapromo" element={<PromocoesKiosk />} />
             <Route path="/player" element={<PlayerHub />} />
             <Route path="/player/watch" element={<PlayerPage />} />

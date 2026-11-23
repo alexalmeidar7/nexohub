@@ -1,11 +1,10 @@
 import { useEffect, useState, useCallback, useMemo, forwardRef, useImperativeHandle } from "react";
-import { Plus, Trash2, Image as ImageIcon, Upload, Save, Loader2, LayoutGrid, Radio, ArrowRight, Pencil } from "lucide-react";
+import { Plus, Trash2, Image as ImageIcon, Upload, Save, Loader2, LayoutGrid, Radio, ArrowRight, Pencil, Search, Monitor, Link2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -146,10 +145,6 @@ const layoutCardStyle: React.CSSProperties = {
   color: "var(--layout-page-text, #0d0446)",
   border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)",
 };
-const layoutInnerStyle: React.CSSProperties = {
-  background: "color-mix(in srgb, var(--layout-page-text, #0d0446) 5%, var(--layout-page-bg, #ffffff))",
-  border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)",
-};
 const layoutTextMuted: React.CSSProperties = {
   color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)",
 };
@@ -168,6 +163,8 @@ export default forwardRef<{ addGrupo: () => void }, { effectiveUserId?: string |
     const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [editingIds, setEditingIds] = useState<Set<string>>(new Set());
+  const [templateSearch, setTemplateSearch] = useState("");
+  const [templateFilter, setTemplateFilter] = useState<"all" | "linked" | "unlinked">("all");
 
   const loadAll = useCallback(async () => {
     const ownerId = targetUserId || user?.id;
@@ -603,7 +600,24 @@ export default forwardRef<{ addGrupo: () => void }, { effectiveUserId?: string |
   const noProgramas = programas.length === 0;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
+      {/* Compact creative-library overview: primary action stays visible. */}
+      <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-white p-5 sm:p-6" aria-label="Biblioteca de cenários">
+        <div className="flex min-w-0 items-center gap-3.5">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0055ff]/10 text-[#0055ff]">
+            <LayoutGrid size={22}/>
+          </span>
+          <div>
+            <h3 className="text-lg font-extrabold tracking-tight text-slate-900">Cenários por imagem</h3>
+            <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
+              Organize suas artes, monte o painel de TVs e escolha em quais programas cada cenário aparece.
+            </p>
+          </div>
+        </div>
+        <Button type="button" onClick={() => void addGrupo()} className="h-10 rounded-xl bg-[#0055ff] px-4 text-xs font-bold text-white hover:bg-[#0045d1]">
+          <Plus size={16} className="mr-2"/> Novo cenário
+        </Button>
+      </section>
       {/* Empty state: no programas registered (priority over "no grupos") */}
       {noProgramas && (
         <Card className="p-10 text-center border-dashed" style={layoutCardStyle}>
@@ -661,317 +675,189 @@ export default forwardRef<{ addGrupo: () => void }, { effectiveUserId?: string |
           />
         ))}
 
-      {/* Saved templates gallery (organized by TEMPLATE, not by program) */}
+      {/* The gallery is image-first, with discovery controls separate from editing. */}
       {(() => {
-        const savedTemplates = grupos.filter((t) => {
-          const a = t.tvs.find((tv) => tv.posicao === 0);
-          return !!a?.imagem_url;
+        const allTemplates = grupos.filter(t => !!t.tvs.find(tv => tv.posicao === 0)?.imagem_url);
+        if (!allTemplates.length) return null;
+        const linkedCount = allTemplates.filter(t => t.programa_ids.length > 0).length;
+        const unlinkedCount = allTemplates.length - linkedCount;
+        const q = templateSearch.trim().toLocaleLowerCase("pt-BR");
+        const visible = allTemplates.filter(t => {
+          if (templateFilter === "linked" && t.programa_ids.length === 0) return false;
+          if (templateFilter === "unlinked" && t.programa_ids.length > 0) return false;
+          if (!q) return true;
+          return t.nome.toLocaleLowerCase("pt-BR").includes(q) ||
+            t.programa_ids.some(id => programas.find(p => p.id === id)?.nome.toLocaleLowerCase("pt-BR").includes(q));
         });
-        
-        if (savedTemplates.length === 0) return null;
-
-        // Templates linked to programs
-        const linkedTemplates = savedTemplates.filter(t => t.programa_ids.length > 0);
-        // Templates with no programs linked yet
-        const unlinkedTemplates = savedTemplates.filter(t => t.programa_ids.length === 0);
-
-        // Render template card with programs on the side
-        const renderTemplateCard = (t: Grupo) => {
-          const a = t.tvs.find((tv) => tv.posicao === 0);
-          const url = a?.imagem_url || "";
-          const linkedNames = t.programa_ids
-            .map((pid) => programas.find((p) => p.id === pid)?.nome)
-            .filter(Boolean) as string[];
-            
-          const isActive = onAirProgramId && t.programa_ids.includes(onAirProgramId);
-          const isEditing = editingIds.has(t.id);
-
-          return (
-            <div 
-              key={t.id} 
-              className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4 p-4 rounded-2xl border border-border/40 transition-all duration-200" 
-              style={{ ...layoutInnerStyle }}
-              onDragOver={(e) => {
-                e.preventDefault();
-                e.currentTarget.style.backgroundColor = "var(--layout-accent-color, #2563eb)";
-                e.currentTarget.style.opacity = "0.15";
-              }}
-              onDragLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "";
-                e.currentTarget.style.opacity = "1";
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                e.currentTarget.style.backgroundColor = "";
-                e.currentTarget.style.opacity = "1";
-                const programId = e.dataTransfer.getData("program-id");
-                console.log("Drop evento acionado - programId:", programId, "template:", t.id);
-                if (programId && !t.programa_ids.includes(programId)) {
-                  console.log("Chamando toggleProgramaInGrupo com:", t.id, programId);
-                  toggleProgramaInGrupo(t.id, programId);
-                  toast.success("Programa vinculado ao template");
-                }
-              }}
-            >
-              {/* Template Card Preview */}
-              <Card 
-                className={`group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isActive ? 'ring-2 ring-primary ring-offset-2' : ''}`}
-                style={{
-                  ...layoutCardStyle,
-                  border: isActive ? "2px solid var(--layout-accent-color, #2563eb)" : "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 12%, transparent)",
-                }}
-              >
-                <div
-                  className="w-full relative overflow-hidden bg-slate-900 flex items-center justify-center p-2"
-                  style={{
-                    aspectRatio: t.cols > 2 ? `${t.cols * 16}/${t.rows * 9}` : `${16 * t.cols}/${9 * t.rows}`
-                  }}
-                >
-                  {/* TV Grid Container - proportional 16:9 TVs */}
-                  <div 
-                    className="w-full h-full grid gap-1 rounded"
-                    style={{
-                      gridTemplateColumns: `repeat(${t.cols}, 1fr)`,
-                      gridTemplateRows: `repeat(${t.rows}, 1fr)`,
-                    }}
-                  >
-                    {Array.from({ length: t.rows * t.cols }).map((_, i) => {
-                      // Calculate which row and column this TV is in
-                      const row = Math.floor(i / t.cols);
-                      const col = i % t.cols;
-                      
-                      // Calculate the offset for this TV slice
-                      // Image is designed as total_cols * 1920 x total_rows * 1080
-                      const offsetX = (col / t.cols) * 100;
-                      const offsetY = (row / t.rows) * 100;
-                      
-                      return (
-                        <div 
-                          key={i} 
-                          className="relative overflow-hidden rounded-sm bg-black border border-white/30 shadow-inner"
-                          style={{ aspectRatio: "16/9" }}
-                        >
-                          <img
-                            src={url}
-                            onError={(e) => {
-                              (e.currentTarget as HTMLImageElement).src = "/images/CAPA_PH2.png";
-                            }}
-                            alt={`${t.nome} TV ${i + 1}`}
-                            className="absolute inset-0 w-full h-full transition-transform duration-500 group-hover:scale-105 opacity-80"
-                            style={{
-                              objectFit: "cover",
-                              objectPosition: `${offsetX}% ${offsetY}%`,
-                              width: "100%",
-                              height: "100%",
-                            }}
-                          />
-                          {/* TV Index Label */}
-                          <div className="absolute bottom-1 right-1 bg-black/60 text-white text-[8px] font-bold px-1.5 py-0.5 rounded opacity-70">
-                            TV{i + 1}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Actions Overlay */}
-                <div className="absolute inset-0 flex flex-col pointer-events-none">
-                  {/* Floating Actions - Top Right */}
-                  <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-300 pointer-events-auto">
-                    <Button
-                      size="icon"
-                      variant="secondary"
-                      className="h-9 w-9 rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors"
-                      onClick={() => {
-                        setEditingIds((prev) => new Set(prev).add(t.id));
-                        scrollToForm();
-                      }}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="destructive"
-                      className="h-9 w-9 rounded-full shadow-lg"
-                      onClick={() => removeGrupo(t.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  {/* Grid Badge - Bottom Left */}
-                  <div className="absolute bottom-3 left-3 flex items-center gap-2 pointer-events-auto">
-                    <Badge className="bg-white/10 backdrop-blur-md border-white/20 text-white text-[10px] font-mono">
-                      {t.rows}×{t.cols} GRID
-                    </Badge>
-                    {isActive && (
-                      <Badge className="bg-primary/90 backdrop-blur-md border-none text-white text-[10px] font-bold animate-pulse">
-                        NO AR
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-
-                <div className="p-4">
-                  <div className="mb-3">
-                    <h5 className="font-bold text-sm truncate" style={layoutText}>{t.nome}</h5>
-                    <p className="text-[10px] mt-0.5 font-medium uppercase tracking-tight opacity-50" style={layoutText}>
-                      {t.rows * t.cols} TV{t.rows * t.cols !== 1 ? "s" : ""} em layout
-                    </p>
-                  </div>
-                </div>
-              </Card>
-
-              {/* Programs List Sidebar */}
-              <div className="flex flex-col gap-3">
+        const withoutTemplate = programas.filter(p =>
+          !allTemplates.some(t => t.programa_ids.includes(p.id)));
+        const filters = [
+          { id: "all" as const, text: "Todos", count: allTemplates.length },
+          { id: "linked" as const, text: "Com programa", count: linkedCount },
+          { id: "unlinked" as const, text: "Sem vínculo", count: unlinkedCount },
+        ];
+        return (
+          <section className="space-y-4" aria-label="Biblioteca de templates">
+            <div className="rounded-2xl bg-white p-4 sm:p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h6 className="text-[10px] font-bold uppercase tracking-widest mb-2" style={layoutTextMuted}>Programas Vinculados</h6>
-                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                    {linkedNames.length === 0 ? (
-                      <p className="text-[10px] italic opacity-40" style={layoutText}>Nenhum programa vinculado</p>
-                    ) : (
-                      linkedNames.map((nome, idx) => (
-                        <div key={idx} className="flex items-center gap-2 px-2 py-1.5 rounded-lg" style={layoutAccentSoft}>
-                          <Radio className="h-3 w-3 shrink-0" style={layoutAccent} />
-                          <span className="text-[10px] font-medium truncate" style={layoutText}>{nome}</span>
-                          <button
-                            className="ml-auto h-4 w-4 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity"
-                            onClick={() => toggleProgramaInGrupo(t.id, programas.find(p => p.nome === nome)?.id || "")}
-                            title="Remover vínculo"
-                          >
-                            <Trash2 className="h-3 w-3" style={layoutAccent} />
-                          </button>
-                        </div>
-                      ))
-                    )}
-                  </div>
+                  <h4 className="text-sm font-extrabold text-slate-900">Biblioteca de cenários</h4>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {allTemplates.length} cenário{allTemplates.length !== 1 ? "s" : ""} · {linkedCount} vinculado{linkedCount !== 1 ? "s" : ""} a programas
+                  </p>
                 </div>
-
-                {/* Edit & Delete Buttons */}
-                <div className="flex gap-2 mt-auto pt-3 border-t border-border/20">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 h-8 text-[10px]"
-                    onClick={() => {
-                      setEditingIds((prev) => new Set(prev).add(t.id));
-                      scrollToForm();
-                    }}
-                  >
-                    <Pencil className="h-3 w-3 mr-1" /> Editar
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    className="flex-1 h-8 text-[10px]"
-                    onClick={() => removeGrupo(t.id)}
-                  >
-                    <Trash2 className="h-3 w-3 mr-1" /> Remover
-                  </Button>
-                </div>
+                <label className="relative flex h-10 w-full items-center sm:w-64">
+                  <Search size={16} aria-hidden className="pointer-events-none absolute left-3 text-slate-400"/>
+                  <input type="search" value={templateSearch} onChange={e => setTemplateSearch(e.target.value)}
+                    placeholder="Buscar cenário ou programa" aria-label="Buscar cenário ou programa"
+                    className="h-full w-full rounded-xl bg-slate-100 pl-10 pr-3 text-xs font-medium text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:bg-slate-50 focus:ring-2 focus:ring-[#0055ff]/50"/>
+                </label>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Filtrar cenários">
+                {filters.map(filter => (
+                  <button type="button" key={filter.id} onClick={() => setTemplateFilter(filter.id)}
+                    aria-pressed={templateFilter === filter.id}
+                    className={"inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-xs font-semibold transition-colors " +
+                      (templateFilter === filter.id
+                        ? "bg-[#0055ff] text-white"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200")}>
+                    {filter.text}
+                    <span className={"rounded-full px-1.5 py-0.5 text-[10px] " +
+                      (templateFilter === filter.id ? "bg-white/20 text-white" : "bg-white text-slate-500")}>
+                      {filter.count}
+                    </span>
+                  </button>
+                ))}
               </div>
             </div>
-          );
-        };
 
-        return (
-          <div className="space-y-8">
-            {/* Linked Templates */}
-            {linkedTemplates.length > 0 && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between pb-2 border-b border-border/40">
-                  <h4 className="text-sm font-bold uppercase tracking-[0.2em] opacity-60 flex items-center gap-2" style={layoutText}>
-                    <LayoutGrid className="h-4 w-4" /> Templates com Programas
-                  </h4>
-                  <Badge variant="outline" className="text-[10px] font-medium" style={layoutTextMuted}>
-                    {linkedTemplates.length} template{linkedTemplates.length !== 1 ? 's' : ''}
-                  </Badge>
-                </div>
-                <div className="space-y-4">
-                  {linkedTemplates.map(renderTemplateCard)}
-                </div>
-              </div>
-            )}
-
-            {/* Unlinked Templates */}
-            {unlinkedTemplates.length > 0 && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between pb-2 border-b border-border/40">
-                  <h4 className="text-sm font-bold uppercase tracking-[0.2em] opacity-60 flex items-center gap-2" style={layoutText}>
-                    <LayoutGrid className="h-4 w-4" /> Templates sem Programas
-                  </h4>
-                  <Badge variant="outline" className="text-[10px] font-medium" style={layoutTextMuted}>
-                    {unlinkedTemplates.length} template{unlinkedTemplates.length !== 1 ? 's' : ''}
-                  </Badge>
-                </div>
-                <div className="space-y-4">
-                  {unlinkedTemplates.map(renderTemplateCard)}
-                </div>
-              </div>
-            )}
-
-            {/* Programs without any template */}
-            {(() => {
-              const programsWithoutTemplate = programas.filter(
-                p => !savedTemplates.some(t => t.programa_ids.includes(p.id))
-              );
-
-              if (programsWithoutTemplate.length === 0) return null;
-
-              return (
-                <div className="space-y-4 mt-12 pt-8 border-t-2 border-dashed border-border/30">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-bold uppercase tracking-[0.2em] opacity-60 flex items-center gap-2" style={layoutText}>
-                      <Radio className="h-4 w-4" /> Programas sem Cenário
-                    </h4>
-                    <Badge variant="outline" className="text-[10px] font-medium" style={layoutTextMuted}>
-                      {programsWithoutTemplate.length} programa{programsWithoutTemplate.length !== 1 ? 's' : ''}
-                    </Badge>
-                  </div>
-                  
-                  <p className="text-[11px] leading-relaxed" style={layoutTextMuted}>
-                    Arraste os programas abaixo para um template acima para vinculá-los. Ou edite o template para adicionar programas manualmente.
-                  </p>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                    {programsWithoutTemplate.map((prog) => (
-                      <div
-                        key={prog.id}
-                        draggable
-                        onDragStart={(e) => {
-                          e.dataTransfer.effectAllowed = "copy";
-                          e.dataTransfer.setData("program-id", prog.id);
-                          e.dataTransfer.setData("program-name", prog.nome);
-                        }}
-                        className="p-3 rounded-lg border-2 border-dashed border-border/40 cursor-move hover:border-primary hover:bg-primary/5 transition-all duration-200 group"
-                        style={layoutInnerStyle}
-                      >
-                        <div className="flex items-start gap-2">
-                          <div className="h-6 w-6 rounded-full flex items-center justify-center bg-primary/20 text-primary shrink-0 mt-1">
-                            <Radio className="h-3 w-3" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h5 className="text-[11px] font-bold truncate group-hover:text-primary transition-colors" style={layoutText}>
-                              {prog.nome}
-                            </h5>
-                            <p className="text-[9px] opacity-50 mt-0.5">
-                              {prog.horario_inicio && prog.horario_fim 
-                                ? `${prog.horario_inicio.substring(0, 5)} - ${prog.horario_fim.substring(0, 5)}`
-                                : 'Sem horário'
-                              }
-                            </p>
-                          </div>
+            {visible.length ? (
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+                {visible.map(t => {
+                  const art = t.tvs.find(tv => tv.posicao === 0)?.imagem_url || "";
+                  const linked = t.programa_ids
+                    .map(id => programas.find(p => p.id === id))
+                    .filter((p): p is Programa => !!p);
+                  const onAir = !!onAirProgramId && t.programa_ids.includes(onAirProgramId);
+                  const editing = editingIds.has(t.id);
+                  const edit = () => {
+                    setEditingIds(previous => new Set(previous).add(t.id));
+                    requestAnimationFrame(() => scrollToForm());
+                  };
+                  return (
+                    <article key={t.id}
+                      className={"group flex min-w-0 flex-col overflow-hidden rounded-2xl bg-white transition-colors " +
+                        (onAir ? "ring-2 ring-[#0055ff]" : "hover:bg-slate-50")}
+                      onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; }}
+                      onDrop={e => {
+                        e.preventDefault();
+                        const id = e.dataTransfer.getData("program-id");
+                        if (!id || !programas.some(p => p.id === id)) return;
+                        if (!t.programa_ids.includes(id)) toggleProgramaInGrupo(t.id, id);
+                        edit();
+                        toast.info("Vínculo adicionado. Salve as alterações para confirmar.");
+                      }}>
+                      <div className="relative aspect-video overflow-hidden bg-slate-950">
+                        <div className="absolute inset-0 grid gap-[2px] p-2"
+                          style={{
+                            gridTemplateColumns: "repeat(" + t.cols + ",minmax(0,1fr))",
+                            gridTemplateRows: "repeat(" + t.rows + ",minmax(0,1fr))",
+                          }}>
+                          {Array.from({ length: t.rows * t.cols }, (_, i) => (
+                            <TvSlice key={i} posicao={i} row={Math.floor(i / t.cols)} col={i % t.cols}
+                              rows={t.rows} cols={t.cols} imageUrl={art}/>
+                          ))}
+                        </div>
+                        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/50 to-transparent"/>
+                        <span className="absolute bottom-3 left-3 rounded-md bg-black/60 px-2.5 py-1 text-[10px] font-bold tracking-wide text-white">
+                          <Monitor size={12} className="mr-1 inline-block align-[-2px]"/> {t.cols} × {t.rows} · {t.rows * t.cols} TV{t.rows * t.cols !== 1 ? "s" : ""}
+                        </span>
+                        {onAir && <span className="absolute right-3 top-3 rounded-full bg-[#0055ff] px-3 py-1 text-[10px] font-extrabold text-white">
+                          <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-white"/> NO AR
+                        </span>}
+                        {editing && <span className="absolute left-3 top-3 rounded-full bg-white px-2.5 py-1 text-[10px] font-bold text-[#0055ff]">
+                          Editando
+                        </span>}
+                      </div>
+                      <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
+                        <div className="min-w-0">
+                          <h5 className="truncate text-sm font-extrabold text-slate-900" title={t.nome}>{t.nome}</h5>
+                          <p className="mt-1 text-[11px] text-slate-500">
+                            {linked.length ? linked.length + " programa" + (linked.length > 1 ? "s" : "") + " vinculado" + (linked.length > 1 ? "s" : "") : "Nenhum programa vinculado"}
+                          </p>
+                        </div>
+                        <div className="flex min-h-7 flex-wrap content-start gap-1.5">
+                          {linked.length ? linked.map(p => (
+                            <span key={p.id} title={p.nome}
+                              className="max-w-full truncate rounded-lg bg-[#0055ff]/[0.07] px-2.5 py-1.5 text-[10px] font-semibold text-[#0055ff]">
+                              <Radio size={11} className="mr-1 inline-block align-[-2px]"/>{p.nome}
+                            </span>
+                          )) : <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-2.5 py-1.5 text-[10px] font-semibold text-amber-800">
+                            <Link2 size={11}/> Vincule a um programa
+                          </span>}
+                        </div>
+                        <div className="mt-auto flex gap-2 pt-2">
+                          <button type="button" onClick={edit}
+                            className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-[#0055ff] px-3 text-xs font-bold text-white transition-colors hover:bg-[#0044d3]">
+                            <Pencil size={14}/> Editar cenário
+                          </button>
+                          <button type="button" onClick={() => void removeGrupo(t.id)}
+                            aria-label={"Excluir cenário " + t.nome} title="Excluir cenário"
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600">
+                            <Trash2 size={16}/>
+                          </button>
                         </div>
                       </div>
-                    ))}
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center rounded-2xl bg-white px-5 py-10 text-center">
+                <Search size={24} className="mb-3 text-slate-300"/>
+                <h5 className="text-sm font-bold text-slate-900">Nenhum cenário encontrado</h5>
+                <p className="mt-1 text-xs text-slate-500">Experimente outro nome ou filtro.</p>
+                <button type="button" onClick={() => { setTemplateSearch(""); setTemplateFilter("all"); }}
+                  className="mt-4 rounded-xl bg-slate-100 px-4 py-2.5 text-xs font-bold text-[#0055ff] hover:bg-slate-200">
+                  Limpar filtros
+                </button>
+              </div>
+            )}
+
+            {withoutTemplate.length > 0 && (
+              <div className="rounded-2xl bg-white p-4 sm:p-5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h5 className="text-sm font-extrabold text-slate-900">Programas sem cenário</h5>
+                    <p className="mt-1 text-xs text-slate-500">Arraste um programa até o cenário desejado. Depois, salve a edição.</p>
                   </div>
+                  <span className="rounded-full bg-amber-50 px-3 py-1 text-[10px] font-bold text-amber-800">
+                    {withoutTemplate.length} pendente{withoutTemplate.length !== 1 ? "s" : ""}
+                  </span>
                 </div>
-              );
-            })()}
-          </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {withoutTemplate.map(p => (
+                    <div key={p.id} draggable
+                      onDragStart={e => {
+                        e.dataTransfer.effectAllowed = "copy";
+                        e.dataTransfer.setData("program-id", p.id);
+                      }}
+                      className="inline-flex max-w-full cursor-grab items-center gap-2 rounded-xl bg-slate-100 px-3 py-2.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-blue-50 hover:text-[#0055ff] active:cursor-grabbing"
+                      title="Arraste até um cenário para vincular">
+                      <Radio size={13} className="shrink-0"/>
+                      <span className="truncate">{p.nome}</span>
+                      <span className="shrink-0 text-[10px] font-normal text-slate-400">
+                        {p.horario_inicio?.slice(0, 5) || ""}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
         );
       })()}
+
     </div>
   );
   }
@@ -998,20 +884,20 @@ function GrupoCard({ grupo, programas, onChange, onSave, onToggleProgram, onSetA
   const inputId = `arte-upload-${grupo.id}`;
 
   return (
-    <Card className="p-0 overflow-hidden border-2" style={{ ...layoutCardStyle, borderColor: "var(--layout-accent-color, #2563eb)" }}>
+    <Card className="overflow-hidden rounded-2xl border-0 bg-white shadow-none" style={{ color: "var(--layout-page-text, #0d0446)" }}>
       {/* Editor Header */}
-      <div className="px-6 py-4 flex items-center justify-between border-b border-border/40 bg-muted/20">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-[#0055ff]/[0.06] px-5 py-4 sm:px-6">
         <div className="flex items-center gap-3">
           <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-primary/10 text-primary">
             <Pencil className="h-4 w-4" />
           </div>
-          <h4 className="font-bold text-base tracking-tight" style={layoutText}>Editando Template</h4>
+          <h4 className="font-bold text-base tracking-tight" style={layoutText}>Editor de cenário</h4>
         </div>
         <div className="flex items-center gap-2">
            <Button size="sm" variant="ghost" onClick={onCancel} style={layoutTextMuted}>
              Cancelar
            </Button>
-           <Button variant="save" size="sm" onClick={onSave} disabled={saving} className="shadow-lg shadow-primary/20 h-9 px-5">
+           <Button variant="save" size="sm" onClick={onSave} disabled={saving} className="h-10 rounded-xl bg-[#0055ff] px-5 font-bold text-white shadow-none hover:bg-[#0044d3]">
             {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
             Salvar Alterações
           </Button>
@@ -1020,7 +906,7 @@ function GrupoCard({ grupo, programas, onChange, onSave, onToggleProgram, onSetA
 
       <div className="p-6 space-y-8">
         {/* Basic Settings */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 gap-4 rounded-xl bg-slate-50 p-4 md:grid-cols-4">
           <div className="md:col-span-2">
             <Label className="text-[10px] uppercase tracking-widest font-bold mb-2 block" style={layoutTextMuted}>Nome do template</Label>
             <Input 
@@ -1031,7 +917,7 @@ function GrupoCard({ grupo, programas, onChange, onSave, onToggleProgram, onSetA
             />
           </div>
           <div>
-            <Label className="text-[10px] uppercase tracking-widest font-bold mb-2 block" style={layoutTextMuted}>Grid (Linhas)</Label>
+            <Label className="text-[10px] uppercase tracking-widest font-bold mb-2 block" style={layoutTextMuted}>Linhas de TVs</Label>
             <Input
               type="number"
               min={1}
@@ -1042,7 +928,7 @@ function GrupoCard({ grupo, programas, onChange, onSave, onToggleProgram, onSetA
             />
           </div>
           <div>
-            <Label className="text-[10px] uppercase tracking-widest font-bold mb-2 block" style={layoutTextMuted}>Grid (Colunas)</Label>
+            <Label className="text-[10px] uppercase tracking-widest font-bold mb-2 block" style={layoutTextMuted}>Colunas de TVs</Label>
             <Input
               type="number"
               min={1}
@@ -1054,7 +940,7 @@ function GrupoCard({ grupo, programas, onChange, onSave, onToggleProgram, onSetA
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-8">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(220px,1fr)_minmax(0,1.7fr)]">
           {/* Programs Selection */}
           <div className="space-y-4">
             <div>
@@ -1062,7 +948,7 @@ function GrupoCard({ grupo, programas, onChange, onSave, onToggleProgram, onSetA
               <p className="text-[11px] mb-3 leading-tight" style={layoutTextMuted}>Selecione quais programas ativarão este cenário automaticamente.</p>
             </div>
             
-            <div className="rounded-2xl p-4 border border-border/40 bg-muted/10 max-h-[400px] overflow-y-auto">
+            <div className="max-h-[390px] overflow-y-auto rounded-xl bg-slate-50 p-3">
               <div className="flex flex-col gap-2">
                 {programas.length === 0 && <p className="text-xs py-4 text-center italic" style={layoutTextMuted}>Nenhum programa ativo disponível.</p>}
                 {programas.map((p) => {
@@ -1094,7 +980,7 @@ function GrupoCard({ grupo, programas, onChange, onSave, onToggleProgram, onSetA
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <Label className="text-[10px] uppercase tracking-widest font-bold mb-1 block" style={layoutTextMuted}>Preview do Layout</Label>
+                <Label className="text-[10px] uppercase tracking-widest font-bold mb-1 block" style={layoutTextMuted}>Prévia do cenário</Label>
                 <p className="text-[11px]" style={layoutTextMuted}>Arraste ou envie a imagem base do cenário.</p>
               </div>
               
@@ -1124,17 +1010,17 @@ function GrupoCard({ grupo, programas, onChange, onSave, onToggleProgram, onSetA
             </div>
 
             <div 
-              className="relative rounded-2xl overflow-hidden border-2 border-dashed flex items-center justify-center bg-muted/20 min-h-[300px] transition-all"
-              style={{ borderColor: arteUrl ? "transparent" : "color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)" }}
+              className="relative flex min-h-[260px] items-center justify-center overflow-hidden rounded-xl bg-slate-950 transition-colors"
+              style={{}}
             >
               {!arteUrl ? (
                 <label htmlFor={inputId} className="cursor-pointer flex flex-col items-center gap-3 p-12 text-center group">
-                  <div className="h-16 w-16 rounded-full bg-muted/50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 text-white transition-transform duration-300 group-hover:scale-105">
                     <ImageIcon className="h-8 w-8 opacity-20" />
                   </div>
                   <div>
-                    <span className="text-sm font-bold block" style={layoutText}>Nenhuma imagem selecionada</span>
-                    <span className="text-xs opacity-50 block mt-1">Recomendado: 1920x1080 ou 3840x2160 (PNG/JPG)</span>
+                    <span className="block text-sm font-bold text-white">Adicione a arte principal do cenário</span>
+                    <span className="mt-1 block text-xs text-slate-400">PNG ou JPG · proporção de acordo com o painel de TVs</span>
                   </div>
                 </label>
               ) : (

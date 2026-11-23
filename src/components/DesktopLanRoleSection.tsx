@@ -24,6 +24,8 @@ export default function DesktopLanRoleSection({ stationId }: { stationId: string
   const canChangePrincipal = user?.id === ownerId;
   const [identity, setIdentity] = useState<Identity | null>(null);
   const identityRef = useRef<Identity | null>(null);
+  const nameInputRef = useRef<HTMLInputElement | null>(null);
+  const nameIsDirtyRef = useRef(false);
   const [name, setName] = useState("");
   const [registry, setRegistry] = useState<Registry>({ devices: [], principalId: null });
   const [loading, setLoading] = useState(true);
@@ -44,7 +46,7 @@ export default function DesktopLanRoleSection({ stationId }: { stationId: string
     setRegistry({ devices, principalId });
     const me = current || identityRef.current;
     const record = me && devices.find(device => device.device_id === me.deviceId);
-    if (record) setName(record.display_name);
+    if (record && !nameIsDirtyRef.current) setName(record.display_name);
     // Mirror central election in legacy settings without changing the cloud transport.
     if (record && me && window.houseMixDesktop?.getLanRole && window.houseMixDesktop?.setLanRole) {
       const desired = principalId === me.deviceId ? "principal" : "secondary";
@@ -110,6 +112,7 @@ export default function DesktopLanRoleSection({ stationId }: { stationId: string
         p_station_id: ownerId, p_device_id: identity.deviceId, p_display_name: value,
       });
       if (result.error) throw result.error;
+      nameIsDirtyRef.current = false;
       await reload(identity);
       toast.success("Nome deste computador salvo.");
     } catch (err) {
@@ -143,8 +146,9 @@ export default function DesktopLanRoleSection({ stationId }: { stationId: string
         Nome deste computador
       </label>
       <div className="flex flex-wrap gap-2">
-        <input id="hmd-device-name" value={name} maxLength={64}
-          onChange={e => setName(e.target.value)} disabled={!identity || busy || loading}
+        <input id="hmd-device-name" ref={nameInputRef} value={name} maxLength={64}
+          onChange={e => { nameIsDirtyRef.current = true; setName(e.target.value); }}
+          disabled={!identity || busy || loading}
           placeholder="Ex.: Estúdio Principal"
           className="min-w-[180px] flex-1 rounded-xl bg-slate-100 px-4 py-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0055ff] disabled:opacity-50"/>
         <button type="submit" disabled={!identity || busy || loading || name.trim() === myRecord?.display_name}
@@ -178,6 +182,14 @@ export default function DesktopLanRoleSection({ stationId }: { stationId: string
             <div className="flex flex-wrap items-center gap-2">
               <strong className="text-sm text-slate-900">{device.display_name}</strong>
               {isMine && <span className="text-[10px] font-semibold text-slate-500">Este computador</span>}
+              {isMine && <button type="button" disabled={busy}
+                onClick={() => {
+                  nameInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                  nameInputRef.current?.focus();
+                  nameInputRef.current?.select();
+                }}
+                className="rounded-md bg-[#0055ff]/10 px-2 py-1 text-[10px] font-bold text-[#0055ff] hover:bg-[#0055ff]/20 disabled:opacity-40"
+              >Renomear</button>}
             </div>
             <span className="mt-1 flex items-center gap-1 text-[10px] text-slate-500">
               <Clock3 size={11}/> Último acesso ao painel: {formatLastSeen(device.last_seen_at)}

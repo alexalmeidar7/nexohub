@@ -31,6 +31,7 @@ const PREFETCH_MAP: Record<string, () => Promise<unknown>> = {
   enquete: () => import("@/components/EnquetePage"),
   quiz: () => import("@/components/QuizPage"),
   site: () => import("@/components/site/SitePage"),
+  linkbio: () => import("@/components/LinkBioPage"),
   clientes: () => import("@/components/ClientesPage"),
   chatbot: () => import("@/components/ChatbotHome"),
   configtelapromo: () => import("@/components/ConfigTelaPromoPage"),
@@ -65,7 +66,7 @@ export function prefetchGroup(group: "cadastros" | "site" | "comercial" | "vmix"
     site: ["site", "playerconfig"],
     comercial: ["logos", "configtelapromo", "shopping", "promocoes", "testemunhais", "preroll"],
     vmix: ["broadcast", "cenario", "batalha", "enquete", "quiz"],
-    ferramentas: ["cortevideo", "tp"],
+    ferramentas: ["cortevideo", "tp", "linkbio"],
   };
   const list = groups[group] || [];
   list.forEach((key, idx) => {
