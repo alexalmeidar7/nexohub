@@ -8,6 +8,9 @@ const { createWindowOptions, isAllowedExternalUrl, resolveRendererRequestPath } 
 const { startLocalApiHost } = require("./local-api-host.cjs");
 const { startNdiBridge } = require("./ndi-bridge.cjs");
 const { fetchVmixApi } = require("./vmix-api.cjs");
+const { generateLocalText } = require("./local-free-ai.cjs");
+const { transcribeLocalAudio } = require("./local-whisper.cjs");
+const { appendTranscription, listTranscriptions } = require("./local-transcription-store.cjs");
 const { writeXmlIfChanged } = require("./local-xml-write.cjs");
 
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
@@ -336,6 +339,12 @@ function configureDesktopIpc() {
       return true;
     } catch { return false; }
   });
+  ipcMain.handle("housemix:local-ai", (_event, request) => generateLocalText(request));
+  ipcMain.handle("housemix:local-transcribe", (_event, streamUrl) => transcribeLocalAudio(streamUrl));
+  ipcMain.handle("housemix:local-transcripts-read", (_event, stationId) =>
+    listTranscriptions(app.getPath("userData"), stationId));
+  ipcMain.handle("housemix:local-transcripts-append", (_event, stationId, content, start, end) =>
+    appendTranscription(app.getPath("userData"), stationId, content, start, end));
   ipcMain.handle("housemix:app-version", () => app.getVersion());
   ipcMain.handle("housemix:get-start-with-windows", () => {
     const preferences = readDesktopPreferences();

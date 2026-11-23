@@ -5,7 +5,7 @@
  * para o Deepgram (streaming em tempo real) e faz INSERT contínuo na tabela
  * `transcricoes_streaming` do backend.
  *
- * Rode em um servidor Node 18+ (VPS, Railway, Render, Docker...):
+ * Exemplo legado: rode em Node 18+ com VPS próprio ou Docker local:
  *   npm i @supabase/supabase-js @deepgram/sdk
  *   # ffmpeg precisa estar instalado no sistema
  *

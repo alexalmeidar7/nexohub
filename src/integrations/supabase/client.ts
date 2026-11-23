@@ -33,9 +33,14 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 // Intercept edge functions to provide resilient local and direct operations
 import { invokeWeatherFunction } from '@/lib/weatherService';
 import { invokeFetchRss, invokeFetchRssTitles } from '@/lib/rssService';
+import { invokeDesktopFreeAi } from '@/lib/desktopFreeAi';
 
 const originalInvoke = supabase.functions.invoke.bind(supabase.functions);
 supabase.functions.invoke = (async (functionName: string, options?: any) => {
+  if (window.houseMixDesktop?.generateLocalText) {
+    const result = await invokeDesktopFreeAi(functionName, options?.body);
+    if (result) return result;
+  }
   if (functionName === "fetch-weather") {
     return invokeWeatherFunction(options?.body);
   }
