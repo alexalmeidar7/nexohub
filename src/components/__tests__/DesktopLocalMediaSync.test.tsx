@@ -28,7 +28,7 @@ describe("HMD local XML synchronization", () => {
     vi.stubGlobal("AbortSignal", { timeout: () => new AbortController().signal });
     mocks.channel.on.mockReturnValue(mocks.channel); mocks.channel.subscribe.mockReturnValue(mocks.channel);
     Object.defineProperty(navigator, "onLine", { configurable: true, value: true });
-    window.houseMixDesktop = { initializeLocalAssets: vi.fn().mockResolvedValue(undefined), cacheImage: vi.fn() } as any;
+    window.houseMixDesktop = { initializeLocalAssets: vi.fn().mockResolvedValue(undefined), cacheImage: vi.fn(), readXml: vi.fn().mockResolvedValue(null) } as any;
     let program = "Before";
     vi.stubGlobal("fetch", vi.fn(async (url: string) => {
       if (url.includes("serve-xml-geral")) throw new Error("Unavailable feed");

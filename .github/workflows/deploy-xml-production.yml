@@ -84,13 +84,14 @@ jobs:
           apply_migration "20261103230000" "housemix_weather_xml_refresh_interval" "supabase/migrations/20261103230000_housemix_weather_xml_refresh_interval.sql"
           apply_migration "20261104130000" "housemix_reports_45d_and_catalog_order" "supabase/migrations/20261104130000_housemix_reports_45d_and_catalog_order.sql"
           apply_migration "20261123182000" "restore_audience_collector_official" "supabase/migrations/20261123182000_restore_audience_collector_official.sql"
+          apply_migration "20261123184500" "broadcast_aseguir_45_second_pulses" "supabase/migrations/20261123184500_broadcast_aseguir_45_second_pulses.sql"
 
       - name: Deploy XML Edge Functions
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           set -euo pipefail
-          for function_name in serve-xml-geral serve-xml-tempo serve-xml-roteiro-estudio serve-xml-cenarios-estudio serve-xml-broadcast serve-xml-vmix-live serve-xml-logos serve-xml-enquete serve-xml-batalha serve-xml-quiz collect-audience count-stream-listeners count-video-viewers update-weather-xml public-cenario-data public-player-data get-music-curiosity; do
+          for function_name in serve-xml-geral serve-xml-tempo serve-xml-roteiro-estudio serve-xml-cenarios-estudio serve-xml-broadcast trigger-broadcast-aseguir serve-xml-vmix-live serve-xml-logos serve-xml-enquete serve-xml-batalha serve-xml-quiz collect-audience count-stream-listeners count-video-viewers update-weather-xml public-cenario-data public-player-data get-music-curiosity; do
             supabase functions deploy "$function_name" --project-ref qazvgmgdidjhbvcuinpy --use-api
           done
 

@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { resolveBroadcastAseguir } from "../_shared/broadcastAseguirSchedule.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -655,86 +656,25 @@ serve(async (req) => {
     const bgAppliesToCurrent = linkedProgIds.length === 0 || (programaId && linkedProgIds.includes(programaId));
     const fundoAssunto = broadcastConfig.useCustomAssuntoBg && broadcastConfig.assuntoBgUrl && bgAppliesToCurrent ? broadcastConfig.assuntoBgUrl : "";
 
-    // ── A SEGUIR (next program) ──────────────────────────────────────────
+    // A Seguir text: the XML is blank by default. Automatic windows are
+    // calculated from the grade; manual triggers are persisted per station.
     const aSeguirEnabled = !!broadcastConfig.aSeguirEnabled;
-    // Saved by BroadcastPage as aSeguirRefreshSeconds (default 60 = vMix refresh rule).
     const rawRefresh = Number(broadcastConfig.aSeguirRefreshSeconds);
     const aSeguirRefreshSeconds = Number.isFinite(rawRefresh) && rawRefresh > 0 ? Math.round(rawRefresh) : 60;
-    const showNextProgram = broadcastConfig.aSeguirShowPrograma !== false;
-    const showNextProgramLogo = broadcastConfig.aSeguirShowLogoPrograma !== false;
-    const showNextStart = broadcastConfig.aSeguirShowHorario !== false;
-    const showNextPresenter = broadcastConfig.aSeguirShowLocutor !== false;
-    const showNextPresenterPhoto = broadcastConfig.aSeguirShowFotoLocutor !== false;
-    let aSeguirNome = "";
-    let aSeguirLogo = "";
-    let aSeguirLocutorNome = "";
-    let aSeguirLocutorFoto = "";
-    let aSeguirHorario = "";
-    let aSeguirTexto = "";
-    const BLANK_PNG_ASEG = "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png";
-    aSeguirLogo = BLANK_PNG_ASEG;
-    aSeguirLocutorFoto = BLANK_PNG_ASEG;
-
+    let manualAseguir: { mode: "next" | "later"; triggered_at: string; expires_at: string } | null = null;
     if (aSeguirEnabled) {
-      const allProgs = progsRes.data || [];
-      let nextProg: any = null;
-      const curEndSec = prog ? timeToSeconds((prog as any).horario_fim) : -1;
-      const refSeconds = curEndSec > nowSeconds ? curEndSec : nowSeconds;
-
-      for (let offset = 0; offset <= 7 && !nextProg; offset++) {
-        const refDate = new Date(now.getTime() + offset * 24 * 60 * 60 * 1000);
-        const refDayName = dayMap[dayFormatter.format(refDate).toLowerCase()] || "";
-        const refDateStr = dateFormatter.format(refDate);
-        const candidates = allProgs
-          .map((p: any) => ({ p, start: timeToSeconds(p.horario_inicio) }))
-          .filter(({ p, start }) => {
-            if (start < 0) return false;
-            if (p.id && programaId && p.id === programaId) return false;
-            const runs = p.variavel
-              ? normalizeDateValue(p.data_variavel) === refDateStr
-              : (Array.isArray(p.dias_semana) ? p.dias_semana : []).includes(refDayName);
-            return runs && (offset > 0 || start >= refSeconds);
-          })
-          .sort((a, b) => a.start - b.start);
-        if (candidates.length > 0) nextProg = candidates[0].p;
-      }
-
-      if (nextProg) {
-        if (showNextProgram) aSeguirNome = nextProg.nome || "";
-        if (showNextProgramLogo) {
-          const logoSource = nextProg.selo || nextProg.logo || nextProg.logo_url || "";
-          if (logoSource) {
-            aSeguirLogo = await ensurePngImageUrl(
-              supabase, logoSource, `broadcast/${dataOwnerId}/${nextProg.id || "programa"}-aseguir-logo.png`, 1080,
-            ) || BLANK_PNG_ASEG;
-          }
-        }
-        if (showNextStart) {
-          aSeguirHorario = (nextProg.horario_inicio || "").toString().slice(0, 5);
-          aSeguirTexto = aSeguirHorario ? `começa às: ${aSeguirHorario}` : "";
-        }
-        if (showNextPresenter || showNextPresenterPhoto) {
-          const nextApIds = (nextProg.apresentadores_ids && nextProg.apresentadores_ids.length > 0)
-            ? nextProg.apresentadores_ids
-            : (nextProg.apresentador_id ? [nextProg.apresentador_id] : []);
-          if (nextApIds.length > 0) {
-            const { data: nextPresenters } = await supabase
-              .from("apresentadores")
-              .select("id, nome, foto")
-              .eq("user_id", dataOwnerId)
-              .in("id", nextApIds);
-            const nextAp = (nextPresenters || [])
-              .sort((a: any, b: any) => nextApIds.indexOf(a.id) - nextApIds.indexOf(b.id))[0];
-            if (nextAp) {
-              if (showNextPresenter) aSeguirLocutorNome = nextAp.nome || "";
-              if (showNextPresenterPhoto && nextAp.foto) {
-                aSeguirLocutorFoto = await ensurePngImageUrl(
-                  supabase, nextAp.foto, `broadcast/${dataOwnerId}/${nextAp.id}-aseguir-locutor.png`, 1080,
-                ) || BLANK_PNG_ASEG;
-              }
-            }
-          }
-        }
+      const { data: manual, error: pulseError } = await supabase
+        .from("broadcast_aseguir_pulses")
+        .select("mode,triggered_at,expires_at")
+        .eq("user_id", dataOwnerId)
+        .gte("expires_at", new Date().toISOString())
+        .maybeSingle();
+      if (!pulseError && (manual?.mode === "next" || manual?.mode === "later")) {
+        manualAseguir = {
+          mode: manual.mode === "later" ? "later" : "next",
+          triggered_at: String(manual.triggered_at),
+          expires_at: String(manual.expires_at),
+        };
       }
     }
 
@@ -1270,6 +1210,19 @@ serve(async (req) => {
     }
 
 
+    // Evaluate at render time (after RSS/weather processing), so the XML never
+    // serves text outside the exact 45-second window.
+    const aSeguirPulse = resolveBroadcastAseguir(
+      progsRes.data || [], new Date(), tz, aSeguirEnabled, manualAseguir,
+    );
+    const aSeguirNome = aSeguirPulse.t2;
+    const aSeguirHorario = aSeguirPulse.t3;
+    const aSeguirTexto = aSeguirPulse.t1;
+    const aSeguirLogo = "";
+    const aSeguirLocutorNome = "";
+    const aSeguirLocutorFoto = "";
+    const BLANK_PNG_ASEG = "";
+
     const lines: string[] = [];
     lines.push('<?xml version="1.0" encoding="UTF-8"?>');
     lines.push("<items>");
@@ -1322,17 +1275,20 @@ serve(async (req) => {
     lines.push(`      <temp_atual>${esc(infoCantoTempAtual || currentTempStr)}</temp_atual>`);
     lines.push(`      <ico_temp_atual>${esc(ensurePngExtension(infoCantoTempAtual ? infoCantoIcoTemp : (currentTempStr ? currentTempIcon : infoCantoIcoTemp)))}</ico_temp_atual>`);
     lines.push("    </infos_canto>");
+    // Direct vMix mappings: ALWAYS exist, even when empty.
+    lines.push(`    <aseguir_t1>${esc(aSeguirPulse.t1)}</aseguir_t1>`);
+    lines.push(`    <aseguir_t2>${esc(aSeguirPulse.t2)}</aseguir_t2>`);
+    lines.push(`    <aseguir_t3>${esc(aSeguirPulse.t3)}</aseguir_t3>`);
+    // Metadata powers precise local HMD activation/clear without extra polling.
+    lines.push(`    <aseguir_expira_em>${esc(aSeguirPulse.expiresAt)}</aseguir_expira_em>`);
+    lines.push(`    <aseguir_proximo_disparo_em>${esc(aSeguirPulse.nextTriggerAt)}</aseguir_proximo_disparo_em>`);
     lines.push("    <a_seguir>");
     lines.push(`      <ativo>${aSeguirEnabled ? "1" : "0"}</ativo>`);
     lines.push(`      <programa_nome>${esc(aSeguirNome)}</programa_nome>`);
     lines.push(`      <nome_programa>${esc(aSeguirNome)}</nome_programa>`);
-    lines.push(`      <programa_logo>${esc(ensurePngExtension(aSeguirLogo))}</programa_logo>`);
+    lines.push(`      <programa_logo>${esc(aSeguirLogo)}</programa_logo>`);
     lines.push(`      <locutor_nome>${esc(aSeguirLocutorNome)}</locutor_nome>`);
-    lines.push(`      <locutor_foto>${esc(
-      !aSeguirLocutorFoto || aSeguirLocutorFoto.includes("sem-loc") || aSeguirLocutorNome === "Automático" || aSeguirLocutorNome === "—"
-        ? ""
-        : ensurePngExtension(aSeguirLocutorFoto)
-    )}</locutor_foto>`);
+    lines.push("      <locutor_foto></locutor_foto>");
     lines.push(`      <horario>${esc(aSeguirHorario)}</horario>`);
     lines.push(`      <texto>${esc(aSeguirTexto)}</texto>`);
     lines.push(`      <intervalo_atualizacao>${aSeguirRefreshSeconds}</intervalo_atualizacao>`);
