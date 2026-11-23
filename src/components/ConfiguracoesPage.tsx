@@ -16,6 +16,7 @@ const PlayerLayoutCustomizer = lazyRetry(() => import("./PlayerLayoutCustomizer"
 const InfoMusicSection = lazyRetry(() => import("./InfoMusicSection"));
 const PermissoesSection = lazyRetry(() => import("./PermissoesSection"));
 import XmlsConfigSection from "./XmlsConfigSection";
+import DesktopLanRoleSection from "./DesktopLanRoleSection";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -2615,6 +2616,11 @@ export default function ConfiguracoesPage({
               aria-label="Iniciar com Windows"
             />
           </label>
+        </CollapsibleBox>
+      )}
+      {isWindowsDesktop && (section === "all" || section === "empresa") && targetUid && (
+        <CollapsibleBox title="Sincronização entre computadores" icon={<Radio size={16} style={{opacity:0.8}} />}>
+          <DesktopLanRoleSection stationId={targetUid} />
         </CollapsibleBox>
       )}
         </div>
