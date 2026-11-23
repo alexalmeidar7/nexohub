@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo, forwardRef, useImperativeHandle } from "react";
-import { Plus, Trash2, Image as ImageIcon, Upload, Save, Loader2, LayoutGrid, Radio, ArrowRight, Pencil, Search, Monitor, X, Link2 } from "lucide-react";
+import { Plus, Trash2, Image as ImageIcon, Upload, Save, Loader2, LayoutGrid, Radio, ArrowRight, Pencil, Search, Monitor, Link2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -143,10 +143,6 @@ const safeUuid = (): string => {
 const layoutCardStyle: React.CSSProperties = {
   background: "color-mix(in srgb, var(--layout-page-text, #0d0446) 4%, var(--layout-page-bg, #ffffff))",
   color: "var(--layout-page-text, #0d0446)",
-  border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)",
-};
-const layoutInnerStyle: React.CSSProperties = {
-  background: "color-mix(in srgb, var(--layout-page-text, #0d0446) 5%, var(--layout-page-bg, #ffffff))",
   border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)",
 };
 const layoutTextMuted: React.CSSProperties = {
