@@ -3,25 +3,6 @@ import { Download, HardDrive, Package } from "lucide-react";
 import { HMD_LATEST_RELEASE_API, parseLatestDesktopRelease } from "@/lib/desktopRelease";
 import type { DesktopRelease } from "@/lib/desktopRelease";
 
-const DOWNLOAD_URL = "https://housemix.nexobrasil.net/downloads/nexohub-bridge/NexoHubBridge.exe";
-const MANIFEST_URL = "https://housemix.nexobrasil.net/downloads/nexohub-bridge/latest.json";
-
-type Details = {
-  version: string;
-  updatedAt: string;
-  sizeBytes: number;
-  downloadUrl: string;
-  available: boolean;
-};
-
-const EMPTY_DETAILS: Details = {
-  version: "—",
-  updatedAt: "",
-  sizeBytes: 0,
-  downloadUrl: DOWNLOAD_URL,
-  available: false,
-};
-
 const formatSize = (bytes: number) =>
   bytes > 0 ? `${(bytes / (1024 * 1024)).toFixed(1).replace(".", ",")} MB` : "Não informado";
 
@@ -37,8 +18,7 @@ const formatDate = (value: string) => {
 };
 
 export default function NexoPluginsPage() {
-  const [details, setDetails] = useState<Details>(EMPTY_DETAILS);
-  const [checking, setChecking] = useState(true);
+  const isDesktop = typeof window !== "undefined" && Boolean(window.houseMixDesktop);
   const [desktopRelease, setDesktopRelease] = useState<DesktopRelease | null>(null);
   const [checkingDesktop, setCheckingDesktop] = useState(true);
   useEffect(() => {
@@ -67,62 +47,6 @@ export default function NexoPluginsPage() {
   }, []);
 
 
-  useEffect(() => {
-    let active = true;
-
-    const loadDetails = async () => {
-      try {
-        const response = await fetch(`${MANIFEST_URL}?t=${Date.now()}`, {
-          cache: "no-store",
-        });
-        if (!response.ok) throw new Error("Manifesto indisponível");
-
-        const manifest = await response.json();
-        if (
-          typeof manifest.version !== "string" ||
-          typeof manifest.updatedAt !== "string" ||
-          !Number.isFinite(Number(manifest.sizeBytes)) ||
-          Number(manifest.sizeBytes) <= 0
-        ) {
-          throw new Error("Manifesto incompleto");
-        }
-
-        const downloadUrl =
-          typeof manifest.downloadUrl === "string" &&
-          new URL(manifest.downloadUrl, window.location.origin).origin ===
-            window.location.origin
-            ? manifest.downloadUrl
-            : DOWNLOAD_URL;
-
-        const fileResponse = await fetch(downloadUrl, {
-          method: "HEAD",
-          cache: "no-store",
-        });
-        if (!fileResponse.ok) throw new Error("Executável não encontrado");
-
-        const actualSize = Number(fileResponse.headers.get("content-length"));
-        if (active) {
-          setDetails({
-            version: manifest.version,
-            updatedAt: manifest.updatedAt,
-            sizeBytes: actualSize > 0 ? actualSize : Number(manifest.sizeBytes),
-            downloadUrl,
-            available: true,
-          });
-        }
-      } catch {
-        if (active) setDetails(EMPTY_DETAILS);
-      } finally {
-        if (active) setChecking(false);
-      }
-    };
-
-    void loadDetails();
-    return () => {
-      active = false;
-    };
-  }, []);
-
   return (
     <section className="min-h-full p-5 text-slate-900 sm:p-8">
       <header className="mb-8">
@@ -131,7 +55,7 @@ export default function NexoPluginsPage() {
         </div>
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Downloads</h1>
         <p className="mt-2 max-w-2xl text-sm text-slate-500">
-          Instaladores oficiais e versões mais recentes dos aplicativos House Mix.
+          Versões e instaladores oficiais do House Mix Desktop.
         </p>
       </header>
 
@@ -159,11 +83,12 @@ export default function NexoPluginsPage() {
                 </ul>
               ) : (
                 <p className="mt-2 text-sm text-slate-500">
-                  {checkingDesktop ? "Consultando as notas da versão..." : "Notas detalhadas não disponíveis. Consulte a publicação oficial."}
+                  {checkingDesktop ? "Consultando as notas da versão..." : "Notas detalhadas não disponíveis."}
                 </p>
               )}
             </div>
-            <div className="mt-5 flex flex-wrap items-center gap-3">
+            {!isDesktop && (
+              <div className="mt-5 flex flex-wrap items-center gap-3">
               {desktopRelease ? (
                 <a
                   href={desktopRelease.downloadUrl}
@@ -178,73 +103,12 @@ export default function NexoPluginsPage() {
                   <Download size={17} /> {checkingDesktop ? "Verificando..." : "Indisponível"}
                 </button>
               )}
-              <a
-                href={desktopRelease?.releaseUrl || "https://github.com/alexalmeidar7/nexohub/releases"}
-                target="_blank" rel="noopener noreferrer"
-                className="text-sm font-semibold text-[#0055ff] hover:underline"
-              >
-                Ver publicação oficial
-              </a>
-            </div>
-          </div>
-        </div>
-      </article>
-
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-600">Outras ferramentas</h2>
-      <article className="flex flex-col gap-6 rounded-2xl border border-slate-200 bg-slate-50/70 p-5 sm:flex-row sm:items-center sm:gap-7 sm:p-6">
-        <div className="mx-auto w-36 shrink-0 overflow-hidden rounded-[1.65rem] bg-[#0645d5] shadow-sm sm:mx-0 sm:w-40">
-          <img
-            src="/nexo-bridge-cover.svg"
-            alt="Capa do aplicativo Nexo Bridge"
-            className="block aspect-square h-auto w-full object-cover"
-          />
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="mb-3">
-            <h2 className="text-xl font-bold leading-tight tracking-tight text-slate-900">Nexo Bridge</h2>
-            <p className="mt-1 text-sm leading-relaxed text-slate-600">
-              Ponte de conexão entre o House Mix e o vMix.
-            </p>
-          </div>
-
-          <dl className="grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-[max-content_1fr]">
-            <dt className="font-semibold text-slate-800">Versão</dt>
-            <dd className="text-slate-600">{details.version}</dd>
-            <dt className="font-semibold text-slate-800">Última atualização</dt>
-            <dd className="text-slate-600">{formatDate(details.updatedAt)}</dd>
-            <dt className="font-semibold text-slate-800">Tamanho</dt>
-            <dd className="text-slate-600">{formatSize(details.sizeBytes)}</dd>
-          </dl>
-
-          <div className="mt-4">
-            {details.available ? (
-              <a
-                href={details.downloadUrl}
-                download="NexoHubBridge.exe"
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-[#0055ff] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0046d5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0055ff] focus-visible:ring-offset-2 active:scale-[0.98]"
-              >
-                <Download size={17} /> Download
-              </a>
-            ) : (
-              <button
-                type="button"
-                disabled
-                className="inline-flex min-h-10 cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-[#0055ff]/40 px-6 py-2.5 text-sm font-semibold text-white"
-              >
-                <Download size={17} /> {checking ? "Verificando..." : "Download indisponível"}
-              </button>
+              </div>
             )}
           </div>
-          <p className={`mt-2 text-xs leading-relaxed ${details.available ? "text-emerald-700" : "text-amber-700"}`}>
-            {details.available
-              ? "Executável disponível para download."
-              : checking
-                ? "Verificando disponibilidade do executável..."
-                : "Download temporariamente indisponível. Tente novamente mais tarde."}
-          </p>
         </div>
       </article>
+
     </section>
   );
 }
