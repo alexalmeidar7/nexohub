@@ -50,5 +50,5 @@ Deno.serve(async (request) => {
     console.error("Failed to persist A Seguir pulse", error.message);
     return json({ error: "pulse_unavailable" }, 503);
   }
-  return json({ ok: true, ...target, expires_at: expires.toISOString() });
+  return json({ ok: true, ...target, triggered_at: now.toISOString(), expires_at: expires.toISOString() });
 });

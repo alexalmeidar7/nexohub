@@ -1,4 +1,5 @@
 import { DateInput } from "@/components/ui/date-input";
+import { resolveBroadcastAseguir, type AseguirManual, type AseguirMode } from "../../supabase/functions/_shared/broadcastAseguirSchedule";
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
@@ -334,7 +335,9 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
   const [reloadKey, setReloadKey] = useState<number>(() => Date.now());
   const [timezone, setTimezone] = useState<string | null>("America/Sao_Paulo");
   const [nextProgramInfo, setNextProgramInfo] = useState<NextProgramInfo | null>(null);
-  const [, setScheduleClock] = useState<number>(() => Date.now());
+  const [scheduleClock, setScheduleClock] = useState<number>(() => Date.now());
+  const [aseguirManualPulse, setAseguirManualPulse] = useState<AseguirManual | null>(null);
+  const [aseguirSending, setAseguirSending] = useState<AseguirMode | null>(null);
   const latestDataRef = useRef<BroadcastData>(defaultBroadcast);
 
 
@@ -1194,33 +1197,48 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
     return () => clearInterval(id);
   }, [stationUid, loadInitialData]);
 
-  // ── Módulo A SEGUIR: envio contínuo em backend ──
-  // Quando habilitado, o XML é regerado no backend (serve-xml-broadcast
-  // calcula o próximo programa da grade a cada requisição) no intervalo
-  // escolhido pelo usuário. Aqui apenas disparamos o refresh periódico e
-  // registramos o último envio para o usuário acompanhar.
-  const [aSeguirSentAt, setASeguirSentAt] = useState<Date | null>(null);
+  // Manual A Seguir pulses are saved server-side for 45 seconds and shared
+  // across HMD/HMO, including when the Broadcast tab is closed.
   useEffect(() => {
-    if (!stationUid || !data.aSeguirEnabled) return;
-    const every = Math.max(15, Number(data.aSeguirRefreshSeconds) || 60) * 1000;
+    if (!stationUid) return;
     let cancelled = false;
-    const push = async () => {
-      try {
-        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-broadcast?user_id=${stationUid}&aseguir=1&t=${Date.now()}`;
-        const response = await fetch(url, { cache: "no-store" });
-        if (!response.ok) throw new Error("HTTP " + response.status);
-        if (!cancelled) setASeguirSentAt(new Date());
-      } catch {
-        /* silencioso — próximo ciclo tenta de novo */
-      }
+    const hydrate = async () => {
+      const { data: pulse, error } = await (supabase.from("broadcast_aseguir_pulses" as any) as any)
+        .select("mode,triggered_at,expires_at").eq("user_id", stationUid).maybeSingle();
+      if (!cancelled && !error && pulse) setAseguirManualPulse(pulse as AseguirManual);
     };
-    void push();
-    const timer = setInterval(push, every);
-    return () => { cancelled = true; clearInterval(timer); };
-  }, [stationUid, data.aSeguirEnabled, data.aSeguirRefreshSeconds]);
+    void hydrate();
+    const channel = supabase.channel(`broadcast-aseguir-preview-${stationUid}`)
+      .on("postgres_changes", {
+        event: "*", schema: "public", table: "broadcast_aseguir_pulses",
+        filter: `user_id=eq.${stationUid}`,
+      }, () => { void hydrate(); })
+      .subscribe();
+    return () => {
+      cancelled = true;
+      void supabase.removeChannel(channel);
+    };
+  }, [stationUid]);
 
-
-
+  const sendManualAseguir = useCallback(async (mode: AseguirMode) => {
+    if (!stationUid || !data.aSeguirEnabled || aseguirSending) return;
+    setAseguirSending(mode);
+    try {
+      const { data: response, error } = await supabase.functions.invoke("trigger-broadcast-aseguir", {
+        body: { owner_id: stationUid, mode },
+      });
+      if (error || !response?.ok) throw new Error(response?.error || error?.message || "Não foi possível enviar.");
+      setAseguirManualPulse({
+        mode, triggered_at: response.triggered_at, expires_at: response.expires_at,
+      });
+      window.dispatchEvent(new CustomEvent("broadcast:aseguir-triggered", { detail: { userId: stationUid } }));
+      toast.success(mode === "next" ? "A Seguir enviado por 45 segundos." : "Daqui a Pouco enviado por 45 segundos.");
+    } catch (error: any) {
+      toast.error("Falha no envio: " + (error?.message || "erro de comunicação"));
+    } finally {
+      setAseguirSending(null);
+    }
+  }, [stationUid, data.aSeguirEnabled, aseguirSending]);
 
   const saveManualInserts = useCallback(async (nextInserts: ManualInsert[]) => {
     if (!stationUid) throw new Error("Usuário não identificado");
@@ -1453,44 +1471,10 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
     return () => clearInterval(t);
   }, [user, allProgramasFull, timezone, data.aSeguirLeadSeconds, data.aSeguirForceUntil]);
 
-  // A Seguir — locutor do próximo programa (para a prévia do XML)
-  const [aSeguirLocutor, setASeguirLocutor] = useState<{ nome: string; foto: string } | null>(null);
-  const nextProgId = nextProgramInfo?.next?.id || null;
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const prog = nextProgramInfo?.next;
-      if (!user || !prog) { setASeguirLocutor(null); return; }
-      const apIds: string[] = (prog.apresentadores_ids && prog.apresentadores_ids.length > 0)
-        ? prog.apresentadores_ids
-        : (prog.apresentador_id ? [prog.apresentador_id] : []);
-      if (apIds.length === 0) { setASeguirLocutor(null); return; }
-      const { data: aps } = await supabase
-        .from("apresentadores")
-        .select("id, nome, foto")
-        .in("id", apIds);
-      if (cancelled) return;
-      const ap = (aps || []).sort((a: any, b: any) => apIds.indexOf(a.id) - apIds.indexOf(b.id))[0];
-      setASeguirLocutor(ap ? { nome: ap.nome || "", foto: ap.foto || "" } : null);
-    })();
-    return () => { cancelled = true; };
-  }, [user, nextProgId]);
-
-  const BLANK_PNG_ASEGUIR = (import.meta.env.VITE_SUPABASE_URL || "").replace(/\/$/, "") + "/storage/v1/object/public/xml-files/broadcast/imgblanck.png";
-  const aSeguirActive = !!data.aSeguirEnabled && !!nextProgramInfo;
-  const aSeguirXmlPreview = (() => {
-    const horario = aSeguirActive && data.aSeguirShowHorario !== false ? (nextProgramInfo?.next?.horario_inicio || "").toString().slice(0, 5) : "";
-    return {
-      ativo: data.aSeguirEnabled ? "1" : "0",
-      programa_nome: aSeguirActive && data.aSeguirShowPrograma !== false ? (nextProgramInfo?.next?.nome || "") : "",
-      programa_logo: aSeguirActive && data.aSeguirShowLogoPrograma !== false ? (nextProgramInfo?.next?.selo || nextProgramInfo?.next?.logo || BLANK_PNG_ASEGUIR) : BLANK_PNG_ASEGUIR,
-      locutor_nome: aSeguirActive && data.aSeguirShowLocutor !== false ? (aSeguirLocutor?.nome || "") : "",
-      locutor_foto: aSeguirActive && data.aSeguirShowFotoLocutor !== false ? (aSeguirLocutor?.foto || BLANK_PNG_ASEGUIR) : BLANK_PNG_ASEGUIR,
-      horario,
-      texto: horario ? `começa às: ${horario}` : "",
-    };
-  })();
-
+  const aSeguirPulsePreview = resolveBroadcastAseguir(
+    allProgramasFull, new Date(scheduleClock), timezone || "America/Sao_Paulo",
+    !!data.aSeguirEnabled, aseguirManualPulse,
+  );
 
   const SectionHeader = ({ n, label, color = CYAN, right }: { n: string; label: string; color?: string; right?: React.ReactNode }) => (
     <div className="flex items-center justify-between mb-4">
@@ -2113,7 +2097,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
               style={{ backgroundColor: data.aSeguirEnabled ? "rgba(0,85,255,0.06)" : "#ffffff", border: `1px solid ${data.aSeguirEnabled ? CYAN : NAVY_BORDER}` }}>
               <div className="min-w-0 flex-1">
                 <span className="block text-[12px] font-bold text-slate-800">A Seguir</span>
-                <p className="text-[10px] text-slate-500">{data.aSeguirEnabled ? "Ativo: o XML BROADCAST acompanha automaticamente o próximo programa da grade durante todo o dia." : "Desligado: os campos de A Seguir serão desativados no XML."}</p>
+                <p className="text-[10px] text-slate-500">{data.aSeguirEnabled ? "Ativo: envia 45 segundos de texto, 10 minutos antes e 30 minutos depois do início dos programas." : "Desligado: os campos aseguir_t1, aseguir_t2 e aseguir_t3 permanecem vazios."}</p>
               </div>
               <span className="inline-flex shrink-0 items-center gap-2">
                 <span className="text-[9px] font-black uppercase tracking-wider" style={{ color: data.aSeguirEnabled ? "#0055ff" : "#94a3b8" }}>{data.aSeguirEnabled ? "Ligado" : "Desligado"}</span>
@@ -2122,99 +2106,57 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
                 </span>
               </span>
             </button>
-            <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
-              <div className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-700">Informações enviadas para o XML</div>
-              <p className="mb-3 text-[10px] text-slate-500">Escolha quais dados do próximo programa devem permanecer atualizados no XML BROADCAST.</p>
-              <div className="flex flex-wrap items-center justify-center gap-3 py-2">
+            <div className="mt-4 rounded-xl bg-white p-4">
+              <div className="mb-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-800">Disparo manual • 45 segundos</div>
+              <p className="mb-4 text-[11px] text-slate-500">
+                Envie imediatamente o próximo programa ou o segundo programa seguinte na grade.
+                O XML volta a ficar vazio automaticamente após 45 segundos.
+              </p>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <button type="button" disabled={!data.aSeguirEnabled || !!aseguirSending}
+                  onClick={() => void sendManualAseguir("next")}
+                  className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[#0055ff] px-4 text-xs font-bold text-white hover:bg-[#0042cc] disabled:cursor-not-allowed disabled:opacity-40">
+                  {aseguirSending === "next" ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
+                  Enviar A Seguir
+                </button>
+                <button type="button" disabled={!data.aSeguirEnabled || !!aseguirSending}
+                  onClick={() => void sendManualAseguir("later")}
+                  className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[#0055ff] px-4 text-xs font-bold text-white hover:bg-[#0042cc] disabled:cursor-not-allowed disabled:opacity-40">
+                  {aseguirSending === "later" ? <Loader2 size={15} className="animate-spin" /> : <Clock size={15} />}
+                  Enviar Daqui a Pouco
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-xl bg-slate-50 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-700">Prévia XML Broadcast • vMix</span>
+                <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${aSeguirPulsePreview.t1 ? "bg-blue-100 text-[#0055ff]" : "bg-slate-200 text-slate-500"}`}>
+                  {aSeguirPulsePreview.t1 ? "Transmitindo • 45s" : "Campos vazios"}
+                </span>
+              </div>
+              <div className="mt-3 grid gap-2">
                 {([
-                  { key: "aSeguirShowPrograma" as const, label: "Nome do programa" },
-                  { key: "aSeguirShowLogoPrograma" as const, label: "Logo do programa" },
-                  { key: "aSeguirShowHorario" as const, label: "Horário inicial" },
-                  { key: "aSeguirShowLocutor" as const, label: "Nome do locutor" },
-                  { key: "aSeguirShowFotoLocutor" as const, label: "Foto do locutor" },
-                ]).map(({ key, label }) => {
-                  const active = data[key] !== false;
-                  return <button key={key} type="button" aria-pressed={active} disabled={!data.aSeguirEnabled}
-                    onClick={() => { const nextData = { ...latestDataRef.current, [key]: !active }; setData(nextData); void handleSave(nextData); }}
-                    className="rounded-xl px-4 py-3 text-[10px] sm:text-[11px] font-extrabold text-white transition-opacity duration-150 disabled:cursor-not-allowed"
-                    style={{ backgroundColor: CYAN, opacity: active ? 1 : 0.5 }}>
-                    {label}
-                  </button>;
-                })}
+                  ["aseguir_t1", aSeguirPulsePreview.t1],
+                  ["aseguir_t2", aSeguirPulsePreview.t2],
+                  ["aseguir_t3", aSeguirPulsePreview.t3],
+                ] as const).map(([name, value]) => (
+                  <div key={name} className="flex min-h-10 items-center gap-3 rounded-lg bg-white px-3 py-2">
+                    <code className="min-w-[100px] text-[11px] font-semibold text-[#0055ff]">{name}</code>
+                    <span className="min-w-0 truncate text-[12px] font-bold text-slate-800">{value || <span className="font-normal text-slate-400">(vazio)</span>}</span>
+                  </div>
+                ))}
               </div>
+              <p className="mt-3 text-[10px] text-slate-500">
+                Automático: A Seguir 10 minutos antes de cada programa; Ainda Hoje 30 minutos após seu início.
+                Os três campos permanecem vazios fora dos 45 segundos.
+              </p>
+              {aSeguirPulsePreview.expiresAt && (
+                <p className="mt-2 text-[10px] font-semibold text-[#0055ff]">
+                  Limpeza às {new Date(aSeguirPulsePreview.expiresAt).toLocaleTimeString("pt-BR", { timeZone: timezone || "America/Sao_Paulo" })}
+                </p>
+              )}
             </div>
-
-            {/* Os dados selecionados são atualizados automaticamente em cada leitura do XML. */}
-
-            {/* Prévia do XML */}
-            <div
-              className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200"
-            >
-              <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
-                <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: CYAN }}>
-                  Prévia do XML — nódulo a_seguir
-                </div>
-                <span
-                  className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider"
-                  style={{
-                    backgroundColor: aSeguirActive ? "#22c55e" : "#e2e8f0",
-                    color: aSeguirActive ? "#ffffff" : "#64748b",
-                  }}
-                >
-                  {data.aSeguirEnabled ? "Atualizado conforme a programação" : "Desligado"}
-                </span>
-              </div>
-
-              <style>{`
-                @keyframes nextHostRise { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
-                @keyframes nextInfoEnter { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
-                .next-host-rise { animation: nextHostRise 750ms cubic-bezier(.2,.8,.2,1) both; }
-                .next-info-enter { animation: nextInfoEnter 650ms ease-out both; }
-                @media (prefers-reduced-motion: reduce) { .next-host-rise, .next-info-enter { animation: none; } }
-              `}</style>
-              <div className="relative isolate overflow-hidden rounded-[24px] bg-black text-white min-h-[245px] sm:min-h-[290px]">
-                <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 50% 100%, rgba(140,20,20,.24), transparent 70%)" }} />
-                <div className="relative grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] items-stretch gap-2 sm:gap-4 min-h-[245px] sm:min-h-[290px] px-4 sm:px-7">
-                  <div key={`program-${nextProgramInfo?.next?.id || aSeguirXmlPreview.programa_nome}`} className="next-info-enter z-10 flex flex-col items-start justify-between py-6 sm:py-8 min-w-0">
-                    {data.aSeguirEnabled && data.aSeguirShowLogoPrograma !== false && aSeguirXmlPreview.programa_logo !== BLANK_PNG_ASEGUIR ? (
-                      <img src={aSeguirXmlPreview.programa_logo} alt="Logo do próximo programa" className="w-full max-w-[150px] h-[100px] sm:h-[135px] object-contain object-left" />
-                    ) : <span />}
-                    <div className="min-w-0">
-                      {aSeguirXmlPreview.horario && <div className="text-lg sm:text-2xl font-black tabular-nums leading-tight">{aSeguirXmlPreview.horario}{nextProgramInfo?.next?.horario_fim ? ` – ${String(nextProgramInfo.next.horario_fim).slice(0,5)}` : ""}</div>}
-                      {aSeguirXmlPreview.programa_nome && <div className="mt-2 text-[11px] sm:text-sm font-extrabold uppercase leading-snug break-words">{aSeguirXmlPreview.programa_nome}</div>}
-                    </div>
-                  </div>
-                  <div className="relative min-w-0 self-stretch overflow-hidden">
-                    {data.aSeguirEnabled && data.aSeguirShowFotoLocutor !== false && aSeguirXmlPreview.locutor_foto !== BLANK_PNG_ASEGUIR && (
-                      <img key={`host-${nextProgramInfo?.next?.id || ""}-${aSeguirXmlPreview.locutor_foto}`} src={aSeguirXmlPreview.locutor_foto} alt="Foto do próximo locutor" className="next-host-rise absolute bottom-0 left-0 h-full w-full object-contain object-bottom" />
-                    )}
-                  </div>
-                  <div key={`presenter-${nextProgramInfo?.next?.id || aSeguirXmlPreview.locutor_nome}`} className="next-info-enter z-10 flex items-center justify-start min-w-0 py-6 sm:py-8">
-                    {aSeguirXmlPreview.locutor_nome && (
-                      <div className="border-l-[3px] border-blue-500 pl-3 sm:pl-5 min-w-0">
-                        <div className="text-[9px] sm:text-xs uppercase tracking-widest text-white/60 mb-2">Apresentador</div>
-                        <div className="text-base sm:text-2xl font-black uppercase leading-tight break-words">{aSeguirXmlPreview.locutor_nome}</div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {data.aSeguirEnabled && (
-              <div
-                className="mt-3 px-4 py-2.5 rounded-xl flex items-center justify-between gap-2 text-[10px] bg-blue-50 border border-blue-200"
-              >
-                <span className="font-bold uppercase tracking-widest text-[#0055ff]">
-                  Envio automático em backend ativo
-                </span>
-                <span className="font-mono text-slate-600">
-                  {aSeguirSentAt
-                    ? `último envio ${aSeguirSentAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
-                    : "aguardando primeiro ciclo…"}
-                </span>
-              </div>
-            )}
 
           </div>
         )}
