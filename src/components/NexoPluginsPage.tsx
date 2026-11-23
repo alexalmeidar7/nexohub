@@ -47,11 +47,6 @@ export default function NexoPluginsPage() {
   }, []);
 
 
-  return () => {
-      active = false;
-    };
-  }, []);
-
   return (
     <section className="min-h-full p-5 text-slate-900 sm:p-8">
       <header className="mb-8">
@@ -93,7 +88,7 @@ export default function NexoPluginsPage() {
               )}
             </div>
             {!isDesktop && (
-            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <div className="mt-5 flex flex-wrap items-center gap-3">
               {desktopRelease ? (
                 <a
                   href={desktopRelease.downloadUrl}
@@ -108,7 +103,7 @@ export default function NexoPluginsPage() {
                   <Download size={17} /> {checkingDesktop ? "Verificando..." : "Indisponível"}
                 </button>
               )}
-            </div>
+              </div>
             )}
           </div>
         </div>
