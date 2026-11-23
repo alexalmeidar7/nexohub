@@ -7,7 +7,7 @@ Get-Content .\schema\001_local_control_plane.sql | docker compose exec -T housem
 Get-Content .\schema\002_one_time_device_enrollment.sql | docker compose exec -T housemix-local-postgres psql -U housemix_dev -d housemix_local
 ```
 
-Migration 001 creates tenants, memberships, device identity, sync outbox, checkpoints, and audit events. Migration 002 adds expiring, tenant-bound, single-use device enrollment grants. Only a SHA-256 hash of each high-entropy grant token is stored.
+Migration 003 (apply after 002 in a disposable lab database only) creates separate tenant-bound offline operator verifiers and revocable local sessions. It does not touch Supabase production or automatically provision customer accounts.\n\nMigration 001 creates tenants, memberships, device identity, sync outbox, checkpoints, and audit events. Migration 002 adds expiring, tenant-bound, single-use device enrollment grants. Only a SHA-256 hash of each high-entropy grant token is stored.
 
 ## Important boundaries
 

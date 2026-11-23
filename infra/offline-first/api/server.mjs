@@ -3,6 +3,7 @@ import { createServer as createHttpServer } from "node:http";
 import { createServer as createHttpsServer } from "node:https";
 import express from "express";
 import postgres from "postgres";
+import { registerLocalOperatorRoutes } from "./local-operator-routes.mjs";
 import { resolveApiHost } from "./network-config.mjs";
 import { resolveTlsOptions } from "./tls-config.mjs";
 
@@ -114,6 +115,8 @@ async function authenticateDevice(req, res, next) {
     return res.status(503).json({ error: "database_unavailable" });
   }
 }
+
+registerLocalOperatorRoutes(app, db, authenticateDevice);
 
 app.get("/v1/me", authenticateDevice, (req, res) => {
   res.json({ device: req.device });

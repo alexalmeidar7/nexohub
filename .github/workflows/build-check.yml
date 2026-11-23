@@ -29,6 +29,15 @@ jobs:
       - name: Testar resolução de imagens do Desktop
         run: bunx vitest run src/lib/programImageResolver.test.ts src/lib/ownedRealtimeChannel.test.ts src/lib/desktopPromotionBanners.test.ts src/lib/desktopXmlRefresh.test.ts src/components/__tests__/DesktopLocalMediaSync.test.tsx src/lib/vmixRemoteRoom.test.ts src/lib/vmixPreviewSession.test.ts src/components/vmix/StudioPreview.test.tsx
 
+      - name: Testar controle de consumo do Supabase
+        run: bunx vitest run src/integrations/supabase/requestBudget.test.ts
+
+      - name: Validar criptografia e sintaxe do login local (HMD)
+        run: |
+          node --check infra/offline-first/api/server.mjs
+          node --check infra/offline-first/api/local-operator-routes.mjs
+          node --test infra/offline-first/api/tests/local-operator-password.test.mjs
+
       - name: Testar transporte remoto do Desktop
         run: node --test desktop/runtime.test.cjs desktop/vmix-api.test.cjs desktop/ndi-bridge.test.cjs
 

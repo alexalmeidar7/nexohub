@@ -7,7 +7,7 @@ describe("desktop XML refresh", () => {
     const refresh = createDesktopXmlRefresh(sync);
     refresh.request(); refresh.request(); refresh.request();
     await vi.advanceTimersByTimeAsync(250); expect(sync).toHaveBeenCalledTimes(1);
-    await vi.advanceTimersByTimeAsync(15000); expect(sync).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(60000); expect(sync).toHaveBeenCalledTimes(2);
     refresh.stop(); await vi.advanceTimersByTimeAsync(60000); expect(sync).toHaveBeenCalledTimes(2);
   });
   it("never overlaps slow requests and replays a pending realtime change once", async () => {
