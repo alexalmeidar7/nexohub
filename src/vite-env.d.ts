@@ -21,6 +21,12 @@ interface Window {
     listLocalTranscriptions?: (stationId: string) => Promise<Array<{id:string; texto_transcrito:string; timestamp_inicio:string; timestamp_fim:string|null}>>;
     appendLocalTranscription?: (stationId: string, text: string, start: string, end: string) =>
       Promise<{id:string; texto_transcrito:string; timestamp_inicio:string; timestamp_fim:string|null}>;
+    onLocalActivity?: (callback: (event: {
+      id: string | number;
+      phase: "start" | "end";
+      operation: "read" | "write";
+      ok?: boolean;
+    }) => void) => () => void;
     fetchVmixApi?: (base: string, path: string, username?: string, password?: string) => Promise<string>;
     platform: string;
     version: string;

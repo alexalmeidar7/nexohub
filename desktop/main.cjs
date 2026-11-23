@@ -11,6 +11,7 @@ const { fetchVmixApi } = require("./vmix-api.cjs");
 const { generateLocalText } = require("./local-free-ai.cjs");
 const { transcribeLocalAudio } = require("./local-whisper.cjs");
 const { appendTranscription, listTranscriptions } = require("./local-transcription-store.cjs");
+const { writeXmlIfChanged } = require("./local-xml-write.cjs");
 
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 if (!hasSingleInstanceLock) app.quit();
@@ -385,16 +386,21 @@ function configureDesktopIpc() {
   ipcMain.handle("housemix:assets-init", (_event, slug) => ensureAccountLocalAssetFolders(slug));
   ipcMain.handle("housemix:vmix-api", (_event, base, apiPath, username, password) => fetchVmixApi(base, apiPath, username, password));
   ipcMain.handle("housemix:xml-path", (_event, slug, filename) => xmlFilePath(slug, filename));
-  ipcMain.handle("housemix:xml-save", async (_event, slug, filename, content) => {
+  ipcMain.handle("housemix:xml-save", async (event, slug, filename, content) => {
     if (typeof content !== "string" || content.length > 5_000_000 || !content.trim().startsWith("<")) {
       throw new Error("Invalid XML content");
     }
     await ensureAccountLocalAssetFolders(slug);
     const target = xmlFilePath(slug, filename);
-    const temporary = `${target}.${process.pid}.${crypto.randomUUID()}.tmp`;
-    await fs.promises.writeFile(temporary, content, "utf8");
-    await fs.promises.rename(temporary, target);
-    return target;
+    // Only changed XML bytes reach the disk and the local-write indicator.
+    const result = await writeXmlIfChanged(target, content, {
+      emit(activity) {
+        try {
+          if (!event.sender.isDestroyed()) event.sender.send("housemix:local-activity", activity);
+        } catch { /* status UI is never allowed to interrupt a save */ }
+      },
+    });
+    return result.path;
   });
   ipcMain.handle("housemix:xml-read", async (_event, slug, filename) => {
     const target = xmlFilePath(slug, filename);

@@ -10,7 +10,7 @@ const TONES: Record<StatusTone, { bg: string; border: string; color: string }> =
 };
 
 export default function SystemStatusChip() {
-  const { notice, saving, loading, lastSyncAt } = useActivityStatus();
+  const { notice, active, lastByOrigin } = useActivityStatus();
 
   useEffect(() => {
     document.body.classList.add("nexo-status-chip-on");
@@ -18,23 +18,23 @@ export default function SystemStatusChip() {
   }, []);
 
   let Icon = Database;
-  let text = "Sincronizado";
+  let text = "Sem operações";
   let tone: StatusTone | "idle" = "idle";
   let pulse = false;
+  const operations: string[] = [];
+  if (active.online.write) operations.push("Online · Gravando");
+  if (active.online.read) operations.push("Online · Lendo");
+  if (active.local.write) operations.push("Local (HMD) · Gravando");
+  if (active.local.read) operations.push("Local (HMD) · Lendo");
 
   if (notice) {
     tone = notice.tone;
     text = notice.text;
     Icon = notice.tone === "success" ? CheckCircle2 : notice.tone === "error" ? AlertCircle : Bell;
-  } else if (saving) {
+  } else if (operations.length) {
     tone = "info";
-    text = "Gravando dados…";
-    Icon = ArrowUpFromLine;
-    pulse = true;
-  } else if (loading) {
-    tone = "info";
-    text = "Recebendo dados…";
-    Icon = ArrowDownToLine;
+    text = operations.join("  |  ");
+    Icon = active.online.write || active.local.write ? ArrowUpFromLine : ArrowDownToLine;
     pulse = true;
   }
 
@@ -55,12 +55,15 @@ export default function SystemStatusChip() {
   }, [text]);
 
   const showSyncTooltip = tone === "idle";
-  const syncLabel = lastSyncAt
-    ? `Última atualização do banco: ${new Date(lastSyncAt).toLocaleString("pt-BR", {
-        day: "2-digit", month: "2-digit", year: "numeric",
-        hour: "2-digit", minute: "2-digit", second: "2-digit",
-      })}`
-    : "Aguardando a primeira atualização do banco";
+  const formatActivity = (name: string, activity: typeof lastByOrigin.online) => {
+    if (!activity) return `${name}: nenhuma operação registrada`;
+    return `${name}: última ${activity.operation === "read" ? "leitura" : "gravação"} às ${new Date(activity.at).toLocaleString("pt-BR", {
+      day: "2-digit", month: "2-digit", year: "numeric",
+      hour: "2-digit", minute: "2-digit", second: "2-digit",
+    })}`;
+  };
+  const syncLabel = [formatActivity("Online (Supabase)", lastByOrigin.online),
+    formatActivity("Local no computador (não implica banco LAN compartilhado)", lastByOrigin.local)];
 
   const chip = (
     <div
@@ -69,7 +72,7 @@ export default function SystemStatusChip() {
       aria-live="polite"
       onClick={notice ? dismissStatusNotice : undefined}
       title={showSyncTooltip ? undefined : text}
-      className="hidden sm:flex min-w-0 max-w-[420px] shrink-0 items-center overflow-hidden rounded-full py-2 text-xs font-semibold"
+      className="hidden sm:flex min-w-0 max-w-[550px] shrink-0 items-center overflow-hidden rounded-full py-2 text-xs font-semibold"
       style={{
         width: contentWidth === null ? undefined : contentWidth + 26,
         paddingLeft: 12,
@@ -98,7 +101,7 @@ export default function SystemStatusChip() {
     <Tooltip>
       <TooltipTrigger asChild>{chip}</TooltipTrigger>
       <TooltipContent side="bottom">
-        <p className="text-xs">{syncLabel}</p>
+        {syncLabel.map(label => <p key={label} className="text-xs">{label}</p>)}
       </TooltipContent>
     </Tooltip>
   );
