@@ -12,7 +12,8 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const VERIFY_TOKEN = Deno.env.get("WHATSAPP_VERIFY_TOKEN") || "";
-const APP_SECRET = Deno.env.get("WHATSAPP_APP_SECRET") || "";
+// The Meta App Secret used for Embedded Signup is also the webhook HMAC key.
+const APP_SECRET = Deno.env.get("META_APP_SECRET") || Deno.env.get("WHATSAPP_APP_SECRET") || "";
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
 
@@ -21,13 +22,14 @@ async function verifySignature(rawBody: string, header: string | null): Promise<
   if (!APP_SECRET) return false; // fail closed: never accept unsigned webhooks
   if (!header?.startsWith("sha256=")) return false;
   const expected = header.slice(7);
+  if (!/^[0-9a-f]{64}$/i.test(expected)) return false;
+  const bytes = new Uint8Array(expected.match(/.{2}/g)!.map(pair => parseInt(pair, 16)));
   const key = await crypto.subtle.importKey(
     "raw", new TextEncoder().encode(APP_SECRET),
-    { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
+    { name: "HMAC", hash: "SHA-256" }, false, ["verify"],
   );
-  const sigBuf = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(rawBody));
-  const hex = Array.from(new Uint8Array(sigBuf)).map(b => b.toString(16).padStart(2, "0")).join("");
-  return hex === expected;
+  // crypto.subtle.verify prevents timing differences from leaking signature data.
+  return crypto.subtle.verify("HMAC", key, bytes, new TextEncoder().encode(rawBody));
 }
 
 // ---------- Send helper (used by flow runner) ----------
