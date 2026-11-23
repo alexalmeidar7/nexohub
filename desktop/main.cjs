@@ -12,6 +12,7 @@ const { generateLocalText } = require("./local-free-ai.cjs");
 const { transcribeLocalAudio } = require("./local-whisper.cjs");
 const { appendTranscription, listTranscriptions } = require("./local-transcription-store.cjs");
 const { writeXmlIfChanged } = require("./local-xml-write.cjs");
+const { readStationRole, writeStationRole } = require("./lan-role-preference.cjs");
 const { createLocalMusicSourceManager } = require("./local-music-source.cjs");
 const { nextDailyInstallAt, saveVmixUpdateRestore, takeVmixUpdateRestore } = require("./auto-update-schedule.cjs");
 
@@ -372,6 +373,14 @@ function configureDesktopIpc() {
     return getLocalMusicSources().read(stationId);
   });
   ipcMain.handle("housemix:app-version", () => app.getVersion());
+  ipcMain.handle("housemix:lan-role-get", (_event, stationId) => readStationRole(app.getPath("userData"), stationId));
+  ipcMain.handle("housemix:lan-role-set", (_event, stationId, role) => {
+    const status = writeStationRole(app.getPath("userData"), stationId, role);
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) win.webContents.send("housemix:lan-role-changed", {stationId,...status});
+    }
+    return status;
+  });
   ipcMain.handle("housemix:get-start-with-windows", () => {
     const preferences = readDesktopPreferences();
     const supported = applyStartWithWindows(preferences.startWithWindows);

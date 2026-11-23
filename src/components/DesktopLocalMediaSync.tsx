@@ -52,7 +52,7 @@ export default function DesktopLocalMediaSync() {
     let stopped = false;
     let running = false;
     let pending = false;
-    let delay = 60_000;
+    let delay = 15 * 60_000;
     let refreshTimer: ReturnType<typeof setTimeout>;
     let rotationTimer: ReturnType<typeof setTimeout>;
     let lastWarning = "";
@@ -95,10 +95,10 @@ export default function DesktopLocalMediaSync() {
           description: `Arquivo indisponível na origem: ${warning}. Os demais continuam em rodízio.`, duration: 12000,
         });
         lastWarning = warning;
-        delay = result.failed.length ? Math.min(delay * 2, 300_000) : 60_000;
+        delay = result.failed.length ? Math.min(delay * 2, 30 * 60_000) : 15 * 60_000;
         await Promise.all(["broadcast.xml", "geral.xml"].map(file => rotateDesktopBanner(desktop, slug, file).catch(() => {})));
       } catch (error) {
-        delay = Math.min(delay * 2, 300_000);
+        delay = Math.min(delay * 2, 30 * 60_000);
         console.warn("Falha ao sincronizar banners de promoções", error);
       } finally {
         running = false;
@@ -241,7 +241,9 @@ export default function DesktopLocalMediaSync() {
       } catch (error) { if (!stopped) console.warn("Local XML sync failed", error); }
     };
 
-    const refresh = createDesktopXmlRefresh(sync);
+    // Supabase Realtime signals refresh immediately. Avoid 12 XML downloads per minute
+    // when the station is idle; keep a 15-minute repair pass for lost events/weather.
+    const refresh = createDesktopXmlRefresh(sync, 15 * 60_000, 15 * 60_000);
     const onChange = () => refresh.request();
     let lastMusic = "";
     const onMusic = (event: Event) => {
