@@ -13,7 +13,7 @@ async function generateLocalText(payload, { transport = globalThis.fetch, env = 
   const system = safePrompt(payload?.system, 3500);
   const prompt = safePrompt(payload?.prompt, 6500);
   const model = (env.HOUSEMIX_OLLAMA_MODEL || DEFAULT_MODEL).trim();
-  if (!/^[a-zA-Z0-9_.:/-]{1,90}$/.test(model)) throw new Error("invalid_ollama_model");
+  if (!/^[a-zA-Z0-9_.:-]+(?:\/[a-zA-Z0-9_.:-]+)*$/.test(model) || model.length > 90) throw new Error("invalid_ollama_model");
   const response = await transport(ENDPOINT, {
     method: "POST",
     headers: { "content-type": "application/json" },
