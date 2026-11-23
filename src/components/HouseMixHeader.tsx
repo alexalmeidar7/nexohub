@@ -1402,19 +1402,18 @@ export default function HouseMixHeader({
                 {updateStatus.status === "available"
                   ? `Tenho uma nova atualização${updateStatus.version ? ` v${updateStatus.version}` : ""}`
                   : updateStatus.status === "downloaded"
-                    ? `Atualização pronta${updateStatus.version ? ` v${updateStatus.version}` : ""}`
+                    ? `Atualização pronta${updateStatus.version ? ` v${updateStatus.version}` : ""} · instalação automática às ${updateStatus.installAt ? new Date(updateStatus.installAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "00:30"}`
                     : `Baixando atualização${updateStatus.version ? ` v${updateStatus.version}` : ""} · ${updateStatus.percent || 0}%`}
               </span>
               <button
                 type="button"
-                disabled={updateStatus.status === "downloading"}
+                disabled={updateStatus.status !== "downloaded"}
                 onClick={() => {
-                  if (updateStatus.status === "available") void window.houseMixDesktop?.downloadUpdate();
-                  else if (updateStatus.status === "downloaded") void window.houseMixDesktop?.installUpdate();
+                  if (updateStatus.status === "downloaded") void window.houseMixDesktop?.installUpdate();
                 }}
                 className="rounded-full bg-blue-800/80 px-3 py-1 text-[10px] font-bold whitespace-nowrap transition hover:bg-blue-900 disabled:cursor-wait disabled:opacity-70"
               >
-                {updateStatus.status === "available" ? "atualizar agora" : updateStatus.status === "downloaded" ? "reiniciar para instalar" : "baixando..."}
+                {updateStatus.status === "available" ? "download automático" : updateStatus.status === "downloaded" ? "instalar agora" : "baixando..."}
               </button>
             </div>
           )}

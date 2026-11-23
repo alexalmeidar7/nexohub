@@ -69,3 +69,17 @@ describe("music sync polling", () => {
     expect(sync).toHaveBeenCalledTimes(1);
   });
 });
+describe("desktop cloud budget", () => {
+  it("HMD uses Realtime and only checks cloud every 3 minutes when connected", async () => {
+    vi.useFakeTimers();
+    const sync = vi.fn(async () => {});
+    const polling = startMusicSyncPolling(sync, () => true, { desktop: true });
+    await vi.advanceTimersByTimeAsync(30);
+    expect(sync).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(170_000);
+    expect(sync).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(sync).toHaveBeenCalledTimes(2);
+    polling.stop();
+  });
+});

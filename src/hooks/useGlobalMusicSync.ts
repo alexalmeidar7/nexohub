@@ -866,7 +866,9 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
       })
       .subscribe((status) => { realtimeConnected = status === "SUBSCRIBED"; });
 
-    const polling = startMusicSyncPolling(fetchAndSync, () => realtimeConnected);
+    const polling = startMusicSyncPolling(fetchAndSync, () => realtimeConnected, {
+      desktop: Boolean(window.houseMixDesktop?.isDesktop),
+    });
     const resume = () => {
       if (document.visibilityState === "hidden") return;
       settingsFetchedRef.current = false;

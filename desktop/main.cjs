@@ -12,6 +12,8 @@ const { generateLocalText } = require("./local-free-ai.cjs");
 const { transcribeLocalAudio } = require("./local-whisper.cjs");
 const { appendTranscription, listTranscriptions } = require("./local-transcription-store.cjs");
 const { writeXmlIfChanged } = require("./local-xml-write.cjs");
+const { createLocalMusicSourceManager } = require("./local-music-source.cjs");
+const { nextDailyInstallAt, saveVmixUpdateRestore, takeVmixUpdateRestore } = require("./auto-update-schedule.cjs");
 
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 if (!hasSingleInstanceLock) app.quit();
@@ -35,6 +37,9 @@ let updateCheckInFlight = false;
 let updateDownloaded = false;
 let updateCheckTimer = null;
 let latestUpdateStatus = { status: "idle" };
+let updateInstallTimer = null;
+let installingDownloadedUpdate = false;
+let localMusicSources = null;
 let pendingPlayerOAuthCallback = null;
 const auxiliaryWindows = new WeakSet();
 
@@ -345,6 +350,27 @@ function configureDesktopIpc() {
     listTranscriptions(app.getPath("userData"), stationId));
   ipcMain.handle("housemix:local-transcripts-append", (_event, stationId, content, start, end) =>
     appendTranscription(app.getPath("userData"), stationId, content, start, end));
+  // Electron-native station files: explicit selection ONCE, then reconnect on every start.
+  ipcMain.handle("housemix:music-source", (event, stationId) => {
+    if (!isTrustedDesktopRenderer(event)) throw new Error("untrusted_renderer");
+    return getLocalMusicSources().getSource(stationId);
+  });
+  ipcMain.handle("housemix:music-pick", async (event, stationId) => {
+    if (!isTrustedDesktopRenderer(event)) throw new Error("untrusted_renderer");
+    getLocalMusicSources().getSource(stationId); // validates station before dialog
+    const parent = BrowserWindow.fromWebContents(event.sender);
+    const picker = await dialog.showOpenDialog(parent || mainWindow, {
+      title: "Selecionar arquivo de automação da rádio",
+      properties: ["openFile"],
+      filters: [{ name: "Automação XML / TXT", extensions: ["xml", "txt", "log", "nowplaying"] }],
+    });
+    if (picker.canceled || picker.filePaths.length !== 1) return null;
+    return getLocalMusicSources().savePickedSource(stationId, picker.filePaths[0]);
+  });
+  ipcMain.handle("housemix:music-read", async (event, stationId) => {
+    if (!isTrustedDesktopRenderer(event)) throw new Error("untrusted_renderer");
+    return getLocalMusicSources().read(stationId);
+  });
   ipcMain.handle("housemix:app-version", () => app.getVersion());
   ipcMain.handle("housemix:get-start-with-windows", () => {
     const preferences = readDesktopPreferences();
@@ -370,19 +396,7 @@ function configureDesktopIpc() {
       return false;
     }
   });
-  ipcMain.handle("housemix:install-update", () => {
-    if (!updateDownloaded || !desktopAutoUpdater) return false;
-    if (updateCheckTimer) clearInterval(updateCheckTimer);
-    if (localApiHost && !isQuitting) {
-      isQuitting = true;
-      const host = localApiHost;
-      localApiHost = null;
-      void host.stop().finally(() => desktopAutoUpdater.quitAndInstall());
-      return true;
-    }
-    desktopAutoUpdater.quitAndInstall();
-    return true;
-  });
+  ipcMain.handle("housemix:install-update", () => installDownloadedUpdate());
   ipcMain.handle("housemix:assets-init", (_event, slug) => ensureAccountLocalAssetFolders(slug));
   ipcMain.handle("housemix:vmix-api", (_event, base, apiPath, username, password) => fetchVmixApi(base, apiPath, username, password));
   ipcMain.handle("housemix:xml-path", (_event, slug, filename) => xmlFilePath(slug, filename));
@@ -455,21 +469,107 @@ function configureDesktopStartup() {
   applyStartWithWindows(readDesktopPreferences().startWithWindows);
 }
 
+// All scheduled times use the WINDOWS COMPUTER'S LOCAL TIMEZONE.
 const UPDATE_CHECK_INTERVAL_MS = 15 * 60 * 1000;
+function isTrustedDesktopRenderer(event) {
+  const url = event?.sender?.getURL?.() || "";
+  return url === "housemix://desktop/" || url.startsWith("housemix://desktop/");
+}
+function getLocalMusicSources() {
+  if (localMusicSources) return localMusicSources;
+  localMusicSources = createLocalMusicSourceManager(app.getPath("userData"), (stationId) => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) win.webContents.send("housemix:music-changed", stationId);
+    }
+  });
+  return localMusicSources;
+}
+function isVmixControlWindow(win) {
+  try {
+    if (win.isDestroyed()) return false;
+    const url = new URL(win.webContents.getURL());
+    return url.protocol === "housemix:" && url.hostname === "desktop" &&
+      (url.pathname === "/vmix-control" || url.pathname.startsWith("/vmix-control/"));
+  } catch { return false; }
+}
+function scheduleDownloadedInstall() {
+  if (updateInstallTimer) clearTimeout(updateInstallTimer);
+  const installDate = nextDailyInstallAt(new Date());
+  latestUpdateStatus = { ...latestUpdateStatus, status: "downloaded",
+    installAt: installDate.toISOString(), percent: 100 };
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("housemix:update-status", latestUpdateStatus);
+  updateInstallTimer = setTimeout(() => {
+    updateInstallTimer = null;
+    if (updateDownloaded && !installingDownloadedUpdate) void installDownloadedUpdate();
+  }, Math.max(0, installDate.getTime() - Date.now()));
+  updateInstallTimer.unref?.();
+}
+async function installDownloadedUpdate() {
+  if (!updateDownloaded || !desktopAutoUpdater || installingDownloadedUpdate) return false;
+  installingDownloadedUpdate = true;
+  if (updateInstallTimer) clearTimeout(updateInstallTimer);
+  if (updateCheckTimer) clearInterval(updateCheckTimer);
+  // Do not persist passwords or login tokens. The existing Electron session and
+  // per-user vmix_last_connected ID handle reconnection after the restart.
+  try {
+    const open = BrowserWindow.getAllWindows().some(isVmixControlWindow);
+    saveVmixUpdateRestore(app.getPath("userData"), latestUpdateStatus.version, open);
+  } catch {}
+  try {
+    if (localApiHost && !isQuitting) {
+      isQuitting = true;
+      const host = localApiHost;
+      localApiHost = null;
+      await host.stop().catch(() => {});
+    }
+    // NSIS: silent install AND restart House Mix automatically afterwards.
+    desktopAutoUpdater.quitAndInstall(true, true);
+    return true;
+  } catch {
+    installingDownloadedUpdate = false;
+    isQuitting = false;
+    return false;
+  }
+}
+function openRestoredVmixControl() {
+  if (BrowserWindow.getAllWindows().some(isVmixControlWindow)) return;
+  const options = createWindowOptions(path.join(__dirname, "preload.cjs"));
+  const win = new BrowserWindow({
+    ...options, width: 1280, height: 800, minWidth: 800, minHeight: 550,
+    backgroundColor: "#111111",
+  });
+  auxiliaryWindows.add(win);
+  // The vMix Control should remain above HMD on the restored desktop.
+  win.setAlwaysOnTop(true, "floating");
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (isAllowedExternalUrl(url)) void shell.openExternal(url);
+    return { action: "deny" };
+  });
+  win.webContents.on("will-navigate", (event, url) => {
+    if (url.startsWith("housemix://desktop/")) return;
+    event.preventDefault();
+    if (isAllowedExternalUrl(url)) void shell.openExternal(url);
+  });
+  win.once("ready-to-show", () => { win.show(); win.focus(); });
+  void win.loadURL("housemix://desktop/vmix-control?resumeVmix=1");
+}
+
 
 function configureAutoUpdater() {
   if (!app.isPackaged) return;
 
   try {
     ({ autoUpdater: desktopAutoUpdater } = require("electron-updater"));
-    desktopAutoUpdater.autoDownload = false;
-    desktopAutoUpdater.autoInstallOnAppQuit = true;
+    desktopAutoUpdater.autoDownload = true;
+    // Install only at 00:30 (or when explicitly requested), not on normal exit.
+    desktopAutoUpdater.autoInstallOnAppQuit = false;
+    desktopAutoUpdater.autoRunAppAfterInstall = true;
     const publishStatus = (status) => {
       latestUpdateStatus = status;
       if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("housemix:update-status", status);
     };
     desktopAutoUpdater.on("checking-for-update", () => publishStatus({ status: "checking" }));
-    desktopAutoUpdater.on("update-available", (info) => publishStatus({ status: "available", version: info.version, percent: 0 }));
+    desktopAutoUpdater.on("update-available", (info) => { updateDownloaded = false; publishStatus({ status: "available", version: info.version, percent: 0 }); });
     desktopAutoUpdater.on("download-progress", (progress) => publishStatus({
       ...latestUpdateStatus,
       status: "downloading",
@@ -482,11 +582,7 @@ function configureAutoUpdater() {
     desktopAutoUpdater.on("update-downloaded", (info) => {
       updateDownloaded = true;
       publishStatus({ status: "downloaded", version: info.version, percent: 100 });
-      if (!Notification.isSupported()) return;
-      new Notification({
-        title: "House Mix Desktop atualizado",
-        body: `A versão ${info.version} será instalada quando você fechar o aplicativo.`
-      }).show();
+      scheduleDownloadedInstall();
     });
   } catch {
     // Updates are optional; an updater issue must not block the local app.
@@ -566,7 +662,12 @@ function createMainWindow() {
     mainWindow.webContents.send("housemix:player-oauth-callback", pendingPlayerOAuthCallback);
     pendingPlayerOAuthCallback = null;
   });
-  mainWindow.once("ready-to-show", () => { mainWindow.maximize(); mainWindow.show(); });
+  mainWindow.once("ready-to-show", () => {
+    mainWindow.maximize(); mainWindow.show();
+    if (takeVmixUpdateRestore(app.getPath("userData"), app.getVersion())) {
+      setTimeout(() => openRestoredVmixControl(), 700);
+    }
+  });
   mainWindow.on("closed", () => { mainWindow = null; });
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -594,7 +695,11 @@ function createMainWindow() {
       event.preventDefault();
       if (isAllowedExternalUrl(targetUrl)) void shell.openExternal(targetUrl);
     });
-    child.once("ready-to-show", () => child.show());
+    if (isVmixControlWindow(child)) child.setAlwaysOnTop(true, "floating");
+    child.once("ready-to-show", () => {
+      child.show();
+      if (isVmixControlWindow(child)) { child.setAlwaysOnTop(true, "floating"); child.focus(); }
+    });
   });
 
   mainWindow.webContents.on("will-navigate", (event, targetUrl) => {
@@ -658,6 +763,8 @@ app.whenReady().then(async () => {
 
 app.on("before-quit", (event) => {
   ndiBridge?.stop();
+  localMusicSources?.close();
+  if (updateInstallTimer) clearTimeout(updateInstallTimer);
   if (updateCheckTimer) clearInterval(updateCheckTimer);
   if (isQuitting || !localApiHost) return;
   event.preventDefault();

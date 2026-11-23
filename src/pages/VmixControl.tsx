@@ -148,7 +148,7 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
             </form>
           ) : (
             <div className="w-full h-full min-h-[480px]" style={{ color: "#fff" }}>
-              <Suspense fallback={<div className="w-full min-h-[480px]" />}><VmixPage forcedConnected={forcedConnected} cleanLayout /></Suspense>
+              <Suspense fallback={<div className="w-full min-h-[480px]" />}><VmixPage forcedConnected={forcedConnected || (Boolean(window.houseMixDesktop?.isDesktop) && new URLSearchParams(window.location.search).get("resumeVmix") === "1")} cleanLayout /></Suspense>
             </div>
           )}
         </main>
