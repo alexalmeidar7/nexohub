@@ -47,6 +47,10 @@ jobs:
         env:
           PGPASSWORD: test-only-password
         run: psql -h localhost -U housemix_test -d housemix_test -v ON_ERROR_STOP=1 -f infra/offline-first/schema/002_one_time_device_enrollment.sql
+      - name: Apply local operator-auth migration
+        env:
+          PGPASSWORD: test-only-password
+        run: psql -h localhost -U housemix_test -d housemix_test -v ON_ERROR_STOP=1 -f infra/offline-first/schema/003_local_operator_auth.sql
       - name: Verify tenant isolation constraints
         env:
           PGPASSWORD: test-only-password
@@ -57,3 +61,9 @@ jobs:
         env:
           DATABASE_URL: postgres://housemix_test:test-only-password@localhost:5432/housemix_test
         run: node infra/offline-first/api/tests/api-isolation.test.mjs
+      - name: Test offline operator login, tenant boundaries and revocation
+        env:
+          DATABASE_URL: postgres://housemix_test:test-only-password@localhost:5432/housemix_test
+        run: |
+          node --test infra/offline-first/api/tests/local-operator-password.test.mjs
+          node infra/offline-first/api/tests/local-operator-api.test.mjs

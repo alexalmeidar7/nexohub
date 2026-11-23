@@ -3421,6 +3421,27 @@ export type Database = {
           musica: string
         }[]
       }
+      get_player_music_like_points: {
+        Args: { p_radio_user_id: string | null }
+        Returns: number | null
+      }
+      get_player_poll_vote: {
+        Args: { p_poll_id: string }
+        Returns: number | null
+      }
+      save_player_music_like: {
+        Args: {
+          p_radio_user_id: string
+          p_titulo: string
+          p_artista: string
+          p_capa: string
+        }
+        Returns: boolean
+      }
+      submit_player_poll_vote: {
+        Args: { p_poll_id: string; p_answer_index: number }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

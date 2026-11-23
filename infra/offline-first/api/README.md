@@ -65,3 +65,14 @@ Enrollment tokens are single-use, expire, can be revoked by setting `revoked_at`
 - SHA-256 is used only to hash high-entropy random tokens and device keys, not human passwords.
 - API is not exposed to browsers and must not receive requests from untrusted origins.
 - This prototype is a milestone for local API contract validation, not a production server.
+
+## Offline operator-login foundation (migration 003)
+
+Apply `schema/003_local_operator_auth.sql` **only to a disposable local database** after 001 and 002. The API adds:
+
+- `POST /v1/operators/provision` — primary-server device credential only; initial, one-time provisioning of a locally managed operator with a strong password (scrypt, random salt, never plaintext).
+- `POST /v1/operators/login` — previously provisioned users can sign in against the local database without reaching Supabase. Requires the enrolled device's Bearer key. Lockout after repeated invalid passwords.
+- `GET /v1/operators/session` — validates the locally issued token, bound to the tenant and device, with expiry.
+- `POST /v1/operators/logout` — revokes the local session; never deletes user data.
+
+**IMPORTANT:** These are new API capabilities, not yet wired to the shipped HMD login UI, and do not make the existing Electron interface fully offline. No production users were migrated. Cloud-verified roster updates at midnight, offline user bootstrap from valid web login, LAN pairing/TLS, complete application-record storage, local authority, backup/restore, and tested Desktop integration remain required. The service is deliberately loopback-only, must not be deployed as LAN or receive real customer data yet. Do not copy Supabase password hashes or service keys into the Desktop.

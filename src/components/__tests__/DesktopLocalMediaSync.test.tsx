@@ -39,11 +39,11 @@ describe("HMD local XML synchronization", () => {
     expect(mocks.save.mock.calls.map(call => call[2])).toContain("vmix-live.xml");
     expect(mocks.save).toHaveBeenCalledTimes(11);
     program = "After";
-    await act(async () => { await vi.advanceTimersByTimeAsync(15000); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(60000); });
     expect(mocks.save.mock.calls.some(call => call[2] === "broadcast.xml" && call[3].includes("After"))).toBe(true);
     expect(mocks.channel.on).toHaveBeenCalledWith("postgres_changes", expect.objectContaining({ table: "programas", filter: "user_id=eq.station" }), expect.any(Function));
     const count = mocks.save.mock.calls.length; view.unmount();
-    await act(async () => { await vi.advanceTimersByTimeAsync(30000); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(120000); });
     expect(mocks.save).toHaveBeenCalledTimes(count);
   });
 });

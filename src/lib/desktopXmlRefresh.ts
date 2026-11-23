@@ -1,5 +1,5 @@
 /** Completion-based refresh: coalesce realtime bursts and never overlap cycles. */
-export function createDesktopXmlRefresh(sync: () => Promise<void>, interval = 15_000) {
+export function createDesktopXmlRefresh(sync: () => Promise<void>, interval = 60_000) {
   let running = false, pending = false, stopped = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let clockTimer: ReturnType<typeof setTimeout> | undefined;

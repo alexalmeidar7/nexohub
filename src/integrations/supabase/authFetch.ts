@@ -1,3 +1,7 @@
+import { createCostAwareFetch } from "./requestBudget";
+
+const costAwareFetch = createCostAwareFetch((input, init) => fetch(input, init));
+
 // Auth can return 500/504 during service interruptions. Bound each request and
 // abort abandoned work so retries do not accumulate in the browser.
 export const authResilientFetch: typeof fetch = async (input: RequestInfo | URL, init: RequestInit = {}) => {
@@ -6,7 +10,7 @@ export const authResilientFetch: typeof fetch = async (input: RequestInfo | URL,
     : input instanceof URL
       ? input.href
       : input.url;
-  if (!requestUrl.includes("/auth/v1/")) return fetch(input, init);
+  if (!requestUrl.includes("/auth/v1/")) return costAwareFetch(input, init);
 
   const controller = new AbortController();
   const callerSignal = init.signal;
