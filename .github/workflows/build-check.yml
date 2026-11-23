@@ -47,6 +47,15 @@ jobs:
       - name: Validar provedores de IA locais (sem chamadas pagas)
         run: node --test desktop/local-free-ai.test.cjs desktop/local-whisper.test.cjs desktop/local-transcription-store.test.cjs
 
+      - name: Testar instalador agendado e leitura nativa local (HMD)
+        run: |
+          node --check desktop/main.cjs
+          node --check desktop/preload.cjs
+          node --test desktop/auto-update-schedule.test.cjs desktop/local-music-source.test.cjs
+
+      - name: Testar redução de polling de música no HMD
+        run: bunx vitest run src/lib/musicSyncPolling.test.ts
+
       - name: Testar transporte remoto do Desktop
         run: node --test desktop/runtime.test.cjs desktop/vmix-api.test.cjs desktop/ndi-bridge.test.cjs
 

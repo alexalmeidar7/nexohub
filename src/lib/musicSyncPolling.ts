@@ -2,6 +2,7 @@
 export function startMusicSyncPolling(
   sync: () => Promise<void>,
   isRealtimeConnected: () => boolean,
+  options: { desktop?: boolean } = {},
 ) {
   let stopped = false;
   let running = false;
@@ -21,7 +22,9 @@ export function startMusicSyncPolling(
       if (!stopped) {
         const delay = failures > 0
           ? Math.min(300_000, 15_000 * 2 ** failures)
-          : isRealtimeConnected() ? 15_000 : 20_000;
+          : options.desktop
+            ? (isRealtimeConnected() ? 180_000 : 90_000)
+            : (isRealtimeConnected() ? 15_000 : 20_000);
         timer = setTimeout(() => { void run(); }, delay);
       }
     }

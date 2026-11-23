@@ -54,6 +54,15 @@ contextBridge.exposeInMainWorld("houseMixDesktop", Object.freeze({
     return () => ipcRenderer.removeListener("housemix:update-status", listener);
   },
   installUpdate: () => ipcRenderer.invoke("housemix:install-update"),
+  getLocalMusicSource: (stationId) => ipcRenderer.invoke("housemix:music-source", stationId),
+  pickLocalMusicSource: (stationId) => ipcRenderer.invoke("housemix:music-pick", stationId),
+  readLocalMusicSource: (stationId) => trackedLocalInvoke("read", "housemix:music-read", stationId),
+  onLocalMusicChanged: (callback) => {
+    if (typeof callback !== "function") return () => {};
+    const listener = (_event, stationId) => callback(stationId);
+    ipcRenderer.on("housemix:music-changed", listener);
+    return () => ipcRenderer.removeListener("housemix:music-changed", listener);
+  },
   initializeLocalAssets: (slug) => ipcRenderer.invoke("housemix:assets-init", slug),
   getXmlPath: (slug, filename) => ipcRenderer.invoke("housemix:xml-path", slug, filename),
   saveXml: (slug, filename, content) => ipcRenderer.invoke("housemix:xml-save", slug, filename, content),

@@ -10,6 +10,7 @@ interface HouseMixDesktopUpdateStatus {
   status: "idle" | "checking" | "available" | "downloading" | "downloaded";
   version?: string;
   percent?: number;
+  installAt?: string;
 }
 
 interface Window {
@@ -39,6 +40,10 @@ interface Window {
     onUpdateStatus: (callback: (status: HouseMixDesktopUpdateStatus) => void) => () => void;
     downloadUpdate: () => Promise<boolean>;
     installUpdate: () => Promise<boolean>;
+    getLocalMusicSource?: (stationId: string) => Promise<{ configured: boolean; name: string }>;
+    pickLocalMusicSource?: (stationId: string) => Promise<{ configured: boolean; name: string } | null>;
+    readLocalMusicSource?: (stationId: string) => Promise<{ changed: boolean; name: string; content?: string; lastModified: number } | null>;
+    onLocalMusicChanged?: (callback: (stationId: string) => void) => () => void;
     initializeLocalAssets: (slug: string) => Promise<string>;
     getXmlPath: (slug: string, filename: string) => Promise<string>;
     saveXml: (slug: string, filename: string, content: string) => Promise<string>;

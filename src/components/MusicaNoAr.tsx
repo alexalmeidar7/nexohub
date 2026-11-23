@@ -462,6 +462,7 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
   const localFileRef = useRef<File | null>(null);
   const fileHandleRef = useRef<FileSystemFileHandle | null>(null);
   const savedHandleRef = useRef<FileSystemFileHandle | null>(null);
+  const nativeSourceRef = useRef(false);
   const [needsFilePermission, setNeedsFilePermission] = useState(false);
   // localPollRef removed — using Web Worker timer instead
   const [uploadHistory, setUploadHistory] = useState<UploadLogEntry[]>([]);
@@ -520,7 +521,7 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
     if (!dataUserId) return;
     getMusicExceptions(dataUserId).then(setAllExceptions);
     // Poll exceptions every 60s
-    const iv = setInterval(() => getMusicExceptions(dataUserId).then(setAllExceptions), 60000);
+    const iv = setInterval(() => getMusicExceptions(dataUserId).then(setAllExceptions), window.houseMixDesktop?.isDesktop ? 600_000 : 60_000);
     return () => clearInterval(iv);
   }, [dataUserId]);
 
@@ -553,7 +554,7 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
   // selecionado ativamente neste navegador. Computadores secundários não possuem o arquivo local
   // em memória e DEVEM sempre sincronizar do banco de dados (Supabase user_settings / musicas_tocadas).
   const isPhysicalLocalReader = useCallback(() => {
-    return Boolean(fileHandleRef.current || localFileRef.current);
+    return Boolean(nativeSourceRef.current || fileHandleRef.current || localFileRef.current);
   }, []);
 
   const isLocalReaderActive = useCallback(() => {
@@ -647,14 +648,15 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
           }, { onConflict: "user_id" });
         }
       } else {
-        await supabase.from("user_settings").upsert({
-          user_id: dataUserId,
-          music_xml_url: DEFAULT_XML_URL,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: "user_id" });
+        // A URL padrão é vazia: não criar/atualizar user_settings apenas
+        // porque a página foi aberta sem URL de origem online.
+        setXmlUrl(DEFAULT_XML_URL);
       }
       // Restore local filename from DB (persists across computers)
       const di = data?.dashboard_items as any;
+      if (typeof di?.local_xml_storage_path === "string") {
+        lastUploadedPathRef.current = di.local_xml_storage_path;
+      }
       if (di?.local_xml_filename) {
         setLocalFileName(di.local_xml_filename);
       }
@@ -782,7 +784,7 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
       }
     };
     fetchPresenter();
-    const interval = setInterval(fetchPresenter, 60000);
+    const interval = setInterval(fetchPresenter, window.houseMixDesktop?.isDesktop ? 600_000 : 60_000);
     return () => clearInterval(interval);
   }, []);
 
@@ -1376,7 +1378,8 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
   const syncingRef = useRef(false);
   const pendingSyncRef = useRef<string | null>(null);
   const readingRef = useRef(false);
-  const lastStorageSyncAttemptRef = useRef(0);
+  const lastUploadedContentRef = useRef<string | null>(null);
+  const lastUploadedPathRef = useRef<string | null>(null);
 
   // Keep stable refs to avoid interval restarts
   const processMusicRef = useRef(processMusic);
@@ -1390,19 +1393,18 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
 
   const syncToStorage = useCallback(async (text: string) => {
     const uid = dataUserIdRef.current;
-    if (!uid) return;
+    if (!uid || !text || text === lastUploadedContentRef.current) return;
     if (syncingRef.current) {
-      pendingSyncRef.current = text;
+      if (pendingSyncRef.current !== text) pendingSyncRef.current = text;
       return;
     }
     syncingRef.current = true;
-    lastStorageSyncAttemptRef.current = Date.now();
     try {
       // Storage RLS requires foldername[1] = auth.uid() for INSERT and
       // owner = auth.uid() for UPDATE. Prefix path with the authenticated
       // user's id (independent of effectiveUserId used for multi-tenant reads).
-      const { data: authData } = await supabase.auth.getUser();
-      const authUid = authData?.user?.id;
+      const { data: authData } = await supabase.auth.getSession();
+      const authUid = authData?.session?.user?.id;
       if (!authUid) throw new Error("not authenticated");
       const utf8Blob = new Blob([new TextEncoder().encode(text)], { type: "application/xml" });
       const filePath = `${authUid}/local-xml-${uid}.xml`;
@@ -1410,11 +1412,16 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
         .from("xml-files")
         .upload(filePath, utf8Blob, { upsert: true, contentType: "application/xml" });
       if (upErr) throw upErr;
-      await mergeUserDashboardItems(uid, {
-        local_xml_storage_path: filePath,
-        local_xml_uploaded_at: Date.now(),
-        local_xml_upload_error: "",
-      });
+      lastUploadedContentRef.current = text;
+      // O caminho do XML é fixo para cada rádio. Salve-o apenas UMA vez,
+      // não faça GET/PATCH em user_settings para cada música.
+      if (lastUploadedPathRef.current !== filePath) {
+        await mergeUserDashboardItems(uid, {
+          local_xml_storage_path: filePath,
+          local_xml_upload_error: "",
+        });
+        lastUploadedPathRef.current = filePath;
+      }
       // Do NOT overwrite music_xml_url — the online URL is independent from local sync
       // History logging happens inside processMusic (with real artist/music).
     } catch (err) {
@@ -1428,7 +1435,7 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
     syncingRef.current = false;
     const queued = pendingSyncRef.current;
     pendingSyncRef.current = null;
-    if (queued) syncToStorage(queued);
+    if (queued && queued !== lastUploadedContentRef.current) void syncToStorage(queued);
   }, []); // stable — uses refs
 
   // Fast local file re-read — no await on processMusic, no blocking
@@ -1439,23 +1446,39 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
 
     try {
       let file: File | null = null;
-      if (fileHandleRef.current) {
-        try {
-          file = await fileHandleRef.current.getFile();
-        } catch (err: any) {
-          localFailCountRef.current++;
-          if (localFailCountRef.current >= 5) {
-            setLocalError(`Erro ao acessar arquivo local (${err?.message || "permissão negada"})`);
+      let rawText = "";
+      let fileModifiedAt = Date.now();
+      if (nativeSourceRef.current && window.houseMixDesktop?.readLocalMusicSource && dataUserIdRef.current) {
+        const result = await window.houseMixDesktop.readLocalMusicSource(dataUserIdRef.current);
+        if (!result || !result.changed) {
+          if (result) {
+            lastLocalSuccessRef.current = Date.now();
+            setLocalError(null);
           }
           readingRef.current = false;
           return;
         }
+        rawText = result.content || "";
+        fileModifiedAt = result.lastModified;
       } else {
-        file = localFileRef.current;
+        if (fileHandleRef.current) {
+          try {
+            file = await fileHandleRef.current.getFile();
+          } catch (err: any) {
+            localFailCountRef.current++;
+            if (localFailCountRef.current >= 5) {
+              setLocalError(`Erro ao acessar arquivo local (${err?.message || "permissão negada"})`);
+            }
+            readingRef.current = false;
+            return;
+          }
+        } else {
+          file = localFileRef.current;
+        }
+        if (!file) { readingRef.current = false; return; }
+        rawText = await readFileWithEncoding(file);
+        fileModifiedAt = file.lastModified;
       }
-      if (!file) { readingRef.current = false; return; }
-
-      const rawText = await readFileWithEncoding(file);
       // Jornal FM lê um TXT "ARTISTA - MUSICA"; convertemos em XML sintético
       // para reaproveitar todo o pipeline downstream (parser, storage sync).
       const text = isJornalFmTxt(dataUserIdRef.current, rawText)
@@ -1478,12 +1501,7 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
 
       const parsed = parseXmlString(text);
       if (text === localFileContentRef.current) {
-        // O conteúdo do arquivo local NÃO mudou no disco!
-        // A última leitura permanece 100% salva e firme sem alternância de registros.
-        if (Date.now() - lastStorageSyncAttemptRef.current > 10_000) {
-          syncToStorage(text);
-        }
-
+        // Conteúdo idêntico: nenhuma gravação, upload ou atualização de histórico.
         readingRef.current = false;
         return;
       }
@@ -1492,7 +1510,7 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
 
       if (parsed) {
         // Fire-and-forget: don't block polling with iTunes cover fetch
-        processMusicRef.current(parsed, "pasta", text, file.lastModified);
+        processMusicRef.current(parsed, "pasta", text, fileModifiedAt);
 
       } else if (isStoppedXmlPayload(text)) {
         // Automação sem música tocando — limpa o card em vez de manter
@@ -1500,11 +1518,7 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
         clearMusicRef.current("pasta");
       }
 
-      // Background sync (non-blocking) - already handled above in processMusic if it changed
-      // or here if it's a periodic sync
-      if (Date.now() - lastStorageSyncAttemptRef.current > 10_000) {
-        syncToStorage(text);
-      }
+      // O processMusic sincroniza SOMENTE mudanças reais; não reenviar a cada verificação.
 
 
     } catch { }
@@ -1540,6 +1554,22 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
   useEffect(() => {
     let isCancelled = false;
     const restoreHandle = async () => {
+      if (window.houseMixDesktop?.getLocalMusicSource && dataUserId) {
+        nativeSourceRef.current = false;
+        try {
+          const local = await window.houseMixDesktop.getLocalMusicSource(dataUserId);
+          if (isCancelled || !local.configured) return;
+          nativeSourceRef.current = true;
+          setLocalFileName(local.name);
+          setNeedsFilePermission(false);
+          setLocalMonitoring(true);
+          // O Windows mantém a associação autorizada; não pedir permissão do Chrome.
+          void readLocalFile();
+        } catch (err) {
+          if (!isCancelled) setLocalError("Arquivo local indisponível. Selecione novamente em Arquivo.");
+        }
+        return;
+      }
       if (!('showOpenFilePicker' in window)) return;
       const keysToTry = [
         dataUserId,
@@ -1582,6 +1612,23 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
 
   // Handle file select
   const handleFileSelect = async (e?: React.ChangeEvent<HTMLInputElement>) => {
+    if (window.houseMixDesktop?.pickLocalMusicSource && dataUserId && !e) {
+      try {
+        const local = await window.houseMixDesktop.pickLocalMusicSource(dataUserId);
+        if (!local?.configured) return;
+        nativeSourceRef.current = true;
+        fileHandleRef.current = null;
+        localFileRef.current = null;
+        setLocalFileName(local.name);
+        setNeedsFilePermission(false);
+        setLocalMonitoring(true);
+        await setSourceMode("pasta");
+        void readLocalFile();
+      } catch (err) {
+        setLocalError(err instanceof Error ? err.message : "Não foi possível selecionar o arquivo");
+      }
+      return;
+    }
     let file: File | null = null;
     let handle: FileSystemFileHandle | null = null;
 
@@ -1678,8 +1725,18 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
     return () => { worker.postMessage({ cmd: "stopAll" }); worker.terminate(); };
   }, []);
 
-  // Local file polling via Worker
+  // HMD: alteração por evento de arquivo do Windows; safety check apenas local.
+  // Navegador comum mantém o antigo FileSystemFileHandle.
   useEffect(() => {
+    if (window.houseMixDesktop?.readLocalMusicSource) {
+      if (!dataUserId || !isLocalSelected || !localMonitoring) return;
+      void readLocalFile();
+      const off = window.houseMixDesktop.onLocalMusicChanged?.(stationId => {
+        if (stationId === dataUserId) void readLocalFile();
+      });
+      const safety = window.setInterval(() => void readLocalFile(), 90_000);
+      return () => { off?.(); window.clearInterval(safety); };
+    }
     const worker = workerRef.current;
     if (!worker) return;
     if (!localMonitoring || !isLocalSelected) {
@@ -1695,13 +1752,13 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
       worker.removeEventListener("message", handler);
       worker.postMessage({ cmd: "stop", id: "localPoll" });
     };
-  }, [isLocalSelected, localMonitoring, readLocalFile]);
+  }, [dataUserId, isLocalSelected, localMonitoring, readLocalFile]);
 
   // Remote storage polling via Worker (para máquinas secundárias sem arquivo físico)
   useEffect(() => {
     const worker = workerRef.current;
     if (!worker || !dataUserId) return;
-    if (fileHandleRef.current || localFileRef.current) return;
+    if (nativeSourceRef.current || fileHandleRef.current || localFileRef.current) return;
 
     const pollStorage = async () => {
       // Este computador virou leitor físico (ou leitor online ativo) enquanto o
@@ -1712,8 +1769,8 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
         // Ler somente o arquivo sincronizado pelo leitor no Storage.
         // (O antigo caminho estático /xml/<slug>/local.xml podia estar congelado
         // com uma faixa antiga e era a causa da alternância.)
-        const { data: authData } = await supabase.auth.getUser();
-        const authUid = authData?.user?.id || dataUserId;
+        const { data: authData } = await supabase.auth.getSession();
+        const authUid = authData?.session?.user?.id || dataUserId;
         const candidates = [
           `${authUid}/local-xml-${dataUserId}.xml`,
           `local-xml-${dataUserId}.xml`,
@@ -1749,7 +1806,7 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
 
     const handler = (e: MessageEvent) => { if (e.data.id === "storagePoll") pollStorage(); };
     worker.addEventListener("message", handler);
-    worker.postMessage({ cmd: "start", id: "storagePoll", interval: 2000 });
+    worker.postMessage({ cmd: "start", id: "storagePoll", interval: window.houseMixDesktop?.isDesktop ? 120_000 : 20_000 });
     return () => {
       worker.removeEventListener("message", handler);
       worker.postMessage({ cmd: "stop", id: "storagePoll" });
@@ -1767,7 +1824,7 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
       const lastRead = Math.max(lastOnlineSuccessRef.current, lastLocalSuccessRef.current);
       if (now - lastRead > 2000) {
         if (isOnlineSelected && hasValidOnlineUrl) void fetchXml();
-        if (isLocalSelected && (fileHandleRef.current || localFileRef.current)) void readLocalFile();
+        if (isLocalSelected && !nativeSourceRef.current && (fileHandleRef.current || localFileRef.current)) void readLocalFile();
       }
     };
 
@@ -2199,7 +2256,7 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
     );
 
     // Polling a cada 2.5s para garantir consistência caso haja latência de rede
-    const pollInterval = setInterval(syncFromDatabase, 2500);
+    const pollInterval = setInterval(syncFromDatabase, window.houseMixDesktop?.isDesktop ? 300_000 : 30_000);
 
     return () => {
       isCancelled = true;
