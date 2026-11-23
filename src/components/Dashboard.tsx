@@ -88,6 +88,7 @@ const IntercomWidget = lazyRetry(() => import("./IntercomWidget"));
 const FloatingMiniPlayer = lazyRetry(() => import("./FloatingMiniPlayer"));
 const FloatingOnAirPresenter = lazyRetry(() => import("./FloatingOnAirPresenter"));
 const BackupPage = lazyRetry(() => import("./BackupPage"));
+const NexoPluginsPage = lazyRetry(() => import("./NexoPluginsPage"));
 
 
 
@@ -176,6 +177,7 @@ const sidebarMenu: MenuItem[] = [
     icon: Wrench, label: "ferramentas", children: [
       { icon: Scissors, label: "editor de vídeo", page: "cortevideo" },
       { icon: DatabaseBackup, label: "backup / importar", page: "backup" },
+      { icon: Package, label: "downloads", page: "nexoplugins" },
       { icon: ExternalLink, label: "abrir TP externo", page: undefined as unknown as Page },
     ]
   },
@@ -319,7 +321,7 @@ const collectModuleKeys = (items: { label: string; page?: unknown; children?: an
 const KNOWN_MODULE_KEYS = new Set([...collectModuleKeys(adminModulosGroups as any), "clientes", "subusuarios", "pacotes"]);
 
 const pageTitle: Record<Page, string> = {
-  nexoplugins: "Nexo Plugins",
+  nexoplugins: "Downloads",
   dashboard: "Home",
   previsao: "Cidade Tempo",
   noticias: "Roteiro de Programa",
@@ -377,6 +379,7 @@ const HOUSEMIX_MODULE_DISPLAY_NAMES: Partial<Record<Page, string>> = {
   enquete: "Enquete",
   quiz: "Quiz",
   cortevideo: "Editor de Vídeo",
+  nexoplugins: "Downloads",
   sorteios: "Sorteios",
   blitz: "Blitz Promocionais",
   noticias: "Roteiro de Programa",
@@ -1861,7 +1864,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
         {/* House Mix Window Mode - Nexo Plugins */}
         {!isAdmin && (currentPage === "nexoplugins" || (minimizedModules.includes("nexoplugins") && (currentPage === "dashboard" || isWindowMode))) && (
           <HouseMixWindow
-            title="HOUSE MIX – NEXO PLUGINS"
+            title="HOUSE MIX – DOWNLOADS"
             wide
             isOpen={currentPage === "nexoplugins"}
             onClose={() => {
@@ -1877,7 +1880,9 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
               try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
             }}
           >
-            {null}
+            <Suspense fallback={<ModulePageSkeleton variant="form" />}>
+              <NexoPluginsPage />
+            </Suspense>
           </HouseMixWindow>
         )}
 

@@ -56,6 +56,12 @@ jobs:
       - name: Testar redução de polling de música no HMD
         run: bunx vitest run src/lib/musicSyncPolling.test.ts
 
+      - name: Testar metadados da página Downloads
+        run: bunx vitest run src/lib/desktopRelease.test.ts
+
+      - name: Testar retenção segura das releases HMD
+        run: node --test scripts/cleanup-hmd-releases.test.mjs
+
       - name: Testar transporte remoto do Desktop
         run: node --test desktop/runtime.test.cjs desktop/vmix-api.test.cjs desktop/ndi-bridge.test.cjs
 
