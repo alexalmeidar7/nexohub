@@ -25,6 +25,7 @@ import { AnimatedFlyout } from "@/components/AnimatedFlyout";
 import { resolveEffectiveOnAir, getZonedNow } from "@/lib/onAirResolver";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
+import { useDesktopStationRole } from "@/hooks/useDesktopStationRole";
 import { getClientHouseMixProgramsSync } from "@/lib/houseMixProgramasService";
 import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
 
@@ -609,6 +610,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
   const [parentEmail, setParentEmail] = useState<string | null>(null);
   const currentClientAccount = findClientAccountByEmail(user?.email) || findClientAccountById(user?.id);
   const targetStationUserId = effectiveUserId || currentClientAccount?.parentUserId || currentClientAccount?.id || user?.id;
+  const desktopStationRole = useDesktopStationRole(targetStationUserId);
   const [initialLoading, setInitialLoading] = useState(true);
   const autoOpenMusicHandledRef = useRef(false);
   const [desktopStartupEnabled, setDesktopStartupEnabled] = useState(false);
@@ -622,19 +624,22 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
     : null;
 
   useEffect(() => {
-    if (!window.houseMixDesktop || !user || initialLoading || autoOpenMusicHandledRef.current) return;
+    if (!window.houseMixDesktop || !user || initialLoading ||
+        !desktopStationRole.ready || autoOpenMusicHandledRef.current) return;
     autoOpenMusicHandledRef.current = true;
     let cancelled = false;
     void window.houseMixDesktop.getStartWithWindows().then(({ enabled }) => {
       if (!cancelled) {
-        setDesktopStartupEnabled(enabled);
-        if (enabled) setCurrentPage("musica");
+        // Only the station-elected primary may auto-open or start the reader.
+        const shouldAutoOpen = enabled && desktopStationRole.isPrimary;
+        setDesktopStartupEnabled(shouldAutoOpen);
+        if (shouldAutoOpen) setCurrentPage("musica");
       }
     }).catch((error) => {
       console.error("Não foi possível restaurar o módulo Música no Ar na inicialização:", error);
     });
     return () => { cancelled = true; };
-  }, [user?.id, initialLoading, setCurrentPage]);
+  }, [user?.id, initialLoading, setCurrentPage, desktopStationRole.ready, desktopStationRole.isPrimary]);
   // Gradiente dinâmico do box "no ar" a partir da foto do locutor
   useEffect(() => {
     let cancelled = false;
@@ -1327,6 +1332,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
             onNavigate={setCurrentPage}
             onLogout={onLogout}
             userEmail={user?.email || ""}
+            desktopDeviceBadge={window.houseMixDesktop ? desktopStationRole.badge : null}
             empresaNome={empresa.nome}
             empresaLogo={empresa.logo}
             empresaTimezone={empresaTimezone}

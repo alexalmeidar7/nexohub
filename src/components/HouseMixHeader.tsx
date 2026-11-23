@@ -37,6 +37,7 @@ interface HouseMixHeaderProps {
   onNavigate: (page: any) => void;
   onLogout?: () => void;
   userEmail?: string;
+  desktopDeviceBadge?: string | null;
   empresaNome?: string;
   empresaLogo?: string;
   empresaTimezone?: string | null;
@@ -59,6 +60,7 @@ export default function HouseMixHeader({
   onNavigate,
   onLogout,
   userEmail = "",
+  desktopDeviceBadge = null,
   empresaNome = "",
   empresaLogo = "",
   empresaTimezone = null,
@@ -1424,11 +1426,17 @@ export default function HouseMixHeader({
           {/* User Email: aligned to the right with the menu clock */}
           {displayEmail && (
             <div
-              className="hidden sm:flex items-center select-none shrink-0 rounded-full px-3 py-2"
+              className="relative hidden sm:flex max-w-[280px] items-center select-none shrink-0 rounded-full px-3 py-2"
               style={{ border: "1px solid rgba(255,255,255,0.16)", background: "transparent" }}
-              title={`Conectado como: ${displayEmail}`}
+              title={`Conectado como: ${displayEmail}${desktopDeviceBadge ? " · HMD " + desktopDeviceBadge : ""}`}
             >
-              <span className="text-xs font-semibold text-slate-300/85 tracking-tight">{displayEmail}</span>
+              <span className="truncate text-xs font-semibold tracking-tight text-slate-300/85">{displayEmail}</span>
+              {desktopDeviceBadge && (
+                <span
+                  aria-label={desktopDeviceBadge === "P" ? "HMD principal" : "HMD secundário " + desktopDeviceBadge}
+                  className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#0055ff] px-1 text-[10px] font-extrabold leading-none text-white"
+                >{desktopDeviceBadge}</span>
+              )}
             </div>
           )}
           </div>
