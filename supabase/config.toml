@@ -135,3 +135,7 @@ verify_jwt = false
 \n[functions.count-stream-listeners]\nverify_jwt = false # handler enforces user JWT or service-role token\n\n[functions.count-video-viewers]\nverify_jwt = false # handler enforces user JWT or service-role token\n
 [functions.trigger-broadcast-aseguir]
 verify_jwt = false # verified by requireUser in the handler
+
+[functions.whatsapp-connect]
+verify_jwt = false # requireUser enforces JWT inside the handler
+
