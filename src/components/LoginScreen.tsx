@@ -238,7 +238,7 @@ export default function LoginScreen() {
       }
       localStorage.setItem("nexohub_backup_session", JSON.stringify(data.session));
       localStorage.setItem(KEEP_CONNECTED_KEY, "true");
-      window.location.replace("/home");
+      window.location.replace(new URLSearchParams(window.location.search).get("app") === "locutor" ? "/locutor" : "/home");
     } catch (err) {
       const rawMessage = getErrorMessage(err);
       console.error("[AuthLogin] login request threw", err);
