@@ -39,3 +39,22 @@ if ($hasCertificate) {
     Write-Output "Verified signed executable: $file"
   }
 }
+
+# Build the separate Locutor product from the same verified frontend.
+# Separate app ID, user data, installer and updater channel prevent HMD replacement.
+$locutorArgs = @('exec','electron-builder','--','--win','nsis','--x64','--publish','never',
+  '-c.appId=br.com.nexobrasil.housemix.locutor','-c.productName=House Mix - Locutor',
+  '-c.directories.output=release-locutor','-c.win.artifactName=House-Mix-Locutor-${version}-Setup.${ext}',
+  '-c.nsis.shortcutName=House Mix - Locutor','-c.nsis.include=desktop/locutor-installer.nsh',
+  '-c.publish.channel=locutor','-c.extraMetadata.name=housemix-locutor')
+if ($hasCertificate) { $locutorArgs += '-c.forceCodeSigning=true' }
+& npm @locutorArgs
+if ($LASTEXITCODE -ne 0) { throw "Locutor packaging failed ($LASTEXITCODE)." }
+$locutor = Get-ChildItem -LiteralPath 'release-locutor' -Filter 'House-Mix-Locutor-*-Setup.exe' -File
+if (-not $locutor) { throw 'Locutor installer missing.' }
+if ($hasCertificate) {
+  foreach ($file in $locutor) {
+    $signature = Get-AuthenticodeSignature -LiteralPath $file.FullName
+    if ($signature.Status -ne 'Valid' -or -not $signature.TimeStamperCertificate) { throw "Invalid Locutor signature: $file" }
+  }
+}

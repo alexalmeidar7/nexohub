@@ -377,15 +377,17 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
               data,
               merge: mergeUserDashboardItems,
               fetchCuriosity: async () => {
-                const { data: curData } = await db.functions.invoke("get-music-curiosity", {
+                const { data: curData, error: curiosityError } = await db.functions.invoke("get-music-curiosity", {
                   body: {
                     artista: data.artista,
                     musica: data.titulo,
                     userId: targetId,
                     deezerArtistImg: data.capa,
+                    lookupOnly: true,
                   },
                 });
-                return curData as { curiosidade?: string } | null | undefined;
+                if (curiosityError) throw curiosityError;
+                return curData as { curiosidade?: string; pending?: boolean; skipped?: boolean } | null | undefined;
               },
               isStillCurrent: () => localStorage.getItem(MUSIC_START_KEY) === now.toString(),
               onError: (e) => console.warn("[MusicSync] Error generating curiosity/merging:", e),

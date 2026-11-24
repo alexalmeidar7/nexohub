@@ -5,6 +5,8 @@ export interface DesktopRelease {
   releaseUrl: string;
   sizeBytes: number;
   changes: string[];
+  locutorDownloadUrl?: string;
+  locutorSizeBytes?: number;
 }
 
 export const HMD_LATEST_RELEASE_API =
@@ -72,6 +74,9 @@ export function parseLatestDesktopRelease(value: unknown): DesktopRelease | null
       }) as Record<string, unknown> | undefined
     : undefined;
   if (!asset) return null;
+  const locutorName = `House-Mix-Locutor-${version}-Setup.exe`;
+  const locutorUrl = `https://github.com/alexalmeidar7/nexohub/releases/download/v${version}/${locutorName}`;
+  const locutor = (release.assets as Record<string, unknown>[]).find(item => item?.name === locutorName && item.browser_download_url === locutorUrl && typeof item.size === "number" && item.size > 0);
   return {
     version,
     publishedAt,
@@ -79,5 +84,6 @@ export function parseLatestDesktopRelease(value: unknown): DesktopRelease | null
     releaseUrl: `https://github.com/alexalmeidar7/nexohub/releases/tag/v${version}`,
     sizeBytes: asset.size as number,
     changes: getDesktopReleaseChanges(release.body, version),
+    ...(locutor ? { locutorDownloadUrl: locutorUrl, locutorSizeBytes: locutor.size as number } : {}),
   };
 }

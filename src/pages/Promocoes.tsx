@@ -403,8 +403,8 @@ export default function PromocoesKiosk() {
   const isPublicMode = !!validSlug;
   // In public mode we don't want the auth user's empresa name leaking into
   // the title, so pass empty and override via effect below using config.nome.
-  usePageTitle(isPublicMode ? "" : "Promoções");
-  usePublicHead(isPublicMode ? validSlug : null, "Promoções");
+  usePageTitle(isPublicMode ? "" : "Módulo Locutor");
+  usePublicHead(isPublicMode ? validSlug : null, "Módulo Locutor");
   useLayoutColors();
 
   const [loading, setLoading] = useState(true);
@@ -684,7 +684,7 @@ export default function PromocoesKiosk() {
       .replace(/\s*[-–—]\s*promoç(ões|ao|ão)\s*$/i, "")
       .replace(/\s+/g, " ")
       .trim();
-    applyPublicHead(nome || null, config?.logo || null, "Promoções");
+    applyPublicHead(nome || null, config?.logo || null, "Módulo Locutor");
   }, [isPublicMode, config?.nome, config?.logo]);
 
 

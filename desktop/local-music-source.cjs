@@ -89,7 +89,16 @@ function createLocalMusicSourceManager(root, onChange = () => {}, options = {}) 
     if (existing?.signature === signature) return { name: source.name, changed: false, lastModified: stat.mtimeMs };
     const buffer = await io.readFile(file);
     // Allow radio encodings; the UI already has an XML/TXT parser and normalizer.
-    const content = buffer.toString("utf8");
+    const bytes = new Uint8Array(buffer);
+    const head = buffer.subarray(0, 256).toString("latin1");
+    const declared = head.match(/<\?xml[^>]*encoding\s*=\s*["']([^"']+)["']/i)?.[1];
+    let content;
+    if (bytes[0] === 0xff && bytes[1] === 0xfe) content = new TextDecoder("utf-16le").decode(bytes);
+    else if (bytes[0] === 0xfe && bytes[1] === 0xff) content = new TextDecoder("utf-16be").decode(bytes);
+    else {
+      try { content = new TextDecoder(declared || "utf-8", { fatal: true }).decode(bytes); }
+      catch { content = new TextDecoder("windows-1252").decode(bytes); }
+    }
     if (existing?.content === content) {
       lastRead.set(id, { signature, content });
       return { name: source.name, changed: false, lastModified: stat.mtimeMs };
