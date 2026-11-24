@@ -150,6 +150,29 @@ try {
   assert.equal(page2.changes.length, 1);
   assert.equal(page2.changes[0].payload.name, "Alpha page two");
   assert.equal(page2.has_more, false);
+  assert.equal(page2.next_cursor, null);
+  assert.ok(page2.checkpoint_cursor, "final page provides a durable checkpoint");
+  const resumeUrl = baseUrl + "/v1/sync/changes?cursor=" + encodeURIComponent(page2.checkpoint_cursor);
+  const idle = await (await fetch(resumeUrl, { headers: auth(keyA) })).json();
+  assert.deepEqual(idle.changes, [], "idle reconnect does not replay old events");
+  assert.equal(idle.checkpoint_cursor, page2.checkpoint_cursor);
+  // A second authenticated workstation in the same station receives only new changes.
+  const workstationKey = randomKey();
+  const workstationToken = await issueGrant(idA, "workstation");
+  const enrollment = await post("/v1/devices/enroll", {
+    enrollment_token: workstationToken, device_key: workstationKey, label: "Alpha secondary",
+  });
+  assert.equal(enrollment.status, 201);
+  const written = await post("/v1/sync/outbox", {
+    aggregate_type: "program", aggregate_id: "program-3", operation: "upsert",
+    payload: { name: "Secondary update" }, idempotency_key: "secondary-update-003",
+  }, auth(workstationKey));
+  assert.equal(written.status, 202);
+  const resumed = await (await fetch(resumeUrl, { headers: auth(keyA) })).json();
+  assert.equal(resumed.changes.length, 1);
+  assert.equal(resumed.changes[0].payload.name, "Secondary update");
+  assert.notEqual(resumed.checkpoint_cursor, page2.checkpoint_cursor);
+
   const betaChanges = await fetch(baseUrl + "/v1/sync/changes", { headers: auth(keyB) });
   const betaBody = await betaChanges.json();
   assert.equal(betaBody.changes.length, 1, "Beta cannot pull Alpha tenant events");
