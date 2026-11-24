@@ -3,9 +3,10 @@ import { useParams } from "react-router-dom";
 import { Loader2, RadioTower } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import LinkBioVisual from "@/components/linkbio/LinkBioVisual";
-import { isLinkBioSlug, makeLinkBioDefaults, resolveLinkBioOnAir, type LinkBioConfig, type LinkBioOnAir } from "@/lib/linkBio";
+import { isLinkBioSlug, normalizeLinkBioWhatsApp, makeLinkBioDefaults, resolveLinkBioOnAir, type LinkBioConfig, type LinkBioOnAir } from "@/lib/linkBio";
 
 type PublicState = {
+  companyWhatsApp?: string;
   config: LinkBioConfig;
   onAir: LinkBioOnAir | null;
 };
@@ -53,7 +54,7 @@ export default function LinkBioPublic() {
         });
         if (active && !error && data && !data.error) {
           setPage(current => current && current.config.user_id === userId
-            ? { ...current, onAir: resolveLinkBioOnAir(data) }
+            ? { ...current, onAir: resolveLinkBioOnAir(data), companyWhatsApp: normalizeLinkBioWhatsApp(data.empresa?.telefone_participacao) }
             : current);
         }
       } catch (error) {
@@ -86,5 +87,5 @@ export default function LinkBioPublic() {
       <p className="max-w-sm text-sm text-white/65">O endereço pode estar incorreto ou a rádio ainda não publicou seus links.</p>
     </main>;
   }
-  return <LinkBioVisual config={page.config} onAir={page.onAir}/>;
+  return <LinkBioVisual config={{ ...page.config, whatsapp_url: normalizeLinkBioWhatsApp(page.config.whatsapp_url) || page.companyWhatsApp || "" }} onAir={page.onAir}/>;
 }
