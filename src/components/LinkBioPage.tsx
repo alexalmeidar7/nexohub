@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef, type FormEvent } from "react";
+import { useEffect, useMemo, useState, useRef, Component, type ReactNode, type FormEvent } from "react";
 import { Apple, Check, Copy, ExternalLink, Globe2, Image as ImageIcon, Instagram, Link2, Loader2, MapPin, MessageCircle, Palette, Radio, Save, Smartphone, Youtube, Facebook } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,6 +9,12 @@ import LinkBioAds from "@/components/linkbio/LinkBioAds";
 import LinkBioVisual from "@/components/linkbio/LinkBioVisual";
 import { isLinkBioSlug, makeLinkBioDefaults, normalizeLinkBioUrl, resolveLinkBioOnAir, shortLinkBioUrl, type LinkBioConfig, type LinkBioOnAir } from "@/lib/linkBio";
 
+class AdsRecovery extends Component<{children:ReactNode},{failed:boolean}> {
+ state={failed:false};
+ static getDerivedStateFromError(){return {failed:true};}
+ componentDidCatch(error:Error){console.error("[LinkBio ADS] render failure",error);}
+ render(){return this.state.failed?<section className="rounded-2xl bg-white p-5 text-slate-800"><p>Não foi possível carregar o ADS.</p><button type="button" className="mt-2 text-blue-600" onClick={()=>this.setState({failed:false})}>Tentar novamente</button></section>:this.props.children;}
+}
 interface Props { effectiveUserId?: string | null }
 type EditableKey = "station_name" | "logo_url" | "whatsapp_url" | "site_url" | "map_url" |
   "ios_store_url" | "android_store_url" | "instagram_url" | "facebook_url" | "youtube_url";
@@ -58,6 +64,8 @@ export default function LinkBioPage({ effectiveUserId }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [bannerPreview,setBannerPreview]=useState("");
+  const [dismissedBanner,setDismissedBanner]=useState("");
   const previewOuter = useRef<HTMLDivElement>(null);
   const previewInner = useRef<HTMLDivElement>(null);
   const [previewFit,setPreviewFit] = useState({scale:1,height:800});
@@ -344,7 +352,7 @@ export default function LinkBioPage({ effectiveUserId }: Props) {
           </button>
         </div>
       </form>
-      <LinkBioAds key={ownerId} owner={ownerId} canEdit={canEdit}/></div>
+      <AdsRecovery key={ownerId}><LinkBioAds owner={ownerId} canEdit={canEdit} onBannerPreview={setBannerPreview}/></AdsRecovery></div>
       <aside className="xl:sticky xl:top-2">
         <div className="mb-3 flex items-center justify-between gap-3 px-1">
           <div className="flex items-center gap-2">
@@ -353,7 +361,7 @@ export default function LinkBioPage({ effectiveUserId }: Props) {
           </div>
           <span className="text-[11px] font-semibold text-slate-500">Atualizada em tempo real</span>
         </div>
-        <div ref={previewOuter} className="w-full" aria-label="Prévia da página Link Bio"><div className="relative mx-auto overflow-hidden rounded-[23px] bg-[#260000] ring-4 ring-slate-800/90" style={{width:440*previewFit.scale,height:previewFit.height*previewFit.scale}}><div ref={previewInner} style={{width:440,transform:"scale("+previewFit.scale+")",transformOrigin:"top left"}}>{preview}</div></div></div>
+        <div ref={previewOuter} className="w-full" aria-label="Prévia da página Link Bio"><div className="relative mx-auto overflow-hidden rounded-[23px] bg-[#260000] ring-4 ring-slate-800/90" style={{width:440*previewFit.scale,height:previewFit.height*previewFit.scale}}><div ref={previewInner} style={{width:440,transform:"scale("+previewFit.scale+")",transformOrigin:"top left"}}>{preview}</div>{bannerPreview&&dismissedBanner!==bannerPreview&&<div className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="relative overflow-hidden rounded-[14px] pointer-events-auto" style={{width:"75%",aspectRatio:"800 / 1050"}}><img src={bannerPreview} alt="Prévia da campanha" className="h-full w-full object-contain"/><button type="button" aria-label="Fechar prévia do banner" onClick={()=>setDismissedBanner(bannerPreview)} className="absolute right-2 top-2 rounded-full bg-black/55 px-2 text-white">×</button></div></div>}</div></div>
       </aside>
     </div>
   </div>;
