@@ -5,10 +5,10 @@ using System.Net.Http;
 namespace HouseMix.OfflineFirst.Transport;
 
 /// <summary>
-/// Starts and supervises the loopback-only House Mix local API as a child process.
+/// Starts and supervises the House Mix local API as a child process.
 /// The caller supplies the local PostgreSQL connection string; it is passed only
 /// through the child process environment and is never included in diagnostics.
-/// This is a Windows Desktop integration primitive, not a LAN server.
+/// The default is loopback; explicit LAN configuration is validated by the API.
 /// </summary>
 public sealed class LocalApiHostManager : IAsyncDisposable
 {
@@ -62,11 +62,20 @@ public sealed class LocalApiHostManager : IAsyncDisposable
             };
             startInfo.ArgumentList.Add(_options.ServerScriptPath);
             startInfo.Environment["DATABASE_URL"] = _options.DatabaseUrl;
-            startInfo.Environment["HOUSEMIX_API_HOST"] = "127.0.0.1";
+            // Explicit opt-in only. The Node API independently validates the private
+            // address, authorized subnet and TLS certificate before listening.
+            var lanEnabled = Environment.GetEnvironmentVariable("HOUSEMIX_ALLOW_LAN") == "true";
+            startInfo.Environment["HOUSEMIX_API_HOST"] = lanEnabled
+                ? Environment.GetEnvironmentVariable("HOUSEMIX_API_HOST") ?? "127.0.0.1"
+                : "127.0.0.1";
             startInfo.Environment["HOUSEMIX_API_PORT"] = _options.Port.ToString(
                 System.Globalization.CultureInfo.InvariantCulture);
-            // Do not inherit a caller-provided LAN override into the child process.
-            startInfo.Environment.Remove("HOUSEMIX_ALLOW_LAN");
+            if (!lanEnabled)
+            {
+                startInfo.Environment.Remove("HOUSEMIX_ALLOW_LAN");
+                startInfo.Environment.Remove("HOUSEMIX_LAN_SUBNET");
+                startInfo.Environment.Remove("HOUSEMIX_API_TLS");
+            }
 
             var process = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
             if (!process.Start())
@@ -81,7 +90,7 @@ public sealed class LocalApiHostManager : IAsyncDisposable
             _ = process.StandardError.ReadToEndAsync();
 
             var healthUri = new Uri($"http://127.0.0.1:{_options.Port}/health");
-            var deadline = DateTimeOffset.UtcNow + _options.StartupTimeout;
+            var deadline = DateTimeOffset.UtcNow + _options.EffectiveStartupTimeout;
             while (DateTimeOffset.UtcNow < deadline)
             {
                 cancellationToken.ThrowIfCancellationRequested();
