@@ -18,6 +18,9 @@ describe("Link Bio", () => {
     expect(result).toEqual({
       programName: "Vale Night", presenterName: "Reginaldo", presenterPhoto: "https://example.com/photo.png",
       start: "19:00", end: "00:00",
+      presenters: [{ id: "primary", name: "Reginaldo", photo: "https://example.com/photo.png" }],
+      isLive: true,
+      schedule: [],
     });
   });
 });

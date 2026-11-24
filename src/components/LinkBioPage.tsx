@@ -57,6 +57,34 @@ export default function LinkBioPage({ effectiveUserId }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  const [pendingLogo, setPendingLogo] = useState<{ file: File; preview: string } | null>(null);
+  const [validatingLogo, setValidatingLogo] = useState(false);
+  useEffect(() => { setPendingLogo(null); }, [ownerId]);
+  async function chooseLogo(file?: File) {
+    if (!file || !canEdit || validatingLogo || saving) return;
+    setValidatingLogo(true);
+    try {
+      if (file.type !== "image/png" || !/\.png$/i.test(file.name) || file.size > 5 * 1024 * 1024) throw new Error("Selecione um PNG de ate 5 MB.");
+      const bytes = new Uint8Array(await file.slice(0,8).arrayBuffer());
+      if (bytes.join(",") !== "137,80,78,71,13,10,26,10") throw new Error("Arquivo PNG invalido.");
+      const bitmap = await createImageBitmap(file);
+      try {
+        if (bitmap.width !== 400 || bitmap.height !== 400) throw new Error("A logo precisa ter 400 x 400 pixels.");
+        const canvas = document.createElement("canvas");
+        canvas.width = canvas.height = 400;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("Nao foi possivel validar a imagem.");
+        ctx.drawImage(bitmap, 0, 0);
+        const pixels = ctx.getImageData(0,0,400,400).data;
+        let transparent = false, visible = false;
+        for (let i = 3; i < pixels.length; i += 4) { if (pixels[i] === 0) transparent = true; if (pixels[i] > 0) visible = true; }
+        if (!transparent || !visible) throw new Error("Use uma logo com fundo transparente.");
+        setPendingLogo({ file, preview: canvas.toDataURL("image/png") });
+      } finally { bitmap.close(); }
+    } catch (error) { toast.error(error instanceof Error ? error.message : "Imagem invalida."); }
+    finally { setValidatingLogo(false); }
+  }
   const [hasSaved, setHasSaved] = useState(false);
   const publicUrl = useMemo(() => shortLinkBioUrl(config.slug || ""), [config.slug]);
 
@@ -68,7 +96,7 @@ export default function LinkBioPage({ effectiveUserId }: Props) {
       const [existing, radio] = await Promise.all([
         (supabase as any).from("link_bio_pages").select("*").eq("user_id", ownerId).maybeSingle(),
         supabase.from("empresa_config")
-          .select("nome,logo,site,instagram,facebook,youtube").eq("user_id", ownerId).maybeSingle(),
+          .select("nome,logo,site,instagram,facebook,youtube,telefone_participacao").eq("user_id", ownerId).maybeSingle(),
       ]);
       if (!active) return;
       if (existing.error) {
@@ -89,6 +117,12 @@ export default function LinkBioPage({ effectiveUserId }: Props) {
         youtube_url: company?.youtube?.startsWith("http") ? company.youtube : "",
         ...(existing.data || {}),
       } as LinkBioConfig;
+      if (!initial.whatsapp_url?.trim() && company?.telefone_participacao) {
+        const raw = company.telefone_participacao.trim();
+        const digits = raw.replace(/\D/g, "");
+        const phone = !raw.startsWith("+") && (digits.length === 10 || digits.length === 11) ? "55" + digits : digits;
+        if (phone.length >= 10 && phone.length <= 15) initial.whatsapp_url = "https://wa.me/" + phone;
+      }
       setConfig(initial);
       setHasSaved(Boolean(existing.data));
       setLoading(false);
@@ -137,7 +171,7 @@ export default function LinkBioPage({ effectiveUserId }: Props) {
   }
   async function save(event: FormEvent) {
     event.preventDefault();
-    if (saving || !canEdit) return;
+    if (saving || validatingLogo || !canEdit) return;
     const slug = config.slug.trim().toLowerCase();
     if (!isLinkBioSlug(slug)) {
       toast.error("O endereço curto deve ter de 3 a 40 letras, números ou hifens.");
@@ -154,15 +188,25 @@ export default function LinkBioPage({ effectiveUserId }: Props) {
     }
     setSaving(true);
     try {
+      let logoUrl = config.logo_url;
+      if (pendingLogo) {
+        const path = `${ownerId}/link-bio-${crypto.randomUUID()}.png`;
+        const bucket = supabase.storage.from("empresa-assets");
+        const { error: uploadError } = await bucket.upload(path, pendingLogo.file, { contentType: "image/png", upsert: false });
+        if (uploadError) { toast.error("Nao foi possivel enviar a logo. Verifique as permissoes do armazenamento."); return; }
+        logoUrl = bucket.getPublicUrl(path).data.publicUrl;
+      }
       const { error } = await (supabase as any).from("link_bio_pages").upsert({
         ...config,
         slug,
+        logo_url: logoUrl,
         station_name: config.station_name.trim().slice(0, 120),
         user_id: ownerId,
         updated_at: new Date().toISOString(),
       }, { onConflict: "user_id" });
       if (error) throw error;
-      setConfig(prev => ({ ...prev, slug }));
+      setConfig(prev => ({ ...prev, slug, logo_url: logoUrl }));
+      setPendingLogo(null);
       setHasSaved(true);
       toast.success(config.published ? "Link Bio salvo e publicado!" : "Link Bio salvo como rascunho.");
     } catch (error: any) {
@@ -176,7 +220,7 @@ export default function LinkBioPage({ effectiveUserId }: Props) {
   if (loading) return <div className="flex min-h-[320px] items-center justify-center gap-2 text-sm text-slate-600">
     <Loader2 size={21} className="animate-spin"/> Carregando Link Bio...
   </div>;
-  const preview = <LinkBioVisual config={config} onAir={onAir} preview/>;
+  const preview = <LinkBioVisual config={{ ...config, logo_url: pendingLogo?.preview || config.logo_url }} onAir={onAir} preview/>;
   return <div className="mx-auto w-full max-w-[1500px] pb-8">
     <header className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-white p-5 sm:p-6">
       <div className="flex items-center gap-3">
@@ -217,16 +261,23 @@ export default function LinkBioPage({ effectiveUserId }: Props) {
               <ExternalLink size={15}/> Abrir
             </a>}
           </div>
-          <p className="text-[11px] text-slate-500">Exemplo: housemix.nexobrasil.net/b/positivafm</p>
-        </Section>
+          </Section>
 
         <Section title="Identidade da rádio" subtitle="O programa, horário, foto e nome do apresentador são preenchidos automaticamente pela grade ao vivo.">
           <FormField label="Nome da emissora" value={config.station_name}
             onChange={v => change("station_name", v)} placeholder="Nome da sua rádio" icon={Radio}/>
-          <FormField label="Logo da rádio" value={config.logo_url}
-            onChange={v => change("logo_url", v)} placeholder="https://.../logo.png"
-            hint="A logo atual da rádio é sugerida automaticamente. Use um PNG transparente para seguir o modelo."
-            icon={ImageIcon}/>
+          <div className="space-y-2">
+            <span className="flex items-center gap-1.5 text-xs font-bold text-[#18354a]"><ImageIcon size={14} className="text-[#0055ff]"/> Logo</span>
+            <div className="flex items-center gap-3">
+              {(pendingLogo?.preview || config.logo_url) && <img src={pendingLogo?.preview || config.logo_url} alt="Logo" className="h-14 w-14 rounded-lg bg-slate-100 object-contain"/>}
+              <label className={"inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl px-4 text-xs font-bold " + blue}>
+                <ImageIcon size={16}/> {validatingLogo ? "Validando..." : "Enviar imagem"}
+                <input type="file" accept="image/png,.png" className="sr-only" disabled={!canEdit || saving || validatingLogo} onChange={e => { const file = e.currentTarget.files?.[0]; e.currentTarget.value = ""; void chooseLogo(file); }}/>
+              </label>
+              {pendingLogo && <button type="button" disabled={saving} onClick={() => setPendingLogo(null)} className="text-xs font-bold text-slate-600">Cancelar troca</button>}
+            </div>
+            <p className="text-[11px] text-slate-500">PNG · 400 x 400 pixels · fundo transparente. A logo cadastrada na empresa é usada por padrão.</p>
+          </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <ColorField label="Fundo superior" value={config.background_top}
               onChange={v => setConfig(prev => ({ ...prev, background_top: v }))}/>
@@ -277,7 +328,7 @@ export default function LinkBioPage({ effectiveUserId }: Props) {
           {!canEdit && <p className="mt-3 text-xs font-semibold text-amber-800">
             Somente o titular da emissora pode publicar ou alterar esse link.
           </p>}
-          <button type="submit" disabled={saving || !canEdit} className={"mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-extrabold disabled:opacity-40 " + blue}>
+          <button type="submit" disabled={saving || validatingLogo || !canEdit} className={"mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-extrabold disabled:opacity-40 " + blue}>
             {saving ? <Loader2 size={17} className="animate-spin"/> : <Save size={17}/>}
             {saving ? "Salvando..." : config.published ? "Salvar e publicar" : "Salvar rascunho"}
           </button>
