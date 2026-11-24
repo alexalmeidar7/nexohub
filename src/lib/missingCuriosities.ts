@@ -30,7 +30,7 @@ export interface MissingRow {
   ultima: string;
 }
 
-const norm = (s: string | null | undefined) => (s || "").trim().toLowerCase();
+const norm = (s: string | null | undefined) => (s || "").normalize("NFC").trim().toLowerCase();
 
 export function computeMissingCuriosities(
   infomusicRows: InfoMusicInput[],
@@ -49,7 +49,7 @@ export function computeMissingCuriosities(
   for (const i of infomusicRows) {
     if ((i.curiosidade || "").trim().length > 0) continue;
     const key = `${norm(i.artista)}::${norm(i.musica)}`;
-    if (!key || key === "::" || seen.has(key)) continue;
+    if (!key || key === "::" || known.has(key) || seen.has(key)) continue;
     seen.add(key);
     missing.push({
       artista: i.artista || "",
