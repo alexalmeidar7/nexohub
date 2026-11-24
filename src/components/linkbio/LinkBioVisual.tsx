@@ -77,7 +77,7 @@ function LinkBioFitLabelV10({label}: {label: string}) {
   }, [label]);
   return <span ref={ref} style={{ display: "block", whiteSpace: "nowrap", width: "max-content" }}>{label}</span>;
 }
-function LinkBioOfferV14({ live, owner }: { live: LinkBioOnAir | null; owner: string }) {
+function LinkBioOfferV14({ live, owner, preview }: { live: LinkBioOnAir | null; owner: string; preview: boolean }) {
   const programId = live?.isLive === false ? "" : live?.programIdV14 || "";
   const seal = programId ? normalizeLinkBioUrl(live?.programSealV14 || "") : "";
   const [result, setResult] = useState<{key:string; logos:{id:string;nome:string;logo_url:string}[]}>({key:"",logos:[]});
@@ -86,15 +86,19 @@ function LinkBioOfferV14({ live, owner }: { live: LinkBioOnAir | null; owner: st
     if (!programId || !owner) return;
     let active = true;
     const refresh = async () => {
-      const { data, error } = await supabase.from("logos_patrocinadores").select("id,nome,logo_url").eq("user_id",owner).eq("programa_id",programId).eq("ativo",true).eq("excluido",false).gte("data_final",new Intl.DateTimeFormat("sv-SE",{timeZone:"America/Sao_Paulo",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date())).order("id");
-      if (!active || error) return;
-      const logos = (data || []).filter(x => normalizeLinkBioUrl(x.logo_url));
+      const query = new URLSearchParams({ slug: owner, section: "linkbio_sponsors", program_id: programId });
+      const response = preview
+        ? await supabase.from("logos_patrocinadores").select("id,nome,logo_url").eq("user_id",owner).eq("programa_id",programId).eq("ativo",true).eq("excluido",false).gte("data_final",new Intl.DateTimeFormat("sv-SE",{timeZone:"America/Sao_Paulo",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date())).order("id")
+        : await supabase.functions.invoke("public-player-data?" + query.toString(), { method: "GET" });
+      const rows = preview ? response.data : response.data?.logos;
+      if (!active || response.error || !Array.isArray(rows)) return;
+      const logos = (rows as {id:string;nome:string;logo_url:string}[]).filter(x => normalizeLinkBioUrl(x.logo_url));
       logos.forEach(x => { const img = new Image(); img.src = x.logo_url; });
       setResult({key,logos});
     };
     void refresh(); const timer = window.setInterval(()=>{if(document.visibilityState === "visible")void refresh();},60000);
     return ()=>{active=false;window.clearInterval(timer);};
-  },[key,owner,programId]);
+  },[key,owner,programId,preview]);
   const logos = result.key === key ? result.logos : [];
   const signature = logos.map(x=>x.id+":"+x.logo_url).join("|");
   const [index,setIndex]=useState(0);
@@ -260,7 +264,7 @@ export default function LinkBioVisual({ config, onAir: liveOnAir, preview = fals
           </div>}
         </main>
 
-        <LinkBioOfferV14 live={liveOnAir} owner={config.user_id}/>
+        <LinkBioOfferV14 live={liveOnAir} owner={config.user_id} preview={preview}/>
 
       </div>
     </div>
