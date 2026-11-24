@@ -157,14 +157,14 @@ export default function LinkBioVisual({ config, onAir: liveOnAir, preview = fals
   const name = config.station_name || "A sua rádio";
   return (
     <div
-      className="relative isolate min-h-svh overflow-hidden text-white"
+      className={"relative isolate overflow-hidden text-white "+(preview?"":"min-h-svh")}
       style={{
         background: "radial-gradient(ellipse 90% 58% at 16% 100%, " + config.background_bottom +
           " 0%, transparent 88%), linear-gradient(180deg, " + config.background_top +
           " 0%, #330000 40%, " + config.background_bottom + " 100%)",
       }}
     >
-      <div className="relative mx-auto flex min-h-svh w-full max-w-[440px] flex-col px-4 pb-8 pt-5 sm:px-7 sm:pt-5">
+      <div className={"relative mx-auto flex w-full max-w-[440px] flex-col px-4 pb-8 pt-5 sm:px-7 sm:pt-5 "+(preview?"":"min-h-svh")}>
         <style>{`@keyframes linkBioProgramInV9 { from { opacity:0; transform:translateX(calc(var(--bio-direction,1) * 12px)); } to { opacity:1; transform:translateX(0); } }
 @keyframes linkBioProgramOutV9 { from { opacity:1; transform:translateX(0); } to { opacity:0; transform:translateX(calc(var(--bio-direction,1) * -12px)); } }
 .linkBioProgramEnterV9 { animation: linkBioProgramInV9 420ms cubic-bezier(.16,1,.3,1) both; }
