@@ -109,6 +109,17 @@ export default function NexoPluginsPage() {
         </div>
       </article>
 
+      <article className="mb-4 rounded-xl bg-slate-50 p-5 sm:p-7">
+        <div className="flex flex-wrap items-start gap-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[#0055ff] text-white"><Package size={27}/></div>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-xl font-bold">House Mix – Locutor</h2>
+            <p className="mt-1 text-sm text-slate-600">Aplicativo independente para Windows, com acesso ao módulo de locução.</p>
+            <p className="mt-3 text-sm text-slate-700">{desktopRelease?.locutorDownloadUrl ? `v${desktopRelease.version} · ${formatSize(desktopRelease.locutorSizeBytes || 0)}` : checkingDesktop ? "Consultando..." : "Instalador ainda não publicado."}</p>
+            {desktopRelease?.locutorDownloadUrl && <a href={desktopRelease.locutorDownloadUrl} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#0055ff] px-6 py-2.5 text-sm font-bold text-white"><Download size={17}/> Baixar</a>}
+          </div>
+        </div>
+      </article>
     </section>
   );
 }
