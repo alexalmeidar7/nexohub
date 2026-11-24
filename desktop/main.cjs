@@ -2,7 +2,7 @@ const path = require("node:path");
 const fs = require("node:fs");
 const crypto = require("node:crypto");
 const { pathToFileURL } = require("node:url");
-const { app, BrowserWindow, dialog, shell, protocol, net, Notification, ipcMain } = require("electron");
+const { app, BrowserWindow, dialog, shell, protocol, net, Notification, ipcMain, safeStorage } = require("electron");
 const { spawn } = require("node:child_process");
 const { createWindowOptions, isAllowedExternalUrl, resolveRendererRequestPath } = require("./runtime.cjs");
 const { startLocalApiHost } = require("./local-api-host.cjs");
@@ -372,6 +372,25 @@ function configureDesktopIpc() {
   ipcMain.handle("housemix:music-read", async (event, stationId) => {
     if (!isTrustedDesktopRenderer(event)) throw new Error("untrusted_renderer");
     return getLocalMusicSources().read(stationId);
+  });
+  const credentialPath = () => path.join(app.getPath("userData"), "remembered-login.enc");
+  const trustedLogin = (event) => {
+    if (!isTrustedDesktopRenderer(event) || event.senderFrame !== event.sender.mainFrame) throw new Error("untrusted_renderer");
+    const route = new URL(event.sender.getURL()).pathname;
+    if (!["/", "/user/login"].includes(route)) throw new Error("invalid_login_route");
+  };
+  ipcMain.handle("housemix:remember-login", async (event, operation, credentials) => {
+    trustedLogin(event);
+    const target = credentialPath();
+    if (operation === "clear") { await fs.promises.rm(target, { force: true }); return null; }
+    if (process.platform !== "win32" || !safeStorage.isEncryptionAvailable()) throw new Error("secure_storage_unavailable");
+    if (operation === "read") {
+      try { return JSON.parse(safeStorage.decryptString(await fs.promises.readFile(target))); }
+      catch (error) { if (error.code === "ENOENT") return null; throw error; }
+    }
+    if (operation !== "save" || typeof credentials?.email !== "string" || typeof credentials?.password !== "string" || credentials.email.length > 320 || credentials.password.length > 4096) throw new Error("invalid_credentials");
+    await fs.promises.writeFile(target, safeStorage.encryptString(JSON.stringify(credentials)), { mode: 0o600 });
+    return null;
   });
   ipcMain.handle("housemix:app-version", () => app.getVersion());
   // Native identity is stable per installation; never use a browser-generated ID.
