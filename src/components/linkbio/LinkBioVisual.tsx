@@ -4,7 +4,7 @@ import {
   Apple, ChevronLeft, ChevronRight, ExternalLink, Facebook, Globe2, Instagram, Link as LinkIcon,
   MapPin, MessageCircle, Mic2, Smartphone, Youtube,
 } from "lucide-react";
-import { type LinkBioConfig, type LinkBioOnAir, normalizeLinkBioUrl } from "@/lib/linkBio";
+import { type LinkBioConfig, type LinkBioOnAir, normalizeLinkBioWhatsApp, normalizeLinkBioUrl } from "@/lib/linkBio";
 
 interface Props {
   config: LinkBioConfig;
@@ -26,7 +26,8 @@ function BioButton({ title, href, icon: Icon, background, onClick, preview = fal
   onClick?: () => void;
   preview?: boolean;
 }) {
-  const active = Boolean(href || onClick);
+  const url = safeLink(href || "");
+  const active = Boolean(url || onClick);
   const css = "group flex min-h-[52px] w-full items-center gap-3 rounded-full px-4 py-2 text-left " +
     "transition-transform duration-150 hover:-translate-y-0.5 active:scale-[0.99] sm:min-h-[60px] sm:px-3";
   const content = <>
@@ -38,7 +39,6 @@ function BioButton({ title, href, icon: Icon, background, onClick, preview = fal
   </>;
   const style = { backgroundColor: background, opacity: active || preview ? 1 : 0.6 };
   if (onClick) return <button type="button" onClick={onClick} disabled={!active} className={css} style={style}>{content}</button>;
-  const url = safeLink(href || "");
   return url ? <a href={url} target="_blank" rel="noopener noreferrer" className={css} style={style}>{content}</a> :
     <div aria-disabled="true" className={css + " cursor-not-allowed"} style={style} title="Link ainda não configurado">{content}</div>;
 }
@@ -178,6 +178,16 @@ export default function LinkBioVisual({ config, onAir: liveOnAir, preview = fals
   83% { animation-timing-function: cubic-bezier(.4,0,.8,.35); }
   100% { transform: translate3d(0,5px,0); opacity: 0; }
 } @media (prefers-reduced-motion: reduce) { [style*="linkBioPortraitSmoothV6"], [style*="linkBioNameSmoothV6"] { animation: none !important; } }`}</style>
+        <div className="mx-auto flex min-h-[110px] w-[74%] items-center justify-center sm:min-h-[100px] linkBioLogoV11 shrink-0" style={{ marginBottom: 8 }}>
+          {config.logo_url && (safeLink(config.logo_url) || (preview && config.logo_url.startsWith("data:image/png;base64,"))) ? (
+            <img src={preview && config.logo_url.startsWith("data:image/png;base64,") ? config.logo_url : safeLink(config.logo_url)} loading="eager" alt={"Logo " + name}
+              className="max-h-24 w-auto max-w-full object-contain drop-shadow-[0_12px_12px_rgba(0,0,0,0.25)]"/>
+          ) : (
+            <div className="flex items-center gap-2 text-center text-3xl font-black text-white">
+              <Globe2 size={29} className="shrink-0"/>{name}
+            </div>
+          )}
+        </div>
         {/* Hero mirrors the approved reference: presenter cutout at left, live show at right. */}
         <section className="relative overflow-hidden mb-[-4px] h-[168px] shrink-0 sm:h-[188px]" aria-label="Programa no ar">
           {schedule.length > 1 && <>
@@ -224,7 +234,7 @@ export default function LinkBioVisual({ config, onAir: liveOnAir, preview = fals
         {/* The black link deck, four red pills, social tray and bottom station mark. */}
         <main className="relative z-10 rounded-[31px] bg-gradient-to-b from-[#490000] via-[#1a0000] to-[#000000] px-4 pb-7 pt-6 sm:rounded-[22px] sm:px-6 sm:pb-6 sm:pt-6">
           <nav aria-label="Links da rádio" className="flex flex-col gap-1.5 sm:gap-1.5">
-            <BioButton title="whats estúdio" href={config.whatsapp_url} icon={MessageCircle} background={config.button_color} preview={preview}/>
+            <BioButton title="whats estúdio" href={normalizeLinkBioWhatsApp(config.whatsapp_url)} icon={MessageCircle} background={config.button_color} preview={preview}/>
             <BioButton title="site" href={config.site_url} icon={LinkIcon} background={config.button_color} preview={preview}/>
             <BioButton title="localização" href={config.map_url} icon={MapPin} background={config.button_color} preview={preview}/>
             <BioButton title="app" icon={Smartphone} background={config.button_color}
@@ -251,16 +261,7 @@ export default function LinkBioVisual({ config, onAir: liveOnAir, preview = fals
         </main>
 
         <LinkBioOfferV14 live={liveOnAir} owner={config.user_id}/>
-        <div className="mx-auto flex min-h-[110px] w-[74%] items-center justify-center sm:min-h-[100px] linkBioLogoV11 shrink-0" style={{ marginTop: 8 }}>
-          {config.logo_url && (safeLink(config.logo_url) || (preview && config.logo_url.startsWith("data:image/png;base64,"))) ? (
-            <img src={preview && config.logo_url.startsWith("data:image/png;base64,") ? config.logo_url : safeLink(config.logo_url)} loading="lazy" alt={"Logo " + name}
-              className="max-h-24 w-auto max-w-full object-contain drop-shadow-[0_12px_12px_rgba(0,0,0,0.25)]"/>
-          ) : (
-            <div className="flex items-center gap-2 text-center text-3xl font-black text-white">
-              <Globe2 size={29} className="shrink-0"/>{name}
-            </div>
-          )}
-        </div>
+
       </div>
     </div>
   );
