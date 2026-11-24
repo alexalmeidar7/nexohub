@@ -99,6 +99,50 @@ public sealed class DeviceConnectionSession
         }
     }
 
+    /// <summary>
+    /// Revalidates the enrolled station periodically and reconnects after network
+    /// interruption. Authentication failures stop the loop rather than retrying
+    /// revoked credentials. The caller owns cancellation and the session lifetime.
+    /// </summary>
+    public async Task MaintainConnectionAsync(
+        TimeSpan interval,
+        Action<DeviceConnectionState>? onStateChanged = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (interval < TimeSpan.FromSeconds(5) || interval > TimeSpan.FromMinutes(5))
+            throw new ArgumentOutOfRangeException(nameof(interval));
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    await ConnectAsync(cancellationToken).ConfigureAwait(false);
+                }
+                catch (HttpRequestException exception) when (IsTransient(exception))
+                {
+                    // A bounded connection attempt failed; try again after the interval.
+                }
+                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+                {
+                    // HTTP timeout, not a request to stop the connection supervisor.
+                }
+                catch
+                {
+                    onStateChanged?.Invoke(State);
+                    throw;
+                }
+                onStateChanged?.Invoke(State);
+                await Task.Delay(interval, cancellationToken).ConfigureAwait(false);
+            }
+        }
+        finally
+        {
+            await DisconnectAsync(CancellationToken.None).ConfigureAwait(false);
+            onStateChanged?.Invoke(State);
+        }
+    }
+
     public void EnsureConnected()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
