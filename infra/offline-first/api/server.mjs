@@ -21,6 +21,7 @@ if (host !== "127.0.0.1") {
   const authorized = parseSubnet(process.env.HOUSEMIX_LAN_SUBNET);
   app.use((req, res, next) => {
     const remote = req.socket.remoteAddress;
+    if (remote === "127.0.0.1" || remote === "::ffff:127.0.0.1") return next();
     if (!req.secure || !authorized(remote)) return res.status(403).json({ error: "lan_access_denied" });
     // Administrative endpoints remain inaccessible over LAN.
     if (req.path === "/v1/devices/enroll" || req.path === "/v1/operators/provision")
@@ -242,15 +243,27 @@ app.use((err, _req, res, _next) => {
 });
 
 const tlsOptions = resolveTlsOptions(process.env);
-const protocol = tlsOptions ? "https" : "http";
-const server = tlsOptions
-  ? createHttpsServer(tlsOptions, app)
-  : createHttpServer(app);
-server.listen(port, host, () => {
-  console.log(`House Mix local API listening on ${protocol}://${host}:${port}`);
+const lan = host !== "127.0.0.1";
+// Keep the existing loopback health and enrollment interface available.
+// The LAN listener is a separate TLS-only socket with the same tenant-scoped API.
+const localServer = lan ? createHttpServer(app) : (tlsOptions ? createHttpsServer(tlsOptions, app) : createHttpServer(app));
+const servers = [localServer];
+localServer.listen(port, "127.0.0.1", () => {
+  console.log("House Mix local API listening on loopback");
 });
+if (lan) {
+  const lanServer = createHttpsServer(tlsOptions, app);
+  servers.push(lanServer);
+  lanServer.listen(port, host, () => console.log("House Mix LAN TLS listener ready"));
+}
+for (const server of servers) {
+  server.requestTimeout = 15000;
+  server.headersTimeout = 10000;
+  server.maxConnections = 128;
+  server.on("error", () => { void shutdown().finally(() => process.exit(1)); });
+}
 async function shutdown() {
-  server.close();
+  for (const server of servers) server.close();
   await db.end({ timeout: 5 });
 }
 process.on("SIGINT", shutdown);
