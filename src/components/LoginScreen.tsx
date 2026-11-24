@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, Loader2, CheckCircle, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import HouseMixBrandLogo from "@/components/HouseMixBrandLogo";
@@ -113,6 +113,16 @@ export default function LoginScreen() {
     }
   });
   const [pass, setPass] = useState("");
+  const credentialStore = (window.houseMixDesktop as unknown as { rememberLogin?: (operation: string, credentials?: { email: string; password: string }) => Promise<{ email: string; password: string } | null> } | undefined)?.rememberLogin;
+  const [rememberLogin, setRememberLogin] = useState(() => localStorage.getItem("nexohub_remember_login") === "true");
+  useEffect(() => {
+    if (!credentialStore || !rememberLogin) return;
+    let active = true;
+    void credentialStore("read").then(saved => {
+      if (active && saved) { setEmail(old => old || saved.email); setPass(old => old || saved.password); }
+    }).catch(() => {});
+    return () => { active = false; };
+  }, []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [keepConnected, setKeepConnected] = useState(() => {
@@ -182,7 +192,7 @@ export default function LoginScreen() {
     setError("");
     // O bloqueio pós-logout só é removido após confirmação do Supabase.
     localStorage.setItem(KEEP_CONNECTED_KEY, keepConnected ? "true" : "false");
-    if (keepConnected) {
+    if (rememberLogin) {
       localStorage.setItem(REMEMBERED_USER_KEY, email.trim());
     } else {
       localStorage.removeItem(REMEMBERED_USER_KEY);
@@ -216,6 +226,10 @@ export default function LoginScreen() {
         return;
       }
 
+      if (rememberLogin && credentialStore) {
+        try { await credentialStore("save", { email: email.trim(), password: pass }); }
+        catch { localStorage.removeItem("nexohub_remember_login"); }
+      }
       localStorage.removeItem("nexohub_explicit_logout");
       localStorage.removeItem(SIGNED_OUT_FLAG);
       sessionStorage.removeItem(SIGNED_OUT_FLAG);
@@ -269,6 +283,8 @@ export default function LoginScreen() {
               <label style={labelStyle}>E-mail de Acesso</label>
               <input
                 type="email"
+                name="username"
+                autoComplete={rememberLogin ? "username" : "off"}
                 placeholder="seu.email@empresa.com.br"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -292,6 +308,8 @@ export default function LoginScreen() {
               <label style={labelStyle}>Senha</label>
               <input
                 type="password"
+                name="password"
+                autoComplete={rememberLogin ? "current-password" : "off"}
                 placeholder="••••••••"
                 value={pass}
                 onChange={(e) => setPass(e.target.value)}
@@ -320,6 +338,19 @@ export default function LoginScreen() {
               </p>
             )}
 
+            <label className="flex items-center gap-3 cursor-pointer select-none px-3 py-2 rounded-xl" style={{ background: "#101B30", border: "1px solid #233754" }}>
+              <input type="checkbox" checked={rememberLogin} disabled={loading} className="w-4 h-4 accent-[#0055ff]" onChange={e => {
+                const checked = e.target.checked;
+                setRememberLogin(checked);
+                localStorage.setItem("nexohub_remember_login", String(checked));
+                if (!checked) {
+                  localStorage.removeItem(REMEMBERED_USER_KEY);
+                  void credentialStore?.("clear").catch(() => setError("Não foi possível excluir as credenciais salvas."));
+                }
+              }} />
+              <span style={{ fontFamily: FONT_FAMILY, fontSize: 11, fontWeight: 700, color: "#B9C7DD" }}>LEMBRAR E-MAIL E SENHA</span>
+            </label>
+            {!credentialStore && rememberLogin && <p className="text-xs text-slate-400">Permita salvar a senha no gerenciador do navegador.</p>}
             {/* Mantenha-me conectado */}
             <label
               htmlFor="keep-connected"
