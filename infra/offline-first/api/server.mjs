@@ -4,7 +4,7 @@ import { createServer as createHttpsServer } from "node:https";
 import express from "express";
 import postgres from "postgres";
 import { registerLocalOperatorRoutes } from "./local-operator-routes.mjs";
-import { resolveApiHost } from "./network-config.mjs";
+import { resolveApiHost, parseSubnet } from "./network-config.mjs";
 import { resolveTlsOptions } from "./tls-config.mjs";
 
 const required = ["DATABASE_URL"];
@@ -17,6 +17,17 @@ const port = Number(process.env.HOUSEMIX_API_PORT || 8787);
 const db = postgres(process.env.DATABASE_URL, { max: 10, idle_timeout: 20, connect_timeout: 5 });
 const app = express();
 app.disable("x-powered-by");
+if (host !== "127.0.0.1") {
+  const authorized = parseSubnet(process.env.HOUSEMIX_LAN_SUBNET);
+  app.use((req, res, next) => {
+    const remote = req.socket.remoteAddress;
+    if (!req.secure || !authorized(remote)) return res.status(403).json({ error: "lan_access_denied" });
+    // Administrative endpoints remain inaccessible over LAN.
+    if (req.path === "/v1/devices/enroll" || req.path === "/v1/operators/provision")
+      return res.status(403).json({ error: "local_admin_only" });
+    next();
+  });
+}
 app.use(express.json({ limit: "64kb", strict: true }));
 
 const hash = (value) => crypto.createHash("sha256").update(value, "utf8").digest();
