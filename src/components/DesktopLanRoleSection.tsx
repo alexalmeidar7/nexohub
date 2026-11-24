@@ -28,6 +28,19 @@ export default function DesktopLanRoleSection({ stationId }: { stationId: string
   const nameIsDirtyRef = useRef(false);
   const [name, setName] = useState("");
   const [registry, setRegistry] = useState<Registry>({ devices: [], principalId: null });
+  const [lab, setLab] = useState<{configured:boolean;status:string}>({configured:false,status:"idle"});
+  useEffect(() => {
+    const native = window.houseMixDesktop;
+    if (!native?.getLanLabStatus || !validUuid(ownerId)) return;
+    let active = true;
+    const refresh = () => {
+      void native.getLanLabStatus!(ownerId).then(value => { if(active) setLab(value); })
+        .catch(() => { if(active) setLab({configured:false,status:"idle"}); });
+    };
+    refresh();
+    const timer = window.setInterval(refresh, 5000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [ownerId]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -216,7 +229,7 @@ export default function DesktopLanRoleSection({ stationId }: { stationId: string
     </div>}
     <div className="flex items-start gap-2 rounded-xl bg-amber-50 p-4 text-amber-900">
       <ShieldAlert size={18} className="mt-0.5 shrink-0"/>
-      <p className="text-xs leading-relaxed"><strong>Conexão LAN ainda não ativada.</strong>
+      <p className="text-xs leading-relaxed">{lab.configured && <><strong>Transporte de laboratório: {lab.status === "connected" ? "conectado" : lab.status === "syncing" ? "sincronizando" : "aguardando conexão"}.</strong>{" "}</>}<strong>Conexão LAN de produção ainda não ativada.</strong>
         A seleção organiza os computadores, mas a sincronização atual permanece online até a comunicação
         entre PCs ser validada com autenticação, TLS e segurança dos dados.
         O status “Lendo/gravando do principal” só aparecerá quando a transferência local estiver ativa.

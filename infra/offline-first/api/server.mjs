@@ -6,17 +6,35 @@ import postgres from "postgres";
 import { registerLocalOperatorRoutes } from "./local-operator-routes.mjs";
 import { resolveApiHost } from "./network-config.mjs";
 import { resolveTlsOptions } from "./tls-config.mjs";
+import { createLanPilotPolicy } from "./lan-pilot-policy.mjs";
 
 const required = ["DATABASE_URL"];
 for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing required environment variable: ${key}`);
 }
 
-const host = resolveApiHost(process.env);
+const tlsOptions = resolveTlsOptions(process.env);
+// Explicit laboratory mode only; the normal listener remains loopback-only.
+const pilot = process.env.HOUSEMIX_LAN_LAB === "true"
+  ? createLanPilotPolicy({ host: process.env.HOUSEMIX_API_HOST, cidr: process.env.HOUSEMIX_LAN_CIDR, tlsOptions })
+  : null;
+const host = pilot ? pilot.host : resolveApiHost(process.env);
 const port = Number(process.env.HOUSEMIX_API_PORT || 8787);
 const db = postgres(process.env.DATABASE_URL, { max: 10, idle_timeout: 20, connect_timeout: 5 });
 const app = express();
 app.disable("x-powered-by");
+if (pilot) {
+  app.use((req, res, next) => {
+    if (!req.socket.encrypted || !pilot.allowsPeer(req.socket.remoteAddress)) {
+      return res.status(403).json({ error: "lan_peer_denied" });
+    }
+    // No remote operator provisioning in the laboratory listener.
+    if (req.path.toLowerCase().replace(/\/+$/, "") === "/v1/operators/provision") {
+      return res.status(403).json({ error: "local_admin_only" });
+    }
+    next();
+  });
+}
 app.use(express.json({ limit: "64kb", strict: true }));
 
 const hash = (value) => crypto.createHash("sha256").update(value, "utf8").digest();
@@ -214,6 +232,9 @@ app.get("/v1/sync/changes", authenticateDevice, async (req, res) => {
       changes: page,
       has_more: hasMore,
       next_cursor: hasMore && last ? encodeCursor(last) : null,
+      // A durable checkpoint is available even on the final or empty page.
+      // Keep next_cursor unchanged for existing pagination clients.
+      checkpoint_cursor: last ? encodeCursor(last) : (cursor ? req.query.cursor : null),
     });
   } catch {
     return res.status(500).json({ error: "sync_pull_failed" });
@@ -230,7 +251,6 @@ app.use((err, _req, res, _next) => {
   return res.status(500).json({ error: "internal_error" });
 });
 
-const tlsOptions = resolveTlsOptions(process.env);
 const protocol = tlsOptions ? "https" : "http";
 const server = tlsOptions
   ? createHttpsServer(tlsOptions, app)

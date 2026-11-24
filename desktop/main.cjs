@@ -13,6 +13,29 @@ const { transcribeLocalAudio } = require("./local-whisper.cjs");
 const { appendTranscription, listTranscriptions } = require("./local-transcription-store.cjs");
 const { writeXmlIfChanged } = require("./local-xml-write.cjs");
 const { readStationRole, writeStationRole } = require("./lan-role-preference.cjs");
+const { createLanRuntime } = require("./lan-runtime.cjs");
+let labLanRuntime = null;
+function startLanLabRuntime() {
+  // Explicit administrator-provisioned lab settings only. Never accept secrets
+  // or arbitrary endpoints from the renderer.
+  if (process.env.HOUSEMIX_LAN_CLIENT_LAB !== "true") return;
+  try {
+    const stationId = process.env.HOUSEMIX_LAN_STATION_ID;
+    const tenantId = process.env.HOUSEMIX_LAN_TENANT_ID;
+    const endpoint = process.env.HOUSEMIX_LAN_ENDPOINT;
+    const keyFile = process.env.HOUSEMIX_LAN_DEVICE_KEY_FILE;
+    const caFile = process.env.HOUSEMIX_LAN_CA_FILE;
+    if (!stationId || !tenantId || !endpoint || !keyFile || !caFile || !safeStorage.isEncryptionAvailable()) return;
+    const deviceKey = safeStorage.decryptString(fs.readFileSync(keyFile));
+    const ca = fs.readFileSync(caFile);
+    const runtime = createLanRuntime({root:app.getPath("userData"),stationId,tenantId,endpoint,deviceKey,ca});
+    labLanRuntime = {stationId:stationId.toLowerCase(),runtime};
+    runtime.start();
+  } catch {
+    // Preserve normal online operation if laboratory provisioning fails.
+    labLanRuntime = null;
+  }
+}
 const { getDesktopDeviceIdentity } = require("./device-identity.cjs");
 const { createLocalMusicSourceManager } = require("./local-music-source.cjs");
 const { nextDailyInstallAt, saveVmixUpdateRestore, takeVmixUpdateRestore } = require("./auto-update-schedule.cjs");
@@ -399,8 +422,17 @@ function configureDesktopIpc() {
     if (!isTrustedDesktopRenderer(event)) throw new Error("untrusted_renderer");
     return getDesktopDeviceIdentity(app.getPath("userData"));
   });
-  ipcMain.handle("housemix:lan-role-get", (_event, stationId) => readStationRole(app.getPath("userData"), stationId));
-  ipcMain.handle("housemix:lan-role-set", (_event, stationId, role) => {
+  ipcMain.handle("housemix:lan-lab-status", (event, stationId) => {
+    if (!isTrustedDesktopRenderer(event) || event.senderFrame !== event.sender.mainFrame) throw new Error("untrusted_renderer");
+    if (typeof stationId !== "string" || labLanRuntime?.stationId !== stationId.toLowerCase()) return {configured:false,status:"idle"};
+    return {configured:true,status:labLanRuntime.runtime.status()};
+  });
+  ipcMain.handle("housemix:lan-role-get", (event, stationId) => {
+    if (!isTrustedDesktopRenderer(event) || event.senderFrame !== event.sender.mainFrame) throw new Error("untrusted_renderer");
+    return readStationRole(app.getPath("userData"), stationId);
+  });
+  ipcMain.handle("housemix:lan-role-set", (event, stationId, role) => {
+    if (!isTrustedDesktopRenderer(event) || event.senderFrame !== event.sender.mainFrame) throw new Error("untrusted_renderer");
     const status = writeStationRole(app.getPath("userData"), stationId, role);
     for (const win of BrowserWindow.getAllWindows()) {
       if (!win.isDestroyed()) win.webContents.send("housemix:lan-role-changed", {stationId,...status});
@@ -781,6 +813,7 @@ app.whenReady().then(async () => {
     await initializeLocalAssetFolders();
     if (!isLocutor) await startLocalRuntime();
     if (!isLocutor) ndiBridge = startNdiBridge({ executablePath: path.join(app.isPackaged ? process.resourcesPath : __dirname, "runtime", "ndi-bridge", "NexoHubBridge.exe") });
+    startLanLabRuntime();
     createMainWindow();
     const startupOAuthCallback = process.argv.find((arg) => arg.startsWith("housemix://desktop/oauth-callback"));
     if (startupOAuthCallback) forwardPlayerOAuthCallback(startupOAuthCallback);
@@ -798,6 +831,13 @@ app.whenReady().then(async () => {
 });
 
 app.on("before-quit", (event) => {
+  if (labLanRuntime) {
+    const entry = labLanRuntime;
+    labLanRuntime = null;
+    event.preventDefault();
+    void entry.runtime.stop().finally(() => app.quit());
+    return;
+  }
   ndiBridge?.stop();
   localMusicSources?.close();
   if (updateInstallTimer) clearTimeout(updateInstallTimer);
