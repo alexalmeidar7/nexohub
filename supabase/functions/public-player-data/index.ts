@@ -226,6 +226,33 @@ Deno.serve(async (req) => {
     }
 
 
+    // Public sponsor artwork for published Link Bio only; no commercial records.
+    if (section === "linkbio_sponsors") {
+      const programId = reqUrl.searchParams.get("program_id");
+      const respond = (value: unknown, status = 200) => new Response(JSON.stringify(value), {
+        status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+      if (!programId || !isUUID(programId)) return respond({ logos: [] }, 400);
+      const [page, program, company] = await Promise.all([
+        supabase.from("link_bio_pages").select("user_id").eq("user_id", userId).eq("published", true).maybeSingle(),
+        supabase.from("programas").select("id").eq("user_id", userId).eq("id", programId).eq("ativo", true).maybeSingle(),
+        supabase.from("empresa_config").select("timezone").eq("user_id", userId).maybeSingle(),
+      ]);
+      if (page.error || program.error || company.error) return respond({ error: "Dados temporariamente indisponíveis" }, 503);
+      if (!page.data || !program.data) return respond({ logos: [] });
+      const dateInZone = (zone: string) => new Intl.DateTimeFormat("sv-SE", {
+        timeZone: zone, year: "numeric", month: "2-digit", day: "2-digit",
+      }).format(new Date());
+      let today: string;
+      try { today = dateInZone(company.data?.timezone || "America/Sao_Paulo"); }
+      catch { today = dateInZone("America/Sao_Paulo"); }
+      const { data, error } = await supabase.from("logos_patrocinadores")
+        .select("id,nome,logo_url").eq("user_id", userId).eq("programa_id", programId)
+        .eq("ativo", true).eq("excluido", false).gte("data_final", today).order("id");
+      if (error) return respond({ error: "Dados temporariamente indisponíveis" }, 503);
+      return respond({ logos: data || [] });
+    }
+
     // ── FAST PATH: active mid-rolls for public Top 10 playback ──────
     if (section === "active_midrolls") {
       const now = new Date();
