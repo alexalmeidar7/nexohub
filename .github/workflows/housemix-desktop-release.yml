@@ -117,16 +117,19 @@ jobs:
           $installer = "release/House-Mix-Desktop-$env:VERSION-Setup.exe"
           $blockmap = "$installer.blockmap"
           $metadata = "release/latest.yml"
-          foreach ($file in @($installer, $blockmap, $metadata)) {
+          $locutor = "release-locutor/House-Mix-Locutor-$env:VERSION-Setup.exe"
+          $locutorBlockmap = "$locutor.blockmap"
+          $locutorMetadata = "release-locutor/locutor.yml"
+          foreach ($file in @($installer, $blockmap, $metadata, $locutor, $locutorBlockmap, $locutorMetadata)) {
             if (-not (Test-Path -LiteralPath $file)) { throw "Missing updater file: $file" }
           }
           gh release view $tag *> $null
           if ($LASTEXITCODE -eq 0) {
-            gh release upload $tag $installer $blockmap $metadata --clobber
+            gh release upload $tag $installer $blockmap $metadata $locutor $locutorBlockmap $locutorMetadata --clobber
             if ($LASTEXITCODE -ne 0) { throw 'Release asset upload failed' }
             gh release edit $tag --target $env:TARGET_SHA
           } else {
-            gh release create $tag $installer $blockmap $metadata --title $env:VERSION --generate-notes --target $env:TARGET_SHA
+            gh release create $tag $installer $blockmap $metadata $locutor $locutorBlockmap $locutorMetadata --title $env:VERSION --generate-notes --target $env:TARGET_SHA
           }
           if ($LASTEXITCODE -ne 0) { throw 'Release publish failed' }
 
