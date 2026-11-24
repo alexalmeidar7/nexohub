@@ -86,9 +86,9 @@ function LinkBioOfferV14({ live, owner }: { live: LinkBioOnAir | null; owner: st
     if (!programId || !owner) return;
     let active = true;
     const refresh = async () => {
-      const { data, error } = await supabase.from("logos_patrocinadores").select("id,nome,logo_url").eq("user_id",owner).eq("programa_id",programId).eq("ativo",true).eq("excluido",false).gte("data_final",new Intl.DateTimeFormat("sv-SE",{timeZone:"America/Sao_Paulo",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date())).order("id");
-      if (!active || error) return;
-      const logos = (data || []).filter(x => normalizeLinkBioUrl(x.logo_url));
+      const { data, error } = await supabase.functions.invoke("public-player-data?program_id=" + encodeURIComponent(programId), { body: { slug: owner, section: "link_bio_sponsors" } });
+      if (!active || error || !Array.isArray(data?.logos)) return;
+      const logos = (data.logos as {id:string;nome:string;logo_url:string}[]).filter(x => normalizeLinkBioUrl(x.logo_url));
       logos.forEach(x => { const img = new Image(); img.src = x.logo_url; });
       setResult({key,logos});
     };
