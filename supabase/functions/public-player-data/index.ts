@@ -226,6 +226,22 @@ Deno.serve(async (req) => {
     }
 
 
+    // Public Link Bio: only published stations and public sponsor artwork.
+    if (section === "link_bio_sponsors") {
+      const { data: page, error: pageError } = await supabase.from("link_bio_pages")
+        .select("user_id").eq("user_id", userId).eq("published", true).maybeSingle();
+      if (pageError) throw pageError;
+      if (!page) return new Response(JSON.stringify({ error: "Page not published" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const programId = reqUrl.searchParams.get("program_id");
+      if (!programId || !isUUID(programId)) return new Response(JSON.stringify({ error: "Invalid program" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const today = new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+      const { data, error } = await supabase.from("logos_patrocinadores")
+        .select("id,nome,logo_url").eq("user_id", userId).eq("programa_id", programId)
+        .eq("ativo", true).eq("excluido", false).gte("data_final", today).order("id");
+      if (error) throw error;
+      return new Response(JSON.stringify({ logos: data || [] }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     // ── FAST PATH: active mid-rolls for public Top 10 playback ──────
     if (section === "active_midrolls") {
       const now = new Date();
