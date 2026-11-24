@@ -399,8 +399,12 @@ function configureDesktopIpc() {
     if (!isTrustedDesktopRenderer(event)) throw new Error("untrusted_renderer");
     return getDesktopDeviceIdentity(app.getPath("userData"));
   });
-  ipcMain.handle("housemix:lan-role-get", (_event, stationId) => readStationRole(app.getPath("userData"), stationId));
-  ipcMain.handle("housemix:lan-role-set", (_event, stationId, role) => {
+  ipcMain.handle("housemix:lan-role-get", (event, stationId) => {
+    if (!isTrustedDesktopRenderer(event) || event.senderFrame !== event.sender.mainFrame) throw new Error("untrusted_renderer");
+    return readStationRole(app.getPath("userData"), stationId);
+  });
+  ipcMain.handle("housemix:lan-role-set", (event, stationId, role) => {
+    if (!isTrustedDesktopRenderer(event) || event.senderFrame !== event.sender.mainFrame) throw new Error("untrusted_renderer");
     const status = writeStationRole(app.getPath("userData"), stationId, role);
     for (const win of BrowserWindow.getAllWindows()) {
       if (!win.isDestroyed()) win.webContents.send("housemix:lan-role-changed", {stationId,...status});
