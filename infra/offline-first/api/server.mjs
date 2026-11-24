@@ -214,6 +214,9 @@ app.get("/v1/sync/changes", authenticateDevice, async (req, res) => {
       changes: page,
       has_more: hasMore,
       next_cursor: hasMore && last ? encodeCursor(last) : null,
+      // A durable checkpoint is available even on the final or empty page.
+      // Keep next_cursor unchanged for existing pagination clients.
+      checkpoint_cursor: last ? encodeCursor(last) : (cursor ? req.query.cursor : null),
     });
   } catch {
     return res.status(500).json({ error: "sync_pull_failed" });
