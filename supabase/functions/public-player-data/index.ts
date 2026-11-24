@@ -246,9 +246,9 @@ Deno.serve(async (req) => {
       const days=["domingo","segunda","terca","quarta","quinta","sexta","sabado"];
       const norm=(v:unknown)=>String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/-feira$/,"").trim();
       const live=(programs.data||[]).filter(p=>{const start=String(p.horario_inicio||"").slice(0,5),end=String(p.horario_fim||"").slice(0,5);if(!start||!end||start===end)return false;const overnight=start>end;if(!(overnight?time>=start||time<end:time>=start&&time<end))return false;const date=new Date(today+"T00:00:00Z");if(overnight&&time<end)date.setUTCDate(date.getUTCDate()-1);return p.variavel?String(p.data_variavel||"").slice(0,10)===date.toISOString().slice(0,10):Array.isArray(p.dias_semana)&&p.dias_semana.some((d:unknown)=>norm(d)===days[date.getUTCDay()]);}).sort((a,b)=>Number(Boolean(b.variavel))-Number(Boolean(a.variavel))||String(b.horario_inicio).localeCompare(String(a.horario_inicio)))[0];
-      const {data:ads,error}=await supabase.from("link_bio_ads").select("id,program_id,image_url,link_url").eq("user_id",userId).eq("active",true).lte("start_date",today).gte("end_date",today);
+      const {data:ads,error}=await supabase.from("link_bio_ads").select("id,program_id,program_ids,image_url,link_url").eq("user_id",userId).eq("active",true).lte("start_date",today).gte("end_date",today);
       if(error)return reply({ad:null});
-      const eligible=(ads||[]).filter(a=>!a.program_id||a.program_id===live?.id);
+      const eligible=(ads||[]).filter(a=>{const ids=Array.isArray(a.program_ids)&&a.program_ids.length?a.program_ids:a.program_id?[a.program_id]:[];return !ids.length||ids.includes(live?.id);});
       if(!eligible.length)return reply({ad:null});
       const previous=reqUrl.searchParams.get("previous");
       const options=eligible.length>1?eligible.filter(a=>a.id!==previous):eligible;
