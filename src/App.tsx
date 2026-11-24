@@ -67,7 +67,7 @@ function DesktopWindowControls() {
     const timer = window.setInterval(refresh, 1000);
     return () => window.clearInterval(timer);
   }, []);
-  if (!windowState?.auxiliary) return null;
+  if (!windowState?.auxiliary || /\/(?:locutor|telapromo)\/?$/.test(window.location.pathname)) return null;
   return (
     <button
       type="button"
