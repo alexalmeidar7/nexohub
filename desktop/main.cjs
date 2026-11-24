@@ -17,6 +17,7 @@ const { getDesktopDeviceIdentity } = require("./device-identity.cjs");
 const { createLocalMusicSourceManager } = require("./local-music-source.cjs");
 const { nextDailyInstallAt, saveVmixUpdateRestore, takeVmixUpdateRestore } = require("./auto-update-schedule.cjs");
 
+const isLocutor = app.getName() === "House Mix - Locutor";
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 if (!hasSingleInstanceLock) app.quit();
 
@@ -74,7 +75,7 @@ if (hasSingleInstanceLock) {
 
 function getLocalAssetsRoot() {
   const programFiles = process.env.ProgramFiles || "C:\\Program Files";
-  return path.join(programFiles, "House Mix Desktop", "arquivos_locais");
+  return isLocutor ? path.join(app.getPath("userData"), "arquivos_locais") : path.join(programFiles, "House Mix Desktop", "arquivos_locais");
 }
 
 function safeAccountSlug(value) {
@@ -594,6 +595,7 @@ function configureAutoUpdater() {
 
   try {
     ({ autoUpdater: desktopAutoUpdater } = require("electron-updater"));
+    if (isLocutor) desktopAutoUpdater.channel = "locutor";
     desktopAutoUpdater.autoDownload = true;
     // Install only at 00:30 (or when explicitly requested), not on normal exit.
     desktopAutoUpdater.autoInstallOnAppQuit = false;
@@ -742,7 +744,7 @@ function createMainWindow() {
     if (isAllowedExternalUrl(targetUrl)) void shell.openExternal(targetUrl);
   });
 
-  void mainWindow.loadURL("housemix://desktop/");
+  void mainWindow.loadURL(isLocutor ? "housemix://desktop/?app=locutor" : "housemix://desktop/");
 }
 
 function resolveLocalApiHostPath() {
@@ -774,11 +776,11 @@ app.whenReady().then(async () => {
     configureAutoUpdater();
     configureDesktopIpc();
     configureDesktopStartup();
-    registerDesktopOAuthProtocol();
+    if (!isLocutor) registerDesktopOAuthProtocol();
     await registerRendererProtocol();
     await initializeLocalAssetFolders();
-    await startLocalRuntime();
-    ndiBridge = startNdiBridge({ executablePath: path.join(app.isPackaged ? process.resourcesPath : __dirname, "runtime", "ndi-bridge", "NexoHubBridge.exe") });
+    if (!isLocutor) await startLocalRuntime();
+    if (!isLocutor) ndiBridge = startNdiBridge({ executablePath: path.join(app.isPackaged ? process.resourcesPath : __dirname, "runtime", "ndi-bridge", "NexoHubBridge.exe") });
     createMainWindow();
     const startupOAuthCallback = process.argv.find((arg) => arg.startsWith("housemix://desktop/oauth-callback"));
     if (startupOAuthCallback) forwardPlayerOAuthCallback(startupOAuthCallback);
