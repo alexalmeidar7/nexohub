@@ -1032,8 +1032,8 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
       music_deezer_artist_img: "",
     };
 
+    const publishTrack = Promise.all(candidateUserIds.map(uid => mergeUserDashboardItems(uid, updateDashboardData)));
     candidateUserIds.forEach(uid => {
-      mergeUserDashboardItems(uid, updateDashboardData).catch(() => {});
       writeMusicData(uid, data);
       writeMusicStart(uid, songStartTime!);
       try {
@@ -1157,25 +1157,12 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
           }
         })();
       }
+      // Confirm the authoritative update before optional enrichment.
+      await publishTrack;
       // Persist to DB
       if (dataUserId) {
         (async () => {
           try {
-            // Push fresh track info + clear old curiosity IMMEDIATELY
-            const basePatch: Record<string, any> = {
-              music_start_time: songStartTime,
-              music_current_title: data.titulo,
-              music_current_artist: data.artista,
-              music_current_cover: data.capa || "",
-              music_current_duration: Math.round(data.duracao || 180),
-              music_current_curiosity: "",
-              music_source_type: source || "pasta",
-              music_source_device: deviceNameRef.current,
-            };
-            await Promise.allSettled(
-              candidateUserIds.map(uid => mergeUserDashboardItems(uid, basePatch))
-            );
-
             if (incomingIsBreak) return;
             // Fetch curiosity in background; guard against stale writes if the song changed again
             const { data: curData } = await supabase.functions.invoke("get-music-curiosity", {
@@ -1459,14 +1446,15 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
         readingRef.current = false;
         return;
       }
-      localFileContentRef.current = text;
       setLocalFileContent(text);
 
       if (parsed) {
         // Fire-and-forget: don't block polling with iTunes cover fetch
         await processMusicRef.current(parsed, "pasta", text, fileModifiedAt);
+        localFileContentRef.current = text;
 
       } else if (isStoppedXmlPayload(text)) {
+        localFileContentRef.current = text;
         // Automação sem música tocando — limpa o card em vez de manter
         // a última música travada.
         clearMusicRef.current("pasta");
@@ -1475,7 +1463,9 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
       // O processMusic sincroniza SOMENTE mudanças reais; não reenviar a cada verificação.
 
 
-    } catch { }
+    } catch (error) {
+      console.warn("[MusicaNoAr] local read/publish failed", error);
+    }
     readingRef.current = false;
   }, [syncToStorage]); // stable deps
 
