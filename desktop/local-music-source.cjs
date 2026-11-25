@@ -86,7 +86,7 @@ function createLocalMusicSourceManager(root, onChange = () => {}, options = {}) 
     if (!stat.isFile() || stat.size > FILE_LIMIT_BYTES) throw new Error("invalid_local_music_file");
     const signature = [stat.size, stat.mtimeMs, stat.ino].join(":");
     const existing = lastRead.get(id);
-    if (existing?.signature === signature) return { name: source.name, changed: false, lastModified: stat.mtimeMs };
+    // Read actual bytes even when automation preserves size and mtime.
     const buffer = await io.readFile(file);
     // Allow radio encodings; the UI already has an XML/TXT parser and normalizer.
     const bytes = new Uint8Array(buffer);
