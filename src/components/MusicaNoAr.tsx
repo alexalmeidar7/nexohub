@@ -867,83 +867,12 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
       return;
     }
 
-    const incomingIsBreak = !!(data && (
-      (data.titulo || "").toUpperCase().trim() === "BREAK" ||
-      (data.artista || "").toUpperCase().trim() === "BREAK" ||
-      (data.titulo || "").toLowerCase().trim() === "intervalo" ||
-      (data.artista || "").toLowerCase().trim() === "intervalo" ||
-      (data.titulo || "").toLowerCase().trim() === "ebs curtas" ||
-      (data.artista || "").toLowerCase().trim() === "ebs curtas" ||
-      (data.titulo || "").toLowerCase().trim() === "commercial break" ||
-      (data.artista || "").toLowerCase().trim() === "commercial break"
-    ));
-    const previousIsBreak = !!(prev && (
-      (prev.titulo || "").toUpperCase().trim() === "BREAK" ||
-      (prev.artista || "").toUpperCase().trim() === "BREAK" ||
-      (prev.titulo || "").toLowerCase().trim() === "intervalo" ||
-      (prev.artista || "").toLowerCase().trim() === "intervalo" ||
-      (prev.titulo || "").toLowerCase().trim() === "ebs curtas" ||
-      (prev.artista || "").toLowerCase().trim() === "ebs curtas" ||
-      (prev.titulo || "").toLowerCase().trim() === "commercial break" ||
-      (prev.artista || "").toLowerCase().trim() === "commercial break"
-    ));
-
-    const startStr = localStorage.getItem(MUSIC_START_KEY);
-    const prevStart = startStr ? parseInt(startStr, 10) : 0;
-    const prevAgeMs = prevStart > 0 ? Date.now() - prevStart : Infinity;
-
-    // Anti ping-pong: se temos uma faixa real recente (< 4 min ou duração da música),
-    // ignore BREAK/Intervalo transitório para que a música continue salva e visível.
-    if (incomingIsBreak && previousHasReal && !previousIsBreak) {
-      const maxTrackAge = Math.max(240_000, ((prev?.duracao || 180) * 1000));
-      if (prevAgeMs < maxTrackAge) {
-        return;
-      }
-    }
-
-    if (!data.capa) {
-      const cacheKey = `${data.artista}-${data.titulo}`;
-      if (coverCacheRef.current[cacheKey]) {
-        data.capa = coverCacheRef.current[cacheKey];
-      } else {
-        setLoadingCover(true);
-        const cover = await fetchCoverFromiTunes(data.titulo, data.artista);
-        setLoadingCover(false);
-        if (cover) {
-          data.capa = cover;
-          coverCacheRef.current[cacheKey] = cover;
-          const currentDev = deviceNameRef.current || "Estúdio";
-          candidateUserIds.forEach(uid => {
-            mergeUserDashboardItems(uid, { music_current_cover: cover }).catch(() => {});
-            writeMusicData(uid, { ...data, capa: cover });
-            try {
-              const channel = supabase.channel(`music-live-sync:${uid}`);
-              channel.send({
-                type: "broadcast",
-                event: "track_change",
-                payload: {
-                  titulo: data.titulo,
-                  artista: data.artista,
-                  capa: cover,
-                  duracao: data.duracao,
-                  startTime: startTimeRef.current || Date.now(),
-                  source: source || "pasta",
-                  deviceName: currentDev,
-                },
-              }).catch(() => {});
-            } catch {}
-          });
-          notifySyncServer({
-            titulo: data.titulo,
-            artista: data.artista,
-            duracao: data.duracao,
-            capa: cover,
-            horario: data.horario,
-            startTime: startTimeRef.current || Date.now(),
-            source: source || "pasta",
-          });
-        }
-      }
+    const incomingIsBreak = [data.titulo, data.artista].some(value =>
+      ["break", "intervalo", "ebs curtas", "commercial break"].includes((value || "").trim().toLowerCase()));
+    // The automation file is authoritative, including commercial breaks.
+    // Cover lookup must never delay publication of the current track.
+    if (!data.capa && !incomingIsBreak) {
+      data.capa = coverCacheRef.current[`${data.artista}-${data.titulo}`] || "";
     }
 
     const cleanT = (data.titulo || "").trim().toLowerCase();
@@ -1098,6 +1027,9 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
       music_start_time: songStartTime,
       local_reader_device_name: currentDeviceName,
       local_reader_active_at: Date.now(),
+      music_current_curiosity: "",
+      music_current_excecao: null,
+      music_deezer_artist_img: "",
     };
 
     candidateUserIds.forEach(uid => {
@@ -1244,6 +1176,7 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
               candidateUserIds.map(uid => mergeUserDashboardItems(uid, basePatch))
             );
 
+            if (incomingIsBreak) return;
             // Fetch curiosity in background; guard against stale writes if the song changed again
             const { data: curData } = await supabase.functions.invoke("get-music-curiosity", {
               body: {
@@ -1266,6 +1199,27 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
             console.warn("[MusicaNoAr] Error generating curiosity/merging:", e);
           }
         })();
+      }
+      // Enrich only after the authoritative title/artist have been published.
+      if (!incomingIsBreak && !data.capa) {
+        const key = `${data.artista}-${data.titulo}`;
+        const current = () => {
+          try {
+            const live = JSON.parse(localStorage.getItem(MUSIC_DATA_KEY) || "null");
+            return live?.titulo === data.titulo && live?.artista === data.artista &&
+              localStorage.getItem(MUSIC_START_KEY) === String(songStartTime);
+          } catch { return false; }
+        };
+        void fetchCoverFromiTunes(data.titulo, data.artista).then(cover => {
+          if (!cover || !current()) return;
+          coverCacheRef.current[key] = cover;
+          const enriched = { ...data, capa: cover };
+          setMusic(enriched);
+          candidateUserIds.forEach(uid => {
+            writeMusicData(uid, enriched);
+            void mergeUserDashboardItems(uid, { music_current_cover: cover }).catch(console.warn);
+          });
+        }).catch(console.warn);
       }
       // Track which source detected the change first
       if (source) {
@@ -1510,7 +1464,7 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
 
       if (parsed) {
         // Fire-and-forget: don't block polling with iTunes cover fetch
-        processMusicRef.current(parsed, "pasta", text, fileModifiedAt);
+        await processMusicRef.current(parsed, "pasta", text, fileModifiedAt);
 
       } else if (isStoppedXmlPayload(text)) {
         // Automação sem música tocando — limpa o card em vez de manter
@@ -1734,7 +1688,7 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
       const off = window.houseMixDesktop.onLocalMusicChanged?.(stationId => {
         if (stationId === dataUserId) void readLocalFile();
       });
-      const safety = window.setInterval(() => void readLocalFile(), 90_000);
+      const safety = window.setInterval(() => void readLocalFile(), 1500);
       return () => { off?.(); window.clearInterval(safety); };
     }
     const worker = workerRef.current;
