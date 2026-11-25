@@ -925,6 +925,14 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
       setStartTime(existingStart);
       setElapsed(dur > 0 ? Math.min(dur, el) : el);
       
+      if (source === "pasta" && pendingLocalPublishRef.current) {
+        await Promise.all(candidateUserIds.map(uid => mergeUserDashboardItems(uid, {
+          music_current_title: data.titulo, music_current_artist: data.artista,
+          music_current_duration: dur, music_start_time: existingStart,
+          music_current_cover: data.capa || prev?.capa || "",
+        })));
+        if (rawXml) void syncToStorage(rawXml);
+      }
       const activeCover = data.capa || prev?.capa || "";
       if (activeCover && (!prev?.capa || prev.capa !== activeCover)) {
         try {
@@ -1319,6 +1327,7 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
   const syncingRef = useRef(false);
   const pendingSyncRef = useRef<string | null>(null);
   const readingRef = useRef(false);
+  const pendingLocalPublishRef = useRef<{ data: MusicData; text: string; modified: number } | null>(null);
   const lastUploadedContentRef = useRef<string | null>(null);
   const lastUploadedPathRef = useRef<string | null>(null);
 
@@ -1392,6 +1401,12 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
       if (nativeSourceRef.current && window.houseMixDesktop?.readLocalMusicSource && dataUserIdRef.current) {
         const result = await window.houseMixDesktop.readLocalMusicSource(dataUserIdRef.current);
         if (!result || !result.changed) {
+          const pending = pendingLocalPublishRef.current;
+          if (pending) {
+            await processMusicRef.current(pending.data, "pasta", pending.text, pending.modified);
+            localFileContentRef.current = pending.text;
+            pendingLocalPublishRef.current = null;
+          }
           if (result) {
             lastLocalSuccessRef.current = Date.now();
             setLocalError(null);
@@ -1450,8 +1465,10 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
 
       if (parsed) {
         // Fire-and-forget: don't block polling with iTunes cover fetch
+        pendingLocalPublishRef.current = { data: parsed, text, modified: fileModifiedAt };
         await processMusicRef.current(parsed, "pasta", text, fileModifiedAt);
         localFileContentRef.current = text;
+        pendingLocalPublishRef.current = null;
 
       } else if (isStoppedXmlPayload(text)) {
         localFileContentRef.current = text;
