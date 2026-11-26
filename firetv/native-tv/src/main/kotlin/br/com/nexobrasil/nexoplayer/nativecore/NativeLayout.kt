@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.zIndex
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.tv.material3.Text
@@ -65,7 +66,7 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     Row(modifier.onFocusChanged { focused=it.isFocused }.focusProperties { canFocus=enabled }
         .background(if(accent!=null) accentGlass(accent) else glass,shape)
         .border(u.space(if(focused) 3 else 1),if(focused) Color.White else Color.White.copy(alpha=.16f),shape)
-        .clickable(enabled=enabled,onClick=onClick).semantics { contentDescription=label }
+        .clickable(enabled=enabled,onClick=onClick).semantics { contentDescription=label.ifEmpty{when(icon){"play"->"Reproduzir";"pause"->"Pausar";"left"->"Voltar";"up"->"Canal anterior";"down"->"Próximo canal";"search"->"Buscar";"spark"->"Interatividade";else->"Controle"}} }
         .padding(horizontal=u.space(if(icon!=null && label.isEmpty()) 0 else 20)),
         verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.Center) {
         if(icon!=null) Symbol(icon,Modifier.size(u.space(29)))
@@ -95,6 +96,8 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
             "calendar" -> { drawRoundRect(Color.White,p(.12f,.20f),Size(w*.76f,h*.67f),androidx.compose.ui.geometry.CornerRadius(w*.08f),style=Stroke(sw));line(p(.12f,.43f),p(.88f,.43f));line(p(.32f,.10f),p(.32f,.30f));line(p(.68f,.10f),p(.68f,.30f)) }
             "plus" -> { line(p(.5f,.16f),p(.5f,.84f));line(p(.16f,.5f),p(.84f,.5f)) }
             "spark" -> { path(.5f to .10f,.60f to .39f,.88f to .50f,.60f to .61f,.50f to .90f,.40f to .61f,.12f to .50f,.40f to .39f,.50f to .10f) }
+            "sun" -> {drawCircle(Color.White,w*.23f,p(.50f,.50f),style=Stroke(sw));repeat(8){i->val a=i*Math.PI/4;val x=kotlin.math.cos(a).toFloat();val y=kotlin.math.sin(a).toFloat();line(p(.5f+x*.34f,.5f+y*.34f),p(.5f+x*.46f,.5f+y*.46f))}}
+            "cloud" -> {drawRoundRect(Color.White,p(.10f,.45f),Size(w*.80f,h*.34f),androidx.compose.ui.geometry.CornerRadius(w*.16f),style=Stroke(sw));drawArc(Color.White,190f,160f,false,p(.23f,.18f),Size(w*.47f,h*.48f),style=Stroke(sw))}
             "music" -> { line(p(.53f,.12f),p(.53f,.70f));line(p(.53f,.12f),p(.82f,.28f));drawOval(Color.White,p(.20f,.65f),Size(w*.33f,h*.22f),style=Stroke(sw)) }
             "user" -> { drawCircle(Color.White,w*.18f,p(.50f,.30f),style=Stroke(sw));drawArc(Color.White,180f,180f,false,p(.15f,.54f),Size(w*.70f,h*.60f),style=Stroke(sw)) }
         }
@@ -121,7 +124,7 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
 @Composable internal fun NativeLayout(
     screen:Screen,station:StationBootstrap?,stationName:String,payload:JSONObject?,track:JSONObject?,program:JSONObject?,presenter:JSONObject?,
     player:ExoPlayer,playing:Boolean,buffering:Boolean,failure:String?,playerError:String?,controls:Boolean,chrome:Float,interaction:Boolean,
-    banner:String,history:List<JSONObject>,historyLoading:Boolean,historyError:Boolean,notice:String?,video:List<StationChannel>,selected:StationChannel?,
+    banner:String,sponsor:String?,weather:JSONObject?,history:List<JSONObject>,historyLoading:Boolean,historyError:Boolean,notice:String?,video:List<StationChannel>,selected:StationChannel?,
     onRetry:()->Unit,onToggle:()->Unit,onBack:()->Unit,onOpen:(Screen)->Unit,onChannel:(Int)->Unit,onVideo:(StationChannel)->Unit,
     onInteraction:()->Unit,onNotice:(String?)->Unit
 ) {
@@ -145,8 +148,8 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
         Box(Modifier.fillMaxSize().background(Color.Black)) {
             val watch=screen==Screen.VIDEO||screen==Screen.AUDIO
             if(screen!=Screen.VIDEO) {
-                Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(accent.copy(alpha=.93f),Color(0xFF802027),Color(0xFF111114)))))
-                if(screen==Screen.HOME||screen==Screen.AUDIO) {
+                Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(accent.copy(alpha=.93f),Color(red=accent.red*.56f,green=accent.green*.56f,blue=accent.blue*.56f),Color(0xFF111114)))))
+                if(screen==Screen.HOME||screen==Screen.AUDIO||screen==Screen.SCHEDULE) {
                     var showArtist by remember(artistPhoto){mutableStateOf(true)}
                     LaunchedEffect(artistPhoto){while(artistPhoto.isNotBlank()){delay(if(showArtist) 20000 else 10000);showArtist=!showArtist}}
                     val fade by androidx.compose.animation.core.animateFloatAsState(if(showArtist) 1f else 0f,tween(1500),label="artist")
@@ -167,10 +170,10 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                 Copy(failure,u,35,500,u.at(100,300,1500,70))
                 GlassButton(u,"Tentar novamente",u.at(100,400,330,64).focusRequester(focus),onClick=onRetry)
             } else {
-                if(!watch) Header(u,logo,title,artist,cover,playing,accent,screen,onToggle,{onOpen(Screen.SEARCH)})
+                if(!watch) Header(u,logo,title,artist,cover,playing,accent,screen,weather,onToggle,{onOpen(Screen.SEARCH)})
                 if(screen==Screen.HOME) {
                     Box(u.at(96,254,102,420).background(glass,CircleShape).border(u.space(1),Color.White.copy(alpha=.16f),CircleShape))
-                    Column(Modifier.offset(u.space(108),u.space(272)),verticalArrangement=Arrangement.spacedBy(u.space(4))) {
+                    Column(Modifier.offset(u.space(108),u.space(272)).zIndex(2f),verticalArrangement=Arrangement.spacedBy(u.space(4))) {
                         RailItem(u,"audio","Ouvir",accent,Modifier.focusRequester(focus)){onOpen(Screen.AUDIO)}
                         RailItem(u,"video","Assistir",accent){onOpen(Screen.VIDEO)}
                         RailItem(u,"catalog","On Demand",accent){onOpen(Screen.CATALOG)}
@@ -183,6 +186,7 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                         Copy(presenter.str("nome"),u,25,400)
                         GlassButton(u,"programação",Modifier.height(u.space(54)),icon="plus"){onOpen(Screen.SCHEDULE)}
                     }
+                    if(sponsor!=null) Artwork(sponsor,u.at(265,590,270,105))
                     if(banner.isNotBlank()) Artwork(safeImage(banner),u.at(265,886,1320,140).clip(u.round(12)),scale=ContentScale.Fit)
                     GlassButton(u,"",u.at(1744,950,76,76),icon="spark"){onInteraction()}
                 }
@@ -201,15 +205,16 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                         }
                     }
                     if(screen==Screen.AUDIO||controls||chrome>.01f) {
-                        WatchHeader(u,logo,stationName,screen,accent,if(screen==Screen.VIDEO) chrome else 1f,controls||screen==Screen.AUDIO,{onOpen(Screen.PROFILE)})
+                        WatchHeader(u,logo,stationName,screen,accent,weather,if(screen==Screen.VIDEO) chrome else 1f,controls||screen==Screen.AUDIO,{onOpen(Screen.PROFILE)})
                     }
                     if(screen==Screen.VIDEO && chrome>.01f && title!="Ao vivo") {
-                        Row(u.at(100,175,630,125).alpha(chrome).background(glass,u.round(20)).padding(u.space(12)),verticalAlignment=Alignment.CenterVertically) {
-                            Artwork(safeImage(cover),Modifier.size(u.space(100)).clip(u.round(14)),scale=ContentScale.Crop)
+                        Row(u.at(134,455,850,165).alpha(chrome).background(glass,u.round(20)).padding(u.space(12)),verticalAlignment=Alignment.CenterVertically) {
+                            Artwork(safeImage(cover),Modifier.size(u.space(144)).clip(u.round(22)),scale=ContentScale.Crop)
                             Spacer(Modifier.width(u.space(18)))
-                            Column { Copy("tocando",u,18,700);Copy(title,u,27,700);Copy(artist,u,22) }
+                            Column { Copy("tocando",u,18,700);Copy(title,u,40,700);Copy(artist,u,29) }
                         }
                     }
+                    if(sponsor!=null && !interaction && (screen==Screen.AUDIO || chrome>.01f)) Artwork(sponsor,u.at(1630,730,190,130).alpha(if(screen==Screen.VIDEO)chrome else 1f))
                     val programX by animateDpAsState(u.space(if(screen==Screen.AUDIO&&!controls)100 else 280),tween(350),label="programX")
                     if(!interaction && (screen==Screen.AUDIO || chrome>.01f)) Row(Modifier.offset(programX,u.space(928)).width(u.space(900)).height(u.space(85)).alpha(if(screen==Screen.VIDEO)chrome else 1f),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(15))) {
                         Badge(u,"Agora",accent)
@@ -293,12 +298,17 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
 @Composable private fun Badge(u:TvUnits,label:String,accent:Color) {
     Box(Modifier.background(accentGlass(accent),u.round(13)).border(u.space(1),Color.White.copy(alpha=.25f),u.round(13)).padding(horizontal=u.space(15),vertical=u.space(6))) { Copy(label,u,21,600) }
 }
-@Composable private fun Clock(u:TvUnits,modifier:Modifier) {
+@Composable private fun Clock(u:TvUnits,modifier:Modifier,weather:JSONObject?) {
     var clock by remember { mutableStateOf(LocalTime.now(brasilia)) }
     LaunchedEffect(Unit){while(true){clock=LocalTime.now(brasilia);delay(15000)}}
-    Box(modifier.background(glass,CircleShape).border(u.space(1),Color.White.copy(alpha=.17f),CircleShape),contentAlignment=Alignment.Center){Copy(clock.format(DateTimeFormatter.ofPattern("HH:mm")),u,29,400)}
+    val temp=weather?.opt("temperature_2m") as? Number
+    val weatherCode=(weather?.opt("weather_code") as? Number)?.toInt()
+    Row(modifier.background(glass,CircleShape).border(u.space(1),Color.White.copy(alpha=.17f),CircleShape),horizontalArrangement=Arrangement.Center,verticalAlignment=Alignment.CenterVertically){
+        Copy(clock.format(DateTimeFormatter.ofPattern("HH:mm")),u,29,400)
+        if(temp!=null){Spacer(Modifier.width(u.space(12)));Copy("|",u,22,400,color=Color.White.copy(alpha=.55f));Spacer(Modifier.width(u.space(12)));Symbol(if(weatherCode==0)"sun" else "cloud",Modifier.size(u.space(30)));Spacer(Modifier.width(u.space(8)));Copy(kotlin.math.round(temp.toDouble()).toInt().toString()+"°",u,28,400)}
+    }
 }
-@Composable private fun Header(u:TvUnits,logo:String?,title:String,artist:String,cover:String,playing:Boolean,accent:Color,screen:Screen,onToggle:()->Unit,onSearch:()->Unit) {
+@Composable private fun Header(u:TvUnits,logo:String?,title:String,artist:String,cover:String,playing:Boolean,accent:Color,screen:Screen,weather:JSONObject?,onToggle:()->Unit,onSearch:()->Unit) {
     Artwork(logo,u.at(100,76,100,64))
     Row(u.at(210,70,400,76).clip(u.round(16)).background(glass).clickable(onClick=onToggle).padding(u.space(8)),verticalAlignment=Alignment.CenterVertically) {
         Artwork(safeImage(cover)?:logo,Modifier.size(u.space(60)).clip(u.round(8)),scale=ContentScale.Crop)
@@ -307,14 +317,14 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
         Symbol(if(playing)"pause" else "play",Modifier.size(u.space(30)))
     }
     GlassButton(u,"",u.at(1512,76,56,56),icon="search",onClick=onSearch)
-    Clock(u,u.at(1592,76,230,56))
+    Clock(u,u.at(1592,76,230,56),weather)
 }
-@Composable private fun WatchHeader(u:TvUnits,logo:String?,name:String,screen:Screen,accent:Color,alpha:Float,enabled:Boolean,onProfile:()->Unit) {
+@Composable private fun WatchHeader(u:TvUnits,logo:String?,name:String,screen:Screen,accent:Color,weather:JSONObject?,alpha:Float,enabled:Boolean,onProfile:()->Unit) {
     Row(u.at(100,76,1000,64).alpha(alpha),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(25))) {
         Artwork(logo,Modifier.size(u.space(70),u.space(60)));Copy(name,u,22,500);Badge(u,if(screen==Screen.VIDEO)"Vídeo" else "Áudio",accent)
     }
     Copy("• AO VIVO",u,20,600,u.at(1350,91,135,44).alpha(alpha))
-    Clock(u,u.at(1485,76,240,62).alpha(alpha))
+    Clock(u,u.at(1485,76,240,62).alpha(alpha),weather)
     Box(u.at(1760,76,62,62).alpha(alpha).clip(CircleShape).background(accentGlass(accent)).clickable(enabled=enabled,onClick=onProfile)) { Artwork(R.drawable.visitor_avatar,Modifier.fillMaxSize(),scale=ContentScale.Crop) }
 }
 

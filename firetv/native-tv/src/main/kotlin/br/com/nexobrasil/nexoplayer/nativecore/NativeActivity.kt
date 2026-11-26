@@ -19,6 +19,9 @@ import kotlinx.coroutines.delay
 import org.json.JSONObject
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 class NativeActivity : ComponentActivity() {
     private lateinit var player: ExoPlayer
@@ -92,6 +95,8 @@ private fun NativeTv(player: ExoPlayer, activity: Int, onHidden: (Boolean)->Unit
     var interaction by remember { mutableStateOf(false) }
     var notice by remember { mutableStateOf<String?>(null) }
     var campaigns by remember { mutableStateOf<List<JSONObject>>(emptyList()) }
+    var sponsorUrls by remember { mutableStateOf<List<String>>(emptyList()) }
+    var weather by remember { mutableStateOf<JSONObject?>(null) }
     var history by remember { mutableStateOf<List<JSONObject>>(emptyList()) }
     var historyLoading by remember { mutableStateOf(false) }
     var historyError by remember { mutableStateOf(false) }
@@ -206,9 +211,9 @@ private fun NativeTv(player: ExoPlayer, activity: Int, onHidden: (Boolean)->Unit
         finally { historyLoading = false }
     }
     val watch = screen == Screen.AUDIO || screen == Screen.VIDEO
-    LaunchedEffect(screen,activity,interaction,notice,buffering,playerError) {
+    LaunchedEffect(screen,activity,interaction,notice,buffering,playerError,playing) {
         controls = true
-        if (watch && !interaction && notice == null && (screen == Screen.AUDIO || (!buffering && playerError == null))) {
+        if (watch && !interaction && notice == null && (screen == Screen.AUDIO || (playing && !buffering && playerError == null))) {
             delay(5000)
             controls = false
         }
@@ -218,6 +223,43 @@ private fun NativeTv(player: ExoPlayer, activity: Int, onHidden: (Boolean)->Unit
     val data = payload
     val currentProgram = data?.optJSONObject("currentProgram")
     val currentPresenter = data?.optJSONObject("currentPresenter")
+    LaunchedEffect(station?.ownerId,currentProgram.str("id")) {
+        sponsorUrls = emptyList()
+        val owner=station?.ownerId ?: return@LaunchedEffect
+        val id=currentProgram.str("id").takeIf{it.isNotBlank()} ?: return@LaunchedEffect
+        while(true) {
+            try {
+                val now=ZonedDateTime.now(brasilia)
+                val day=now.format(DateTimeFormatter.ofPattern("EEEE",Locale("pt","BR"))).replace("-feira","").replaceFirstChar{it.titlecase()}
+                val data=api.sponsors(owner,now.toLocalDate().toString(),day,now.format(DateTimeFormatter.ofPattern("HH:mm")))
+                if(data.optBoolean("ok") && data.optJSONObject("currentProgram").str("id")==id) {
+                    sponsorUrls=data.rows("sponsorLogos").mapNotNull { row ->
+                        val url=row.str("logo_url")
+                        when {
+                            url.contains("default-sponsor-logo.png")->null
+                            url.startsWith("/")&&!url.startsWith("//")->"https://housemix.nexobrasil.net"+url
+                            else->safeImage(url)
+                        }
+                    }.distinct()
+                }
+            } catch(e:CancellationException){throw e} catch(_:Exception){}
+            delay(60_000)
+        }
+    }
+    LaunchedEffect(station?.ownerId) {
+        weather=null
+        val owner=station?.ownerId ?: return@LaunchedEffect
+        while(true){
+            try {
+                val data=api.weather(owner)
+                if(data.optBoolean("ok")) weather=data.optJSONObject("data")?.optJSONObject("current")
+            }catch(e:CancellationException){throw e}catch(_:Exception){}
+            delay(300_000)
+        }
+    }
+    var sponsorIndex by remember(sponsorUrls){mutableIntStateOf(0)}
+    LaunchedEffect(sponsorUrls){if(sponsorUrls.size>1)while(true){delay(4000);sponsorIndex=(sponsorIndex+1)%sponsorUrls.size}}
+
     val stationDate = LocalDate.now(brasilia).toString()
     val banners = remember(campaigns,currentProgram?.str("id"),stationDate) {
         campaigns.filter { it.str("start_date") <= stationDate && it.str("end_date") >= stationDate &&
@@ -237,7 +279,7 @@ private fun NativeTv(player: ExoPlayer, activity: Int, onHidden: (Boolean)->Unit
         screen=screen, station=station, stationName=stationName, payload=data, track=track,
         program=currentProgram,presenter=currentPresenter,player=player,playing=playing,buffering=buffering,
         failure=failure,playerError=playerError,controls=controls,chrome=chrome,interaction=interaction,
-        banner=banners.getOrNull(bannerIndex).str("url"),history=history,historyLoading=historyLoading,historyError=historyError,
+        banner=banners.getOrNull(bannerIndex).str("url"),sponsor=sponsorUrls.getOrNull(sponsorIndex),weather=weather,history=history,historyLoading=historyLoading,historyError=historyError,
         notice=notice,video=video,selected=selected, onRetry={retry++},onToggle=::toggle,onBack=::back,
         onOpen={destination ->
             when(destination) {
