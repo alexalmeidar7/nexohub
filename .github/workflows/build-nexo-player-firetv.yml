@@ -72,7 +72,7 @@ jobs:
       - name: Read app version
         id: version
         run: |
-          version=$(sed -n 's/.*versionName = "\([^"]*\)".*/\1/p' firetv/app/build.gradle.kts)
+          version=$(python3 -c 'import glob,json; versions={e["versionName"] for p in glob.glob("firetv/app/build/outputs/apk/*/debug/output-metadata.json") for e in json.load(open(p))["elements"]}; assert len(versions)==1, versions; print(versions.pop())')
           test -n "$version"
           echo "name=$version" >> "$GITHUB_OUTPUT"
       - name: Name versioned Positiva APK
