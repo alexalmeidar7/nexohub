@@ -1078,6 +1078,7 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
       
       // Log to history with real artist/music (never null — use fallback text so column is always populated)
       if (dataUserId && source) {
+        await publishTrack;
         const logArtist = (data.artista && data.artista.trim()) || "Desconhecido";
         const logTitle = (data.titulo && data.titulo.trim()) || "Sem título";
         addUploadLogToDb(dataUserId, source, deviceNameRef.current, logArtist, logTitle)
@@ -1409,6 +1410,7 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
           }
           if (result) {
             lastLocalSuccessRef.current = Date.now();
+            try { localStorage.setItem("masterview_local_reader_active", Date.now().toString()); } catch {}
             setLocalError(null);
           }
           readingRef.current = false;
@@ -1481,6 +1483,7 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
 
 
     } catch (error) {
+      setLocalError("Leitura ou publicação online pendente. Tentando novamente.");
       console.warn("[MusicaNoAr] local read/publish failed", error);
     }
     readingRef.current = false;
