@@ -1709,20 +1709,25 @@ export default function PlayerHome({ onBackToAccess, tvGuestMode = false, tvProf
     // Reset ao trocar de slug para nunca exibir dados da rádio anterior
     setNowPlaying(null);
 
+    let disposed = false;
+    let inFlight = false;
     const fetchMusic = async () => {
       // Em modo público/slug, SEMPRE usa apenas os dados do usuário da URL.
       // Nunca faz fallback para localStorage/DB do usuário logado (evita mistura entre rádios).
       if (isSlugMode) {
+        if (disposed || inFlight) return;
+        inFlight = true;
         try {
-          const { data } = await playerSupabase.functions.invoke("public-player-data", { body: { slug: userSlug, section: "now_playing" } });
+          const { data, error } = await playerSupabase.functions.invoke("public-player-data", { body: { slug: userSlug, section: "now_playing" } });
+          if (disposed || error || !data || data.error) return;
           if (data?.musica) {
             setNowPlaying({ musica: formatTrackText(data.musica), artista: formatTrackText(data.artista || ""), capa: data.capa || "" });
           } else {
             setNowPlaying(null);
           }
         } catch {
-          setNowPlaying(null);
-        }
+          // Preserve the last confirmed snapshot on a temporary transport failure.
+        } finally { inFlight = false; }
         return;
       }
 
@@ -1750,9 +1755,12 @@ export default function PlayerHome({ onBackToAccess, tvGuestMode = false, tvProf
       } catch {}
     };
     fetchMusic();
-    const interval = setInterval(fetchMusic, 10000);
-    return () => clearInterval(interval);
-  }, [user, userSlug]);
+    const interval = setInterval(fetchMusic, 5000);
+    const refresh = () => { if (!document.hidden) void fetchMusic(); };
+    window.addEventListener("online", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => { disposed = true; clearInterval(interval); window.removeEventListener("online", refresh); document.removeEventListener("visibilitychange", refresh); };
+  }, [user?.id, userSlug]);
 
   const userName = profileName || user?.email?.split("@")[0] || "Visitante";
   const tvUser = tvGuestMode ? null : user;
