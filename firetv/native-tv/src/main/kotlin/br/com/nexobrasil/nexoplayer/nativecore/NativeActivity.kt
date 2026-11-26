@@ -87,11 +87,14 @@ internal fun safeImage(url: String): String? = url.takeIf { it.startsWith("https
 private fun NativeTv(player: ExoPlayer, activity: Int, onHidden: (Boolean)->Unit) {
     val api = remember { HouseMixClient(BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_ANON_KEY) }
     var startup by remember { mutableStateOf(true) }
+    var entryPending by remember { mutableStateOf(true) }
+    var guestName by remember { mutableStateOf("Visitante") }
+    var guestAvatar by remember { mutableIntStateOf(R.drawable.visitor_avatar) }
     var startupStage by remember { mutableStateOf("carregando dados da rádio") }
     var station by remember { mutableStateOf<StationBootstrap?>(null) }
     var payload by remember { mutableStateOf<JSONObject?>(null) }
     var track by remember { mutableStateOf<JSONObject?>(null) }
-    var screen by remember { mutableStateOf(Screen.HOME) }
+    var screen by remember { mutableStateOf(Screen.PROFILE) }
     var returnScreen by remember { mutableStateOf(Screen.HOME) }
     var failure by remember { mutableStateOf<String?>(null) }
     var playerError by remember { mutableStateOf<String?>(null) }
@@ -151,6 +154,7 @@ private fun NativeTv(player: ExoPlayer, activity: Int, onHidden: (Boolean)->Unit
     }
     fun back() {
         if (notice != null) notice = null
+        else if (startup || entryPending) return
         else if (interaction) interaction = false
         else if (screen in listOf(Screen.SCHEDULE,Screen.HISTORY,Screen.PROFILE,Screen.SEARCH,Screen.CATALOG)) screen = returnScreen
         else home()
@@ -169,6 +173,8 @@ private fun NativeTv(player: ExoPlayer, activity: Int, onHidden: (Boolean)->Unit
         failure = null
         startup = true
         startupStage = "carregando dados da rádio"
+        withFrameNanos { }
+        withFrameNanos { }
         try {
             val data = api.stationPayload(BuildConfig.STATION_SLUG)
             station = StationBootstrap.fromJson(data)
@@ -182,15 +188,15 @@ private fun NativeTv(player: ExoPlayer, activity: Int, onHidden: (Boolean)->Unit
         startupStage = "preparando áudio"
         val startupAudio=audio.firstOrNull()
         if(startupAudio!=null && selected==null) {
-            select(startupAudio,Screen.HOME,false)
+            select(startupAudio,Screen.PROFILE,false)
             // Wait for real buffered media, bounded for live streams and slow networks.
             withTimeoutOrNull(12_000L) {
                 while(playerError==null && player.bufferedPosition-player.currentPosition<10_000L) {
                     delay(100)
                 }
             }
-            if(playerError==null) player.playWhenReady=audioIntent
         }
+        screen = Screen.PROFILE
         startup = false
         var wait = 15_000L
         var refresh = 0
@@ -305,6 +311,15 @@ private fun NativeTv(player: ExoPlayer, activity: Int, onHidden: (Boolean)->Unit
         failure=failure,playerError=playerError,controls=controls,chrome=chrome,interaction=interaction,
         banner=banners.getOrNull(bannerIndex).str("url"),sponsor=sponsorUrls.getOrNull(sponsorIndex),weather=weather,history=history,historyLoading=historyLoading,historyError=historyError,
         notice=notice,video=video,selected=selected, onRetry={retry++},onToggle=::toggle,onBack=::back,
+        entryPending=entryPending, guestName=guestName, guestAvatar=guestAvatar,
+        onGuestSave={name,avatar -> guestName=name;guestAvatar=avatar},
+        onProfileContinue={
+            if(entryPending) {
+                entryPending=false
+                screen=Screen.HOME
+                if(selected?.type=="audio_live" && playerError==null) player.playWhenReady=audioIntent
+            } else screen=returnScreen
+        },
         onOpen={destination ->
             when(destination) {
                 Screen.HOME -> home()

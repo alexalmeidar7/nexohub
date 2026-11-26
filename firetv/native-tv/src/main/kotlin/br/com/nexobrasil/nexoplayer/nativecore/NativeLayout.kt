@@ -41,6 +41,9 @@ import androidx.compose.ui.zIndex
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.graphics.SolidColor
+import androidx.activity.compose.BackHandler
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.tv.material3.Text
@@ -108,7 +111,7 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     }
 }
 
-@Composable private fun RailItem(u:TvUnits,icon:String,label:String,accent:Color,modifier:Modifier=Modifier,onClick:()->Unit) {
+@Composable private fun RailItem(u:TvUnits,icon:String,label:String,accent:Color,modifier:Modifier=Modifier,avatar:Int=R.drawable.visitor_avatar,onClick:()->Unit) {
     var focused by remember { mutableStateOf(false) }
     val shape=CircleShape
     Row(modifier.onFocusChanged { focused=it.isFocused }
@@ -118,7 +121,7 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
         .clickable(onClick=onClick).semantics { contentDescription=label }
         .padding(u.space(7)),verticalAlignment=Alignment.CenterVertically) {
         Box(Modifier.size(u.space(62)).background(accentGlass(accent),shape).clip(shape),contentAlignment=Alignment.Center) {
-            if(icon=="user") Artwork(R.drawable.visitor_avatar,Modifier.fillMaxSize(),scale=ContentScale.Crop)
+            if(icon=="user") Artwork(avatar,Modifier.fillMaxSize(),scale=ContentScale.Crop)
             else Symbol(icon,Modifier.size(u.space(30)))
         }
         if(focused) { Spacer(Modifier.width(u.space(12)));Copy(label,u,24,500);Spacer(Modifier.width(u.space(22))) }
@@ -130,7 +133,8 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     player:ExoPlayer,playing:Boolean,buffering:Boolean,failure:String?,playerError:String?,controls:Boolean,chrome:Float,interaction:Boolean,
     banner:String,sponsor:String?,weather:JSONObject?,history:List<JSONObject>,historyLoading:Boolean,historyError:Boolean,notice:String?,video:List<StationChannel>,selected:StationChannel?,
     onRetry:()->Unit,onToggle:()->Unit,onBack:()->Unit,onOpen:(Screen)->Unit,onChannel:(Int)->Unit,onVideo:(StationChannel)->Unit,
-    onInteraction:()->Unit,onNotice:(String?)->Unit
+    onInteraction:()->Unit,onNotice:(String?)->Unit,
+    entryPending:Boolean,guestName:String,guestAvatar:Int,onGuestSave:(String,Int)->Unit,onProfileContinue:()->Unit
 ) {
     val accent = remember(payload) {
         val colors=payload?.optJSONObject("playerColors")
@@ -174,7 +178,7 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                 Copy(failure,u,35,500,u.at(100,300,1500,70))
                 GlassButton(u,"Tentar novamente",u.at(100,400,330,64).focusRequester(focus),onClick=onRetry)
             } else {
-                if(!watch) Header(u,logo,title,artist,cover,playing,accent,screen,weather,if(screen==Screen.HOME) Modifier.focusRequester(focus) else Modifier,onToggle,{onOpen(Screen.SEARCH)})
+                if(!watch && screen!=Screen.PROFILE) Header(u,logo,title,artist,cover,playing,accent,screen,weather,if(screen==Screen.HOME) Modifier.focusRequester(focus) else Modifier,onToggle,{onOpen(Screen.SEARCH)})
                 if(screen==Screen.HOME) {
                     var railWidthPx by remember { mutableIntStateOf(0) }
                     val railWidth = (railWidthPx / u.pixelsPerUnit).coerceAtLeast(76f)
@@ -185,7 +189,7 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                         RailItem(u,"video","Assistir",accent){onOpen(Screen.VIDEO)}
                         RailItem(u,"catalog","On Demand",accent){onOpen(Screen.CATALOG)}
                         RailItem(u,"calendar","Grade de programação",accent){onOpen(Screen.SCHEDULE)}
-                        RailItem(u,"user","Olá, visitante",accent){onOpen(Screen.PROFILE)}
+                        RailItem(u,"user","Olá, $guestName",accent,avatar=guestAvatar){onOpen(Screen.PROFILE)}
                     }
                     Column(u.at(programLeft,272,505,310),verticalArrangement=Arrangement.spacedBy(u.space(12))) {
                         Badge(u,"NO AR",accent,compact=true)
@@ -200,6 +204,7 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                         Artwork(model,u.at(265,886,1320,140).clip(u.round(12)),scale=ContentScale.Fit)
                     }
                     GlassButton(u,"",u.at(1744,950,76,76),icon="spark",accent=accent,accentRing=true){onInteraction()}
+                    Copy("Nexo TV v"+BuildConfig.VERSION_NAME,u,15,400,u.at(100,1030,800,25),color=Color.White.copy(alpha=.55f))
                 }
                 if(watch) {
                     if(screen==Screen.AUDIO) {
@@ -216,7 +221,7 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                         }
                     }
                     if(screen==Screen.AUDIO||controls||chrome>.01f) {
-                        WatchHeader(u,logo,stationName,screen,accent,weather,if(screen==Screen.VIDEO) chrome else 1f,controls||screen==Screen.AUDIO,{onOpen(Screen.PROFILE)})
+                        WatchHeader(u,logo,stationName,screen,accent,weather,if(screen==Screen.VIDEO) chrome else 1f,controls||screen==Screen.AUDIO,guestAvatar,{onOpen(Screen.PROFILE)})
                     }
                     if(screen==Screen.VIDEO && chrome>.01f && title!="Ao vivo") {
                         Row(u.at(134,455,850,165).alpha(chrome).background(glass,u.round(20)).padding(u.space(12)),verticalAlignment=Alignment.CenterVertically) {
@@ -255,18 +260,8 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                     GlassButton(u,"Voltar",u.at(100,950,150,56).focusRequester(focus),icon="left",onClick=onBack)
                 }
                 if(screen==Screen.PROFILE) {
-                    Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(accent,Color(0xFF161619)))))
-                    Artwork(logo,u.at(100,80,95,70))
-                    Copy("Entre com sua conta Google para uma melhor experiência",u,30,500,u.at(265,80,1540,60))
-                    Row(u.at(180,280,1000,150),verticalAlignment=Alignment.CenterVertically) {
-                        Artwork(R.drawable.visitor_avatar,Modifier.size(u.space(150)).clip(CircleShape),scale=ContentScale.Crop)
-                        Spacer(Modifier.width(u.space(25)));Column{Copy("Visitante",u,30,700);Copy("Visitante",u,20)}
-                    }
-                    Row(u.at(180,465,1000,150),verticalAlignment=Alignment.CenterVertically) {
-                        GlassButton(u,"G",Modifier.size(u.space(150)).focusRequester(focus)){onNotice("Pareamento Google ainda em migração. Continue como visitante.")}
-                        Spacer(Modifier.width(u.space(25)));Copy("Conectar minha conta",u,25)
-                    }
-                    GlassButton(u,"Voltar",u.at(100,950,150,56),icon="left",onClick=onBack)
+                    NativeProfiles(u,logo,accent,focus,entryPending,guestName,guestAvatar,onProfileContinue,onGuestSave,
+                        onConnect={onNotice("O pareamento seguro Google ainda não está disponível nesta versão de teste. Continue como visitante.")})
                 }
                 if(screen==Screen.HISTORY) {
                     Copy("Últimas tocadas",u,38,600,u.at(115,245,1200,65))
@@ -334,13 +329,13 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     GlassButton(u,"",u.at(1512,76,56,56),icon="search",onClick=onSearch)
     Clock(u,u.at(1592,76,230,56),weather)
 }
-@Composable private fun WatchHeader(u:TvUnits,logo:String?,name:String,screen:Screen,accent:Color,weather:JSONObject?,alpha:Float,enabled:Boolean,onProfile:()->Unit) {
+@Composable private fun WatchHeader(u:TvUnits,logo:String?,name:String,screen:Screen,accent:Color,weather:JSONObject?,alpha:Float,enabled:Boolean,guestAvatar:Int,onProfile:()->Unit) {
     Row(u.at(100,76,1000,64).alpha(alpha),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(25))) {
         Artwork(logo,Modifier.size(u.space(70),u.space(60)));Copy(name,u,22,500);Badge(u,if(screen==Screen.VIDEO)"Vídeo" else "Áudio",accent)
     }
     Copy("• AO VIVO",u,20,600,u.at(1350,91,135,44).alpha(alpha))
     Clock(u,u.at(1485,76,240,62).alpha(alpha),weather)
-    Box(u.at(1760,76,62,62).alpha(alpha).clip(CircleShape).background(accentGlass(accent)).clickable(enabled=enabled,onClick=onProfile)) { Artwork(R.drawable.visitor_avatar,Modifier.fillMaxSize(),scale=ContentScale.Crop) }
+    Box(u.at(1760,76,62,62).alpha(alpha).clip(CircleShape).background(accentGlass(accent)).clickable(enabled=enabled,onClick=onProfile)) { Artwork(guestAvatar,Modifier.fillMaxSize(),scale=ContentScale.Crop) }
 }
 
 private fun minute(s:String):Int? { val h=s.take(2).toIntOrNull()?:return null;val m=s.substringAfter(":").take(2).toIntOrNull()?:return null;return (h*60+m).takeIf{it in 0..1439} }
@@ -418,6 +413,77 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
                     GlassButton(u,"Voltar",Modifier.height(u.space(62)).focusRequester(back),icon="left"){details=null}
                 }
             }
+        }
+    }
+}
+
+
+/** Guest selection uses the Lote 16 two-row profile geometry. Identity remains session-local. */
+@Composable private fun NativeProfiles(
+    u:TvUnits,logo:String?,accent:Color,focus:FocusRequester,entryPending:Boolean,
+    guestName:String,guestAvatar:Int,onContinue:()->Unit,onSave:(String,Int)->Unit,onConnect:()->Unit
+) {
+    var editing by remember { mutableStateOf(false) }
+    var name by remember { mutableStateOf(guestName) }
+    var avatar by remember { mutableIntStateOf(guestAvatar) }
+    val editFocus=remember { FocusRequester() }
+    val avatarList=listOf(R.drawable.visitor_avatar,R.drawable.visitor_avatar_1,R.drawable.visitor_avatar_2,R.drawable.visitor_avatar_3,R.drawable.visitor_avatar_4,R.drawable.visitor_avatar_5,R.drawable.visitor_avatar_6,R.drawable.visitor_avatar_7,R.drawable.visitor_avatar_8)
+    BackHandler(editing) { editing=false }
+    LaunchedEffect(editing) { if(editing) editFocus.requestFocus() else runCatching { focus.requestFocus() } }
+    Box(Modifier.fillMaxSize().background(Brush.linearGradient(if(BuildConfig.STATION_SLUG=="positivafm")
+        listOf(Color(0xFFDF1B22),Color(0xFF8D1E23),Color(0xFF111114)) else
+        listOf(accent,androidx.compose.ui.graphics.lerp(accent,Color.Black,.43f),Color(0xFF111114))))) {
+        Artwork(logo?:if(BuildConfig.STATION_SLUG=="positivafm")R.drawable.splash_positiva else R.drawable.splash_interativa,u.at(100,64,100,90))
+        if(!editing) {
+            Copy("Entre com sua conta Google para uma melhor experiência",u,30,500,u.at(265,80,1540,60))
+            Row(u.at(180,280,1100,160),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))) {
+                ProfileCircle(u,Modifier.focusRequester(focus),guestAvatar,"Continuar como $guestName",onContinue)
+                Column(verticalArrangement=Arrangement.spacedBy(u.space(8))) {
+                    Copy(guestName,u,29,600)
+                    Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(15))) {
+                        Box(Modifier.background(Color.White.copy(alpha=.15f),CircleShape).padding(horizontal=u.space(14),vertical=u.space(5))) { Copy("Visitante",u,18,400) }
+                        GlassButton(u,"Editar",Modifier.height(u.space(47))) {name=guestName;avatar=guestAvatar;editing=true}
+                    }
+                    if(entryPending) Copy("Entrar como visitante",u,20,400)
+                }
+            }
+            Row(u.at(180,465,1200,160),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))) {
+                ProfileCircle(u,Modifier,null,"Conectar minha conta Google",onConnect)
+                Copy("Conectar minha conta",u,25,500)
+            }
+            if(!entryPending) GlassButton(u,"Voltar",u.at(100,950,150,56),icon="left",onClick=onContinue)
+        } else {
+            Copy("Editar perfil",u,38,600,u.at(265,80,1100,64))
+            Column(u.at(180,235,1000,700),verticalArrangement=Arrangement.spacedBy(u.space(24))) {
+                Copy("Nome do perfil",u,25,500)
+                BasicTextField(name,{name=it.take(60)},Modifier.focusRequester(editFocus).fillMaxWidth().background(Color.Black.copy(alpha=.55f),u.round(18)).padding(u.space(22)),
+                    singleLine=true,textStyle=u.referenceText(28,400).copy(color=Color.White),cursorBrush=SolidColor(Color.White))
+                Copy("Escolher avatar",u,25,500)
+                LazyRow(horizontalArrangement=Arrangement.spacedBy(u.space(12)),contentPadding=PaddingValues(u.space(10))) {
+                    items(avatarList) { item ->
+                        ProfileCircle(u,Modifier,item,"Avatar "+(avatarList.indexOf(item)+1)){avatar=item}
+                    }
+                }
+                Row(horizontalArrangement=Arrangement.spacedBy(u.space(18))) {
+                    GlassButton(u,"Salvar",Modifier.height(u.space(64)),enabled=name.isNotBlank()){onSave(name.trim(),avatar);editing=false}
+                    GlassButton(u,"Cancelar",Modifier.height(u.space(64))){editing=false}
+                }
+            }
+            Artwork(avatar,u.at(1340,285,280,280).clip(CircleShape),scale=ContentScale.Crop)
+        }
+        Copy("Nexo TV v"+BuildConfig.VERSION_NAME,u,18,400,u.at(100,1030,800,30),color=Color.White.copy(alpha=.6f))
+    }
+}
+
+@Composable private fun ProfileCircle(u:TvUnits,modifier:Modifier,avatar:Int?,label:String,onClick:()->Unit) {
+    var focused by remember { mutableStateOf(false) }
+    Box(modifier.size(u.space(164)).onFocusChanged { focused=it.isFocused }
+        .border(u.space(3),if(focused)Color.White else Color.Transparent,CircleShape)
+        .clickable(onClick=onClick).semantics { contentDescription=label }.padding(u.space(7)),
+        contentAlignment=Alignment.Center) {
+        Box(Modifier.fillMaxSize().clip(CircleShape).background(glass),contentAlignment=Alignment.Center) {
+            if(avatar!=null) Artwork(avatar,Modifier.fillMaxSize(),scale=ContentScale.Crop)
+            else Copy("G",u,78,700)
         }
     }
 }

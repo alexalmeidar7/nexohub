@@ -16,3 +16,6 @@ Referência: [especificação obrigatória](NEXO_TV_ESPECIFICACAO_NATIVA.md). Es
 - [ ] Assinatura/atualização e aprovação final do usuário.
 
 Nenhum item possui evidência integral neste commit. O APK gerado pelo CI permanece piloto de desenvolvimento. Não publicar como final nem fazer merge até a validação.
+
+## Correção de entrada v0.1.3
+Fluxo frio Splash → escolha de visitante → Home; pré-buffer silencioso e reprodução somente após a escolha. Edição local de visitante. Build, captura física e paridade visual pendentes. Conta Google e perfis autenticados ainda não concluídos: a função tv-pair-redeem não consta na referência Git, não confiar em dados de claim como sessão autenticada. Nenhuma mudança de banco neste commit.
