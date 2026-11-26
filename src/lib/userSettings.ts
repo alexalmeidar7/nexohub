@@ -69,6 +69,12 @@ export async function mergeUserDashboardItems(userId: string, patch: JsonRecord)
     }
 
     const before = normalizeDashboardItems(existing?.dashboard_items);
+    const incomingStart = Number(patch.music_start_time || 0);
+    const savedStart = Number(before.music_start_time || 0);
+    if (incomingStart > 0 && savedStart > incomingStart &&
+        ("music_current_title" in patch || "music_current_artist" in patch)) {
+      return;
+    }
     const mergedDashboardItems = deepMerge(before, patch);
 
     // Same JSON = no actual database change. Avoid bumping updated_at,
@@ -120,21 +126,9 @@ export async function mergeUserDashboardItems(userId: string, patch: JsonRecord)
 
     if ((updatedRows?.length ?? 0) > 0) return;
 
-    // Se falhou pelo optimistic lock e já tentamos várias vezes, fazer update direto por user_id para garantir persistência
-    if (attempt >= 2) {
-      const { data: directRows, error: directError } = await supabase
-        .from("user_settings")
-        .update({
-          dashboard_items: mergedDashboardItems as any,
-          updated_at: nowIso,
-        })
-        .eq("user_id", userId)
-        .select("user_id")
-        .limit(1);
+    // Never replace the entire JSON with a stale snapshot after a CAS conflict.
+    // Retry against the latest row instead.
 
-      if (!directError && (directRows?.length ?? 0) > 0) return;
-      if (directError) lastError = directError;
-    }
   }
 
   throw lastError ?? new Error("Falha ao salvar dashboard_items com merge seguro.");
