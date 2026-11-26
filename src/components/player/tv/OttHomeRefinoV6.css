@@ -1,0 +1,106 @@
+/* NEXO HOME V6 — Somente a Home e a barra compartilhada do On Demand.
+   Não alterar /watch, grade de programação, áudio ou tokens de outras rádios. */
+
+/* Visualizador circular aprovado: cor institucional herdada do Player. */
+.nexo-tv.ott-home .ott-header-track { position: relative; overflow: visible; }
+.nexo-tv.ott-home .ott-circular-spectrum {
+  display: block;
+  flex: 0 0 calc(76 * var(--ott-u));
+  width: calc(76 * var(--ott-u));
+  height: calc(76 * var(--ott-u));
+  margin: 0 calc(-9 * var(--ott-u)) 0 calc(3 * var(--ott-u));
+  border: 0;
+  border-radius: 50%;
+  background: rgba(15, 12, 12, .20);
+  color: var(--ott-accent, var(--player-dominant-color, #f20d0f));
+  pointer-events: none;
+}
+
+/* Busca: absolutamente nenhuma borda, azul ou de outra cor, nem no foco. */
+.nexo-tv.ott-home .ott-home-search-wrap.is-open .ott-home-search-expand {
+  width: calc(440 * var(--ott-u));
+  margin-left: calc(18 * var(--ott-u));
+}
+.nexo-tv.ott-home .ott-home-search-expand {
+  height: calc(76 * var(--ott-u));
+  border: 0 !important;
+  border-radius: calc(23 * var(--ott-u));
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: rgba(50, 50, 50, .50);
+}
+.nexo-tv.ott-home .ott-home-search-input,
+.nexo-tv.ott-home .ott-home-search-input:focus,
+.nexo-tv.ott-home .ott-home-search-input:focus-visible,
+.nexo-tv.ott-home .ott-home-search-input:hover {
+  border: none !important;
+  border-color: transparent !important;
+  border-radius: calc(20 * var(--ott-u));
+  outline: none !important;
+  outline-width: 0 !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  background: transparent !important;
+  appearance: none;
+  -webkit-appearance: none;
+  caret-color: white;
+  padding: 0 calc(27 * var(--ott-u));
+}
+.nexo-tv.ott-home .ott-home-search-wrap .ott-home-search-close {
+  flex: 0 0 calc(53 * var(--ott-u));
+  width: calc(53 * var(--ott-u));
+  height: calc(53 * var(--ott-u));
+  min-height: 0;
+  min-width: 0;
+  border: none !important;
+  outline-offset: calc(3 * var(--ott-u));
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .10) !important;
+  margin: 0 calc(12 * var(--ott-u)) 0 calc(4 * var(--ott-u));
+  display: grid;
+  place-items: center;
+}
+.nexo-tv.ott-home .ott-home-search-wrap .ott-home-search-close svg {
+  width: calc(25 * var(--ott-u));
+  height: calc(25 * var(--ott-u));
+  stroke-width: 2;
+}
+.nexo-tv.ott-home .ott-home-search-results {
+  top: calc(100% + 16 * var(--ott-u));
+  width: calc(440 * var(--ott-u));
+  max-height: calc(540 * var(--ott-u));
+  padding: calc(19 * var(--ott-u));
+  gap: calc(12 * var(--ott-u));
+  border-radius: calc(21 * var(--ott-u));
+  background: rgba(24, 22, 22, .75);
+}
+.nexo-tv.ott-home .ott-home-search-caption { padding: calc(12 * var(--ott-u)) calc(16 * var(--ott-u)); }
+.nexo-tv.ott-home .ott-home-search-results .ott-home-search-result,
+.nexo-tv.ott-home .ott-home-search-results .ott-home-search-recent {
+  padding: calc(13 * var(--ott-u)) calc(17 * var(--ott-u));
+  min-height: calc(81 * var(--ott-u));
+  border-radius: calc(18 * var(--ott-u));
+  gap: calc(18 * var(--ott-u));
+}
+
+/* Ícones do clima: pequena ampliação e traço mais nítido; relógio e avatar intactos. */
+.nexo-tv.ott-home .ott-header-right-group svg.lucide-cloud,
+.nexo-tv.ott-home .ott-header-right-group svg.lucide-cloud-sun,
+.nexo-tv.ott-home .ott-header-right-group svg.lucide-cloud-moon,
+.nexo-tv.ott-home .ott-header-right-group svg.lucide-cloud-rain,
+.nexo-tv.ott-home .ott-header-right-group svg.lucide-cloud-drizzle,
+.nexo-tv.ott-home .ott-header-right-group svg.lucide-cloud-lightning,
+.nexo-tv.ott-home .ott-header-right-group svg.lucide-sun,
+.nexo-tv.ott-home .ott-header-right-group svg.lucide-moon,
+.nexo-tv.ott-home .ott-header-right-group svg.lucide-cloud-snow {
+  width: calc(26 * var(--ott-u));
+  height: calc(26 * var(--ott-u));
+  stroke-width: 2.5 !important;
+}
+/* Cobertura para versões do cabeçalho que desenham o clima com SVG próprio. */
+.nexo-tv.ott-home .ott-header-right-group > :first-child svg:first-of-type {
+  width: calc(26 * var(--ott-u));
+  height: calc(26 * var(--ott-u));
+  stroke-width: 2.5 !important;
+}

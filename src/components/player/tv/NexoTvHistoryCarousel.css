@@ -1,0 +1,214 @@
+/* Nexo Player TV - Histórico das últimas 50 músicas.
+   Mantém o visual flat; seta sobre a capa, contador no rodapé direito. */
+.nexo-tv .nexo-history-carousel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: calc(22 * var(--ott-u)) calc(23 * var(--ott-u)) calc(14 * var(--ott-u));
+  border-radius: calc(28 * var(--ott-u));
+  background: rgba(50,50,50,.86);
+  color: #fff;
+  overflow: hidden;
+}
+.nexo-tv .nexo-history-selected {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: calc(12 * var(--ott-u));
+  width: 100%;
+}
+.nexo-tv .nexo-history-info {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(5 * var(--ott-u));
+  width: 100%;
+  min-width: 0;
+  padding: 0 calc(16 * var(--ott-u));
+  text-align: center;
+}
+.nexo-tv .nexo-history-info time {
+  font-size: calc(18 * var(--ott-u));
+  color: #d8d8d8;
+  font-variant-numeric: tabular-nums;
+}
+.nexo-tv .nexo-history-info strong {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  width: 100%;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font-size: calc(22 * var(--ott-u));
+  font-weight: 700;
+  line-height: 1.18;
+}
+.nexo-tv .nexo-history-info > span {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: calc(18 * var(--ott-u));
+  color: #e0e0e0;
+}
+.nexo-tv .nexo-history-cover {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: 0 1 auto;
+  width: min(100%, calc(385 * var(--ott-u)));
+  max-height: min(calc(390 * var(--ott-u)), 43vh);
+  aspect-ratio: 1 / 1;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: calc(18 * var(--ott-u));
+  background: rgba(255,255,255,.08);
+}
+.nexo-tv .nexo-history-cover > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.nexo-tv .nexo-history-cover > svg {
+  width: 33%;
+  height: 33%;
+  opacity: .6;
+}
+.nexo-tv .nexo-history-cover .nexo-history-up {
+  position: absolute;
+  top: calc(11 * var(--ott-u));
+  left: 50%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: calc(51 * var(--ott-u));
+  height: calc(51 * var(--ott-u));
+  border-radius: 50%;
+  background: rgba(12,12,12,.69);
+  transform: translateX(-50%);
+}
+.nexo-tv .nexo-history-up > svg,
+.nexo-tv .nexo-history-controls button > svg {
+  width: calc(27 * var(--ott-u));
+  height: calc(27 * var(--ott-u));
+}
+.nexo-tv .nexo-history-controls {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 calc(64 * var(--ott-u));
+  width: 100%;
+  min-height: 0;
+}
+.nexo-tv .nexo-history-controls button {
+  display: grid;
+  place-items: center;
+  width: calc(51 * var(--ott-u));
+  height: calc(51 * var(--ott-u));
+  border-radius: 50%;
+  background: rgba(255,255,255,.16);
+}
+.nexo-tv .nexo-history-count {
+  position: absolute;
+  right: calc(4 * var(--ott-u));
+  bottom: calc(12 * var(--ott-u));
+  font-size: calc(17 * var(--ott-u));
+  font-variant-numeric: tabular-nums;
+  color: #e8e8e8;
+}
+.nexo-tv .nexo-history-empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(18 * var(--ott-u));
+  min-height: 0;
+  padding: calc(22 * var(--ott-u));
+  text-align: center;
+  font-size: calc(18 * var(--ott-u));
+}
+.nexo-tv .nexo-history-empty svg {width: calc(52 * var(--ott-u)); height: calc(52 * var(--ott-u)); opacity:.65;}
+@media (prefers-reduced-motion: reduce) {
+  .nexo-tv .nexo-history-cover, .nexo-tv .nexo-history-info {transition:none;}
+}
+
+/* NEXO_V7_1_HISTORY_CSS: capa entre setas. */
+.nexo-tv .nexo-history-selected > .nexo-history-up {position:relative;margin:8px auto;display:grid;place-items:center;}
+.nexo-tv .nexo-history-cover {margin-top:8px;max-height:min(calc(340 * var(--ott-u)),36vh);}
+.nexo-tv .nexo-history-controls {margin-top:8px;}
+.nexo-tv .nexo-history-controls [aria-disabled="true"] {opacity:.55;}
+
+/* NEXO_V7_15_HISTORY_CSS — capa no centro do espaco entre as setas. */
+.nexo-tv .nexo-history-carousel .nexo-history-selected {
+  display:flex; flex-direction:column; align-items:center; min-height:0;
+  justify-content:flex-start; gap:calc(7 * var(--ott-u));
+}
+.nexo-tv .nexo-history-carousel .nexo-history-selected > .nexo-history-up,
+.nexo-tv .nexo-history-carousel .nexo-history-stage > .nexo-history-up {
+  position:relative; inset:auto; transform:none; flex:0 0 auto;
+  width:calc(49 * var(--ott-u)); height:calc(42 * var(--ott-u));
+  margin-inline:auto; display:grid;place-items:center;
+  border-radius:50%; background:rgba(255,255,255,.14);
+}
+.nexo-tv .nexo-history-carousel .nexo-history-selected > .nexo-history-cover,
+.nexo-tv .nexo-history-carousel .nexo-history-stage > .nexo-history-cover {
+  flex:0 1 auto; margin-top:auto; margin-bottom:auto;
+  min-width:0; min-height:0; max-width:100%;
+  width:min(100%,calc(350 * var(--ott-u)));
+  max-height:min(calc(345 * var(--ott-u)),38vh);
+  aspect-ratio:1/1;
+}
+.nexo-tv .nexo-history-carousel .nexo-history-controls { flex:0 0 calc(65 * var(--ott-u)); }
+.nexo-tv .nexo-history-carousel .nexo-history-stage {
+  display:flex; flex-direction:column; flex:1 1 auto; min-height:0;
+  align-items:center; width:100%; justify-content:center;
+  gap:calc(8 * var(--ott-u));
+}
+@keyframes nexoV715Enter {from{opacity:0;transform:translateY(9px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes nexoV715Leave {from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-8px)}}
+.nexo-tv .nexo-history-selected[data-history-transition="in"] .nexo-history-info,
+.nexo-tv .nexo-history-selected[data-history-transition="in"] .nexo-history-cover,
+.nexo-tv .nexo-history-selected:not([data-history-transition]) .nexo-history-info,
+.nexo-tv .nexo-history-selected:not([data-history-transition]) .nexo-history-cover {
+ animation:nexoV715Enter .32s cubic-bezier(.2,.7,.2,1) both;
+}
+.nexo-tv .nexo-history-selected[data-history-transition="out"] .nexo-history-info,
+.nexo-tv .nexo-history-selected[data-history-transition="out"] .nexo-history-cover {
+ animation:nexoV715Leave .15s ease-in both;
+}
+@media (prefers-reduced-motion:reduce) {
+ .nexo-tv .nexo-history-selected .nexo-history-info,
+ .nexo-tv .nexo-history-selected .nexo-history-cover {animation:none!important;}
+}
+
+
+/* v24: staged labels, symmetric spacing and accessible cover */
+.nexo-tv .nexo-history-carousel .nexo-history-selected{gap:calc(9 * var(--ott-u));}
+.nexo-tv .nexo-history-carousel .nexo-history-selected>.nexo-history-up{margin:0 auto!important; flex-shrink:0;}
+.nexo-tv .nexo-history-carousel .nexo-history-selected>.nexo-history-cover{margin:0 auto!important;flex:1 1 auto;width:min(100%,calc(390 * var(--ott-u)));max-height:min(calc(390 * var(--ott-u)),43vh);}
+.nexo-tv .nexo-history-carousel .nexo-history-controls{margin-top:calc(9 * var(--ott-u));}
+.nexo-tv .nexo-history-like .nexo-history-heart{position:absolute;right:8%;bottom:8%;width:12%;height:12%;opacity:0;color:white;filter:drop-shadow(0 1px 3px #000);}
+.nexo-tv .nexo-history-like:is(:focus,:hover,[aria-pressed=true]) .nexo-history-heart{opacity:1;}
+.nexo-tv .nexo-history-like[aria-pressed=true] .nexo-history-heart{color:var(--ott-accent,#f20d0f);}
+.nexo-tv .nexo-history-like:focus{outline:2px solid white;outline-offset:2px;}
+.nexo-tv .nexo-history-selected[data-history-transition=in] .nexo-history-info{animation:none;}
+.nexo-tv .nexo-history-selected[data-history-transition=in] .nexo-history-info>*{animation:nexoV715Enter .26s ease-out both;}
+.nexo-tv .nexo-history-selected[data-history-transition=in] .nexo-history-info>strong{animation-delay:.15s;}
+.nexo-tv .nexo-history-selected[data-history-transition=in] .nexo-history-info>span{animation-delay:.22s;}
+@media(prefers-reduced-motion:reduce){.nexo-tv .nexo-history-selected .nexo-history-info>*{animation:none!important;}}
+
+/* v26: equal circular navigation controls, independent focus */
+.nexo-tv .nexo-history-carousel .nexo-history-selected > button.nexo-history-up,
+.nexo-tv .nexo-history-carousel .nexo-history-controls > button {box-sizing:border-box;flex:0 0 auto;width:calc(46 * var(--ott-u));height:calc(46 * var(--ott-u));min-width:calc(46 * var(--ott-u));min-height:calc(46 * var(--ott-u));max-width:calc(46 * var(--ott-u));max-height:calc(46 * var(--ott-u));padding:0;border-radius:50%;aspect-ratio:1;display:grid;place-items:center;background:rgba(255,255,255,.16);}
+.nexo-tv .nexo-history-carousel .nexo-history-selected > button.nexo-history-up[aria-disabled=true]{opacity:.55;}

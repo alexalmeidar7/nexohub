@@ -1,0 +1,53 @@
+/* NEXO_HOME_FINAL_20261121: somente OttHome e sua página de Programas. */
+/* Música/artista: esperar 2s, rolar se não couber, esperar 3s e voltar. */
+.nexo-tv.ott-home .ott-header-track-names{flex:1 1 auto;min-width:0;overflow:hidden;text-align:left}
+.nexo-tv.ott-home .ott-marquee-clip{display:block;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:clip}
+.nexo-tv.ott-home .ott-header-track-title{font-size:calc(22 * var(--ott-u));font-weight:550;line-height:1.3}
+.nexo-tv.ott-home .ott-header-track-artist{font-size:calc(18 * var(--ott-u));line-height:1.35;color:#ddd}
+.nexo-tv.ott-home .ott-marquee-clip>span{display:inline-block;white-space:nowrap;max-width:none;width:max-content;will-change:transform}
+/* Busca: fundo sem borda, com respiro e resultado diretamente sob o campo. */
+.nexo-tv.ott-home .ott-home-search-wrap{z-index:20}
+.nexo-tv.ott-home .ott-home-search-expand{border:0!important;border-radius:calc(23 * var(--ott-u));box-shadow:none!important;background:rgba(50,50,50,.50);height:calc(66 * var(--ott-u))}
+.nexo-tv.ott-home .ott-home-search-wrap.is-open .ott-home-search-expand{width:calc(405 * var(--ott-u))}
+.nexo-tv.ott-home .ott-home-search-input{border:0!important;border-radius:calc(20 * var(--ott-u));padding:0 calc(25 * var(--ott-u));background:transparent!important;outline:none!important;outline-offset:0!important;box-shadow:none!important;font-size:calc(21 * var(--ott-u));line-height:1.4;caret-color:#fff}
+.nexo-tv.ott-home .ott-home-search-input:focus,.nexo-tv.ott-home .ott-home-search-input:focus-visible{outline:none!important;border:0!important;box-shadow:none!important}
+.nexo-tv.ott-home .ott-home-search-results{left:calc(146 * var(--ott-u));top:calc(100% + 10 * var(--ott-u));width:calc(405 * var(--ott-u));max-height:calc(535 * var(--ott-u));border-radius:calc(20 * var(--ott-u));background:rgba(24,24,24,.74);z-index:22}
+.nexo-tv.ott-home .ott-home-search-result-art>.ott-artwork{width:100%;height:100%;border-radius:calc(10 * var(--ott-u));overflow:hidden}
+.nexo-tv.ott-home .ott-home-search-result-art .ott-artwork>img{width:100%;height:100%;object-fit:cover;display:block}
+.nexo-tv.ott-home .ott-home-search-result-text small em{font-style:normal;color:#fff;font-weight:600}
+.nexo-tv.ott-home .ott-home-search-results .ott-home-search-result,.nexo-tv.ott-home .ott-home-search-results .ott-home-search-recent{background:rgba(50,50,50,.50);border:0!important;border-radius:calc(15 * var(--ott-u));min-height:calc(76 * var(--ott-u))}
+/* Badge piscante discreto, somente texto, com fundo vermelho da identidade. */
+.nexo-tv.ott-home .ott-now-live-label{display:inline-flex;align-items:center;justify-content:center;min-height:calc(33 * var(--ott-u));padding:calc(5 * var(--ott-u)) calc(13 * var(--ott-u));border-radius:calc(10 * var(--ott-u));background:var(--ott-accent,#eb1b24);color:white;font-size:calc(15 * var(--ott-u));font-weight:650;letter-spacing:calc(1.6 * var(--ott-u))}
+.nexo-tv.ott-home .ott-now-live-label>span{animation:nexo-now-blink 1.45s ease-in-out infinite}
+@keyframes nexo-now-blink{0%,100%{opacity:1}50%{opacity:.22}}
+.nexo-tv.ott-home .ott-now-grade{display:inline-flex;align-items:center;justify-content:center;gap:calc(12 * var(--ott-u));margin-top:calc(26 * var(--ott-u));min-height:calc(53 * var(--ott-u));padding:0 calc(20 * var(--ott-u));border:calc(2 * var(--ott-u)) solid white!important;border-radius:calc(30 * var(--ott-u));font-size:calc(19 * var(--ott-u));font-weight:500;color:white;background:transparent!important;white-space:nowrap}
+.nexo-tv.ott-home .ott-now-grade svg{width:calc(22 * var(--ott-u));height:calc(22 * var(--ott-u))}
+.nexo-tv.ott-home .ott-now-grade:hover{background:rgba(255,255,255,.1)!important}
+/* Mesma barra superior da Home nas demais páginas: logo, música, busca, relógio, clima, perfil. */
+.nexo-tv.ott-home .ott-header{gap:calc(24 * var(--ott-u));z-index:30}
+.nexo-tv.ott-home .ott-header-track{max-width:calc(400 * var(--ott-u))}
+.nexo-tv.ott-home .ott-header-right-group{margin-left:auto;gap:calc(24 * var(--ott-u));white-space:nowrap}
+.nexo-tv.ott-home .ott-subpage-bar{position:absolute;left:5.2%;top:19.5%;z-index:4;display:flex;align-items:center;gap:calc(18 * var(--ott-u));font-size:calc(26 * var(--ott-u));font-weight:450}
+.nexo-tv.ott-home .ott-subpage-bar h1{font-size:calc(28 * var(--ott-u));font-weight:550}
+.nexo-tv.ott-home .ott-subpage-bar button{border-radius:50%;width:calc(56 * var(--ott-u));height:calc(56 * var(--ott-u));background:rgba(255,255,255,.15);display:grid;place-items:center}
+.nexo-tv.ott-home .ott-footer{right:5.2%;bottom:6.5%;left:auto;display:flex;justify-content:flex-end;z-index:5;pointer-events:none}
+/* Painel de detalhe do histórico, sem substituir o modal de programação. */
+.nexo-tv.ott-home .ott-home-history-dialog{position:relative;width:calc(650 * var(--ott-u));max-width:80%;padding:calc(50 * var(--ott-u));border-radius:calc(22 * var(--ott-u));background:#292929;color:white;display:flex;flex-direction:column;align-items:flex-start;gap:calc(18 * var(--ott-u))}
+.nexo-tv.ott-home .ott-home-history-dialog h2{font-size:calc(34 * var(--ott-u));font-weight:550;line-height:1.2}
+.nexo-tv.ott-home .ott-home-history-dialog p{font-size:calc(24 * var(--ott-u))}
+.nexo-tv.ott-home .ott-home-history-dialog small,.nexo-tv.ott-home .ott-home-history-label{font-size:calc(19 * var(--ott-u));color:#ccc}
+.nexo-tv.ott-home .ott-home-history-dialog .ott-home-history-close{position:absolute;right:calc(18 * var(--ott-u));top:calc(18 * var(--ott-u))}
+.nexo-tv.ott-home .ott-home-history-dialog .ott-home-history-play{display:flex;gap:calc(10 * var(--ott-u));align-items:center;padding:calc(12 * var(--ott-u)) calc(20 * var(--ott-u));border:calc(2 * var(--ott-u)) solid white;border-radius:calc(22 * var(--ott-u));font-size:calc(20 * var(--ott-u))}
+@media(prefers-reduced-motion:reduce){
+  .nexo-tv.ott-home .ott-marquee-run,.nexo-tv.ott-home .ott-now-live-label>span{animation:none!important}
+}
+
+/* Retoques de Home e On Demand 21/11: não tocar em /watch nem grade. */
+.nexo-tv.ott-home .ott-destination:focus::after,
+.nexo-tv.ott-home .ott-destination:hover::after,
+.nexo-tv.ott-home .ott-destination:focus-visible::after{display:none!important;content:none!important}
+.nexo-tv.ott-home .ott-footer-subpage{left:5.2%;right:5.2%;bottom:6.5%;width:auto;display:flex;justify-content:space-between;align-items:center;pointer-events:auto;opacity:1}
+.nexo-tv.ott-home .ott-footer-subpage .ott-subpage-bottom-back{display:inline-flex;align-items:center;gap:calc(9 * var(--ott-u));height:calc(48 * var(--ott-u));padding:0 calc(15 * var(--ott-u));border:calc(2 * var(--ott-u)) solid #fff!important;border-radius:calc(26 * var(--ott-u));background:transparent!important;font-size:calc(20 * var(--ott-u));color:#fff}
+.nexo-tv.ott-home .ott-footer-subpage .ott-subpage-bottom-back svg{width:calc(22 * var(--ott-u));height:calc(22 * var(--ott-u))}
+.nexo-tv.ott-home .ott-footer-subpage .ott-footer-version{font-size:calc(14 * var(--ott-u));opacity:.55}
+.nexo-tv.ott-home .ott-demand-empty{position:absolute;top:24%;bottom:16%;left:6%;right:6%;pointer-events:none}

@@ -1,3 +1,7 @@
+import { prepareVideoStatuses, readVideoStatus, rememberVideoStatus, useVideoStatusUpdates } from "@/components/player/tv/tvVideoStatus";
+// NEXO_V716_POSITIVA_VIDEO
+// NEXO_V7_15_AUDIO_HISTORICO_FLUIDEZ
+// NEXO_V7_13_CONTINUOUS_AUDIO
 import { useEffect, useMemo, useRef, useState, useCallback, Suspense } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { createPortal } from "react-dom";
@@ -22,9 +26,12 @@ import DjModeLayer from "@/components/player/DjModeLayer";
 import { toast } from "sonner";
 import { playerSignOut } from "@/lib/playerSignOut";
 import { getStationLogoFallback } from "@/lib/playerBranding";
-import { isPlayerTvApp } from "@/lib/playerTvApp";
+import { isPlayerOtt } from "@/lib/playerTvApp";
 import { todayInBrasilia } from "@/lib/brasiliaDate";
+import { useTwitchCast, TwitchCastSurface } from "@/components/player/tv/TwitchCast";
 import OttWatch from "@/components/player/tv/OttWatch";
+import OttAudioHost from "@/components/player/tv/OttAudioHost";
+import type Hls from "hls.js";
 
 const PlayerChat = lazyRetry(() => import("@/components/PlayerChat"));
 const PlayerGradeDialog = lazyRetry(() => import("@/components/player/PlayerGradeDialog"));
@@ -33,11 +40,16 @@ const WatchProfilePopup = lazyRetry(() => import("@/components/player/WatchProfi
 
 export interface AudioPlayerScreenProps {
   audioRef: React.RefObject<HTMLAudioElement>;
+  onTvAudioAdopt?: (engine: Hls | null, userPaused: boolean) => void;
   videoRef: React.RefObject<HTMLVideoElement>;
+  tvPlaybackBlocked?: boolean;
+  tvUserPaused?: boolean;
+  tvStreamRequested?: boolean;
+  commercialPlayback?: boolean;
   canal: any;
   canais: any[];
   liveChannels: any[];
-  navigateChannel: (dir: 1 | -1) => void;
+  navigateChannel: (dir: 1 | -1, targetVideoId?: string) => void;
   programas: any[];
   currentProg: any | null;
   nextProg: any | null;
@@ -245,7 +257,7 @@ function AnimatedNowPlayingInfo({ cover, title, artist, liked, onToggleLike }: {
 
 export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const {
-    audioRef, videoRef, canal, liveChannels, navigateChannel,
+    audioRef, onTvAudioAdopt, videoRef, canal, liveChannels, navigateChannel,
     programas, currentProg, nextProg, apresentadores,
     musicData, playing, muted, volume, buffering,
     onTogglePlay, onSetMuted, onSetVolume,
@@ -262,8 +274,89 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     isVideoChannel = false,
     isCatalog = false,
   } = props;
-  const isOttWatch = isPlayerTvApp() && !isCatalog;
+  const isOttWatch = isPlayerOtt() && !isCatalog;
+  // Multivideo limitado a Positiva. Nenhum outro cliente recebe a barra.
+  const positivaVideo = isVideoChannel && (/^(positiva|positivafm)$/i.test(String(userSlug || ""))
+    || String(radioUserId || effectiveUserId || "").toLowerCase() === "452ebd1e-61a0-42dd-bf80-231a3f426c83");
+  const positivaVideoChannels = useMemo(() => {
+    const videos = (liveChannels || []).filter((c: any) => c?.type === "video_live" && c?.active !== false && c?.url);
+    const castName = (value: any) => /positiva\s*cast|podcast|pod\s*cast|radio\s*cast/i.test(String(value?.name || ""));
+    const principal = videos.find((c: any) => !castName(c)) || videos[0];
+    return [
+      { id: String(principal?.id || ""), label: "Canal Positiva", cover: `${import.meta.env.BASE_URL}nexo-tv/v18/canal-1.jpg`, available: Boolean(principal?.id), url: String(principal?.url || "") },
+      { id: "nexo-positiva-twitch", label: "Positiva Cast", cover: `${import.meta.env.BASE_URL}nexo-tv/v18/canal-2.jpg`, available: videos.some((c: any) => c.id === "nexo-positiva-twitch"), url: "https://youtu.be/uPeZ68nIPUY" },
+    ];
+  }, [liveChannels]);
+  const twitchSelected = isOttWatch && positivaVideo && canal?.id === "nexo-positiva-twitch";
+  const twitch = useTwitchCast(twitchSelected, muted, volume / 100, isOttWatch && positivaVideo);
   const getAudioMedia = useCallback(() => audioRef.current, [audioRef]);
+  // Estado real do audio que foi transferido da Home (nao reinicia o streaming).
+  const [tvMediaPlaying, setTvMediaPlaying] = useState(false);
+  const [videoProgress, setVideoProgress] = useState<{channel: string; active: boolean} | null>(null);
+  useVideoStatusUpdates();
+  useEffect(()=>{
+    if (!isOttWatch) return;
+    const probe=()=>void prepareVideoStatuses(liveChannels || []);
+    probe();const timer=window.setInterval(probe,60000);return()=>clearInterval(timer);
+  },[isOttWatch,liveChannels]);
+  useEffect(()=>{
+    if(!positivaVideo || twitchSelected)return;
+    if(videoProgress?.channel === String(canal?.id || "") && videoProgress.active) {
+      const c=positivaVideoChannels[0]; if(c)rememberVideoStatus(c.id,c.url,"live");
+    }
+  },[positivaVideo,twitchSelected,videoProgress,canal?.id,positivaVideoChannels]);
+  useEffect(()=>{
+    if(twitchSelected && twitch.liveStatus!=="unknown")rememberVideoStatus("nexo-positiva-twitch","https://youtu.be/uPeZ68nIPUY",twitch.liveStatus);
+  },[twitchSelected,twitch.liveStatus]);
+  useEffect(() => {
+    if (!isOttWatch || !isVideoChannel || twitchSelected) return;
+    const media = videoRef.current;
+    if (!media) return;
+    const channel = String(canal?.id || "");
+    let last = media.currentTime;
+    let lastAdvance = performance.now();
+    const stop = () => { last = media.currentTime; lastAdvance = performance.now(); setVideoProgress(old=>old?.channel===channel && !old.active ? old : {channel,active:false}); };
+    const tick = () => {
+      const now = performance.now();
+      if (media.paused || media.ended || media.error || media.readyState < 2) { stop(); return; }
+      const time = media.currentTime;
+      if (time > last) { lastAdvance = now; setVideoProgress(old => old?.channel === channel && old.active ? old : {channel,active:true}); }
+      else if (now-lastAdvance > 1200) setVideoProgress(old => old?.channel === channel && !old.active ? old : {channel,active:false});
+      last = time;
+    };
+    stop();
+    const events = ["waiting", "stalled", "pause", "ended", "emptied", "error", "seeking", "loadstart"];
+    events.forEach(event => media.addEventListener(event,stop));
+    media.addEventListener("timeupdate",tick);
+    const timer = window.setInterval(tick,1000);
+    return () => {window.clearInterval(timer); media.removeEventListener("timeupdate",tick); events.forEach(event => media.removeEventListener(event,stop));};
+  }, [isOttWatch,isVideoChannel,canal?.id,videoRef,twitchSelected]);
+  const [tvUnavailable, setTvUnavailable] = useState(false);
+  const channelCards = positivaVideoChannels.map((c,i)=>({...c,liveStatus: readVideoStatus(c.id,c.url)}));
+  useEffect(() => {
+    setTvUnavailable(false);
+    if (!isOttWatch || twitchSelected || !props.tvStreamRequested || props.tvUserPaused || props.tvPlaybackBlocked) return;
+    let lastTime = -1, lastProgress = Date.now();
+    const timer = window.setInterval(() => {
+      const media = isVideoChannel ? videoRef.current : audioRef.current;
+      if (!media) return;
+      if (!media.paused && !media.ended && !media.error && media.readyState >= 2 && media.currentTime !== lastTime) {
+        lastTime = media.currentTime; lastProgress = Date.now(); setTvUnavailable(false);
+      } else if (Date.now() - lastProgress >= 25000) setTvUnavailable(true);
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [isOttWatch, isVideoChannel, twitchSelected, canal?.id, props.tvStreamRequested, props.tvUserPaused, props.tvPlaybackBlocked, audioRef, videoRef]);
+  useEffect(() => {
+    if (!isOttWatch) return;
+    const media = isVideoChannel ? videoRef.current : audioRef.current;
+    if (!media) return;
+    const sync = () => setTvMediaPlaying(!media.paused && !media.ended);
+    sync(); // Media pode ja estar tocando ANTES da montagem do /watch.
+    const events = ["playing", "play", "pause", "ended", "emptied"];
+    events.forEach(event => media.addEventListener(event, sync));
+    return () => { events.forEach(event => media.removeEventListener(event, sync)); };
+  }, [audioRef, videoRef, canal?.id, isOttWatch, isVideoChannel]);
+
   const lyricsBeforePollRef = useRef(false);
   const handlePollVisibilityChange = useCallback((isOpen: boolean) => {
     if (isOpen) {
@@ -277,10 +370,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       setKaraokeEnabled(true);
     }
   }, [karaokeEnabled, setKaraokeEnabled]);
-  const watchAvatar = profileAvatar
-    || user?.user_metadata?.avatar_url
-    || user?.user_metadata?.picture
-    || null;
+  const watchAvatar = isOttWatch ? profileAvatar : (profileAvatar || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null);
 
   const isYoutube = canal?.type === "video_youtube" || canal?.type === "youtube";
   const selectedVideoId = isCatalog ? (new URLSearchParams(window.location.search).get("vid")) : null;
@@ -356,6 +446,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const handleBackHome = useCallback(() => {
     if (exiting) return;
     setExiting(true);
+    // Audio ao vivo: navegar sem fade-out, pause ou reconexao da radio.
+    if (isOttWatch && !isVideoChannel) { onBackHome(); return; }
     const media = isVideoChannel ? videoRef.current : audioRef.current;
     const FADE_MS = 600;
     if (media && !media.paused) {
@@ -372,7 +464,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       requestAnimationFrame(step);
     }
     setTimeout(() => onBackHome(), FADE_MS);
-  }, [exiting, onBackHome, audioRef, videoRef, isVideoChannel]);
+  }, [exiting, onBackHome, audioRef, videoRef, isVideoChannel, isOttWatch]);
 
 
   // ---- Curtir PROGRAMA (independente do like da música) ----
@@ -819,12 +911,12 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
     // FIX (bug capa travada no canal de áudio):
     // Forçamos o recarregamento da capa sempre que o artista ou título mudar.
-    // Se o XML enviar uma capa (musicData.capa), usamos como placeholder,
-    // mas o fetchCover (iTunes/Deezer) sempre tem prioridade e sobrescreve
-    // para garantir que a imagem corresponda à música atual, corrigindo o bug
+    // Se o XML enviar uma capa (musicData.capa), usamos como placeholder, 
+    // mas o fetchCover (iTunes/Deezer) sempre tem prioridade e sobrescreve 
+    // para garantir que a imagem corresponda à música atual, corrigindo o bug 
     // onde a capa ficava travada na música anterior.
     const cached = coverCacheRef.current.get(key);
-
+    
     // Se temos no cache, usamos; se não, usamos o que veio no musicData (se vier)
     const initialCover = cached || musicData?.capa || "";
     setResolvedMusicCover(initialCover);
@@ -835,7 +927,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     fetchCover(artista, musica).then((cover) => {
       if (cancelled) return;
       if (!cover) return;
-
+      
       // Atualiza o estado e o histórico com a capa confirmada.
       // A comparação de prev === cover evita re-renders desnecessários se a capa for a mesma.
       setResolvedMusicCover((prev) => (prev === cover ? prev : cover));
@@ -1293,7 +1385,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (t as any).isContentEditable === true;
     };
     const onKey = (e: KeyboardEvent) => {
-      if (isPlayerTvApp()) return;
+      if (isPlayerOtt()) return;
       if (isTyping(e.target)) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       switch (e.code) {
@@ -1370,6 +1462,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
   // Atualiza mediaTime a partir do próprio elemento (timeupdate + rAF fallback)
   useEffect(() => {
+    if (isOttWatch) return; // OTT controls use media events directly.
     const a = audioRef.current;
     if (!a) return;
     const sync = () => setMediaTime(a.currentTime || 0);
@@ -1386,7 +1479,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       a.removeEventListener("playing", sync);
       clearInterval(id);
     };
-  }, [audioRef, canal?.id]);
+  }, [audioRef, canal?.id, isOttWatch]);
 
   const trackDur = Math.max(0, Number(musicData?.duracao) || 0);
   const trackElapsedLive = (() => {
@@ -1420,9 +1513,10 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   };
 
   if (isOttWatch) return <div className="ott-media-host">
-    <audio ref={audioRef} crossOrigin="anonymous" preload="none" className="hidden" />
-    <video ref={videoRef} className={isVideoChannel ? "ott-video-element":"hidden"} muted={muted} playsInline />
-    <OttWatch musicTitle={musicData?.titulo} musicArtist={musicData?.artista} avatar={watchAvatar} channelKey={canal?.id} programKey={currentProg?.id} currentProgram={currentProg} presenterName={ottPresenter?.nome} presenterSocial={ottPresenter?.instagram} guest={!user} presenterPhotos={ottPresenterPhotos} audioMedia={getAudioMedia} radioUserId={radioUserId || effectiveUserId} presenterPhoto={locutorFoto} video={isVideoChannel} playing={playing} buffering={buffering} muted={muted} title={isVideoChannel ? currentProg?.nome || canal?.name || "Ao vivo":musicData?.titulo || currentProg?.nome || canal?.name || "Rádio ao vivo"} subtitle={isVideoChannel ? empresaNome || canal?.name:musicData?.artista || currentProg?.nome || empresaNome} radioName={empresaNome} logo={watchLogo} cover={musicData?.capa} programSeal={currentProg?.selo} liked={liked} programs={tvSchedulePrograms} loadHistoryCover={fetchCover} onPlay={onTogglePlay} onMute={()=>onSetMuted(!muted)} onLike={onToggleLike} onBack={onBackHome} onChannel={navigateChannel} onProfile={onSwitchProfile}
+    {isVideoChannel ? <audio ref={audioRef} crossOrigin="anonymous" preload="none" className="hidden" /> : <OttAudioHost mediaRef={audioRef} url={canal?.url} onAdopt={onTvAudioAdopt} />}
+    <video ref={videoRef} className={isVideoChannel && !twitchSelected ? "ott-video-element":"hidden"} muted={muted} playsInline preload="auto" />
+    {twitchSelected && <TwitchCastSurface host={twitch.host} status={twitch.status}/>}
+    <OttWatch commercialPlayback={props.commercialPlayback} musicTitle={musicData?.titulo} musicArtist={musicData?.artista} avatar={watchAvatar} channelKey={canal?.id} programKey={currentProg?.id} currentProgram={currentProg} presenterName={ottPresenter?.nome} presenterSocial={ottPresenter?.instagram} guest={!user} presenterPhotos={ottPresenterPhotos} audioMedia={getAudioMedia} radioUserId={radioUserId || effectiveUserId} presenterPhoto={locutorFoto} video={isVideoChannel} playing={twitchSelected ? twitch.status === "playing" : tvMediaPlaying} videoProgressing={twitchSelected ? twitch.status === "playing" : videoProgress?.channel === String(canal?.id || "") && videoProgress.active} unavailable={twitchSelected ? twitch.status === "offline" : tvUnavailable} playbackBlocked={twitchSelected ? twitch.status === "blocked" : props.tvPlaybackBlocked} buffering={twitchSelected ? twitch.status === "loading" : buffering} muted={muted} title={isVideoChannel ? currentProg?.nome || canal?.name || "Ao vivo":musicData?.titulo || currentProg?.nome || canal?.name || "Rádio ao vivo"} subtitle={isVideoChannel ? empresaNome || canal?.name:musicData?.artista || currentProg?.nome || empresaNome} radioName={empresaNome} logo={watchLogo} cover={musicData?.capa} programSeal={currentProg?.selo} liked={liked} programs={programas} presenters={apresentadores} studio={canal?.estudio} loadHistoryCover={fetchCover} onPlay={twitchSelected ? twitch.toggle : onTogglePlay} onMute={()=>onSetMuted(!muted)} onLike={onToggleLike} onBack={onBackHome} onChannel={navigateChannel} videoChannels={positivaVideo ? channelCards : undefined} onSelectVideoChannel={(id: string) => props.navigateChannel(1, id)} onOfflineConfirm={() => { if (!isVideoChannel) return; const audio=liveChannels.find((c:any)=>(c.type === "audio_live" || c.type === "audio") && c.url); if(audio) props.navigateChannel(1,String(audio.id)); else onBackHome(); }} onProfile={onSwitchProfile}
       renderProfile={user ? close => (
        <Suspense fallback={<p role="status">Carregando perfil...</p>}>
         <WatchProfilePopup embedded userId={user.id} userName={userDisplayName}
@@ -3514,7 +3608,7 @@ function InteractivityMenu({
   return (
     <div ref={wrapRef} className="relative">
       {/* Botão principal — icon-only com borda animada */}
-      <div
+      <div 
         className={`relative flex items-center transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${
           isVideoChannel && !controlsVisible && !open && !autoShowVisible
             ? "opacity-0 translate-y-8 pointer-events-none"
@@ -3572,7 +3666,7 @@ function InteractivityMenu({
         </button>
 
         {/* Botões que surgem acima no mouseover */}
-        <div
+        <div 
           className={`absolute bottom-full left-0 right-0 mb-4 flex flex-col items-center gap-3 transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] ${
             open ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-8 pointer-events-none"
           }`}
@@ -3590,7 +3684,7 @@ function InteractivityMenu({
             <BarChart3 size={24} />
             {hasNotif && <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-black" />}
           </button>
-
+          
           {showKaraoke && (
             <button
               onClick={() => { onToggleKaraoke(); setOpen(false); }}
@@ -3600,7 +3694,7 @@ function InteractivityMenu({
               <Mic size={24} />
             </button>
           )}
-
+          
           <button
             type="button"
             onClick={(event) => {
@@ -3861,3 +3955,6 @@ function PollDialog({
     document.body
   );
 }
+
+
+

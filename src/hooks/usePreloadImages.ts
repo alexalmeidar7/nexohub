@@ -7,29 +7,34 @@ const decodedCache = new Set<string>();
 // Keep a strong reference to preloaded Image objects so the browser
 // doesn't evict them from memory before they're used.
 const imageRefs = new Map<string, HTMLImageElement>();
+const pending = new Map<string, Promise<void>>();
 
 export function preloadImage(url: string): Promise<void> {
   if (!url) return Promise.resolve();
   if (decodedCache.has(url)) return Promise.resolve();
+  const inflight = pending.get(url); if(inflight)return inflight;
   const existing = imageRefs.get(url);
-  if (existing && existing.complete) {
+  if (existing && existing.complete && existing.naturalWidth > 0) {
     decodedCache.add(url);
     return Promise.resolve();
   }
-  return new Promise<void>((resolve) => {
+  const task = new Promise<void>((resolve) => {
     const img = new Image();
     img.decoding = "async";
     (img as any).fetchPriority = "high";
-    img.crossOrigin = "anonymous";
+
     img.onload = async () => {
       try { await (img as any).decode?.(); } catch { /* ignore */ }
       decodedCache.add(url);
       resolve();
     };
-    img.onerror = () => resolve(); // don't block on failure
+    img.onerror = () => {imageRefs.delete(url);resolve();}; // don't block on failure
     imageRefs.set(url, img);
+    if(imageRefs.size>24){ const first=imageRefs.keys().next().value; if(first){imageRefs.delete(first);decodedCache.delete(first);} }
     img.src = url;
   });
+  pending.set(url, task);
+  return task.finally(() => { if (pending.get(url) === task) pending.delete(url); });
 }
 
 /**

@@ -1,0 +1,21 @@
+/* V6: programa acima, banner inferior esquerdo. */
+.nexo-tv.ott-home .nexo-home-commercial-banner{position:absolute;left:calc(265 * var(--ott-u));top:auto;right:auto;bottom:calc(150 * var(--ott-u));width:44%;max-width:44%;z-index:6;display:block;pointer-events:none;overflow:visible;animation:none;filter:none!important;backdrop-filter:none!important;transform:none!important}
+.nexo-tv.ott-home .nexo-home-commercial-trigger,.nexo-tv.ott-home .nexo-home-commercial-art{position:relative;display:block;width:100%;height:auto;padding:0;background:transparent;border:0;border-radius:calc(12 * var(--ott-u));overflow:visible;box-sizing:border-box;line-height:0}
+.nexo-tv.ott-home .nexo-home-commercial-trigger{pointer-events:auto;cursor:pointer}
+.nexo-tv.ott-home .nexo-home-commercial-image{display:block!important;width:100%!important;height:auto!important;max-width:100%!important;max-height:none!important;aspect-ratio:auto!important;object-fit:contain!important;object-position:center!important;border-radius:calc(12 * var(--ott-u));margin:0!important;transform:none!important}
+.nexo-tv.ott-home .nexo-home-commercial-trigger:is(:focus,:focus-visible){outline:calc(3 * var(--ott-u)) solid white!important;outline-offset:calc(5 * var(--ott-u));}
+.nexo-tv.ott-home .nexo-home-commercial-label{position:absolute;top:calc(12 * var(--ott-u));left:calc(12 * var(--ott-u));padding:calc(6 * var(--ott-u)) calc(12 * var(--ott-u));border-radius:calc(18 * var(--ott-u));background:rgba(255,255,255,.82);color:#161616;font-size:calc(16 * var(--ott-u));font-weight:600;line-height:1.2;letter-spacing:0;text-shadow:none;pointer-events:none}
+.nexo-tv.ott-home .nexo-home-commercial-qr{position:absolute;left:calc(100% + 12 * var(--ott-u));right:auto;top:50%;width:calc(270 * var(--ott-u));box-sizing:border-box;display:flex;flex-direction:row;align-items:center;gap:calc(10 * var(--ott-u));pointer-events:none;transform:translateY(-50%);animation:nexo-commercial-qr-in .25s ease both}
+.nexo-tv.ott-home .nexo-home-commercial-qr-code{flex:1;min-width:0;background:rgba(50,50,50,.86);padding:calc(18 * var(--ott-u));border:0;border-radius:calc(18 * var(--ott-u));box-sizing:border-box;line-height:0}
+.nexo-tv.ott-home .nexo-home-commercial-qr-code svg{display:block!important;width:100%!important;height:auto!important;max-width:none!important;max-height:none!important;aspect-ratio:1/1!important;background:white!important;color:#000!important;border-radius:calc(6 * var(--ott-u))}
+.nexo-tv.ott-home .nexo-home-commercial-link-badge{flex:0 0 auto;width:calc(44 * var(--ott-u));height:calc(44 * var(--ott-u));border-radius:50%;background:rgba(50,50,50,.86);color:white;display:grid;place-items:center}
+.nexo-tv.ott-home .nexo-home-commercial-link-badge svg{width:55%;height:55%;display:block}
+@keyframes nexo-commercial-in{from{opacity:0}to{opacity:1}}
+@keyframes nexo-commercial-qr-in{from{opacity:0;transform:translate(calc(-10 * var(--ott-u)),-50%)}to{opacity:1;transform:translate(0,-50%)}}
+@media(prefers-reduced-motion:reduce){.nexo-tv.ott-home .nexo-home-commercial-banner,.nexo-tv.ott-home .nexo-home-commercial-qr{animation:none}}
+
+/* Keep artwork at a stable size and avoid focus/open-state compositing effects. */
+.nexo-tv.ott-home .nexo-home-commercial-trigger,.nexo-tv.ott-home .nexo-home-commercial-art,.nexo-tv.ott-home .nexo-home-commercial-image{filter:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;transform:none!important;scale:1!important;opacity:1!important;transition:none!important;image-rendering:auto;will-change:auto!important}
+
+.nexo-tv.ott-home.ott-rail-layout .ott-now,
+.nexo-tv.ott-home.ott-rail-layout .ott-now:has(.ott-program-sponsors) { top:25.2%!important; bottom:auto!important; left:calc(265 * var(--ott-u))!important; transform:none!important; }

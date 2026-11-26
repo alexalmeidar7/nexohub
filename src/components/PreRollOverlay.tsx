@@ -332,6 +332,7 @@ export default function PreRollOverlay({
             playsInline
             className="absolute inset-0 w-full h-full object-contain"
             onEnded={onEnded}
+            onError={onEnded}
           />
         ) : (
           <div className="absolute inset-0 z-[3] flex flex-col items-center justify-center gap-4 animate-fade-in">

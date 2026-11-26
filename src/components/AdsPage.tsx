@@ -1,3 +1,4 @@
+import PlayerAdsPage from './PlayerAdsPage';
 import { DateInput } from "@/components/ui/date-input";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -723,7 +724,7 @@ export default function AdsPage({ effectiveUserId }: { effectiveUserId?: string 
             <TabsTrigger value="breaks" className="rounded-full text-xs font-bold uppercase tracking-wider data-[state=active]:bg-[#C6F03C] data-[state=active]:text-[#002132]">
               <Radio size={14} className="mr-1.5" /> Break comercial
             </TabsTrigger>
-          </TabsList>
+          <TabsTrigger value="player" className="rounded-full text-xs font-bold uppercase tracking-wider">PLAYER</TabsTrigger></TabsList>
 
           {/* ================= ABA 1 ================= */}
           <TabsContent value="nova" className="space-y-5 mt-0">
@@ -1233,7 +1234,7 @@ export default function AdsPage({ effectiveUserId }: { effectiveUserId?: string 
               )}
             </div>
           </TabsContent>
-        </Tabs>
+        <TabsContent value="player" className="mt-0"><PlayerAdsPage userId={targetUserId || undefined} /></TabsContent></Tabs>
       </div>
 
       <Dialog open={breakPickerOpen} onOpenChange={setBreakPickerOpen}>

@@ -1,0 +1,149 @@
+/* NEXO V7.6 — ajustes exclusivos da HOME (não modificam /watch nem perfis).
+   O painel lateral mantém os respiros em 1920x1080, com escala --ott-u. */
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail {
+  width:calc(326 * var(--ott-u))!important;
+  bottom:4.2%!important; /* centro do avatar alinhado ao texto da versão no rodapé */
+  isolation:isolate;
+}
+/* Painel único atrás do primeiro botão até o avatar, preto a 60%, cantos arredondados. */
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail::before {
+  content:"";
+  position:absolute;
+  inset:calc(-26 * var(--ott-u)) auto calc(-24 * var(--ott-u)) calc(-22 * var(--ott-u));
+  width:calc(350 * var(--ott-u));
+  border-radius:calc(32 * var(--ott-u));
+  background:rgba(0,0,0,.60);
+  pointer-events:none;
+  z-index:0;
+}
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-actions,
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-profile {
+  position:relative!important;
+  z-index:1;
+}
+/* O texto On Demand nunca encosta na borda direita em hover/foco. */
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-button,
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-profile {
+  padding-right:calc(24 * var(--ott-u))!important;
+  box-sizing:border-box!important;
+}
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-button:is(:hover,:focus-visible),
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-profile:is(:hover,:focus-visible) {
+  width:calc(310 * var(--ott-u))!important;
+  max-width:calc(310 * var(--ott-u))!important;
+  background:rgba(0,0,0,.65)!important;
+  border-color:#fff!important;
+  box-shadow:none!important;
+  outline:0!important;
+}
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-name {
+  flex:0 1 auto;
+  max-width:calc(204 * var(--ott-u));
+  overflow:hidden!important;
+  text-overflow:ellipsis;
+  padding-right:calc(6 * var(--ott-u));
+}
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-profile .ott-home-rail-name {
+  font-size:calc(22 * var(--ott-u))!important;
+  max-width:calc(207 * var(--ott-u));
+}
+/* No ar vai para o rodapé, à direita do botão de perfil, sem cobrir o apresentador. */
+.nexo-tv.ott-home.ott-rail-layout .ott-now {
+  position:absolute!important;
+  left:calc(462 * var(--ott-u))!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:6.1%!important;
+  width:calc(550 * var(--ott-u))!important;
+  max-height:calc(455 * var(--ott-u));
+  overflow-y:auto;
+  scrollbar-width:thin;
+  padding:calc(24 * var(--ott-u)) calc(28 * var(--ott-u))!important;
+  background:rgba(0,0,0,.54);
+  border-radius:calc(24 * var(--ott-u));
+  box-sizing:border-box;
+  z-index:5!important;
+}
+.nexo-tv.ott-home.ott-rail-layout .ott-now h2 {
+  margin-top:calc(12 * var(--ott-u))!important;
+  max-width:100%;
+  font-size:calc(35 * var(--ott-u))!important;
+  line-height:1.18!important;
+  overflow-wrap:break-word;
+}
+.nexo-tv.ott-home.ott-rail-layout .ott-now-presenter {
+  margin-top:calc(12 * var(--ott-u))!important;
+}
+.nexo-tv.ott-home.ott-rail-layout .ott-now-grade {
+  margin-top:calc(18 * var(--ott-u))!important;
+}
+/* Mantém a versão visível no mesmo eixo do avatar, sem interceptar cliques. */
+.nexo-tv.ott-home.ott-rail-layout .ott-footer {
+  bottom:6.5%!important;
+  pointer-events:none!important;
+}
+@media (prefers-reduced-motion:reduce) {
+ .nexo-tv.ott-home.ott-rail-layout .ott-home-rail-button,
+ .nexo-tv.ott-home.ott-rail-layout .ott-home-rail-profile,
+ .nexo-tv.ott-home.ott-rail-layout .ott-home-rail-name {transition:none!important;}
+}
+
+/* NEXO_V7_7_MENU_FAIXA_ESTREITA_8080 */
+/* Painel escuro: somente a faixa fina contornando os circulos, do Assistir ate o avatar.
+   Os rotulos dos itens continuam abrindo para a direita, fora desta faixa. */
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail::before {
+  inset: calc(-18 * var(--ott-u)) auto calc(-19 * var(--ott-u)) calc(-12 * var(--ott-u)) !important;
+  width: calc(102 * var(--ott-u)) !important;
+  border-radius: calc(58 * var(--ott-u)) !important;
+  background: rgba(0, 0, 0, .60) !important;
+  box-shadow: none !important;
+}
+/* Menos distancia vertical entre Assistir, Ouvir e On Demand. */
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-actions {
+  gap: calc(4 * var(--ott-u)) !important;
+}
+/* O bloco No ar fica livre, sem caixa ou vidro atras dele. */
+.nexo-tv.ott-home.ott-rail-layout .ott-now {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* NEXO_V7_8_MENU_OPACIDADE_GRADIENTE_NOAR */
+/* Mesmo tom e opacidade do mini-player (.ott-header-track: #17171770 = 44%).
+   O fundo envolve SOMENTE a coluna de botoes, nao suas legendas expandidas. */
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail::before {
+  background: #17171770 !important;
+}
+/* Cor do cliente em diagonal de cima/esquerda para baixo/direita, ate cinza escuro.
+   O avatar conserva a foto de perfil. */
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-button > .ott-home-rail-circle {
+  background: linear-gradient(155deg, var(--ott-accent, #f20d0f) 0%, #171719 100%) !important;
+  transition: background-color 220ms ease !important;
+}
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-button:is(:hover,:focus-visible) {
+  background: linear-gradient(155deg, var(--ott-accent, #f20d0f) 0%, #171719 100%) !important;
+  border-color: #fff !important;
+}
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-button:is(:hover,:focus-visible) > .ott-home-rail-circle {
+  background: linear-gradient(155deg, var(--ott-accent, #f20d0f) 0%, #171719 100%) !important;
+}
+/* No ar: proximo da borda direita da faixa, com respiro; acima do avatar. */
+.nexo-tv.ott-home.ott-rail-layout .ott-now {
+  left: calc(265 * var(--ott-u)) !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: calc(170 * var(--ott-u)) !important;
+  width: calc(505 * var(--ott-u)) !important;
+  max-height: calc(400 * var(--ott-u)) !important;
+  padding: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}

@@ -1,0 +1,143 @@
+/* NEXO_HOME_4_AJUSTES_20261121: apenas Home da TV. NÃO modificar /watch. */
+/* 02. O nome da rádio acima dos cards foi removido no componente.
+   Compensação exata da altura anterior para manter os cards no lugar. */
+.nexo-tv.ott-home .ott-destination-row {
+  margin-top: calc(64 * var(--ott-u));
+}
+/* 03. Base do bloco No Ar alinhada à base dos cards (topo 29%, altura 430u). */
+.nexo-tv.ott-home .ott-now {
+  top: auto;
+  bottom: calc(71% - 494 * var(--ott-u));
+}
+/* 04. Busca expande para a DIREITA, sem mover os elementos à esquerda. */
+.nexo-tv.ott-home .ott-home-search-wrap {
+  display: flex;
+  align-items: center;
+  position: relative;
+  flex-shrink: 0;
+  min-width: 0;
+  isolation: isolate;
+  z-index: 15;
+}
+.nexo-tv.ott-home .ott-home-search-wrap > .ott-search {
+  flex: 0 0 auto;
+  margin-left: 0;
+  color: #fff !important;
+  white-space: nowrap;
+}
+.nexo-tv.ott-home .ott-home-search-expand {
+  width: 0;
+  height: calc(62 * var(--ott-u));
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  opacity: 0;
+  border-radius: calc(16 * var(--ott-u));
+  background: rgba(50, 50, 50, .50);
+  transition: width 380ms cubic-bezier(.2, .8, .2, 1), opacity 240ms ease;
+}
+.nexo-tv.ott-home .ott-home-search-wrap.is-open .ott-home-search-expand {
+  width: calc(410 * var(--ott-u));
+  opacity: 1;
+  margin-left: calc(12 * var(--ott-u));
+}
+.nexo-tv.ott-home .ott-home-search-input {
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
+  height: 100%;
+  padding: 0 calc(18 * var(--ott-u));
+  outline: 0 !important;
+  border: 0;
+  background: transparent;
+  color: white;
+  font-size: calc(21 * var(--ott-u));
+}
+.nexo-tv.ott-home .ott-home-search-input::placeholder { color: rgba(255,255,255,.6); }
+.nexo-tv.ott-home .ott-home-search-input:focus-visible { outline: 0 !important; }
+.nexo-tv.ott-home .ott-home-search-wrap .ott-home-search-close {
+  flex: 0 0 calc(50 * var(--ott-u));
+  min-width: 0;
+  width: calc(50 * var(--ott-u));
+  height: calc(50 * var(--ott-u));
+  min-height: 0;
+  padding: 0;
+  border-radius: calc(12 * var(--ott-u));
+}
+.nexo-tv.ott-home .ott-home-search-close svg {
+  width: calc(24 * var(--ott-u));
+  height: calc(24 * var(--ott-u));
+}
+.nexo-tv.ott-home .ott-home-search-results {
+  position: absolute;
+  top: calc(100% + 16 * var(--ott-u));
+  left: 0;
+  width: min(calc(535 * var(--ott-u)), 85vw);
+  max-height: calc(470 * var(--ott-u));
+  padding: calc(10 * var(--ott-u));
+  display: flex;
+  flex-direction: column;
+  gap: calc(8 * var(--ott-u));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: calc(18 * var(--ott-u));
+  background: rgba(20,20,20,.68);
+  animation: nexo-home-search-enter 260ms cubic-bezier(.2,.8,.2,1) both;
+}
+.nexo-tv.ott-home .ott-home-search-caption {
+  padding: calc(10 * var(--ott-u)) calc(14 * var(--ott-u));
+  color: #ddd;
+  letter-spacing: .04em;
+  font-size: calc(18 * var(--ott-u));
+}
+/* Mesma tonalidade (#323232) do painel de letra, com 50% de opacidade. */
+.nexo-tv.ott-home .ott-home-search-results .ott-home-search-result,
+.nexo-tv.ott-home .ott-home-search-results .ott-home-search-recent {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
+  width: 100%;
+  flex: 0 0 auto;
+  min-height: calc(76 * var(--ott-u));
+  gap: calc(16 * var(--ott-u));
+  padding: calc(10 * var(--ott-u)) calc(16 * var(--ott-u));
+  border: 0;
+  border-radius: calc(16 * var(--ott-u));
+  background: rgba(50,50,50,.50);
+  color: #fff;
+  transition: background 180ms ease;
+}
+.nexo-tv.ott-home .ott-home-search-results .ott-home-search-result:is(:hover,:focus-visible),
+.nexo-tv.ott-home .ott-home-search-results .ott-home-search-recent:is(:hover,:focus-visible) {
+  background: rgba(70,70,70,.72);
+}
+.nexo-tv.ott-home .ott-home-search-result-art {
+  width: calc(56 * var(--ott-u));
+  height: calc(56 * var(--ott-u));
+  border-radius: calc(8 * var(--ott-u));
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  background: rgba(255,255,255,.08);
+}
+.nexo-tv.ott-home .ott-home-search-result-art img { width: 100%; height: 100%; object-fit: cover; }
+.nexo-tv.ott-home .ott-home-search-result-art svg { width: 45%; height: 45%; }
+.nexo-tv.ott-home .ott-home-search-result-text { min-width: 0; flex: 1; }
+.nexo-tv.ott-home .ott-home-search-result-text strong,
+.nexo-tv.ott-home .ott-home-search-result-text small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nexo-tv.ott-home .ott-home-search-result-text strong { font-size: calc(21 * var(--ott-u)); font-weight: 500; }
+.nexo-tv.ott-home .ott-home-search-result-text small { color: #d4d4d4; font-size: calc(17 * var(--ott-u)); }
+.nexo-tv.ott-home .ott-home-search-recent svg { width: calc(22 * var(--ott-u)); height: calc(22 * var(--ott-u)); }
+.nexo-tv.ott-home .ott-home-search-recent span { font-size: calc(21 * var(--ott-u)); text-align: left; }
+.nexo-tv.ott-home .ott-home-search-empty { font-size: calc(19 * var(--ott-u)); color: #ddd; padding: calc(14 * var(--ott-u)); }
+@keyframes nexo-home-search-enter {
+  from { opacity: 0; transform: translateY(calc(-8 * var(--ott-u))); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nexo-tv.ott-home .ott-home-search-expand { transition: none; }
+  .nexo-tv.ott-home .ott-home-search-results { animation: none; }
+}

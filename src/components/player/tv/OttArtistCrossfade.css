@@ -1,0 +1,9 @@
+/* NEXO V7.3: image is preloaded before insertion; previous is retained during fade. */
+.nexo-tv .ott-artist-crossfade { position:absolute;inset:0;overflow:hidden;pointer-events:none; }
+.nexo-tv .ott-artist-crossfade>img { position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 35%;filter:brightness(.72) saturate(1.05); }
+.nexo-tv .ott-artist-crossfade>img { animation:nexo-v73-image-motion 21s ease-in-out infinite alternate; }
+.nexo-tv .ott-artist-crossfade-current { animation:nexo-v73-image-motion 21s ease-in-out infinite alternate,nexo-v73-image-reveal 1.5s ease-out both; }
+.nexo-tv .ott-artist-crossfade-previous { opacity:1; }
+@keyframes nexo-v73-image-reveal { from {opacity:0} to {opacity:1} }
+@keyframes nexo-v73-image-motion { from {transform:scale(1.025)} to {transform:scale(1.105)} }
+@media (prefers-reduced-motion:reduce) { .nexo-tv .ott-artist-crossfade>img{animation:none!important;opacity:1} }

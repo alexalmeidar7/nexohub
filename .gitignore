@@ -35,3 +35,8 @@ playwright-report/
 # Native Bridge build outputs
 tools/NexoHubBridge/bin/
 tools/NexoHubBridge/obj/
+
+# Local PairPage recovery copies
+/src/pages/PairPage-backup.tsx
+/src/pages/PairPage-fixed.tsx
+/src/pages/PairPage-old.tsx

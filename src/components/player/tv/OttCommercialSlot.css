@@ -1,0 +1,47 @@
+ .nexo-ad-slot{position:relative;min-width:0;line-height:0;z-index:5;flex-shrink:0}.nexo-ad-slot>button,.nexo-ad-art{position:relative;display:block;width:100%;padding:0;border:0;background:transparent;border-radius:12px;line-height:0}.nexo-ad-slot img{display:block;width:100%;height:auto;object-fit:contain;border-radius:12px;filter:none!important;transform:none!important}.nexo-ad-slot button:focus-visible{outline:3px solid white;outline-offset:4px}.nexo-ad-label{position:absolute;left:8px;top:8px;background:#ffffffe0;color:#222;border-radius:20px;padding:5px 9px;font-size:12px;line-height:1;pointer-events:none}.nexo-ad-qr{position:absolute;right:calc(100% + 8px);top:50%;transform:translateY(-50%);display:flex;flex-direction:row-reverse;align-items:center;gap:8px;z-index:25;pointer-events:none}.nexo-ad-qr>span,.nexo-ad-qr>div{background:rgba(50,50,50,.86);border-radius:14px;padding:12px;color:white}.nexo-ad-qr svg{display:block;width:calc(180 * var(--ott-u));height:auto;background:white}.nexo-ad-cover_ads{width:100%;height:100%}.nexo-ad-cover_ads img{width:100%;height:100%;object-fit:contain}.nexo-ad-cover_ads .nexo-ad-qr{left:calc(100% + 8px);right:auto;flex-direction:row}.ott-album:has(.nexo-ad-cover_ads){overflow:visible}.nexo-ad-background_ads{position:absolute!important;inset:0;z-index:0;pointer-events:none}.nexo-ad-background_ads img{width:100%;height:100%;object-fit:contain}.nexo-ad-background_ads .nexo-ad-art{height:100%}.nexo-ad-naming_rights{width:calc(110 * var(--ott-u));margin-top:8px}.nexo-ad-chat_ads,.nexo-ad-poll_ads,.nexo-ad-lyrics_ads,.nexo-ad-weather_ads{width:100%;margin:10px 0}.nexo-ad-history_ads{width:100%;max-width:calc(240 * var(--ott-u));margin:auto}.nexo-ad-pause_ads,.nexo-ad-splash_sponsor{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:35%;z-index:45}.nexo-ad-splash_sponsor{width:14%;pointer-events:none}.nexo-ad-pause_ads .nexo-ad-qr{left:calc(100% + 8px);right:auto;flex-direction:row}
+
+.ott-interactivity-panel .nexo-ad-qr,.ott-tv-chat-messages .nexo-ad-qr,.nexo-history-carousel .nexo-ad-qr{position:relative;right:auto;left:auto;top:auto;transform:none;justify-content:center;margin-top:8px;flex-direction:row}.nexo-ad-splash_sponsor .nexo-ad-label{display:none}.nexo-ad-background_ads .nexo-ad-label{top:auto;bottom:12%;left:5%}.nexo-ad-background_ads .nexo-ad-art,.nexo-ad-background_ads img{width:100%;height:100%}.nexo-ad-cover_ads>button,.nexo-ad-cover_ads .nexo-ad-art{height:100%}.nexo-ad-slot img{max-width:100%}.ott-home .nexo-ad-naming_rights{max-height:calc(90 * var(--ott-u))}.ott-home .nexo-ad-naming_rights img{max-height:calc(90 * var(--ott-u))}
+
+/* Exclusive background advertising; full artwork, no locutor or song metadata. */
+.ott-watch-controls:has(>.nexo-ad-background_ads[data-ad-ready="true"]) > .ott-presenter-backdrop,
+.ott-watch-controls:has(>.nexo-ad-background_ads[data-ad-ready="true"]) .ott-audio-stage,
+.ott-watch-controls:has(>.nexo-ad-background_ads[data-ad-ready="true"]) .ott-watch-program{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
+.ott-watch-controls:has(>.nexo-ad-background_ads[data-ad-ready="true"]) > .nexo-ad-background_ads{background:#000;z-index:0;animation:nexoCommercialIn 280ms ease both}
+.ott-watch-controls:has(>.nexo-ad-background_ads[data-ad-ready="true"]) .ott-watch-header{opacity:.0;transition:opacity 220ms}
+.ott-watch-controls:has(>.nexo-ad-background_ads[data-ad-ready="true"]) .ott-watch-header:focus-within{opacity:1}
+.ott-watch-controls:has(>.nexo-ad-background_ads[data-ad-ready="true"]) .ott-watch-surface{z-index:1}
+.nexo-ad-slot[data-ad-ready="true"]{animation:nexoCommercialIn 220ms ease both}
+@keyframes nexoCommercialIn{from{opacity:0}to{opacity:1}}
+.nexo-ad-naming_rights{width:calc(160 * var(--ott-u));max-height:calc(100 * var(--ott-u))}.nexo-ad-naming_rights img{max-height:calc(100 * var(--ott-u));object-fit:contain}
+
+.nexo-tv-commercial-playback{position:fixed;inset:0;z-index:10000;background:#101010;color:white;display:flex;align-items:center;justify-content:center;outline:none;font-family:inherit}.nexo-tv-commercial-playback>video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}.nexo-tv-commercial-label{position:absolute;z-index:2;left:4%;top:5%;background:#ffffffe0;color:#222;border-radius:999px;padding:7px 14px;font-size:clamp(12px,1.2vw,22px)}.nexo-tv-commercial-audio{display:flex;flex-direction:column;gap:18px;align-items:center;text-align:center;font-size:clamp(18px,2vw,36px)}.nexo-tv-commercial-audio>span{font-size:clamp(60px,9vw,160px);color:var(--player-dominant-color,#eb1b24)}.nexo-tv-commercial-audio>small{opacity:.7}.nexo-tv-commercial-back,.nexo-tv-commercial-action{position:absolute;z-index:3;bottom:5%;right:5%;display:flex;align-items:center;gap:10px}.nexo-tv-commercial-back{right:auto;left:5%;background:#333;color:white;border-radius:999px;padding:10px 18px}.nexo-tv-commercial-action button,.nexo-tv-commercial-action>div{background:rgba(50,50,50,.86);border-radius:12px;padding:12px}.nexo-tv-commercial-action svg{display:block;width:clamp(120px,14vw,240px);height:auto;background:white}.nexo-tv-commercial-playback button:focus-visible{outline:3px solid white;outline-offset:4px}
+
+.nexo-preroll-audio-background{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#101010;pointer-events:none}.nexo-preroll-audio-qr{position:absolute;z-index:3;right:5%;bottom:5%;display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px;background:rgba(50,50,50,.86);border-radius:16px;color:white;font-size:clamp(14px,1.4vw,26px);font-weight:700}.nexo-preroll-audio-qr svg{display:block;width:clamp(140px,14vw,240px);height:auto;background:white;border-radius:5px}
+
+/* Audio pre-roll: compact QR, rounded corners and detached focus ring. */
+.nexo-preroll-audio-label{font-weight:400}
+.nexo-preroll-audio-qr{padding:12px;gap:8px;border-radius:24px;font-size:clamp(13px,1.2vw,22px);outline:none}
+.nexo-preroll-audio-qr svg{width:clamp(120px,12vw,204px);border-radius:14px}
+.nexo-preroll-audio-qr:hover,.nexo-preroll-audio-qr:focus,.nexo-preroll-audio-qr:focus-visible{outline:3px solid #fff;outline-offset:6px}
+
+.nexo-tv-commercial-playback.nexo-preroll-exiting{pointer-events:none;animation:nexoPrerollExit 350ms ease-in both}
+@keyframes nexoPrerollExit{from{opacity:1}to{opacity:0}}
+
+/* Contextual ads: clean artwork without overlay labels. */
+.nexo-ad-lyrics_ads .nexo-ad-label,
+.nexo-ad-poll_ads .nexo-ad-label,
+.nexo-ad-weather_ads .nexo-ad-label,
+.nexo-ad-history_ads .nexo-ad-label { display: none; }
+/* Use exactly the existing music-cover container dimensions. */
+.nexo-tv .nexo-history-cover > .nexo-ad-history_ads[data-ad-ready="true"] {
+  position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; margin: 0;
+}
+.nexo-tv .nexo-history-cover > .nexo-ad-history_ads > button,
+.nexo-tv .nexo-history-cover > .nexo-ad-history_ads > .nexo-ad-art {
+  width: 100%; height: 100%; border-radius: inherit;
+}
+.nexo-tv .nexo-history-cover > .nexo-ad-history_ads img {
+  width: 100%; height: 100%; object-fit: contain; border-radius: inherit;
+}
+
+.nexo-ad-label,.nexo-home-commercial-label,.nexo-tv-commercial-label.nexo-preroll-audio-label,.nexo-tv-commercial-label{font-weight:600;}

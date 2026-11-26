@@ -1,3 +1,5 @@
+import { useTvNowPlaying } from "@/components/player/tv/tvNowPlaying";
+import { normalizeTvMusicText } from "@/lib/tvMusicEncoding";
 import { useEffect, useState, useRef, useCallback, useMemo, Suspense } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { createPortal } from "react-dom";
@@ -24,7 +26,7 @@ import { resolveEffectiveOnAir } from "@/lib/onAirResolver";
 import { playerSignOut } from "@/lib/playerSignOut";
 import { fetchStationDatabaseData } from "@/lib/stationDatabaseService";
 import { getStationLogoFallback } from "@/lib/playerBranding";
-import { isPlayerTvApp } from "@/lib/playerTvApp";
+import { isPlayerOtt, isPlayerTvApp } from "@/lib/playerTvApp";
 import OttHome from "@/components/player/tv/OttHome";
 const MiniPlayerWidget = lazyRetry(() => import("@/components/player/MiniPlayerWidget"));
 const PlayerGradeDialog = lazyRetry(() => import("@/components/player/PlayerGradeDialog"));
@@ -463,7 +465,7 @@ function TopNavBar({
         <div className={`flex items-center gap-3 ${homeLayout ? "player-home-clock-weather" : ""}`}>
           <PlayerClockWeather radioUserId={radioUserId} compact />
         </div>
-
+        
         {/* Saudação */}
         <div className={`${homeLayout ? "player-home-greeting" : "text-white font-medium text-lg"}`}>
           {getGreeting()}
@@ -1430,9 +1432,11 @@ interface PlayerHomeProps {
 
 /* ─── Local cache helpers ─── */
 const CACHE_KEY = "player_home_cache";
+const tvHomeMemory = new Map<string, any>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 min
 
 function readCache(cacheId: string) {
+  if (isPlayerOtt() && tvHomeMemory.has(cacheId)) return tvHomeMemory.get(cacheId);
   try {
     const raw = localStorage.getItem(CACHE_KEY + "_" + cacheId);
     if (!raw) return null;
@@ -1443,6 +1447,7 @@ function readCache(cacheId: string) {
 }
 
 function writeCache(cacheId: string, data: Record<string, any>) {
+  if (isPlayerOtt()) { tvHomeMemory.set(cacheId, {...data, _ts:Date.now()}); if(tvHomeMemory.size>4) tvHomeMemory.delete(tvHomeMemory.keys().next().value!); }
   try {
     localStorage.setItem(CACHE_KEY + "_" + cacheId, JSON.stringify({ ...data, _ts: Date.now() }));
   } catch {}
@@ -1450,7 +1455,15 @@ function writeCache(cacheId: string, data: Record<string, any>) {
 
 export default function PlayerHome({ onBackToAccess, tvGuestMode = false, tvProfile = null }: PlayerHomeProps = {}) {
   const { user, loading: authLoading } = usePlayerAuth();
-  useGlobalMusicSync(undefined, true, true);
+  useGlobalMusicSync(undefined, !isPlayerOtt(), true);
+  // NEXO_LOADING_UNICO_V1: pre-carrega o codigo das telas Ouvir/Assistir na Home.
+  useEffect(() => {
+    if (!isPlayerOtt()) return;
+    void Promise.allSettled([
+      import("@/pages/Player"),
+      import("@/pages/player/AudioPlayerScreen"),
+    ]);
+  }, []);
 
   const [activeRow, setActiveRow] = useState(0);
   const ROW_COUNT = 2;
@@ -1662,7 +1675,7 @@ export default function PlayerHome({ onBackToAccess, tvGuestMode = false, tvProf
   const [channels, setChannels] = useState<Channel[]>(() => cached?.channels ?? []);
   const [logoUrl, setLogoUrl] = useState<string | null>(() => cached?.logoUrl ?? null);
   const [channelName, setChannelName] = useState(() => cached?.channelName ?? "");
-  const [timezone, setTimezone] = useState<string | null>(null);
+  const [timezone, setTimezone] = useState<string | null>(cached?.timezone || null);
   const [profileName, setProfileName] = useState(() => cached?.profileName ?? "");
   const [profileAvatar, setProfileAvatar] = useState<string | null>(() => cached?.profileAvatar ?? null);
   const [profileEmail, setProfileEmail] = useState(() => cached?.profileEmail ?? "");
@@ -1671,14 +1684,17 @@ export default function PlayerHome({ onBackToAccess, tvGuestMode = false, tvProf
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [programas, setProgramas] = useState<Programa[]>(() => cached?.programas ?? []);
   const [dataLoaded, setDataLoaded] = useState(() => !!cached);
+  // NEXO_LOADING_UNICO_V1: erro visivel e tentativa manual; nunca travar a Home.
+  const [loadError, setLoadError] = useState(false);
+  const [reloadToken, setReloadToken] = useState(0);
   const [loadProgress, setLoadProgress] = useState(cached ? 100 : 0);
   const [watchHistory, setWatchHistory] = useState<any[]>([]);
   const [playlistVideos, setPlaylistVideos] = useState<Record<string, PlaylistVideo[]>>({});
-  const [nowPlaying, setNowPlaying] = useState<{ musica: string; artista: string; capa?: string } | null>(null);
+  const [nowPlaying, setNowPlaying] = useState<{ musica: string; artista: string; capa?: string } | null>(() => isPlayerOtt() ? cached?.nowPlaying || null : null);
   const [shopProducts, setShopProducts] = useState<any[]>([]);
   const [shopActive, setShopActive] = useState(true);
   const [showGrade, setShowGrade] = useState(false);
-  const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
+  const [apresentadores, setApresentadores] = useState<Apresentador[]>(() => cached?.presenters || []);
   const [activeCatalog, setActiveCatalog] = useState<string | null>(null);
   const contentScrollRef = useRef<HTMLDivElement>(null);
 
@@ -1686,7 +1702,7 @@ export default function PlayerHome({ onBackToAccess, tvGuestMode = false, tvProf
 
   // On mount: destroy any lingering audio from Player page to ensure silence on Home
   useEffect(() => {
-    destroyMiniAudio();
+    if (!isPlayerOtt()) destroyMiniAudio();
     clearMiniPlayerData();
   }, []);
 
@@ -1703,25 +1719,44 @@ export default function PlayerHome({ onBackToAccess, tvGuestMode = false, tvProf
     }
   }, [searchParams]);
 
+  const tvTrack = useTvNowPlaying(userSlug, ownerUserId, isPlayerOtt());
+  useEffect(() => { if (tvTrack) setNowPlaying(prev=>prev?.musica===tvTrack.titulo && prev?.artista===tvTrack.artista && prev?.capa===tvTrack.capa ? prev : {musica:tvTrack.titulo, artista:tvTrack.artista, capa:tvTrack.capa}); }, [tvTrack]);
   // Poll for current music data
   useEffect(() => {
+    if (isPlayerOtt() && userSlug && !userSlug.startsWith(":")) return;
     const isSlugMode = !!(userSlug && userSlug !== ":userSlug");
     // Reset ao trocar de slug para nunca exibir dados da rádio anterior
-    setNowPlaying(null);
+    if (!isPlayerOtt()) setNowPlaying(null);
+    let cancelled = false, busy = false;
+    let revision = 0;
+    let lastRealtimeMusic = "";
 
     const fetchMusic = async () => {
       // Em modo público/slug, SEMPRE usa apenas os dados do usuário da URL.
       // Nunca faz fallback para localStorage/DB do usuário logado (evita mistura entre rádios).
       if (isSlugMode) {
+        if (busy || cancelled) return; busy = true;
+        const requestRevision = revision;
+        const controller = new AbortController();
+        let timeout: ReturnType<typeof setTimeout> | undefined;
         try {
-          const { data } = await playerSupabase.functions.invoke("public-player-data", { body: { slug: userSlug, section: "now_playing" } });
-          if (data?.musica) {
-            setNowPlaying({ musica: formatTrackText(data.musica), artista: formatTrackText(data.artista || ""), capa: data.capa || "" });
-          } else {
-            setNowPlaying(null);
-          }
+          const { data, error } = await Promise.race([
+            playerSupabase.functions.invoke("public-player-data", { body: { slug: userSlug, section: "now_playing" }, signal: controller.signal }),
+            new Promise<never>((_, reject) => { timeout = setTimeout(() => { controller.abort(); reject(new Error("music timeout")); }, 6000); }),
+          ]);
+          if (cancelled || requestRevision !== revision || error) return;
+          const track = isPlayerOtt() && data?.musicData?.titulo ? data.musicData : data;
+          const title = track?.titulo || track?.musica;
+          if (title) {
+            const normalize = isPlayerOtt() ? normalizeTvMusicText : formatTrackText;
+            const next = {musica: normalize(title), artista: normalize(track.artista || ""), capa: track.capa || ""};
+            setNowPlaying(prev => prev?.musica === next.musica && prev.artista === next.artista && (prev.capa || "") === next.capa ? prev : next);
+          } else if (!isPlayerOtt()) setNowPlaying(null);
         } catch {
-          setNowPlaying(null);
+          if (!cancelled && !isPlayerOtt()) setNowPlaying(null);
+        } finally {
+          clearTimeout(timeout); busy = false;
+          if (!cancelled && requestRevision !== revision) void fetchMusic();
         }
         return;
       }
@@ -1750,17 +1785,33 @@ export default function PlayerHome({ onBackToAccess, tvGuestMode = false, tvProf
       } catch {}
     };
     fetchMusic();
-    const interval = setInterval(fetchMusic, 10000);
-    return () => clearInterval(interval);
-  }, [user, userSlug]);
+    const tv = isPlayerOtt();
+    const interval = setInterval(() => { if (!document.hidden || !tv) void fetchMusic(); }, tv ? 2000 : 10000);
+    const realtime = tv && isSlugMode && ownerUserId ? playerSupabase.channel(`tv-home-music-${ownerUserId}`).on("postgres_changes", {event:"UPDATE",schema:"public",table:"user_settings",filter:`user_id=eq.${ownerUserId}`}, payload => {
+      if (cancelled) return;
+      const d = (payload.new as any)?.dashboard_items;
+      if (typeof d?.music_current_title === "string" && d.music_current_title.trim()) {
+        const next = {musica:normalizeTvMusicText(d.music_current_title), artista:normalizeTvMusicText(d.music_current_artist || ""), capa:d.music_current_cover || ""};
+        const signature = JSON.stringify(next);
+        if (signature === lastRealtimeMusic) return;
+        lastRealtimeMusic = signature;
+        revision++;
+        setNowPlaying(next);
+      }
+      void fetchMusic();
+    }).subscribe() : null;
+    const refresh = () => { if (!document.hidden) void fetchMusic(); };
+    if (tv) { document.addEventListener("visibilitychange", refresh); window.addEventListener("online", refresh); window.addEventListener("focus", refresh); }
+    return () => { cancelled = true; clearInterval(interval); document.removeEventListener("visibilitychange", refresh); window.removeEventListener("online", refresh); window.removeEventListener("focus", refresh); if(realtime) void playerSupabase.removeChannel(realtime); };
+  }, [user?.id, userSlug, ownerUserId]);
 
   const userName = profileName || user?.email?.split("@")[0] || "Visitante";
   const tvUser = tvGuestMode ? null : user;
   const tvGoogleProfile = tvUser?.identities?.find(identity => identity.provider === "google")?.identity_data;
   const tvGoogleName = tvGoogleProfile?.full_name || tvGoogleProfile?.name || tvUser?.user_metadata.full_name || tvUser?.user_metadata.name;
   const tvGoogleAvatar = tvGoogleProfile?.avatar_url || tvGoogleProfile?.picture || tvUser?.user_metadata.avatar_url || tvUser?.user_metadata.picture;
-  const tvDisplayName = tvUser ? tvProfile?.name || (typeof tvGoogleName === "string" ? tvGoogleName : null) || tvUser.email?.split("@")[0] || "Visitante" : "Visitante";
-  const tvAvatar = tvUser ? tvProfile?.avatar || (typeof tvGoogleAvatar === "string" ? tvGoogleAvatar : null) : null;
+  const tvDisplayName = tvUser ? tvProfile?.name || (typeof tvGoogleName === "string" ? tvGoogleName : null) || tvUser.email?.split("@")[0] || "Visitante" : tvProfile?.name || "Visitante";
+  const tvAvatar = tvUser ? tvProfile?.avatar || (typeof tvGoogleAvatar === "string" ? tvGoogleAvatar : null) : tvProfile?.avatar || null;
 
   // Fetch data
   useEffect(() => {
@@ -1856,44 +1907,66 @@ export default function PlayerHome({ onBackToAccess, tvGuestMode = false, tvProf
       });
     };
 
-    const fetchPublicData = async (slug: string, attempt = 0) => {
+    const fetchPublicData = async (slug: string) => {
+      setLoadError(false);
       setLoadProgress(prev => Math.max(prev, 20));
       if (cancelled) return;
-      const { data, error } = await playerSupabase.functions.invoke("public-player-data", { body: { slug } });
-      if (cancelled) return;
-      if (Boolean(error || data?.error) && scheduleRetry(() => fetchPublicData(slug, attempt + 1), attempt)) return;
-      setChannels((data?.channels ?? []) as any);
-      setOwnerUserId(data?.userId || null);
-      if (data?.empresa?.logo) setLogoUrl(data.empresa.logo);
-      if (data?.empresa?.nome) setChannelName(data.empresa.nome);
-      if (data?.empresa?.timezone) setTimezone(data.empresa.timezone);
-      setProgramas((data?.programas ?? []) as any);
-      setApresentadores((data?.apresentadores ?? []) as Apresentador[]);
-      setShopProducts((data?.shopProducts ?? []) as any);
-      if (typeof data?.shopActive === "boolean") setShopActive(data.shopActive);
-      setLoadProgress(100);
-      setDataLoaded(true);
-      // Cache public data
-      writeCache(cacheId, {
-        channels: data?.channels ?? [],
-        logoUrl: data?.empresa?.logo || null,
-        channelName: data?.empresa?.nome || "",
-        programas: data?.programas ?? [],
-        ownerUserId: data?.userId || null,
-      });
+      // NEXO_LOADING_UNICO_V1: visitantes nao podem ficar presos esperando o backend.
+      let deadline: ReturnType<typeof setTimeout> | null = null;
+      try {
+        const { data, error } = await Promise.race([
+          playerSupabase.functions.invoke("public-player-data", { body: { slug } }),
+          new Promise<never>((_, reject) => {
+            deadline = setTimeout(() => reject(new Error("tempo limite ao carregar a radio")), 8500);
+          }),
+        ]);
+        if (cancelled) return;
+        if (error || data?.error || !Array.isArray(data?.channels)) throw error || new Error("Dados publicos indisponiveis");
+        setChannels(data.channels as Channel[]);
+        setOwnerUserId(data.userId || null);
+        if (data.empresa?.logo) setLogoUrl(data.empresa.logo);
+        if (data.empresa?.nome) setChannelName(data.empresa.nome);
+        if (data.empresa?.timezone) setTimezone(data.empresa.timezone);
+        setProgramas((data.programas ?? []) as Programa[]);
+        setApresentadores((data.apresentadores ?? []) as Apresentador[]);
+        setShopProducts((data.shopProducts ?? []) as any);
+        if (typeof data.shopActive === "boolean") setShopActive(data.shopActive);
+        setLoadProgress(100);
+        setDataLoaded(true);
+        writeCache(cacheId, {
+          channels: data.channels,
+          logoUrl: data.empresa?.logo || null,
+          channelName: data.empresa?.nome || "",
+          programas: data.programas ?? [],
+          presenters: data.apresentadores ?? [], timezone: data.empresa?.timezone || null,
+          nowPlaying: data.musicData?.titulo ? {musica:data.musicData.titulo, artista:data.musicData.artista || "", capa:data.musicData.capa || ""} : cached?.nowPlaying,
+          ownerUserId: data.userId || null,
+        });
+      } catch (error) {
+        if (cancelled) return;
+        console.warn("[Nexo Player] Dados da radio indisponiveis", error);
+        // Conservar dados de cache se existirem e exibir recuperacao na propria Home.
+        setLoadError(true);
+        setDataLoaded(true);
+        setLoadProgress(100);
+      } finally {
+        if (deadline) clearTimeout(deadline);
+      }
     };
 
     const fetchData = async () => {
-      if (authLoading) return;
-      if (!cached) setDataLoaded(false);
+      // Consulta publica funciona mesmo sem sessao Google restaurada.
+      if (authLoading && !tvGuestMode && !(userSlug && userSlug !== ":userSlug")) return;
       if (userSlug && userSlug !== ":userSlug") { await fetchPublicData(userSlug); return; }
       if (user?.id) { await fetchAuthenticatedData(); return; }
       setChannels([]); setProgramas([]); setWatchHistory([]); setShopProducts([]); setDataLoaded(true);
     };
 
-    void fetchData();
-    return () => { cancelled = true; if (retryTimer) clearTimeout(retryTimer); };
-  }, [authLoading, user?.id, userSlug]);
+    const cachedTv = isPlayerOtt() && !!cached?.channels?.length && Date.now() - (cached._ts || 0) < 30000 && reloadToken === 0;
+    const initialTimer = cachedTv ? setTimeout(()=>void fetchData(),30000) : null;
+    if(!cachedTv) void fetchData();
+    return () => { cancelled = true; if(initialTimer)clearTimeout(initialTimer); if (retryTimer) clearTimeout(retryTimer); };
+  }, [authLoading, user?.id, userSlug, tvGuestMode, reloadToken]);
 
   useEffect(() => {
     if (!user || !ownerUserId) return;
@@ -1972,6 +2045,11 @@ export default function PlayerHome({ onBackToAccess, tvGuestMode = false, tvProf
   // Preload covers/thumbs/presenter photos while user is on Home,
   // so entering /player/watch shows imagery instantly.
   useEffect(() => {
+    if (isPlayerOtt()) {
+      const urls = Array.from(new Set([currentPresenterFoto, ...channels.filter(c=>c.type === "audio_live" || c.type === "video_live").slice(0,3).map(c=>c.cover_url)].filter((u):u is string=>!!u)));
+      let stopped=false; const timer=setTimeout(async()=>{for(const url of urls){if(stopped)break; try{await preloadImage(url);}catch{}}},1200);
+      return ()=>{stopped=true;clearTimeout(timer);};
+    }
     const urls: string[] = [];
     programas.forEach((p) => {
       if (p.capa) urls.push(p.capa);
@@ -2042,29 +2120,40 @@ export default function PlayerHome({ onBackToAccess, tvGuestMode = false, tvProf
   }, [dataLoaded, channels]);
 
   const goToPlayer = (channelId?: string, videoId?: string) => {
-    setFadeOut(true);
     const params = new URLSearchParams();
     if (channelId) params.set("ch", channelId);
     if (videoId) params.set("vid", videoId);
-    // Carry TV mode from the QR/guest entry screen into the actual player route.
-    if (new URLSearchParams(location.search).get("tvGuest") === "1") { params.set("tv", "1"); params.set("tvGuest", "1"); }
-    const qs = params.toString() ? `?${params.toString()}` : "";
-
-    // Mostramos o loading overlay imediatamente se possível, ou apenas aguardamos o fadeOut
-    // O AudioPlayerScreen no destino cuidará do streamLoading=true baseado no param da URL
-
-    setTimeout(() => {
-      const watchPath = userSlug ? `/user/${userSlug}/nexohub/player/watch` : "/user/nexohub/player/watch";
-      const fromParams = new URLSearchParams(location.search);
-      if (activeCatalog) fromParams.set("catalog", activeCatalog);
-      const fromPath = `${location.pathname}${fromParams.toString() ? `?${fromParams.toString()}` : ""}`;
-      navigate(`${watchPath}${qs}`, {
-        state: {
-          fromPath,
-          fromCatalog: activeCatalog,
-        },
-      });
-    }, 400);
+    const fromParams = new URLSearchParams(location.search);
+    const tvMode = isPlayerOtt();
+    if (isPlayerTvApp()) params.set("tv", "1");
+    if (fromParams.get("tvGuest") === "1") params.set("tvGuest", "1");
+    const qs = params.toString() ? `?${params}` : "";
+    if (activeCatalog) fromParams.set("catalog", activeCatalog);
+    const fromPath = `${location.pathname}${fromParams.toString() ? `?${fromParams}` : ""}`;
+    const route = tvMode
+      ? (userSlug ? `/${userSlug}/player/watch` : "/player/watch")
+      : (userSlug ? `/user/${userSlug}/nexohub/player/watch` : "/user/nexohub/player/watch");
+    const state = {
+      fromPath,
+      fromCatalog: activeCatalog,
+      // NEXO_LOADING_UNICO_V1: a Home transfere dados ja recebidos ao player.
+      // Watch atualiza em segundo plano, sem outra tela de carregamento.
+      tvBootstrap: tvMode && channels.length > 0 ? {
+        channels,
+        programs: programas,
+        presenters: apresentadores,
+        ownerUserId,
+        radioName: channelName,
+        logoUrl,
+        nowPlaying,
+      } : undefined,
+    };
+    if (tvMode) {
+      navigate(`${route}${qs}`, { state });
+      return;
+    }
+    setFadeOut(true);
+    setTimeout(() => navigate(`${route}${qs}`, { state }), 400);
   };
 
   const goToCatalog = (catalogName: string) => {
@@ -2239,7 +2328,7 @@ export default function PlayerHome({ onBackToAccess, tvGuestMode = false, tvProf
   const { bgColors: top10Colors } = useBgPalette(heroChannel?.logo_url || undefined);
   const top10Gradient = `radial-gradient(ellipse at 20% 20%, ${top10Colors[0]} 0%, transparent 60%), radial-gradient(ellipse at 85% 90%, ${top10Colors[1]} 0%, transparent 65%), linear-gradient(135deg, ${top10Colors[0]} 0%, ${top10Colors[1]} 100%)`;
 
-  if (isPlayerTvApp() && visibleSection !== "catalog-detail" && visibleSection !== "top10") return <OttHome radioUserId={ownerUserId} channels={channels} radioName={channelName} logo={logoUrl} background={currentProgram?.thumb || currentProgram?.capa || heroChannel?.cover_url || heroChannel?.background_url || currentPresenterFoto} program={currentProgram?.nome} nextProgram={nextProgram} nowPlaying={nowPlaying} presenter={currentPresenterName} presenterPhoto={currentPresenterFoto} loading={!dataLoaded} profileName={tvDisplayName} avatar={tvAvatar} onProfile={()=>onBackToAccess?.(false)} onPlay={goToPlayer} onCatalog={goToCatalog} />;
+  if (isPlayerOtt() && visibleSection !== "catalog-detail" && visibleSection !== "top10") return <OttHome authenticated={!!tvUser} radioUserId={ownerUserId} channels={channels} programs={programas} presenters={apresentadores} onDemandVideos={playlistVideos} currentProgramId={currentProgram?.id} radioName={channelName} logo={logoUrl} background={currentProgram?.thumb || currentProgram?.capa || heroChannel?.cover_url || heroChannel?.background_url || currentPresenterFoto} program={currentProgram?.nome} nextProgram={nextProgram} nowPlaying={nowPlaying} presenter={currentPresenterName} presenterPhoto={currentPresenterFoto} loading={!dataLoaded} loadError={loadError} onRetry={()=>setReloadToken(v=>v+1)} profileName={tvDisplayName} avatar={tvAvatar} onProfile={()=>onBackToAccess?.(false)} onPlay={goToPlayer} onCatalog={goToCatalog} onPlayVideo={(channelId,videoId)=>goToPlayer(channelId,videoId)} />;
 
 
   return (
@@ -2247,8 +2336,8 @@ export default function PlayerHome({ onBackToAccess, tvGuestMode = false, tvProf
       className={`player-tv-home fixed inset-0 text-white flex flex-col antialiased transition-opacity duration-400 ease-in-out overflow-hidden ${fadeOut ? "opacity-0" : "opacity-100"}`}
       style={{ background: `hsl(var(--player-bg))` }}
     >
-      <PlayerLoadingOverlay
-        isLoading={!dataLoaded || fadeOut}
+      <PlayerLoadingOverlay 
+        isLoading={!dataLoaded || fadeOut} 
         minDurationMs={2500}
         progress={loadProgress}
       />
@@ -2523,3 +2612,4 @@ export default function PlayerHome({ onBackToAccess, tvGuestMode = false, tvProf
     </div>
   );
 }
+

@@ -1,20 +1,26 @@
+import { prepareVideoStatuses } from "@/components/player/tv/tvVideoStatus";
+import { warmTvProfile } from "@/components/player/tv/tvProfileWarm";
+// NEXO_V7_15_AUDIO_HISTORICO_FLUIDEZ
 import { useState, useCallback, useEffect } from "react";
 import { usePlayerAuth } from "@/hooks/usePlayerAuth";
 import { playerSupabase } from "@/integrations/supabase/playerClient";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
 import { usePageTitle, usePublicHead } from "@/hooks/usePageTitle";
 import { useLayoutColors } from "@/hooks/useLayoutColors";
 import { usePlayerColors } from "@/hooks/usePlayerColors";
 import { usePlayerHeartbeat } from "@/hooks/usePlayerHeartbeat";
 import { useTvFocusAutoScroll } from "@/hooks/useTvFocusAutoScroll";
 import { preloadImage } from "@/hooks/usePreloadImages";
-import SplashScreen from "./SplashScreen";
+import SplashScreen, { TvSplashVisual } from "./SplashScreen";
 import AccessScreen from "./AccessScreen";
 import WelcomeScreen from "./WelcomeScreen";
 import PlayerHome from "./PlayerHome";
 import { resolveEffectiveOnAir } from "@/lib/onAirResolver";
 import { getStationLogoFallback } from "@/lib/playerBranding";
 import { clearPlayerSession, getPlayerSessionUserId } from "@/lib/playerSession";
+import { ensureTvRadio, unlockTvRadio } from "@/components/player/tv/tvAudio";
+import { warmTvAudioConnection } from "@/lib/tvAudioWarmup";
+import { isPlayerOtt, isPlayerTvApp } from "@/lib/playerTvApp";
 
 // Injects <link rel="preload" as="image"> for the LCP background so the
 // browser starts downloading the program cover in the highest-priority queue,
@@ -49,6 +55,14 @@ export default function PlayerHub() {
   usePublicHead(userSlug && userSlug !== ":userSlug" ? userSlug : null, "Player");
   const [searchParams, setSearchParams] = useSearchParams();
   const tvGuestMode = searchParams.get("tvGuest") === "1";
+  const tvStartup = searchParams.get("tv") === "1";
+  const location = useLocation();
+  const webOtt = isPlayerOtt() && !isPlayerTvApp();
+  const internalTv = (tvStartup || webOtt) && !!(location.state as {tvInternal?:boolean}|null)?.tvInternal;
+  const [initialCache] = useState(()=>{try{return tvStartup ? JSON.parse(localStorage.getItem("player_home_cache_pub_"+userSlug)||"null") : null;}catch{return null;}});
+
+  // NEXO_V5_WATCH_PREFETCH: carrega o modulo da pagina /watch sem abrir o stream.
+  useEffect(() => { if (tvStartup) void import("../Player").catch(() => {}); }, [tvStartup]);
   // A sessão Supabase do House Mix Online não autentica automaticamente o Player.
   // O vínculo é criado somente pelo login Google iniciado dentro desta tela/aba.
   const playerSessionUserId = getPlayerSessionUserId();
@@ -56,6 +70,9 @@ export default function PlayerHub() {
   const tvProfileKey = user && userSlug ? `nexohub_tv_profile:${user.id}:${userSlug}` : null;
   const [tvSelection, setTvSelection] = useState<{ key: string; name: string; avatar: string | null } | null>(null);
   let tvProfile: { name: string; avatar: string | null } | null = null;
+  if (tvGuestMode && userSlug) {
+    try {const guest=JSON.parse(sessionStorage.getItem(`nexohub_tv_guest_preview:${userSlug}`)||"null");if(typeof guest?.name==="string")tvProfile={name:guest.name,avatar:typeof guest.avatar==="string"?guest.avatar:null};}catch{}
+  }
   if (tvProfileKey) {
     if (tvSelection?.key === tvProfileKey) tvProfile = tvSelection;
     else {
@@ -70,8 +87,12 @@ export default function PlayerHub() {
   const skipToHome =
     tvGuestMode ||
     searchParams.get("step") === "home" ||
-    (typeof window !== "undefined" && window.localStorage.getItem(storageKey) === "1");
-  const [step, setStep] = useState<Step>(searchParams.get("step") === "profiles" ? "welcome" : skipToHome ? "home" : "login");
+    (!tvStartup && typeof window !== "undefined" && window.localStorage.getItem(storageKey) === "1");
+  const [step, setStep] = useState<Step>((internalTv || (webOtt && tvGuestMode)) && searchParams.get("step") === "profiles" ? "welcome" : tvStartup && searchParams.get("step") !== "home" ? "splash" : skipToHome ? "home" : "login");
+  const [prepared, setPrepared] = useState(!!(internalTv && initialCache?.channels?.length));
+  const [prepareError, setPrepareError] = useState(false);
+  const [radioSource, setRadioSource] = useState<string>(initialCache?.channels?.find((c:any)=>c.type === "audio_live" && c.active !== false)?.url || "");
+  useEffect(() => { if (tvStartup && (step === "welcome" || step === "home") && radioSource) void ensureTvRadio(radioSource, userSlug || "radio"); }, [tvStartup, step, radioSource, userSlug]);
 
   // Se chegou com ?step=home, grava a preferência e reflete na URL de forma estável.
   useEffect(() => {
@@ -91,7 +112,7 @@ export default function PlayerHub() {
   // web ativa. Se a sessão expirar ou o usuário sair, exige login novamente.
   // A TV mantém seu fluxo próprio de pareamento via tvGuest.
   useEffect(() => {
-    if (loading || user || tvGuestMode) return;
+    if (loading || user || tvGuestMode || tvStartup || (isPlayerTvApp() && searchParams.get("step") === "profiles")) return;
     try { window.localStorage.removeItem(storageKey); } catch {}
     setStep((current) => current === "login" ? current : "login");
     if (searchParams.has("step")) {
@@ -107,15 +128,15 @@ export default function PlayerHub() {
     });
     return () => subscription.unsubscribe();
   }, []);
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [channelBg, setChannelBg] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(initialCache?.logoUrl || null);
+  const [channelBg, setChannelBg] = useState<string | null>(initialCache?.artistBackground || null);
   const [loginBackground, setLoginBackground] = useState<string | null>(null);
   const [loginMusic, setLoginMusic] = useState<{ title: string; artist: string; cover: string | null } | null>(null);
-  const [channelName, setChannelName] = useState("");
+  const [channelName, setChannelName] = useState(initialCache?.channelName || "");
   const [fadeOut, setFadeOut] = useState(false);
   const [pendingStep, setPendingStep] = useState<Step | null>(null);
-  const [publicUserId, setPublicUserId] = useState<string | null>(null);
-  const [dataReady, setDataReady] = useState(false);
+  const [publicUserId, setPublicUserId] = useState<string | null>(initialCache?.ownerUserId || null);
+  const [dataReady, setDataReady] = useState(!!(internalTv && initialCache?.channels?.length));
   const [loadProgress, setLoadProgress] = useState(0);
   const { colors: playerColors, bgConfigs: playerBgConfigs } = usePlayerColors(publicUserId, userSlug);
 
@@ -184,7 +205,7 @@ export default function PlayerHub() {
     const fetchLogo = async () => {
       setLoadProgress(10);
       const userId = user?.id;
-      if (userId) {
+      if (userId && !(tvStartup && userSlug)) {
         setLoadProgress(25);
         const [empRes, chRes, progRes] = await Promise.all([
           playerSupabase.from("empresa_config").select("logo, nome, timezone").eq("user_id", userId).single(),
@@ -200,7 +221,7 @@ export default function PlayerHub() {
         }
         const programThumb = pickCurrentProgramThumb(progRes.data as any[] | null, "auth", tz);
         const channelThumb = pickChannelThumb(chRes.data as any[] | null);
-        const bg = programThumb || channelThumb;
+        const bg = tvStartup ? null : (programThumb || channelThumb);
         console.log("[WelcomeBG:auth] resultado final →", { programThumb, channelThumb, escolhido: bg });
         setLoadProgress(85);
         if (bg) {
@@ -219,11 +240,23 @@ export default function PlayerHub() {
       if (userSlug && userSlug !== ":userSlug") {
         setLoadProgress(30);
         try {
-          const { data, error } = await playerSupabase.functions.invoke("public-player-data", {
-            body: { slug: userSlug },
-          });
+          const { data, error } = await Promise.race([playerSupabase.functions.invoke("public-player-data", { body: { slug: userSlug } }), new Promise<never>((_, reject) => setTimeout(() => reject(new Error("station timeout")), 12000))]);
           setLoadProgress(75);
           if (!error && data && !data.error) {
+            // NEXO_V5_AUDIO_PREPARE: preconexao da emissora sem iniciar som antes da escolha do perfil.
+            if (tvStartup) {
+              if (!internalTv) warmTvAudioConnection(data.channels);
+              const channels = data.channels || [];
+              setRadioSource(channels.find((c:any) => c.type === "audio_live" && c.active !== false)?.url || "");
+              const cache = {channels, logoUrl:data.empresa?.logo || data.empresa?.logo_url || getStationLogoFallback(userSlug), channelName:data.empresa?.nome || "", timezone:data.empresa?.timezone || null, programas:data.programas || [], presenters:data.apresentadores || [], ownerUserId:data.userId, artistBackground:data.musicDeezerArtistImg || null, nowPlaying:data.musicData?.titulo ? {musica:data.musicData.titulo, artista:data.musicData.artista || "", capa:data.musicData.capa || ""} : null, _ts:Date.now()};
+              try { localStorage.setItem("player_home_cache_pub_"+userSlug, JSON.stringify(cache)); } catch {}
+              const images = [cache.logoUrl, data.musicDeezerArtistImg, data.musicData?.capa, pickCurrentProgramThumb(data.programas, "public", data.empresa?.timezone || null)].filter(Boolean) as string[];
+              try {
+                await Promise.race([Promise.all([prepareVideoStatuses(channels), import("../Player"), import("./AudioPlayerScreen"), import("./PlayerHome"), document.fonts?.ready, ...(user && data.userId ? [warmTvProfile(user,data.userId,user.email?.split("@")[0] || "Visitante").then(profile=>Promise.all([profile.avatar_url,...(profile.sub_profiles||[]).map(p=>p.avatar_url)].filter(Boolean).slice(0,8).map(preloadImage)))] : []), ...images.map(preloadImage)]), new Promise((_,reject)=>setTimeout(()=>reject(new Error("preload timeout")),15000))]);
+                if (!channels.length) throw new Error("no channels");
+                setPrepared(true);
+              } catch { setPrepareError(true); }
+            }
             if (data.userId) setPublicUserId(data.userId);
             setLogoUrl(data.empresa?.logo || data.empresa?.logo_url || data.channels?.find((c: any) => c?.active && c?.logo_url)?.logo_url || getStationLogoFallback(userSlug));
             if (data.empresa?.nome) setChannelName(data.empresa.nome);
@@ -234,7 +267,7 @@ export default function PlayerHub() {
             }
             const programThumb = pickCurrentProgramThumb(data.programas, "public", data.empresa?.timezone || null);
             const channelThumb = pickChannelThumb(data.channels);
-            const bg = programThumb || channelThumb;
+            const bg = tvStartup ? null : (programThumb || channelThumb);
             console.log("[WelcomeBG:public] resultado final →", { programThumb, channelThumb, escolhido: bg });
             if (bg) {
               preloadAsLinkTag(bg);
@@ -246,10 +279,12 @@ export default function PlayerHub() {
               setLoadProgress(100);
             }
           } else {
+            if (tvStartup) setPrepareError(true);
             console.warn("public-player-data error:", error || data?.error);
             setLoadProgress(100);
           }
         } catch (e) {
+          if (tvStartup) setPrepareError(true);
           console.warn("Failed to fetch player data:", e);
           setLoadProgress(100);
         }
@@ -259,7 +294,7 @@ export default function PlayerHub() {
       setDataReady(true);
     };
     fetchLogo();
-  }, [user, userSlug]);
+  }, [tvStartup ? null : user?.id, userSlug, tvStartup]);
 
 
   const [welcomeEditOnMount, setWelcomeEditOnMount] = useState(
@@ -279,6 +314,10 @@ export default function PlayerHub() {
   // onSplashFinish moved to use transitionTo below
 
   const transitionTo = useCallback((target: Step) => {
+    // Troca direta na TV, sem 700 ms de tela preta entre Home e Perfis.
+    if (isPlayerOtt() && (target === "welcome" || target === "home")) {
+      setFadeOut(false); setPendingStep(null); setStep(target); return;
+    }
     setFadeOut(true);
     setPendingStep(target);
     setTimeout(() => {
@@ -297,11 +336,20 @@ export default function PlayerHub() {
 
 
   const onLoginSuccess = useCallback(() => {
-    // Sequence: Login -> Splash
+    if (webOtt && tvGuestMode) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("tvGuest");
+      next.delete("step");
+      setSearchParams(next, { replace: true });
+    }
     transitionTo("splash");
-  }, [transitionTo]);
+  }, [transitionTo, webOtt, tvGuestMode, searchParams, setSearchParams]);
 
+  const [tvSplashExit,setTvSplashExit]=useState<"hidden"|"cover"|"fade">("hidden");
+  useEffect(()=>{if(tvSplashExit!=="cover")return; let second=0;const first=requestAnimationFrame(()=>{second=requestAnimationFrame(()=>setTvSplashExit("fade"));});return()=>{cancelAnimationFrame(first);cancelAnimationFrame(second);};},[tvSplashExit]);
+  useEffect(()=>{if(tvSplashExit!=="fade")return;const timer=setTimeout(()=>setTvSplashExit("hidden"),700);return()=>clearTimeout(timer);},[tvSplashExit]);
   const onSplashFinish = useCallback(() => {
+    if(isPlayerTvApp()) setTvSplashExit("cover");
     // After Splash -> Profiles (Welcome)
     transitionTo("welcome");
   }, [transitionTo]);
@@ -311,19 +359,38 @@ export default function PlayerHub() {
       try { window.localStorage.setItem(storageKey, "1"); } catch {}
     }
     const next = new URLSearchParams(searchParams);
+    if (tvStartup && !user) next.set("tvGuest", "1");
     if (next.get("step") !== "home") {
       next.set("step", "home");
       setSearchParams(next, { replace: true });
     }
     transitionTo("home");
-  }, [transitionTo, storageKey, searchParams, setSearchParams, tvGuestMode]);
+  }, [transitionTo, storageKey, searchParams, setSearchParams, tvGuestMode, tvStartup, user]);
 
+  // NEXO_V7_15_PRELOAD: pre-carregamento de modulos, sem solicitar audio/video.
+  useEffect(() => {
+    if (step !== "home" || !dataReady) return;
+    const network = (navigator as Navigator & {connection?:{saveData?:boolean;effectiveType?:string}}).connection;
+    if (network?.saveData || /2g/i.test(network?.effectiveType || "")) return;
+    const timeout = window.setTimeout(() => {
+      void import("../Player").catch(() => {});
+      void import("./PlayerCatalog").catch(() => {});
+    }, 1500);
+    return () => window.clearTimeout(timeout);
+  }, [step, dataReady]);
   // NOTE: do NOT use `scale-*` on this wrapper. Any CSS transform here creates a
   // containing block for descendants with `position: fixed` (like SplashScreen),
   // which then collapse to the wrapper's 0px height and become invisible.
-  const wrapperClass = `player-scope transition-opacity duration-700 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)] ${fadeOut ? "opacity-0" : "opacity-100"}`;
+  // NEXO_V5_NO_FULL_SCREEN_FADE: nao apagar a tela inteira nas transicoes internas da TV.
+  const [profilePrepared,setProfilePrepared]=useState(false);
+  useEffect(()=>{if(!tvStartup||loading||!dataReady)return;let cancelled=false;if(!user||!publicUserId){setProfilePrepared(true);return;}void warmTvProfile(user,publicUserId,user.email?.split("@")[0]||"Visitante").then(profile=>Promise.all([profile.avatar_url,...(profile.sub_profiles||[]).map(p=>p.avatar_url)].filter(Boolean).slice(0,8).map(preloadImage))).catch(()=>{}).finally(()=>{if(!cancelled)setProfilePrepared(true);});return()=>{cancelled=true;};},[tvStartup,loading,dataReady,user?.id,publicUserId]);
+  const wrapperClass = tvStartup || webOtt ? "player-scope" : `player-scope transition-opacity duration-700 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)] ${fadeOut ? "opacity-0" : "opacity-100"}`;
 
-  if (step === "login" || (!loading && !user && !tvGuestMode)) {
+  // A native TV must finish restoring its verified session before the login route can redirect.
+  if (tvStartup && step === "splash" && prepareError) return <div className="player-scope">{prepareError ? <div className="fixed inset-0 bg-black text-white flex flex-col items-center justify-center gap-4"><p>Não foi possível preparar a rádio.</p><button autoFocus onClick={()=>window.location.reload()}>Tentar novamente</button></div> : <SplashScreen logoUrl={logoUrl} ready={false} onFinish={onSplashFinish}/>}</div>;
+  if (step === "login" && tvStartup && user) return <TvSplashVisual logoUrl={logoUrl} />;
+  if (webOtt && loading && !tvGuestMode) return <TvSplashVisual logoUrl={logoUrl} />;
+  if ((step === "login" && !(webOtt && user)) || (!loading && !user && !tvGuestMode && !tvStartup && !(isPlayerTvApp() && searchParams.get("step") === "profiles"))) {
     return (
       <div className={wrapperClass}>
         <AccessScreen
@@ -332,9 +399,22 @@ export default function PlayerHub() {
           music={loginMusic}
           radioUserId={publicUserId || user?.id || null}
           onLoginSuccess={onLoginSuccess}
+          onGuest={webOtt ? () => {
+            unlockTvRadio();
+            const next = new URLSearchParams(searchParams);
+            next.set("tvGuest", "1");
+            next.set("step", "home");
+            setSearchParams(next, { replace: true });
+            transitionTo("home");
+          } : undefined}
         />
       </div>
     );
+  }
+
+  // NEXO_V5_TV_AUTH_GATE: nao renderizar Visitante antes de restaurar a sessao.
+  if (tvStartup && loading && !internalTv && step !== "splash") {
+    return <TvSplashVisual logoUrl={logoUrl} />;
   }
 
   // Não exiba uma home de visitante enquanto o Supabase ainda restaura a
@@ -353,8 +433,8 @@ export default function PlayerHub() {
         <SplashScreen
           logoUrl={logoUrl}
           onFinish={onSplashFinish}
-          ready={tvGuestMode ? true : !loading && dataReady}
-          maxDurationMs={tvGuestMode ? 4200 : 5000}
+          ready={tvStartup ? prepared && !loading && dataReady && profilePrepared : tvGuestMode ? true : !loading && dataReady}
+          maxDurationMs={tvStartup ? 100 : tvGuestMode ? 4200 : 5000}
           progress={loadProgress}
         />
       </div>
@@ -370,7 +450,7 @@ export default function PlayerHub() {
         <WelcomeScreen
           userName={userNameDisplay}
           avatarUrl={null}
-          backgroundUrl={channelBg}
+          backgroundUrl={tvStartup ? null : channelBg}
           channelName={channelName}
           logoUrl={logoUrl}
           avatarAccent={playerColors.homeAccent}
@@ -388,7 +468,7 @@ export default function PlayerHub() {
             }
             clearPlayerSession();
             try { window.localStorage.removeItem(storageKey); } catch {}
-            if (tvGuestMode) {
+            if (tvGuestMode && !webOtt) {
               navigate(userSlug ? `/${userSlug}/player/tv` : "/player/tv", { replace: true });
               return;
             }
@@ -403,6 +483,7 @@ export default function PlayerHub() {
           publicUserId={publicUserId}
           guestMode={tvGuestMode}
         />
+        {tvStartup && tvSplashExit!=="hidden" && <TvSplashVisual logoUrl={logoUrl} leaving={tvSplashExit==="fade"}/>}
 
       </div>
     );
@@ -428,3 +509,5 @@ export default function PlayerHub() {
     </div>
   );
 }
+
+

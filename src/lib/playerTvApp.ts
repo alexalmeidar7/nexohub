@@ -15,3 +15,9 @@ export function isPlayerTvApp() {
     || document.documentElement.dataset.tvApp === "true"
     || document.documentElement.dataset.ottTvPreview === "true";
 }
+
+/** The public station player shares the OTT experience with the TV app. */
+export function isPlayerOtt() {
+  if (typeof window === "undefined") return false;
+  return isPlayerTvApp() || /^\/[^/]+\/player(?:\/watch)?\/?$/i.test(window.location.pathname);
+}

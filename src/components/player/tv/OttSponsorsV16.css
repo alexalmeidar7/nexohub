@@ -1,0 +1,8 @@
+/* Enlarge visual logo without moving the surrounding layout. */
+.nexo-tv .ott-program-sponsors .ott-program-sponsors-label{position:relative;z-index:2}
+.nexo-tv .ott-program-sponsors .ott-program-sponsors-logo-wrap{overflow:visible;position:relative;z-index:0;transform:translateY(calc(-12 * var(--ott-u)))}
+.nexo-tv .ott-program-sponsors .ott-program-sponsors-logo-wrap img{transform:scale(1.3)!important;transform-origin:left center}
+
+@keyframes nexo-sponsor-home-v23{from{max-height:0;opacity:0;transform:translateY(calc(12 * var(--ott-u)));margin-top:0}to{max-height:calc(180 * var(--ott-u));opacity:1;transform:translateY(0);margin-top:calc(22 * var(--ott-u))}}
+.nexo-tv.ott-home .ott-program-sponsors--home{animation:nexo-sponsor-home-v23 600ms cubic-bezier(.2,.75,.25,1) both}
+@media(prefers-reduced-motion:reduce){.nexo-tv.ott-home .ott-program-sponsors--home{animation:none}}

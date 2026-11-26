@@ -1,0 +1,168 @@
+/* NEXO_V7_4: perfis do usuario em linhas iguais a conta Google. */
+.nexo-tv.ott-profiles-refined .ott-profile-select { bottom:12%; width:min(55%,calc(980 * var(--ott-u))); overflow:visible; }
+.nexo-tv.ott-profiles-refined .ott-profile-add-row {
+  display:flex!important;flex-direction:column!important;flex-wrap:nowrap!important;
+  align-items:stretch!important;gap:calc(15 * var(--ott-u))!important;
+  width:100%!important;max-height:calc(405 * var(--ott-u))!important;
+  margin-top:calc(28 * var(--ott-u))!important;
+  padding:calc(8 * var(--ott-u)) calc(16 * var(--ott-u)) calc(20 * var(--ott-u))!important;
+  overflow-x:hidden!important;overflow-y:auto!important;scrollbar-width:thin;
+}
+.nexo-tv.ott-profiles-refined .ott-profile-add-row .ott-profile-row {
+  display:flex!important;flex-direction:row!important;align-items:center!important;
+  gap:calc(24 * var(--ott-u))!important;min-height:calc(154 * var(--ott-u));
+  flex:0 0 auto;width:100%!important;margin:0!important;padding:calc(4 * var(--ott-u))!important;
+}
+.nexo-tv.ott-profiles-refined .ott-profile-add-row .ott-profile-entry,
+.nexo-tv.ott-profiles-refined .ott-profile-add-row .ott-profile-add-button {
+  display:inline-flex!important;flex-direction:row!important;flex:0 0 auto!important;
+  width:calc(150 * var(--ott-u))!important;min-width:calc(150 * var(--ott-u))!important;
+  max-width:none!important;height:calc(150 * var(--ott-u))!important;min-height:0!important;
+  border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;
+  padding:0!important;border-radius:50%!important;justify-content:center!important;
+}
+.nexo-tv.ott-profiles-refined .ott-profile-add-row .ott-avatar {
+  width:calc(150 * var(--ott-u))!important;height:calc(150 * var(--ott-u))!important;
+  min-width:calc(150 * var(--ott-u))!important;max-width:none!important;
+}
+.nexo-tv.ott-profiles-refined .ott-profile-sub-row .ott-profile-meta {gap:calc(8 * var(--ott-u))!important;}
+.nexo-tv.ott-profiles-refined .ott-profile-sub-row .ott-profile-meta>b {font-size:calc(29 * var(--ott-u))!important;}
+.nexo-tv.ott-profiles-refined .ott-profile-add-row .ott-profile-entry:is(:hover,:focus-visible)>.ott-avatar,
+.nexo-tv.ott-profiles-refined .ott-profile-add-row .ott-profile-add-button:is(:hover,:focus-visible)>.ott-avatar {
+  outline:calc(3 * var(--ott-u)) solid #fff!important;outline-offset:calc(5 * var(--ott-u))!important;
+  border-radius:50%!important;box-shadow:none!important;
+}
+.nexo-tv.ott-profiles-refined .ott-profile-add-row .ott-profile-entry:is(:hover,:focus-visible),
+.nexo-tv.ott-profiles-refined .ott-profile-add-row .ott-profile-add-button:is(:hover,:focus-visible) {outline:0!important;box-shadow:none!important;}
+.nexo-tv.ott-profiles-refined .ott-profile-new-label {font-size:calc(29 * var(--ott-u));font-weight:500;color:#fff}
+.nexo-tv.ott-profiles-refined .ott-profile-sub-edit-header {left:8%;top:10%;max-width:80%;}
+.nexo-tv.ott-profiles-refined.ott-profile-edit-page .ott-edit-main {top:29%;bottom:13%;}
+.nexo-tv.ott-profiles-refined .ott-subprofile-delete {background:transparent!important;color:#ffd5d5!important;border:calc(1.5 * var(--ott-u)) solid #f7a1a1!important;display:inline-flex;align-items:center;gap:calc(10 * var(--ott-u));}
+.nexo-tv.ott-profiles-refined .ott-subprofile-delete svg{width:calc(20 * var(--ott-u));height:calc(20 * var(--ott-u));}
+.nexo-tv.ott-profiles-refined .ott-subprofile-delete:is(:hover,:focus-visible){background:#ad242433!important;outline:calc(2 * var(--ott-u)) solid #fff!important;outline-offset:calc(3 * var(--ott-u));}
+.nexo-tv.ott-profiles-refined .ott-subprofile-delete-dialog .ott-dialog-actions{display:flex;align-items:center;flex-wrap:wrap;gap:calc(18 * var(--ott-u));margin-top:calc(35 * var(--ott-u));}
+.nexo-tv.ott-profiles-refined .ott-subprofile-delete-dialog .ott-confirm-delete{background:#e44!important;color:white!important;border-radius:calc(34 * var(--ott-u));padding:calc(12 * var(--ott-u)) calc(30 * var(--ott-u));min-height:calc(62 * var(--ott-u));}
+.nexo-tv.ott-profiles-refined .ott-subprofile-delete-dialog button:disabled {opacity:.5;}
+/* HOME: um unico alvo de foco/hover no texto + foto. */
+.nexo-tv .ott-header button.ott-home-account-action {
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  gap:calc(14 * var(--ott-u))!important;width:auto!important;max-width:calc(385 * var(--ott-u));
+  min-height:calc(75 * var(--ott-u));height:auto;padding:calc(5 * var(--ott-u)) calc(10 * var(--ott-u))!important;
+  border:0!important;border-radius:calc(44 * var(--ott-u))!important;
+  outline:0!important;box-shadow:none!important;background:transparent!important;
+  transition:background .15s ease;
+}
+.nexo-tv .ott-header button.ott-home-account-action .ott-account-avatar {
+  margin:0!important;flex:0 0 calc(62 * var(--ott-u));display:inline-flex;align-items:center;justify-content:center;
+  width:calc(62 * var(--ott-u));height:calc(62 * var(--ott-u));border-radius:50%;overflow:hidden;
+}
+.nexo-tv .ott-header button.ott-home-account-action:is(:hover,:focus,:focus-visible){
+  outline:calc(3 * var(--ott-u)) solid #fff!important;outline-offset:calc(2 * var(--ott-u))!important;
+  border-radius:calc(44 * var(--ott-u))!important;box-shadow:none!important;
+  background:rgba(255,255,255,.1)!important;
+}
+/* O spinner central foi retirado; o skeleton de carregamento preexistente continua intacto. */
+
+/* NEXO_V7_12_CIRCULOS_BEGIN
+   Somente tela de escolha de perfis: tres avatares na mesma coluna e mesmo tamanho.
+   O deslocamento estava no padding do .ott-profile-add-row e de seus .ott-profile-row.
+*/
+.nexo-tv.ott-profiles-refined .ott-profile-select > .ott-profile-row:first-child,
+.nexo-tv.ott-profiles-refined .ott-profile-add-row > .ott-profile-row {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+.nexo-tv.ott-profiles-refined .ott-profile-add-row {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+.nexo-tv.ott-profiles-refined .ott-profile-select > .ott-profile-row:first-child > .ott-profile-main,
+.nexo-tv.ott-profiles-refined .ott-profile-add-row .ott-profile-main,
+.nexo-tv.ott-profiles-refined .ott-profile-add-row .ott-profile-add-button {
+  width: calc(150 * var(--ott-u)) !important;
+  min-width: calc(150 * var(--ott-u)) !important;
+  max-width: calc(150 * var(--ott-u)) !important;
+  height: calc(150 * var(--ott-u)) !important;
+  min-height: calc(150 * var(--ott-u)) !important;
+  flex: 0 0 calc(150 * var(--ott-u)) !important;
+  padding: 0 !important;
+  margin-left: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+}
+.nexo-tv.ott-profiles-refined .ott-profile-select > .ott-profile-row:first-child > .ott-profile-main > .ott-avatar,
+.nexo-tv.ott-profiles-refined .ott-profile-add-row .ott-profile-main > .ott-avatar,
+.nexo-tv.ott-profiles-refined .ott-profile-add-row .ott-profile-add-button > .ott-avatar {
+  width: calc(150 * var(--ott-u)) !important;
+  min-width: calc(150 * var(--ott-u)) !important;
+  max-width: calc(150 * var(--ott-u)) !important;
+  height: calc(150 * var(--ott-u)) !important;
+  min-height: calc(150 * var(--ott-u)) !important;
+  aspect-ratio: 1;
+  flex: 0 0 calc(150 * var(--ott-u)) !important;
+  border-radius: 50% !important;
+}
+/* Foco so no circulo, nunca na linha inteira. */
+.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-main:is(:hover,:focus,:focus-visible),
+.nexo-tv.ott-profiles-refined .ott-profile-add-row .ott-profile-add-button:is(:hover,:focus,:focus-visible) {
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-main:is(:hover,:focus,:focus-visible) > .ott-avatar,
+.nexo-tv.ott-profiles-refined .ott-profile-add-row .ott-profile-add-button:is(:hover,:focus,:focus-visible) > .ott-avatar {
+  outline: calc(3 * var(--ott-u)) solid white !important;
+  outline-offset: calc(5 * var(--ott-u));
+}
+/* NEXO_V7_12_CIRCULOS_END */
+
+/* NEXO_V7_13_BORDER_SAFE_BEGIN
+   O outline antigo ficava PARA FORA do circulo e era recortado pela area com scroll.
+   O anel agora e desenhado DENTRO do botao, sem extrapolar os limites.
+*/
+.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-main,
+.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-add-button {
+  position: relative !important;
+  overflow: visible !important;
+  border-radius: 50% !important;
+  outline: none !important;
+}
+.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-main > .ott-avatar,
+.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-add-button > .ott-avatar {
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-main:is(:hover,:focus,:focus-visible) > .ott-avatar,
+.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-add-button:is(:hover,:focus,:focus-visible) > .ott-avatar {
+  outline: 0 !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
+}
+.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-main:is(:hover,:focus,:focus-visible)::after,
+.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-add-button:is(:hover,:focus,:focus-visible)::after {
+  content: "";
+  position: absolute;
+  inset: calc(2 * var(--ott-u));
+  border: calc(3 * var(--ott-u)) solid white;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 3;
+}
+/* NEXO_V7_13_BORDER_SAFE_END */
+
+.nexo-tv.ott-profiles-refined .ott-profile-select > .ott-profile-row:first-child,.nexo-tv.ott-profiles-refined .ott-profile-add-row > .ott-profile-row{display:grid!important;grid-template-columns:calc(150 * var(--ott-u)) minmax(0,1fr);align-items:center;justify-items:start;}
+.nexo-tv.ott-profiles-refined .ott-profile-add-row{margin-left:0!important;align-self:stretch;padding-inline:0!important;}
+.nexo-tv.ott-profiles-refined .ott-profile-add-row .ott-profile-add-button{justify-self:center;margin:0!important;}
+
+.nexo-tv.ott-profiles-refined .ott-profile-select > .ott-profile-row:first-child,.nexo-tv.ott-profiles-refined .ott-profile-add-row > .ott-profile-row{padding:0!important;margin-inline:0!important;column-gap:calc(24 * var(--ott-u))!important;grid-template-columns:calc(150 * var(--ott-u)) minmax(0,1fr)!important;justify-items:start!important;}
+.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-main,.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-add-button{justify-self:start!important;margin:0!important;width:calc(150 * var(--ott-u))!important;height:calc(150 * var(--ott-u))!important;}
+.nexo-tv.ott-profiles-refined .ott-profile-add-row{padding-left:0!important;margin-left:0!important;box-sizing:border-box!important;}
+
+/* NEXO 10: uma unica grade para todos os perfis, sem deslocamento da sublista. */
+.nexo-tv.ott-profiles-refined .ott-profile-select:has(> .ott-profile-add-row) {overflow-y:auto!important;overflow-x:hidden!important;box-sizing:border-box!important;padding:calc(8 * var(--ott-u))!important;}
+.nexo-tv.ott-profiles-refined .ott-profile-select > .ott-profile-add-row {display:contents!important;}
+.nexo-tv.ott-profiles-refined .ott-profile-select > .ott-profile-row,.nexo-tv.ott-profiles-refined .ott-profile-select > .ott-profile-add-row > .ott-profile-row {display:grid!important;grid-template-columns:calc(150 * var(--ott-u)) minmax(0,1fr)!important;gap:calc(24 * var(--ott-u))!important;width:100%!important;max-width:none!important;box-sizing:border-box!important;padding:0!important;margin:0 0 calc(15 * var(--ott-u)) 0!important;justify-content:start!important;justify-items:start!important;align-items:center!important;transform:none!important;}
+.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-main,.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-add-button {grid-column:1!important;justify-self:start!important;position:relative!important;inset:auto!important;transform:none!important;margin:0!important;box-sizing:border-box!important;}
+.nexo-tv.ott-profiles-refined .ott-profile-select .ott-avatar {margin:0!important;transform:none!important;box-sizing:border-box!important;}

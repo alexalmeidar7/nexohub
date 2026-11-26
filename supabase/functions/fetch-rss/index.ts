@@ -1,3 +1,4 @@
+import { decodeMusicBytes } from "../_shared/musicByteEncoding.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
@@ -187,7 +188,7 @@ Deno.serve(async (req) => {
         response = await fetchWithRetry(parsedUrl!.toString());
         const contentType = response.headers.get("content-type") || "";
         const buffer = await response.arrayBuffer();
-        text = pickBestDecodedText(buffer, contentType);
+        text = decodeMusicBytes(buffer, contentType);
       } catch (fetchErr) {
         if (!input_text) {
           const isTimeout = fetchErr instanceof DOMException && fetchErr.name === "TimeoutError";

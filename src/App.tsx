@@ -40,7 +40,7 @@ function OAuthReturnHandler() {
   const location = useLocation();
 
   useEffect(() => {
-    if (location.pathname === "/auth/popup-callback") return;
+    if (location.pathname === "/auth/popup-callback" || /^\/[^/]+\/pair\/?$/.test(location.pathname)) return;
     // NEXO_CHAT_OAUTH_GUARD_V5: retorno do ouvinte nao e login administrativo.
     if ((location.pathname === "/" && getChatOAuthReturn()) ||
         (/^\/[^/]+\/pair\/?$/.test(location.pathname) && new URLSearchParams(location.search).get("mode") === "chat")) return;
@@ -333,6 +333,7 @@ const App = () => (
             {/* Main routes */}
             <Route path="/home" element={<MasterViewHome />} />
             <Route path="/b/:slug" element={<LinkBioPublic />} />
+            <Route path="/:slug" element={<LinkBioPublic />} />
             <Route path="/telapromo" element={<PromocoesKiosk />} />
             <Route path="/player" element={<PlayerHub />} />
             <Route path="/player/watch" element={<PlayerPage />} />

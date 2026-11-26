@@ -1,0 +1,87 @@
+.ott-web .ott-web-access-content {
+  position: absolute;
+  inset: 25% 6% 8%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  overflow: auto;
+  font-size: 1rem;
+}
+.nexo-tv.ott-web .ott-web-access-content button {
+  min-height: 44px;
+  padding: 8px 24px;
+  font-size: 1rem;
+}
+.nexo-tv.ott-web .ott-web-guest {
+  border: 1px solid currentColor;
+  border-radius: 24px;
+}
+.ott-web .ott-web-access-track {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: auto;
+}
+.ott-web .ott-web-access-track img {
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+.nexo-tv.ott-web :is(button, input, select, textarea):focus-visible {
+  outline: 2px solid white;
+  outline-offset: 3px;
+}
+
+@media (max-width: 700px) and (orientation: portrait) {
+  .nexo-tv.ott-web {
+    --ott-u: .57px;
+  }
+  .nexo-tv.ott-web .ott-header {
+    flex-wrap: wrap;
+    gap: 8px;
+    height: auto;
+  }
+  .nexo-tv.ott-web .ott-header-track {
+    flex: 1 1 120px;
+    min-width: 0;
+    max-width: 58%;
+  }
+  .nexo-tv.ott-web .ott-header-right-group {
+    margin-left: auto;
+  }
+  .nexo-tv.ott-web :is(.ott-home-rail-button, .ott-home-rail-profile, .ott-search,
+    .nexo-tv-climate-trigger, .ott-interactivity-button, .ott-play) {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .nexo-tv.ott-web.ott-home.ott-rail-layout .ott-home-rail {
+    left: 4%;
+  }
+  .nexo-tv.ott-web.ott-home.ott-rail-layout .ott-now {
+    left: 24% !important;
+    right: 5% !important;
+    width: auto !important;
+  }
+  .nexo-tv.ott-web .ott-profile-select {
+    left: 4% !important;
+    right: 4% !important;
+    width: auto !important;
+  }
+  .nexo-tv.ott-web .ott-dialog {
+    max-width: 94vw;
+    max-height: 90dvh;
+    overflow: auto;
+  }
+  .nexo-tv.ott-web .ott-interactivity-panel {
+    left: 4% !important;
+    right: 4% !important;
+    width: auto !important;
+  }
+  .nexo-tv.ott-web .ott-interactivity-shortcuts {
+    max-width: 92vw;
+    overflow-x: auto;
+    touch-action: pan-x;
+  }
+}

@@ -1,0 +1,69 @@
+/* NEXO TV V10: skeleton leve e exclusivo das telas internas.
+   Nenhum skeleton no splash de abertura; não modifica dados, cor nem áudio. */
+.nexo-tv .ott-skeleton-bone {
+  display:block; flex-shrink:0; background:rgba(255,255,255,.105); position:relative; overflow:hidden;
+  border-radius:calc(12 * var(--ott-u));
+}
+.nexo-tv .ott-skeleton-bone:after {
+  content:""; position:absolute; inset:0; transform:translateX(-100%);
+  background:linear-gradient(100deg, transparent 10%, rgba(255,255,255,.14) 45%, transparent 75%);
+  animation:ott-skeleton-sheen 1.55s ease-in-out infinite;
+}
+@keyframes ott-skeleton-sheen { 100% { transform:translateX(100%) } }
+.nexo-tv .ott-skeleton-line {height:calc(23 * var(--ott-u));width:85%}
+.nexo-tv .ott-skeleton-line-s {height:calc(18 * var(--ott-u));width:38%}
+.nexo-tv .ott-skeleton-line-m {height:calc(23 * var(--ott-u));width:65%}
+.nexo-tv .ott-skeleton-line-l {height:calc(28 * var(--ott-u));width:88%}
+.nexo-tv .ott-skeleton-line-xl {height:calc(42 * var(--ott-u));width:100%}
+.nexo-tv .ott-skeleton-badge {height:calc(28 * var(--ott-u));width:calc(94 * var(--ott-u));border-radius:calc(22 * var(--ott-u))}
+.nexo-tv .ott-skeleton-avatar {height:calc(58 * var(--ott-u));width:calc(58 * var(--ott-u));border-radius:50%}
+.nexo-tv .ott-skeleton-art {height:calc(65 * var(--ott-u));width:calc(65 * var(--ott-u));border-radius:calc(12 * var(--ott-u))}
+.nexo-tv .ott-skeleton-card {border-radius:calc(23 * var(--ott-u))}
+.nexo-tv .ott-skeleton-button {height:calc(52 * var(--ott-u));width:calc(220 * var(--ott-u));border-radius:calc(35 * var(--ott-u))}
+.nexo-tv .ott-skeleton-page {position:absolute;inset:0;z-index:25;pointer-events:none;overflow:hidden;background:linear-gradient(115deg,rgba(24,24,24,.92),rgba(26,26,26,.86));color:#fff}
+.nexo-tv.ott-home-gradient .ott-skeleton-page,.nexo-tv.ott-profiles .ott-skeleton-page{background:linear-gradient(115deg,var(--ott-accent,#ad1c21),rgba(24,24,24,.98))}
+.nexo-tv .ott-skeleton-sr {position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.nexo-tv .ott-skeleton-header {position:absolute;top:7%;left:6%;right:6%;display:flex;align-items:center;gap:calc(24 * var(--ott-u))}
+.nexo-tv .ott-skeleton-brand {width:calc(86 * var(--ott-u));height:calc(75 * var(--ott-u))}
+.nexo-tv .ott-skeleton-header-text {width:calc(330 * var(--ott-u));display:grid;gap:calc(12 * var(--ott-u))}
+.nexo-tv .ott-skeleton-header-end {margin-left:auto;display:flex;align-items:center;gap:calc(36 * var(--ott-u));width:calc(275 * var(--ott-u))}
+.nexo-tv .ott-skeleton-home {position:absolute;left:6%;right:6%;top:34%;display:flex;gap:calc(48 * var(--ott-u));align-items:flex-start}
+.nexo-tv .ott-skeleton-home-cards {display:flex;gap:calc(26 * var(--ott-u))}
+.nexo-tv .ott-skeleton-home-card {width:calc(285 * var(--ott-u));height:calc(414 * var(--ott-u))}
+.nexo-tv .ott-skeleton-home-info {width:calc(390 * var(--ott-u));display:grid;align-content:start;gap:calc(25 * var(--ott-u));padding-top:calc(38 * var(--ott-u))}
+.nexo-tv .ott-skeleton-watch {position:absolute;left:6%;right:6%;top:27%;display:grid;grid-template-columns:calc(420 * var(--ott-u)) 1fr;gap:calc(45 * var(--ott-u))}
+.nexo-tv .ott-skeleton-album {width:calc(420 * var(--ott-u));height:calc(420 * var(--ott-u));border-radius:calc(35 * var(--ott-u))}
+.nexo-tv .ott-skeleton-watch-description {display:flex;flex-direction:column;gap:calc(24 * var(--ott-u));padding-top:calc(60 * var(--ott-u));max-width:calc(650 * var(--ott-u))}
+.nexo-tv .ott-skeleton-watch-footer {grid-column:1/-1;display:flex;gap:calc(24 * var(--ott-u));align-items:center;margin-top:calc(72 * var(--ott-u))}
+.nexo-tv .ott-skeleton-profile {position:absolute;top:29%;left:10%;right:10%;display:flex;gap:calc(25 * var(--ott-u));align-items:center}
+.nexo-tv .ott-skeleton-profile-photo {width:calc(165 * var(--ott-u));height:calc(165 * var(--ott-u));border-radius:50%}
+.nexo-tv .ott-skeleton-profile-info {width:calc(410 * var(--ott-u));display:flex;flex-direction:column;align-items:flex-start;gap:calc(16 * var(--ott-u))}
+.nexo-tv .ott-skeleton-profile-add {position:absolute;top:calc(225 * var(--ott-u));left:0;width:calc(130 * var(--ott-u));height:calc(130 * var(--ott-u));border-radius:50%}
+.nexo-tv .ott-skeleton-generic {position:absolute;top:28%;left:12%;right:12%;display:flex;flex-direction:column;gap:calc(24 * var(--ott-u));max-width:calc(1000 * var(--ott-u))}
+.nexo-tv .ott-skeleton-generic-row {display:flex;align-items:center;gap:calc(20 * var(--ott-u))}
+.nexo-tv .ott-skeleton-generic-row>span:last-child {width:calc(510 * var(--ott-u));display:grid;gap:calc(12 * var(--ott-u))}
+.nexo-tv .ott-skeleton-inline {display:flex;flex-direction:column;gap:calc(14 * var(--ott-u));width:100%;padding:calc(14 * var(--ott-u));min-height:calc(150 * var(--ott-u))}
+.nexo-tv .ott-skeleton-inline--poll,.nexo-tv .ott-skeleton-inline--lyrics{min-height:calc(360 * var(--ott-u))}
+.nexo-tv .ott-skeleton-answer {height:calc(66 * var(--ott-u));width:100%;border-radius:calc(17 * var(--ott-u))}
+.nexo-tv .ott-skeleton-inline--history{flex-direction:row;align-items:center;gap:calc(24 * var(--ott-u));min-height:calc(180 * var(--ott-u))}
+.nexo-tv .ott-skeleton-history-art{width:calc(148 * var(--ott-u));height:calc(148 * var(--ott-u))}
+.nexo-tv .ott-skeleton-inline--history>div:last-child{display:flex;flex-direction:column;gap:calc(13 * var(--ott-u));width:65%}
+/* Capas, selos, avatares e miniaturas que demoram para carregar ganham shimmer individual.
+   O scanner JS só ativa esta classe após 180ms; backgrounds decorativos são excluídos. */
+.nexo-tv:not(.ott-black) img.ott-skeleton-media-pending {background:rgba(255,255,255,.13);opacity:.55;animation:ott-skeleton-image 1.35s ease-in-out infinite;color:transparent}
+@keyframes ott-skeleton-image{0%,100%{background-color:rgba(255,255,255,.09)}50%{background-color:rgba(255,255,255,.22)}}
+@media(prefers-reduced-motion:reduce){.nexo-tv .ott-skeleton-bone:after,.nexo-tv img.ott-skeleton-media-pending{animation:none!important}}
+.nexo-tv .ott-inline-pair-qr.ott-skeleton-qr-loading {background:rgba(255,255,255,.08)!important;border-radius:calc(20 * var(--ott-u));overflow:hidden}
+.nexo-tv .ott-skeleton-qr-bone {display:block;width:100%;height:100%;min-height:calc(200 * var(--ott-u));background:linear-gradient(95deg,#ffffff14 20%,#ffffff38 50%,#ffffff14 80%);background-size:200% 100%;animation:ott-skeleton-qr 1.6s ease-in-out infinite;border-radius:calc(12 * var(--ott-u))}
+@keyframes ott-skeleton-qr {to{background-position-x:-200%}}
+@media(prefers-reduced-motion:reduce){.nexo-tv .ott-skeleton-qr-bone{animation:none}}
+
+/* NEXO_V7_11_SKELETON_SEM_SOBREPOSICAO: nao deixar o conteúdo da pagina visivel atras dos placeholders. */
+.nexo-tv.ott-skeleton-active { isolation: isolate; }
+.nexo-tv.ott-skeleton-active > :not(.ott-skeleton-page),
+.nexo-tv.ott-skeleton-active > :not(.ott-skeleton-page) * { visibility: hidden !important; pointer-events: none !important; }
+.nexo-tv.ott-skeleton-active > .ott-skeleton-page { visibility: visible !important;
+  position:absolute !important;inset:0 !important;z-index:1000 !important;opacity:1 !important;
+  background:linear-gradient(125deg,var(--ott-accent,#f20d0f) 0%,#2b171c 65%,#171719 100%) !important;
+  isolation:isolate;pointer-events:auto !important; }
+.nexo-tv.ott-skeleton-active > .ott-skeleton-page * { visibility:visible !important; }
