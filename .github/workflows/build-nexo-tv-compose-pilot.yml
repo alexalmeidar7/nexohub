@@ -19,10 +19,11 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Set up Android SDK tools
-        uses: android-actions/setup-android@v3
-      - name: Install SDK
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - name: Verify preinstalled Android SDK
+        run: |
+          sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          test -d "$sdk/platforms/android-35"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
       - name: Reject WebView in native app sources
         run: |
           if grep -R -nE 'android\.webkit|WebView|loadUrl\(' firetv/native-tv/src/main/kotlin; then exit 1; fi
