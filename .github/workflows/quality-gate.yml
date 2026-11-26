@@ -49,7 +49,7 @@ jobs:
 
       - name: Verificar funções XML e helpers
         run: |
-          deno check --node-modules-dir=none --no-lock \
+          DENO_NO_PACKAGE_JSON=1 deno check --node-modules-dir=none --no-lock \
             supabase/functions/_shared/vmixPng.ts \
             supabase/functions/serve-xml-broadcast/index.ts \
             supabase/functions/serve-xml-cenarios-estudio/index.ts \
@@ -60,4 +60,5 @@ jobs:
             supabase/functions/serve-xml-vmix-live/index.ts \
             supabase/functions/serve-xml-quiz/index.ts \
             supabase/functions/serve-xml-enquete/index.ts \
-            supabase/functions/serve-xml-tempo/index.ts
+            supabase/functions/serve-xml-tempo/index.ts \
+            supabase/functions/public-player-data/index.ts

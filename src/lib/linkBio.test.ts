@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { isLinkBioSlug, normalizeLinkBioUrl, resolveLinkBioOnAir, shortLinkBioUrl } from "./linkBio";
+import { isLinkBioSlug, normalizeLinkBioWhatsApp, normalizeLinkBioUrl, resolveLinkBioOnAir, shortLinkBioUrl } from "./linkBio";
 describe("Link Bio", () => {
+  it("normalizes the listener WhatsApp contact", () => {
+    expect(normalizeLinkBioWhatsApp("(62) 3942-9910")).toBe("https://wa.me/556239429910");
+    expect(normalizeLinkBioWhatsApp("https://wa.me/556239429910")).toBe("https://wa.me/556239429910");
+    expect(normalizeLinkBioWhatsApp(null)).toBe("");
+    expect(normalizeLinkBioWhatsApp("javascript:alert(1)")).toBe("");
+  });
   it("uses a short stable, station-specific path", () => {
     expect(shortLinkBioUrl("positivafm")).toBe("https://housemix.nexobrasil.net/b/positivafm");
     expect(isLinkBioSlug("positivafm")).toBe(true);
@@ -18,6 +24,9 @@ describe("Link Bio", () => {
     expect(result).toEqual({
       programName: "Vale Night", presenterName: "Reginaldo", presenterPhoto: "https://example.com/photo.png",
       start: "19:00", end: "00:00",
+      presenters: [{ id: "primary", name: "Reginaldo", photo: "https://example.com/photo.png" }],
+      isLive: true,
+      schedule: [],
     });
   });
 });

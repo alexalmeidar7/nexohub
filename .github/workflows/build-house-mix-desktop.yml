@@ -1,9 +1,13 @@
 name: Build House Mix Desktop
 
 on:
-  # Build only on explicit manual dispatch. Regular House Mix site PRs/pushes
-  # must never start the slow House Mix Desktop Windows build.
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/package-housemix-desktop.ps1'
+      - 'desktop/locutor-installer.nsh'
+      - '.github/workflows/build-house-mix-desktop.yml'
 
 permissions:
   contents: read
@@ -77,6 +81,10 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: House-Mix-Desktop-Windows-x64
-          path: release/*.exe
+          path: |
+            release/*.exe
+            release-locutor/*.exe
+            release-locutor/*.blockmap
+            release-locutor/*.yml
           if-no-files-found: error
           retention-days: 14

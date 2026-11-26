@@ -89,5 +89,5 @@ export default function Index() {
     );
   }
 
-  return <Navigate to="/home" replace />;
+  return <Navigate to={new URLSearchParams(window.location.search).get("app") === "locutor" ? "/locutor" : "/home"} replace />;
 }

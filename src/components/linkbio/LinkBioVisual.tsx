@@ -4,7 +4,7 @@ import {
   Apple, ChevronLeft, ChevronRight, ExternalLink, Facebook, Globe2, Instagram, Link as LinkIcon,
   MapPin, MessageCircle, Mic2, Smartphone, Youtube,
 } from "lucide-react";
-import { type LinkBioConfig, type LinkBioOnAir, normalizeLinkBioUrl } from "@/lib/linkBio";
+import { type LinkBioConfig, type LinkBioOnAir, normalizeLinkBioWhatsApp, normalizeLinkBioUrl } from "@/lib/linkBio";
 
 interface Props {
   config: LinkBioConfig;
@@ -26,7 +26,8 @@ function BioButton({ title, href, icon: Icon, background, onClick, preview = fal
   onClick?: () => void;
   preview?: boolean;
 }) {
-  const active = Boolean(href || onClick);
+  const url = safeLink(href || "");
+  const active = Boolean(url || onClick);
   const css = "group flex min-h-[52px] w-full items-center gap-3 rounded-full px-4 py-2 text-left " +
     "transition-transform duration-150 hover:-translate-y-0.5 active:scale-[0.99] sm:min-h-[60px] sm:px-3";
   const content = <>
@@ -38,7 +39,6 @@ function BioButton({ title, href, icon: Icon, background, onClick, preview = fal
   </>;
   const style = { backgroundColor: background, opacity: active || preview ? 1 : 0.6 };
   if (onClick) return <button type="button" onClick={onClick} disabled={!active} className={css} style={style}>{content}</button>;
-  const url = safeLink(href || "");
   return url ? <a href={url} target="_blank" rel="noopener noreferrer" className={css} style={style}>{content}</a> :
     <div aria-disabled="true" className={css + " cursor-not-allowed"} style={style} title="Link ainda não configurado">{content}</div>;
 }
@@ -77,7 +77,7 @@ function LinkBioFitLabelV10({label}: {label: string}) {
   }, [label]);
   return <span ref={ref} style={{ display: "block", whiteSpace: "nowrap", width: "max-content" }}>{label}</span>;
 }
-function LinkBioOfferV14({ live, owner }: { live: LinkBioOnAir | null; owner: string }) {
+function LinkBioOfferV14({ live, owner, preview }: { live: LinkBioOnAir | null; owner: string; preview: boolean }) {
   const programId = live?.isLive === false ? "" : live?.programIdV14 || "";
   const seal = programId ? normalizeLinkBioUrl(live?.programSealV14 || "") : "";
   const [result, setResult] = useState<{key:string; logos:{id:string;nome:string;logo_url:string}[]}>({key:"",logos:[]});
@@ -86,15 +86,19 @@ function LinkBioOfferV14({ live, owner }: { live: LinkBioOnAir | null; owner: st
     if (!programId || !owner) return;
     let active = true;
     const refresh = async () => {
-      const { data, error } = await supabase.from("logos_patrocinadores").select("id,nome,logo_url").eq("user_id",owner).eq("programa_id",programId).eq("ativo",true).eq("excluido",false).gte("data_final",new Intl.DateTimeFormat("sv-SE",{timeZone:"America/Sao_Paulo",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date())).order("id");
-      if (!active || error) return;
-      const logos = (data || []).filter(x => normalizeLinkBioUrl(x.logo_url));
+      const query = new URLSearchParams({ slug: owner, section: "linkbio_sponsors", program_id: programId });
+      const response = preview
+        ? await supabase.from("logos_patrocinadores").select("id,nome,logo_url").eq("user_id",owner).eq("programa_id",programId).eq("ativo",true).eq("excluido",false).gte("data_final",new Intl.DateTimeFormat("sv-SE",{timeZone:"America/Sao_Paulo",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date())).order("id")
+        : await supabase.functions.invoke("public-player-data?" + query.toString(), { method: "GET" });
+      const rows = preview ? response.data : response.data?.logos;
+      if (!active || response.error || !Array.isArray(rows)) return;
+      const logos = (rows as {id:string;nome:string;logo_url:string}[]).filter(x => normalizeLinkBioUrl(x.logo_url));
       logos.forEach(x => { const img = new Image(); img.src = x.logo_url; });
       setResult({key,logos});
     };
     void refresh(); const timer = window.setInterval(()=>{if(document.visibilityState === "visible")void refresh();},60000);
     return ()=>{active=false;window.clearInterval(timer);};
-  },[key,owner,programId]);
+  },[key,owner,programId,preview]);
   const logos = result.key === key ? result.logos : [];
   const signature = logos.map(x=>x.id+":"+x.logo_url).join("|");
   const [index,setIndex]=useState(0);
@@ -153,14 +157,14 @@ export default function LinkBioVisual({ config, onAir: liveOnAir, preview = fals
   const name = config.station_name || "A sua rádio";
   return (
     <div
-      className="relative isolate min-h-svh overflow-hidden text-white"
+      className={"relative isolate overflow-hidden text-white "+(preview?"":"min-h-svh")}
       style={{
         background: "radial-gradient(ellipse 90% 58% at 16% 100%, " + config.background_bottom +
           " 0%, transparent 88%), linear-gradient(180deg, " + config.background_top +
           " 0%, #330000 40%, " + config.background_bottom + " 100%)",
       }}
     >
-      <div className="relative mx-auto flex min-h-svh w-full max-w-[440px] flex-col px-4 pb-8 pt-5 sm:px-7 sm:pt-5">
+      <div className={"relative mx-auto flex w-full max-w-[440px] flex-col px-4 pb-8 pt-5 sm:px-7 sm:pt-5 "+(preview?"":"min-h-svh")}>
         <style>{`@keyframes linkBioProgramInV9 { from { opacity:0; transform:translateX(calc(var(--bio-direction,1) * 12px)); } to { opacity:1; transform:translateX(0); } }
 @keyframes linkBioProgramOutV9 { from { opacity:1; transform:translateX(0); } to { opacity:0; transform:translateX(calc(var(--bio-direction,1) * -12px)); } }
 .linkBioProgramEnterV9 { animation: linkBioProgramInV9 420ms cubic-bezier(.16,1,.3,1) both; }
@@ -178,6 +182,16 @@ export default function LinkBioVisual({ config, onAir: liveOnAir, preview = fals
   83% { animation-timing-function: cubic-bezier(.4,0,.8,.35); }
   100% { transform: translate3d(0,5px,0); opacity: 0; }
 } @media (prefers-reduced-motion: reduce) { [style*="linkBioPortraitSmoothV6"], [style*="linkBioNameSmoothV6"] { animation: none !important; } }`}</style>
+        <div className="mx-auto flex min-h-[110px] w-[74%] items-center justify-center sm:min-h-[100px] linkBioLogoV11 shrink-0" style={{ marginBottom: 8 }}>
+          {config.logo_url && (safeLink(config.logo_url) || (preview && config.logo_url.startsWith("data:image/png;base64,"))) ? (
+            <img src={preview && config.logo_url.startsWith("data:image/png;base64,") ? config.logo_url : safeLink(config.logo_url)} loading="eager" alt={"Logo " + name}
+              className="max-h-24 w-auto max-w-full object-contain drop-shadow-[0_12px_12px_rgba(0,0,0,0.25)]"/>
+          ) : (
+            <div className="flex items-center gap-2 text-center text-3xl font-black text-white">
+              <Globe2 size={29} className="shrink-0"/>{name}
+            </div>
+          )}
+        </div>
         {/* Hero mirrors the approved reference: presenter cutout at left, live show at right. */}
         <section className="relative overflow-hidden mb-[-4px] h-[168px] shrink-0 sm:h-[188px]" aria-label="Programa no ar">
           {schedule.length > 1 && <>
@@ -224,7 +238,7 @@ export default function LinkBioVisual({ config, onAir: liveOnAir, preview = fals
         {/* The black link deck, four red pills, social tray and bottom station mark. */}
         <main className="relative z-10 rounded-[31px] bg-gradient-to-b from-[#490000] via-[#1a0000] to-[#000000] px-4 pb-7 pt-6 sm:rounded-[22px] sm:px-6 sm:pb-6 sm:pt-6">
           <nav aria-label="Links da rádio" className="flex flex-col gap-1.5 sm:gap-1.5">
-            <BioButton title="whats estúdio" href={config.whatsapp_url} icon={MessageCircle} background={config.button_color} preview={preview}/>
+            <BioButton title="whats estúdio" href={normalizeLinkBioWhatsApp(config.whatsapp_url)} icon={MessageCircle} background={config.button_color} preview={preview}/>
             <BioButton title="site" href={config.site_url} icon={LinkIcon} background={config.button_color} preview={preview}/>
             <BioButton title="localização" href={config.map_url} icon={MapPin} background={config.button_color} preview={preview}/>
             <BioButton title="app" icon={Smartphone} background={config.button_color}
@@ -250,17 +264,8 @@ export default function LinkBioVisual({ config, onAir: liveOnAir, preview = fals
           </div>}
         </main>
 
-        <LinkBioOfferV14 live={liveOnAir} owner={config.user_id}/>
-        <div className="mx-auto flex min-h-[110px] w-[74%] items-center justify-center sm:min-h-[100px] linkBioLogoV11 shrink-0" style={{ marginTop: 8 }}>
-          {config.logo_url && (safeLink(config.logo_url) || (preview && config.logo_url.startsWith("data:image/png;base64,"))) ? (
-            <img src={preview && config.logo_url.startsWith("data:image/png;base64,") ? config.logo_url : safeLink(config.logo_url)} loading="lazy" alt={"Logo " + name}
-              className="max-h-24 w-auto max-w-full object-contain drop-shadow-[0_12px_12px_rgba(0,0,0,0.25)]"/>
-          ) : (
-            <div className="flex items-center gap-2 text-center text-3xl font-black text-white">
-              <Globe2 size={29} className="shrink-0"/>{name}
-            </div>
-          )}
-        </div>
+        <LinkBioOfferV14 live={liveOnAir} owner={config.user_id} preview={preview}/>
+
       </div>
     </div>
   );

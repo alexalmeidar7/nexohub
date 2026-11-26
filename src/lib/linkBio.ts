@@ -142,3 +142,15 @@ export function resolveLinkBioOnAir(payload: any): LinkBioOnAir | null {
   if(schedule.length) {const next=schedule.find(p=>p.scheduleId.endsWith(today.toISOString().slice(0,10))&&p.start>=time)||schedule[0]; return {...next,isLive:false,schedule};}
   return null;
 }
+
+/** Normalize the public listener contact without changing other link types. */
+export function normalizeLinkBioWhatsApp(raw: unknown): string {
+  if (typeof raw !== "string" || !raw.trim()) return "";
+  const value = raw.trim();
+  const url = normalizeLinkBioUrl(value);
+  if (url) return url;
+  if (!/^\+?[\d\s().-]+$/.test(value)) return "";
+  let digits = value.replace(/\D/g, "");
+  if (!value.startsWith("+") && (digits.length === 10 || digits.length === 11)) digits = "55" + digits;
+  return digits.length >= 10 && digits.length <= 15 ? "https://wa.me/" + digits : "";
+}

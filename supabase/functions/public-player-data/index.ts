@@ -275,6 +275,64 @@ Deno.serve(async (req) => {
     }
 
 
+    // ADS tracking uses a server-issued visit token, with one count per event.
+    if (section === "linkbio_ad_track") {
+      const visit=reqUrl.searchParams.get("visit")||"", campaign=reqUrl.searchParams.get("campaign")||"", event=reqUrl.searchParams.get("event")||"";
+      if (!isUUID(visit)||!isUUID(campaign)||!["view","click"].includes(event)) return new Response(JSON.stringify({ok:false}),{status:400,headers:{...corsHeaders,"Content-Type":"application/json"}});
+      const {data:ad}=await supabase.from("link_bio_ads").select("id").eq("id",campaign).eq("user_id",userId).maybeSingle();
+      const {data,error}=ad?await supabase.rpc("link_bio_ad_track",{visit,campaign,event_type:event}):{data:false,error:null};
+      return new Response(JSON.stringify({ok:!error&&Boolean(data)}),{headers:{...corsHeaders,"Content-Type":"application/json"}});
+    }
+    if (section === "linkbio_ad") {
+      const reply=(value:unknown)=>new Response(JSON.stringify(value),{headers:{...corsHeaders,"Content-Type":"application/json","Cache-Control":"no-store"}});
+      const {data:page}=await supabase.from("link_bio_pages").select("user_id").eq("user_id",userId).eq("published",true).maybeSingle();
+      if(!page)return reply({ad:null});
+      const [company,programs]=await Promise.all([supabase.from("empresa_config").select("timezone").eq("user_id",userId).maybeSingle(),supabase.from("programas").select("id,horario_inicio,horario_fim,dias_semana,variavel,data_variavel").eq("user_id",userId).eq("ativo",true).ilike("estudio","%fm%")]);
+      const getParts=(zone:string)=>new Intl.DateTimeFormat("en-CA",{timeZone:zone,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date());
+      let parts;try{parts=getParts(company.data?.timezone||"America/Sao_Paulo");}catch{parts=getParts("America/Sao_Paulo");}
+      const get=(k:string)=>parts.find(p=>p.type===k)?.value||"";
+      const today=get("year")+"-"+get("month")+"-"+get("day"),time=get("hour")+":"+get("minute");
+      const days=["domingo","segunda","terca","quarta","quinta","sexta","sabado"];
+      const norm=(v:unknown)=>String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/-feira$/,"").trim();
+      const live=(programs.data||[]).filter(p=>{const start=String(p.horario_inicio||"").slice(0,5),end=String(p.horario_fim||"").slice(0,5);if(!start||!end||start===end)return false;const overnight=start>end;if(!(overnight?time>=start||time<end:time>=start&&time<end))return false;const date=new Date(today+"T00:00:00Z");if(overnight&&time<end)date.setUTCDate(date.getUTCDate()-1);return p.variavel?String(p.data_variavel||"").slice(0,10)===date.toISOString().slice(0,10):Array.isArray(p.dias_semana)&&p.dias_semana.some((d:unknown)=>norm(d)===days[date.getUTCDay()]);}).sort((a,b)=>Number(Boolean(b.variavel))-Number(Boolean(a.variavel))||String(b.horario_inicio).localeCompare(String(a.horario_inicio)))[0];
+      const {data:ads,error}=await supabase.from("link_bio_ads").select("id,program_id,program_ids,image_url,link_url").eq("user_id",userId).eq("active",true).lte("start_date",today).gte("end_date",today);
+      if(error)return reply({ad:null});
+      const eligible=(ads||[]).filter(a=>{const ids=Array.isArray(a.program_ids)&&a.program_ids.length?a.program_ids:a.program_id?[a.program_id]:[];return !ids.length||ids.includes(live?.id);});
+      if(!eligible.length)return reply({ad:null});
+      const previous=reqUrl.searchParams.get("previous");
+      const options=eligible.length>1?eligible.filter(a=>a.id!==previous):eligible;
+      const ad=options[Math.floor(Math.random()*options.length)];
+      const {data:visit}=await supabase.from("link_bio_ad_visits").insert({ad_id:ad.id}).select("id").single();
+      return reply({ad:visit?{id:ad.id,image_url:ad.image_url,link_url:ad.link_url,visit:visit.id}:null});
+    }
+
+    // Public sponsor artwork for published Link Bio only; no commercial records.
+    if (section === "linkbio_sponsors") {
+      const programId = reqUrl.searchParams.get("program_id");
+      const respond = (value: unknown, status = 200) => new Response(JSON.stringify(value), {
+        status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+      if (!programId || !isUUID(programId)) return respond({ logos: [] }, 400);
+      const [page, program, company] = await Promise.all([
+        supabase.from("link_bio_pages").select("user_id").eq("user_id", userId).eq("published", true).maybeSingle(),
+        supabase.from("programas").select("id").eq("user_id", userId).eq("id", programId).eq("ativo", true).maybeSingle(),
+        supabase.from("empresa_config").select("timezone").eq("user_id", userId).maybeSingle(),
+      ]);
+      if (page.error || program.error || company.error) return respond({ error: "Dados temporariamente indisponíveis" }, 503);
+      if (!page.data || !program.data) return respond({ logos: [] });
+      const dateInZone = (zone: string) => new Intl.DateTimeFormat("sv-SE", {
+        timeZone: zone, year: "numeric", month: "2-digit", day: "2-digit",
+      }).format(new Date());
+      let today: string;
+      try { today = dateInZone(company.data?.timezone || "America/Sao_Paulo"); }
+      catch { today = dateInZone("America/Sao_Paulo"); }
+      const { data, error } = await supabase.from("logos_patrocinadores")
+        .select("id,nome,logo_url").eq("user_id", userId).eq("programa_id", programId)
+        .eq("ativo", true).eq("excluido", false).gte("data_final", today).order("id");
+      if (error) return respond({ error: "Dados temporariamente indisponíveis" }, 503);
+      return respond({ logos: data || [] });
+    }
+
     // ── FAST PATH: active mid-rolls for public Top 10 playback ──────
     if (section === "active_midrolls") {
       const now = new Date();

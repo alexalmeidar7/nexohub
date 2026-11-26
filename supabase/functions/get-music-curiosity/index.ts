@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { artista, musica, userId: requestedUserId, deezerArtistImg } = await req.json();
+    const { artista, musica, userId: requestedUserId, deezerArtistImg, lookupOnly } = await req.json();
     if (
       typeof artista !== "string" || typeof musica !== "string" ||
       !artista.trim() || !musica.trim()
@@ -84,7 +84,9 @@ Deno.serve(async (req) => {
 
     // Filtro fixo de sistema
     const systemExceptions = ["break"];
-    const allExceptions = [...excecoes, ...systemExceptions];
+    const { data: exceptionRows, error: exceptionError } = await supabase.from("infomusic_excecoes").select("termo").eq("user_id", userId);
+    if (exceptionError) throw exceptionError;
+    const allExceptions = [...excecoes, ...systemExceptions, ...(exceptionRows || []).map(r => String(r.termo || "").trim().toLowerCase()).filter(Boolean)];
 
     if (allExceptions.length > 0) {
       const artistaLower = artistaTrim.toLowerCase();
@@ -100,29 +102,32 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 1) Global cache lookup (check if anyone has this music/artist curiosity)
-    const { data: cached } = await supabase
+    // Curiosities belong to the authenticated station and do not expire.
+    const escapePattern = (value: string) => value.replace(/[\\%_]/g, ch => "\\" + ch);
+    const { data: records, error: lookupError } = await supabase
       .from("infomusic")
-      .select("curiosidade")
-      .ilike("artista", artistaTrim)
-      .ilike("musica", musicaTrim)
-      .gt("expires_at", new Date().toISOString())
-      .limit(1)
-      .maybeSingle();
-
-    if (cached?.curiosidade) {
+      .select("id, curiosidade")
+      .eq("user_id", userId)
+      .ilike("artista", escapePattern(artistaTrim))
+      .ilike("musica", escapePattern(musicaTrim))
+      .order("created_at", { ascending: false });
+    if (lookupError) throw lookupError;
+    const cached = records?.find(row => row.curiosidade?.trim());
+    if (cached) {
       return new Response(JSON.stringify({ curiosidade: cached.curiosidade, cached: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    // Optional: cleanup expired records periodically (e.g. 5% of requests)
-    if (Math.random() < 0.05) {
-      void supabase
-        .from("infomusic")
-        .delete()
-        .lt("expires_at", new Date().toISOString())
-        .then(() => {});
+    if (lookupOnly === true) {
+      if (!records?.length) {
+        const { error: insertError } = await supabase.from("infomusic").insert({
+          user_id: userId, artista: artistaTrim, musica: musicaTrim, curiosidade: ""
+        });
+        if (insertError && insertError.code !== "23505") throw insertError;
+      }
+      return new Response(JSON.stringify({ curiosidade: "", pending: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // 1.5) Verifica cota mensal e flag IA habilitada

@@ -19,7 +19,7 @@ export interface ApplyTrackChangeOptions {
   now: number;
   data: { titulo: string; artista: string; capa: string };
   merge: (userId: string, patch: Record<string, unknown>) => Promise<unknown>;
-  fetchCuriosity: () => Promise<{ curiosidade?: string } | null | undefined>;
+  fetchCuriosity: () => Promise<{ curiosidade?: string; pending?: boolean; skipped?: boolean } | null | undefined>;
   isStillCurrent: () => boolean;
   onError?: (err: unknown) => void;
 }
@@ -67,6 +67,7 @@ export async function applyTrackChangeWithCuriosityGuard(opts: ApplyTrackChangeO
     try {
       const curData = await fetchCuriosity();
       if (!isStillCurrent()) return;
+      if (curData?.pending || curData?.skipped) return;
       if (curData?.curiosidade) {
         const expiresAt = Date.now() + CURIOSITY_TTL_MS;
         await merge(userId, {

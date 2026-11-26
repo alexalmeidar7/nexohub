@@ -29,6 +29,7 @@ contextBridge.exposeInMainWorld("houseMixDesktop", Object.freeze({
     return () => activitySubscribers.delete(callback);
   },
   isDesktop: true,
+  rememberLogin: (operation, credentials) => ipcRenderer.invoke("housemix:remember-login", operation, credentials),
   generateLocalText: (system, prompt) => ipcRenderer.invoke("housemix:local-ai", { system, prompt }),
   transcribeLocalAudio: (streamUrl) => ipcRenderer.invoke("housemix:local-transcribe", streamUrl),
   listLocalTranscriptions: (stationId) => ipcRenderer.invoke("housemix:local-transcripts-read", stationId),

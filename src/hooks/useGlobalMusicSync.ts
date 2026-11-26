@@ -224,7 +224,7 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
       // Exceções cadastradas em INFO MUSIC: essa faixa não deve aparecer em
       // nenhum lugar do player como nome/artista, e as imagens de capa/fundo
       // devem ser as cadastradas na exceção (ou locutor como fallback).
-      const matchedExcecao = matchesMusicException(excecoesRef.current, data.artista, data.titulo);
+      const matchedExcecao = !isBreakTrack(data) && matchesMusicException(excecoesRef.current, data.artista, data.titulo);
       if (matchedExcecao) {
         const photo = await getOnAirPresenterPhoto();
         
@@ -272,7 +272,7 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
         const syncCover = getTrackCoverSync(data.titulo, data.artista);
         if (syncCover) data.capa = syncCover;
       }
-      fetchCoverAndArtistImg(data);
+      if (!isBreakTrack(data)) fetchCoverAndArtistImg(data);
       applyMusicData(data);
     };
 
@@ -331,19 +331,7 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
       const prevHasRealTrack = !!prev && !isPlaceholderTrack(prev);
       if (prevHasRealTrack && isPlaceholderTrack(data)) return;
 
-      const dataIsBreak = isBreakTrack(data);
-      const prevIsBreak = prev ? isBreakTrack(prev) : false;
-      const existingStartStr = localStorage.getItem(MUSIC_START_KEY);
-      const prevAgeMs = existingStartStr ? Date.now() - parseInt(existingStartStr, 10) : Infinity;
-
-      // Anti ping-pong: quando uma fonte retorna BREAK mas ainda temos uma
-      // faixa real recente (< 4 min), ignore o BREAK. Isso evita o widget
-      // alternar entre artista e "Intervalo" a cada poucos segundos quando
-      // as duas fontes (online + local) discordam.
-      if (dataIsBreak && prevHasRealTrack && !prevIsBreak && prevAgeMs < 4 * 60 * 1000) {
-        return;
-      }
-
+      // BREAK from the active automation source is a real track change.
       const songChanged = !prev || prev.titulo !== data.titulo || prev.artista !== data.artista;
 
       if (songChanged) {
@@ -369,7 +357,7 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
           writeMusicStart(targetId, now);
 
           // Trigger async image fetching
-          fetchCoverAndArtistImg(data);
+          if (!isBreakTrack(data)) fetchCoverAndArtistImg(data);
 
           (async () => {
             await applyTrackChangeWithCuriosityGuard({
@@ -378,15 +366,18 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
               data,
               merge: mergeUserDashboardItems,
               fetchCuriosity: async () => {
-                const { data: curData } = await db.functions.invoke("get-music-curiosity", {
+                if (isBreakTrack(data)) return { skipped: true };
+                const { data: curData, error: curiosityError } = await db.functions.invoke("get-music-curiosity", {
                   body: {
                     artista: data.artista,
                     musica: data.titulo,
                     userId: targetId,
                     deezerArtistImg: data.capa,
+                    lookupOnly: true,
                   },
                 });
-                return curData as { curiosidade?: string } | null | undefined;
+                if (curiosityError) throw curiosityError;
+                return curData as { curiosidade?: string; pending?: boolean; skipped?: boolean } | null | undefined;
               },
               isStillCurrent: () => localStorage.getItem(MUSIC_START_KEY) === now.toString(),
               onError: (e) => console.warn("[MusicSync] Error generating curiosity/merging:", e),
@@ -652,8 +643,8 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
         return "ok";
       };
 
-      const onlineResult = await syncOnline();
       const localResult = await syncLocalFromStorage();
+      const onlineResult = localResult === true || localResult === "stopped" ? "skip" : await syncOnline();
       const localSynced = localResult === true;
       const localStopped = localResult === "stopped";
 
