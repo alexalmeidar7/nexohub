@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
-    <application android:icon="@drawable/tv_launcher" android:banner="@drawable/tv_launcher"
+    <application android:icon="@mipmap/positiva_launcher" android:banner="@drawable/positiva_tv_banner"
         tools:replace="android:icon,android:banner">
         <activity android:name="br.com.nexobrasil.nexoplayer.firetv.MainActivity"
-            android:icon="@drawable/tv_launcher" android:banner="@drawable/tv_launcher" />
+            android:icon="@mipmap/positiva_launcher" android:banner="@drawable/positiva_tv_banner" />
     </application>
 </manifest>

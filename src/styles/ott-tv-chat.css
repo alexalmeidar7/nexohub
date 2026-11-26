@@ -123,3 +123,284 @@
   box-shadow: none !important;
 }
 /* NEXO_CHAT_ALINHAMENTO_BOTOES_20261121_V1: fim */
+/* NEXO_LAYOUT_CONSOLIDADO_20261121_V2: inicio */
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat {
+  right: calc(34 * var(--chat-unit));
+  width: calc(362 * var(--chat-unit));
+  max-width: calc(100vw - calc(42 * var(--chat-unit)));
+}
+.ott-tv-chat-top {
+  justify-content: flex-end;
+  padding-right: calc(2 * var(--chat-unit));
+}
+.nexo-tv .ott-tv-chat-back,
+.nexo-tv .ott-standard-back,
+.nexo-tv .ott-interactivity-panel > header .ott-standard-back,
+.nexo-tv .ott-pair-back {
+  background: rgba(255, 255, 255, 0.20) !important;
+}
+.nexo-tv .ott-tv-chat-join {
+  align-self: flex-end;
+  width: calc(336 * var(--chat-unit));
+  min-height: calc(84 * var(--chat-unit));
+  padding: 0 calc(26 * var(--chat-unit));
+  border: 0 !important;
+  box-shadow: none !important;
+}
+.ott-tv-chat-messages {
+  padding-bottom: calc(108 * var(--chat-unit));
+}
+.ott-tv-chat-empty {
+  align-self: flex-end;
+  max-width: calc(300 * var(--chat-unit));
+  margin-bottom: calc(18 * var(--chat-unit));
+  text-align: right;
+}
+/* NEXO_LAYOUT_CONSOLIDADO_20261121_V2: fim */
+/* NEXO_VISUAL_TV_INTERATIVIDADE_CHAT_POLL_20261121_V1: inicio */
+/* Mesma margem direita para avatar, botao Interatividade, QR e chat. */
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat {
+  right: 5.2%;
+  top: calc(166 * var(--chat-unit));
+  width: calc(372 * var(--chat-unit));
+  height: calc(764 * var(--chat-unit));
+  max-height: calc(100vh - calc(290 * var(--chat-unit)));
+  max-width: min(38vw, calc(100vw - 10.4%));
+}
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat-top {
+  height: calc(70 * var(--chat-unit));
+  justify-content: flex-end;
+  padding-right: 0;
+}
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat-back {
+  background: rgba(255, 255, 255, .20) !important;
+}
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat-qr {
+  width: 100%;
+  box-sizing: border-box;
+  padding: calc(23 * var(--chat-unit));
+  background: #323232;
+}
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat-join {
+  width: 100%;
+  max-width: 100%;
+  border: 0 !important;
+}
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat-empty {
+  margin-bottom: calc(16 * var(--chat-unit));
+}
+/* QR Code permanece no tamanho previamente aprovado. */
+/* NEXO_VISUAL_TV_INTERATIVIDADE_CHAT_POLL_20261121_V1: fim */
+
+/* NEXO_BOXES_CHAT_ENQUETE_20261121_V1: INICIO */
+/* Chat: mesmo box da letra, sem deslocar o painel ou modificar o QR. */
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat {
+  box-sizing: border-box;
+  background: rgba(50, 50, 50, .86) !important;
+  border-radius: calc(28 * var(--chat-unit));
+  border: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  padding: calc(20 * var(--chat-unit));
+}
+/* Uma unica superficie escura, sem uma segunda caixa atras do QR. */
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat-qr {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+/* NEXO_BOXES_CHAT_ENQUETE_20261121_V1: FIM */
+
+/* NEXO_CHAT_LAYOUT_REFERENCIA_20261121_V1: INICIO */
+/* Layout aprovado: card chat ao vivo alinhado ao avatar/interatividade. */
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat {
+  position: absolute;
+  right: 5.2%;
+  top: calc(146 * var(--chat-unit));
+  width: calc(372 * var(--chat-unit));
+  max-width: min(38vw, 89.6vw);
+  height: calc(784 * var(--chat-unit));
+  max-height: calc(100vh - calc(270 * var(--chat-unit)));
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+/* O fundo comeca somente DEPOIS do voltar, para o botao ficar fora. */
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat::before {
+  content: "";
+  position: absolute;
+  top: calc(75 * var(--chat-unit));
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+  border-radius: calc(30 * var(--chat-unit));
+  background: rgba(50, 50, 50, .86);
+  pointer-events: none;
+}
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat > * {
+  position: relative;
+  z-index: 1;
+}
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat-top {
+  height: calc(75 * var(--chat-unit));
+  min-height: calc(75 * var(--chat-unit));
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 0 !important;
+  margin: 0;
+}
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat-back {
+  width: calc(56 * var(--chat-unit));
+  height: calc(56 * var(--chat-unit));
+  min-width: 0;
+  min-height: 0;
+  background: rgba(255,255,255,.20) !important;
+  border-radius: 50%;
+  box-shadow: none !important;
+  color: white;
+}
+/* Titulo na mesma margem interna do CTA e das mensagens. */
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat-title {
+  display: block;
+  flex: none;
+  margin: calc(26 * var(--chat-unit)) calc(38 * var(--chat-unit)) calc(18 * var(--chat-unit));
+  color: #fff;
+  font-family: 'Montserrat', Arial, sans-serif !important;
+  font-size: calc(21 * var(--chat-unit));
+  font-weight: 600;
+  line-height: 1.2;
+  text-transform: lowercase;
+  text-align: left;
+}
+/* CTA branco dentro de uma moldura cinza-escura, com icone de chat a direita. */
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat-join {
+  box-sizing: border-box;
+  position: relative;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(12 * var(--chat-unit));
+  flex: none;
+  width: auto !important;
+  min-height: calc(76 * var(--chat-unit));
+  height: calc(76 * var(--chat-unit));
+  max-width: none !important;
+  margin: 0 calc(25 * var(--chat-unit));
+  padding: 0 calc(12 * var(--chat-unit));
+  border: calc(10 * var(--chat-unit)) solid rgba(32, 32, 32, .55) !important;
+  border-radius: calc(26 * var(--chat-unit));
+  background: #fff !important;
+  background-clip: padding-box !important;
+  box-shadow: none !important;
+  color: #292929 !important;
+  font-family: 'Montserrat', Arial, sans-serif !important;
+  font-size: calc(19 * var(--chat-unit));
+  font-weight: 600;
+  line-height: 1;
+  text-transform: lowercase;
+  white-space: nowrap;
+}
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat-join > span {
+  color: inherit !important;
+  font-weight: 600 !important;
+}
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat-join > svg {
+  display: block !important;
+  flex: none;
+  width: calc(23 * var(--chat-unit)) !important;
+  height: calc(23 * var(--chat-unit)) !important;
+  margin: 0;
+  fill: none !important;
+  stroke: #292929 !important;
+  stroke-width: 1.9;
+}
+/* Mantem as mensagens no espaco restante do box, sem encostar nas margens. */
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat-messages {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0 !important;
+  padding: calc(22 * var(--chat-unit)) calc(28 * var(--chat-unit)) calc(31 * var(--chat-unit));
+  gap: calc(12 * var(--chat-unit));
+  overflow: hidden;
+}
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat-empty {
+  align-self: center;
+  max-width: 100%;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-family: 'Montserrat', Arial, sans-serif !important;
+  font-size: calc(16 * var(--chat-unit));
+  font-weight: 400;
+  line-height: 1.25;
+  color: #eee;
+  text-align: center;
+  white-space: normal;
+}
+/* QR: preserva seu tamanho e usa a mesma superficie do chat sem uma segunda caixa. */
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat-qr {
+  align-self: stretch;
+  width: 100%;
+  padding: calc(25 * var(--chat-unit));
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+/* Somente o foco/hover ganha o contorno branco padrao. */
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat-join:is(:hover, :focus, :focus-visible):not(:disabled),
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat-back:is(:hover, :focus, :focus-visible) {
+  outline: calc(3 * var(--chat-unit)) solid white !important;
+  outline-offset: calc(5 * var(--chat-unit)) !important;
+}
+/* NEXO_CHAT_LAYOUT_REFERENCIA_20261121_V1: FIM */
+
+/* NEXO_PAINEIS_RESPIRO_PADRAO_20261121_V2: inicio */
+/* Margem igual entre avatar -> voltar e box -> botoes do rodape.
+   O box nao usa mais altura fixa: respeita o espaco real da TV. */
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat {
+  top: calc(7% + 90 * var(--chat-unit)) !important;
+  bottom: calc(12% + 57 * var(--chat-unit)) !important;
+  height: auto !important;
+  max-height: none !important;
+  min-height: 0;
+  overflow: visible;
+}
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat-top {
+  height: calc(75 * var(--chat-unit));
+  min-height: calc(75 * var(--chat-unit));
+  flex: 0 0 calc(75 * var(--chat-unit));
+  justify-content: flex-end;
+  align-items: flex-start;
+}
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat-back {
+  width: calc(56 * var(--chat-unit));
+  height: calc(56 * var(--chat-unit));
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  flex: none;
+  background: rgba(255,255,255,.20) !important;
+}
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat::before {
+  top: calc(75 * var(--chat-unit)) !important;
+  bottom: 0 !important;
+}
+.nexo-tv .ott-interactivity-panel-chat .ott-tv-chat-messages {
+  min-height: 0;
+  overflow: auto;
+}
+/* NEXO_PAINEIS_RESPIRO_PADRAO_20261121_V2: fim */

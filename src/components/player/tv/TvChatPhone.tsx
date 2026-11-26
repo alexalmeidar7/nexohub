@@ -33,6 +33,12 @@ export default function TvChatPhone({ userSlug }: { userSlug: string }) {
   }, []);
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
   const requestedRadio = params.get("radio") || "";
+  // NEXO_CHAT_SESSAO_PHONE_V1: o QR aponta para uma TV especifica, mesmo apos fechar o app.
+  const chatTvDeviceId = params.get('tv') || '';
+  const chatLeaveKey = 'nexo_chat_left_' + requestedRadio.toLowerCase() + '_' + chatTvDeviceId;
+  const [chatIsJoined, setChatIsJoined] = useState(false);
+  const [chatJoinBusy, setChatJoinBusy] = useState(false);
+  const [chatLeaveBusy, setChatLeaveBusy] = useState(false);
   const [validatedRadio, setValidatedRadio] = useState<string | null>(null);
   const [validating, setValidating] = useState(true);
   const [brandColor, setBrandColor] = useState("#e20a12");
@@ -103,7 +109,7 @@ export default function TvChatPhone({ userSlug }: { userSlug: string }) {
     setSigningIn(true);
     setError("");
     try {
-      const returnTo = `/${userSlug}/pair?mode=chat&radio=${encodeURIComponent(requestedRadio)}`;
+      const returnTo = `/${userSlug}/pair?mode=chat&radio=${encodeURIComponent(requestedRadio)}&tv=${encodeURIComponent(chatTvDeviceId)}`;
       // Login do Player no site publicado; apos Google, retorna ao chat da mesma radio.
       saveChatOAuthReturn(returnTo);
       const { error: loginError } = await playerSupabase.auth.signInWithOAuth({ provider: "google", options: {
@@ -115,10 +121,56 @@ export default function TvChatPhone({ userSlug }: { userSlug: string }) {
     finally { setSigningIn(false); }
   };
 
+  // Login Google e participacao no chat sao coisas diferentes.
+  // Fechar a TV ou o navegador nao encerra a participacao salva no banco.
+  useEffect(() => {
+    setChatIsJoined(false);
+    if (!validatedRadio || !user || !/^[0-9a-f-]{36}$/i.test(chatTvDeviceId)) return;
+    try { if (localStorage.getItem(chatLeaveKey) === '1') return; } catch {}
+    let alive = true;
+    void (async () => {
+      const { error: joinError } = await playerSupabase.rpc('player_tv_chat_join' as never, {
+        p_radio_user_id: validatedRadio, p_tv_device_id: chatTvDeviceId,
+      } as never);
+      if (!alive) return;
+      if (joinError) setError('Nao foi possivel ativar o chat nesta TV. Tente novamente.');
+      else { setChatIsJoined(true); setError(''); }
+    })();
+    return () => { alive = false; };
+  }, [validatedRadio, user?.id, chatTvDeviceId, chatLeaveKey]);
+
+  const joinChatAgain = async () => {
+    if (!user || !validatedRadio || !/^[0-9a-f-]{36}$/i.test(chatTvDeviceId) || chatJoinBusy) return;
+    setChatJoinBusy(true);
+    try {
+      const { error: joinError } = await playerSupabase.rpc('player_tv_chat_join' as never, {
+        p_radio_user_id: validatedRadio, p_tv_device_id: chatTvDeviceId,
+      } as never);
+      if (joinError) throw joinError;
+      try { localStorage.removeItem(chatLeaveKey); } catch {}
+      setChatIsJoined(true); setError('');
+    } catch { setError('Nao foi possivel entrar na conversa.'); }
+    finally { setChatJoinBusy(false); }
+  };
+
+  const leaveChat = async () => {
+    if (!user || !validatedRadio || !chatIsJoined || chatLeaveBusy) return;
+    setChatLeaveBusy(true);
+    try {
+      const { error: leaveError } = await playerSupabase.rpc('player_tv_chat_leave' as never, {
+        p_radio_user_id: validatedRadio, p_tv_device_id: chatTvDeviceId,
+      } as never);
+      if (leaveError) throw leaveError;
+      try { localStorage.setItem(chatLeaveKey, '1'); } catch {}
+      setChatIsJoined(false); setError('');
+    } catch { setError('Nao foi possivel sair da conversa. Tente novamente.'); }
+    finally { setChatLeaveBusy(false); }
+  };
+
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     const text = message.trim();
-    if (!user || !channelId || !text || sending) return;
+    if (!user || !channelId || !chatIsJoined || !text || sending) return;
     setSending(true); setError("");
     try {
       const { data: sessionData } = await playerSupabase.auth.getUser();
@@ -152,9 +204,25 @@ export default function TvChatPhone({ userSlug }: { userSlug: string }) {
                   {signingIn ? "Conectando..." : "Entrar com Google"}
                 </button>
               </div>
+            ) : !chatTvDeviceId ? (
+              <p role="alert">QR Code desatualizado. Escaneie novamente o QR na TV.</p>
+            ) : !chatIsJoined ? (
+              <div style={{ background: '#292929', borderRadius: 22, padding: 22 }}>
+                <p style={{ marginBottom: 16 }}>Voce saiu da conversa. Seu login Google continua salvo.</p>
+                <button type="button" onClick={() => void joinChatAgain()} disabled={chatJoinBusy}
+                  style={{ width: '100%', minHeight: 50, borderRadius: 15, background: 'var(--player-dominant-color, #e20a12)', color: '#fff', fontWeight: 700 }}>
+                  {chatJoinBusy ? 'Conectando...' : 'Entrar na conversa'}
+                </button>
+              </div>
             ) : (
               <form onSubmit={event => void submit(event)} style={{ background: "#292929", borderRadius: 22, padding: 18 }}>
-                <p style={{ marginBottom: 12, fontWeight: 700 }}>Participando como {displayName}</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                  <p style={{ fontWeight: 700, minWidth: 0 }}>Participando como {displayName}</p>
+                  <button type="button" onClick={() => void leaveChat()} disabled={chatLeaveBusy}
+                    style={{ flexShrink: 0, background: '#444', color: '#fff', borderRadius: 999, padding: '9px 15px', fontSize: 14, fontWeight: 600 }}>
+                    {chatLeaveBusy ? 'Saindo...' : 'Sair'}
+                  </button>
+                </div>
                 <label htmlFor="tv-chat-phone-text" style={{ display: "block", opacity:.8, fontSize: 14, marginBottom: 8 }}>Sua mensagem</label>
                 <textarea id="tv-chat-phone-text" maxLength={400} rows={4} value={message} onChange={e => setMessage(e.target.value)} placeholder="Escreva aqui..." style={{ display: "block", width: "100%", resize: "vertical", border: 0, outline: 0, borderRadius: 14, background: "#444", padding: 14, color: "#fff" }} />
                 <button type="submit" disabled={sending || !message.trim()} style={{ marginTop: 14, width: "100%", minHeight: 50, borderRadius: 15, background: "var(--player-dominant-color, #e20a12)", color: "#fff", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 9 }}>

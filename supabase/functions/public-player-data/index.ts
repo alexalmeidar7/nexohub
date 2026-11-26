@@ -1,3 +1,4 @@
+import { decodeMusicBytes } from "../_shared/musicByteEncoding.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -5,6 +6,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function decodeXmlLabel(value:string):string {
+ return value.trim().replace(/^<!\[CDATA\[([\s\S]*)\]\]>$/,"$1").replace(/&(#x[0-9a-f]+|#\d+|amp|lt|gt|quot|apos);/gi,(whole,key:string)=>{
+  const entities:Record<string,string>={amp:"&",lt:"<",gt:">",quot:'"',apos:"'"};
+  if(key[0]!=="#")return entities[key.toLowerCase()]??whole;
+  const n=key[1].toLowerCase()==="x"?parseInt(key.slice(2),16):parseInt(key.slice(1),10);
+  return n>0&&n<=0x10ffff&&!(n>=0xd800&&n<=0xdfff)?String.fromCodePoint(n):whole;
+ }).normalize("NFC");
+}
 type MusicPayload = {
   titulo: string;
   artista: string;
@@ -34,13 +43,23 @@ function readMusicFromDashboard(dashboardItems: Record<string, any> | null) {
   };
 }
 
+function damagedMusic(music: MusicPayload | null | undefined): boolean {
+  return !!music && /\uFFFD/.test(music.titulo + music.artista);
+}
+function sameMusicLabel(a: string, b: string): boolean {
+  const key = (x: string) => Array.from(x.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim());
+  const x = key(a), y = key(b);
+  return x.length === y.length && x.every((c,i) => c === y[i] || c === "\uFFFD");
+}
 function mergeMusicPayload(primary: MusicPayload | null, fallback: MusicPayload | null): MusicPayload | null {
   if (!primary) return fallback;
   if (!fallback) return primary;
+  if (!sameMusicLabel(primary.titulo, fallback.titulo) || (primary.artista && !sameMusicLabel(primary.artista, fallback.artista))) return primary;
+  const canRepair = !damagedMusic(fallback);
 
   return {
-    titulo: primary.titulo,
-    artista: primary.artista || fallback.artista,
+    titulo: canRepair && primary.titulo.includes("\uFFFD") ? fallback.titulo : primary.titulo,
+    artista: canRepair && primary.artista.includes("\uFFFD") ? fallback.artista : primary.artista || fallback.artista,
     capa: primary.capa || fallback.capa,
     horario: primary.horario || fallback.horario,
     duracao: primary.duracao || fallback.duracao,
@@ -56,25 +75,26 @@ async function fetchMusicFromXml(xmlUrl: string): Promise<MusicPayload | null> {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; PublicPlayer/1.0)",
         Accept: "application/xml, text/xml, */*",
+        "Cache-Control": "no-cache, no-store",
       },
-      signal: AbortSignal.timeout(1500),
+      signal: AbortSignal.timeout(4000),
     });
     if (!xmlResp.ok) return null;
-    const xmlText = await xmlResp.text();
+    const xmlText = decodeMusicBytes(await xmlResp.arrayBuffer(), xmlResp.headers.get("content-type") || "");
 
     const extractTag = (...tags: string[]) => {
       for (const tag of tags) {
         const match = xmlText.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i"));
-        if (match?.[1]?.trim()) return match[1].trim();
+        if (match?.[1]?.trim()) return decodeXmlLabel(match[1]);
       }
       return "";
     };
 
-    const titulo = extractTag("nome_musica", "titulo", "title");
+    const titulo = extractTag("nome_musica", "musica_atual", "titulo", "title");
     if (!titulo || titulo.toLowerCase() === "sem título" || titulo.toLowerCase() === "sem titulo") return null;
 
-    const artista = extractTag("interprete", "nome_interprete", "artista", "artist");
-    const capa = extractTag("capa", "cover", "album_art", "artwork", "imagem");
+    const artista = extractTag("interprete", "nome_interprete", "artista_atual", "artista", "artist");
+    const capa = extractTag("capa", "musica_capa", "cover", "album_art", "artwork", "imagem");
     const horario = extractTag("horario");
     const duracaoRaw = extractTag("duracao", "duration");
     let duracao = 0;
@@ -92,6 +112,35 @@ async function fetchMusicFromXml(xmlUrl: string): Promise<MusicPayload | null> {
   } catch {
     return null;
   }
+}
+
+// The physical automation file is uploaded to xml-files by MusicaNoAr.
+// Use the station's configured storage object, never another station's file.
+async function fetchMusicSource(client: Pick<ReturnType<typeof createClient<any>>, "storage">, userId:string, settings: any, current:MusicPayload|null):Promise<MusicPayload|null> {
+ const items=settings?.dashboard_items || {};
+ const localPath=typeof items.local_xml_storage_path==="string"?items.local_xml_storage_path:"";
+ const candidates:string[]=[];
+ const addLocal=()=>{
+  const paths=[localPath,`${userId}/local-xml-${userId}.xml`,`local-xml-${userId}.xml`];
+  for(const path of paths) {
+   if(!path || !path.endsWith(`local-xml-${userId}.xml`) || path.includes("..")) continue;
+   const url=client.storage.from("xml-files").getPublicUrl(path).data.publicUrl;
+   if(url&&!candidates.includes(url))candidates.push(url);
+  }
+ };
+ const mode=String(settings?.music_source_mode||"").toLowerCase();
+ if(mode==="pasta" || mode==="both" || !settings?.music_xml_url)addLocal();
+ if(mode!=="pasta" && typeof settings?.music_xml_url==="string" && settings.music_xml_url)candidates.push(settings.music_xml_url);
+ for(const url of candidates) {
+  let fresh:string;
+  try{const parsed=new URL(url); if(!/^https?:$/.test(parsed.protocol))continue; parsed.searchParams.set("_nexo_music",Date.now().toString());fresh=parsed.toString();}catch{continue;}
+  const value=await fetchMusicFromXml(fresh);
+  if(!value || damagedMusic(value))continue;
+  // Never roll back to a stale song; only enrich the same active track.
+  if(current && (!sameMusicLabel(current.titulo,value.titulo) || (current.artista&&!sameMusicLabel(current.artista,value.artista))))continue;
+  return value;
+ }
+ return null;
 }
 
 const fastSupabaseFetch: typeof fetch = (input, init = {}) =>
@@ -309,7 +358,7 @@ Deno.serve(async (req) => {
     if (section === "now_playing") {
       const { data: settingsData, error: settingsError } = await supabase
         .from("user_settings")
-        .select("music_xml_url, dashboard_items")
+        .select("music_xml_url, music_source_mode, dashboard_items")
         .eq("user_id", userId)
         .maybeSingle();
 
@@ -321,8 +370,8 @@ Deno.serve(async (req) => {
       let musicData = dbMusic?.musicData ?? null;
 
       // If the DB snapshot still has no cover, try to enrich it from XML before returning.
-      if ((!musicData || !musicData.capa) && settingsData?.music_xml_url) {
-        const xmlMusic = await fetchMusicFromXml(settingsData.music_xml_url);
+      if ((musicData && (!musicData.capa || damagedMusic(musicData))) || (!musicData && settingsData?.music_xml_url && !dashboardItems?.music_current_excecao)) {
+        const xmlMusic = await fetchMusicSource(supabase,userId,settingsData,musicData);
         musicData = mergeMusicPayload(musicData, xmlMusic);
       }
 
@@ -353,7 +402,7 @@ Deno.serve(async (req) => {
         supabase.from("comercial_preroll").select("*").eq("user_id", userId).eq("active", true).lte("horario_inicio", currentTime).gte("horario_fim", currentTime).order("priority", { ascending: true }),
         supabase.from("empresa_config").select("*").eq("user_id", userId).maybeSingle(),
         supabase.from("shopping_products").select("id, name, description, image_url, price, stock, program_id, payment_url").eq("user_id", userId).eq("active", true).gt("stock", 0),
-        supabase.from("user_settings").select("shopping_active, music_xml_url, dashboard_items").eq("user_id", userId).maybeSingle(),
+        supabase.from("user_settings").select("shopping_active, music_xml_url, music_source_mode, dashboard_items").eq("user_id", userId).maybeSingle(),
       ]);
 
     const isShopActive = settingsRes.data?.shopping_active !== false;
@@ -362,8 +411,8 @@ Deno.serve(async (req) => {
     // Try dashboard first, and enrich missing cover from XML when needed
     let musicResult = readMusicFromDashboard(dashboardItems);
     const deezerArtistImgFromDash = (dashboardItems?.music_deezer_artist_img as string) || "";
-    if ((!musicResult?.musicData || !musicResult.musicData.capa) && settingsRes.data?.music_xml_url) {
-      const xmlMusic = await fetchMusicFromXml(settingsRes.data.music_xml_url);
+    if ((musicResult?.musicData && (!musicResult.musicData.capa || damagedMusic(musicResult.musicData))) || (!musicResult?.musicData && settingsRes.data?.music_xml_url && !dashboardItems?.music_current_excecao)) {
+      const xmlMusic = await fetchMusicSource(supabase,userId,settingsRes.data,musicResult?.musicData ?? null);
       const mergedMusic = mergeMusicPayload(musicResult?.musicData ?? null, xmlMusic);
       if (mergedMusic) {
         musicResult = {

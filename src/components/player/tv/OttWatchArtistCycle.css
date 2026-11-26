@@ -1,0 +1,10 @@
+/* Canal apenas de áudio: 20s foto do artista + 10s gradiente, como a Home. */
+.nexo-tv.ott-watch-controls.ott-audio .ott-watch-artist-cycle{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;opacity:0;transition:opacity 1.65s cubic-bezier(.4,0,.2,1);will-change:opacity}
+.nexo-tv.ott-watch-controls.ott-audio .ott-watch-artist-cycle.is-visible{opacity:1}
+.nexo-tv.ott-watch-controls.ott-audio .ott-watch-artist-cycle>img{position:absolute;width:100%;height:100%;object-fit:cover;object-position:center 35%;filter:brightness(.72) saturate(1.05);transform:scale(1.02);animation:nexoWatchArtistZoom 20s ease-in-out infinite alternate;animation-play-state:paused;will-change:transform}
+.nexo-tv.ott-watch-controls.ott-audio .ott-watch-artist-cycle.is-visible>img{animation-play-state:running}
+.nexo-tv.ott-watch-controls.ott-audio .ott-watch-artist-cycle-scrim{position:absolute;inset:0;display:block;background:linear-gradient(90deg,rgba(12,10,10,.64) 0%,rgba(12,10,10,.42) 48%,rgba(12,10,10,.24) 100%),linear-gradient(0deg,rgba(0,0,0,.78),transparent 40%)}
+.nexo-tv.ott-watch-controls.ott-audio>.ott-presenter-backdrop{z-index:1}
+.nexo-tv.ott-watch-controls.ott-audio .ott-watch-surface{z-index:2}
+@keyframes nexoWatchArtistZoom{from{transform:scale(1.02)}to{transform:scale(1.11)}}
+@media(prefers-reduced-motion:reduce){.nexo-tv.ott-watch-controls.ott-audio .ott-watch-artist-cycle{transition:none}.nexo-tv.ott-watch-controls.ott-audio .ott-watch-artist-cycle>img{animation:none!important;transform:none}}

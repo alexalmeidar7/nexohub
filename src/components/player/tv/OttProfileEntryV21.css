@@ -1,0 +1,13 @@
+@keyframes nexo-profile-entry-v23{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.nexo-tv.ott-profiles .ott-profile-select[data-entry-ready="false"] .ott-profile-row,.nexo-tv.ott-profiles .ott-profile-select[data-entry-ready="false"] .ott-profile-connect{opacity:0;animation:none!important}
+.nexo-tv.ott-profiles .ott-profile-select[data-entry-ready="true"] .ott-profile-row,.nexo-tv.ott-profiles .ott-profile-select[data-entry-ready="true"] .ott-profile-connect{animation:nexo-profile-entry-v23 600ms cubic-bezier(.2,.75,.25,1) both}
+.nexo-tv.ott-profiles .ott-profile-select[data-entry-ready="true"] .ott-profile-connect{animation-delay:150ms}
+.nexo-tv.ott-profiles-refined .ott-profile-add-button .ott-avatar.ott-add,.nexo-tv.ott-profiles-refined .ott-profile-connect .ott-avatar.ott-add{background:transparent!important;border:calc(2 * var(--ott-u)) solid #fff!important;box-sizing:border-box;box-shadow:none!important}
+.nexo-tv.ott-profiles-refined .ott-profile-add-button:is(:focus,:hover) .ott-avatar.ott-add,.nexo-tv.ott-profiles-refined .ott-profile-connect:is(:focus,:hover) .ott-avatar.ott-add{outline:none!important;border-width:calc(4 * var(--ott-u))!important}
+.nexo-tv .ott-avatar-default{background:var(--ott-accent)!important}
+@media(prefers-reduced-motion:reduce){.nexo-tv.ott-profiles .ott-profile-select .ott-profile-row,.nexo-tv.ott-profiles .ott-profile-select .ott-profile-connect{animation:none!important;opacity:1!important}}
+
+.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-main>.ott-avatar,.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-add-button>.ott-avatar,.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-connect>.ott-avatar{transition:transform .2s ease!important;transform-origin:center;}
+.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-main:is(:hover,:focus,:focus-visible)>.ott-avatar,.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-add-button:is(:hover,:focus,:focus-visible)>.ott-avatar,.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-connect:is(:hover,:focus,:focus-visible)>.ott-avatar{transform:scale(1.08)!important;}
+
+.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-row .ott-profile-main:is(:hover,:focus,:focus-visible)>.ott-avatar,.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-row .ott-profile-add-button:is(:hover,:focus,:focus-visible)>.ott-avatar{transform:scale(1.08)!important;}

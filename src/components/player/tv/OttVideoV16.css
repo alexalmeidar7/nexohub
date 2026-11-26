@@ -1,0 +1,6 @@
+/* Only the focused/hovered card is outlined; no layout recalculation. */
+.nexo-tv .ott-video.ott-positiva-multivideo .ott-positiva-channel-card{outline:none!important;border:0!important;box-shadow:none!important;transition:none!important;transform:none!important}
+.nexo-tv .ott-video.ott-positiva-multivideo .ott-positiva-channel-card:is(:focus-visible,:hover){outline:calc(4 * var(--ott-u)) solid white!important;outline-offset:calc(5 * var(--ott-u))!important}
+.nexo-tv .ott-video.ott-positiva-multivideo .ott-positiva-channel-track:has(.ott-positiva-channel-card:hover) .ott-positiva-channel-card:not(:hover){outline:none!important}
+.nexo-v16-live-status{position:absolute;right:calc(10 * var(--ott-u));top:calc(10 * var(--ott-u));max-width:85%;padding:calc(3 * var(--ott-u)) calc(5 * var(--ott-u));border-radius:calc(5 * var(--ott-u));background:#222d;color:white;font-size:calc(10 * var(--ott-u));font-weight:600;text-align:right;pointer-events:none}
+.nexo-v16-live-status[data-live="true"]{background:#d91620}

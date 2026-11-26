@@ -103,7 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const isPlayerRoute = typeof window !== "undefined" && (
       /^\/(?:[^/]+\/)?player(?:\/|$)/.test(window.location.pathname) ||
       window.location.pathname.endsWith("/auth/popup-callback") ||
-      (/^\/[^/]+\/pair\/?$/.test(window.location.pathname) && new URLSearchParams(window.location.search).get("mode") === "chat") ||
+      /^\/[^/]+\/pair\/?$/.test(window.location.pathname) ||
       (window.location.pathname === "/" && Boolean(getChatOAuthReturn()))
     );
     if (isPlayerRoute) {

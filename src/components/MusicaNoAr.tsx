@@ -1,3 +1,4 @@
+import { decodeMusicBytes, xmlDeclarationUtf8 } from "@/lib/musicByteEncoding";
 import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from "react";
 import { Music, User, Loader2, Check, Globe, FolderOpen, Clock, Upload, Monitor, ChevronDown, ChevronUp, AlertTriangle, Circle, Sparkles, X, Settings, CheckCircle2, Radio, Disc } from "lucide-react";
 import { lazyRetry } from "@/lib/lazyRetry";
@@ -97,22 +98,7 @@ function getDeviceName(): string {
 
 /** Detect encoding from XML declaration or byte-order, then decode */
 async function readFileWithEncoding(file: File): Promise<string> {
-  const headSlice = file.slice(0, 200);
-  const headText = await headSlice.text();
-  const encMatch = headText.match(/encoding=["']([^"']+)["']/i);
-  const declared = encMatch?.[1]?.toLowerCase() || "";
-
-  const latin = ["iso-8859-1", "latin1", "windows-1252", "iso_8859-1"];
-  if (latin.some(e => declared.includes(e))) {
-    const buf = await file.arrayBuffer();
-    return new TextDecoder("windows-1252").decode(buf);
-  }
-  const utf8 = await file.text();
-  if (utf8.includes("\uFFFD") || /\u00C3[\u00A0-\u00BF]/.test(utf8)) {
-    const buf = await file.arrayBuffer();
-    return new TextDecoder("windows-1252").decode(buf);
-  }
-  return utf8;
+  return decodeMusicBytes(await file.arrayBuffer(), file.type);
 }
 
 function parseXmlString(xmlStr: string): MusicData | null {
@@ -1356,11 +1342,11 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
       const { data: authData } = await supabase.auth.getSession();
       const authUid = authData?.session?.user?.id;
       if (!authUid) throw new Error("not authenticated");
-      const utf8Blob = new Blob([new TextEncoder().encode(text)], { type: "application/xml" });
+      const utf8Blob = new Blob([new TextEncoder().encode(xmlDeclarationUtf8(text))], { type: "application/xml; charset=utf-8" });
       const filePath = `${authUid}/local-xml-${uid}.xml`;
       const { error: upErr } = await supabase.storage
         .from("xml-files")
-        .upload(filePath, utf8Blob, { upsert: true, contentType: "application/xml" });
+        .upload(filePath, utf8Blob, { upsert: true, contentType: "application/xml; charset=utf-8" });
       if (upErr) throw upErr;
       lastUploadedContentRef.current = text;
       // O caminho do XML é fixo para cada rádio. Salve-o apenas UMA vez,
@@ -1434,6 +1420,9 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
         if (!file) { readingRef.current = false; return; }
         rawText = await readFileWithEncoding(file);
         fileModifiedAt = file.lastModified;
+      }
+      if (rawText.includes("\uFFFD")) {
+        console.warn("[Nexo metadata] O texto ja chegou corrompido ao leitor", {nativeReader: !!nativeSourceRef.current});
       }
       // Jornal FM lê um TXT "ARTISTA - MUSICA"; convertemos em XML sintético
       // para reaproveitar todo o pipeline downstream (parser, storage sync).
@@ -1743,7 +1732,7 @@ export default function MusicaNoAr({ effectiveUserId, autoStartReader = false }:
           if (!res.ok) continue;
           const lastModHeader = res.headers.get("last-modified");
           const fileModifiedAt = lastModHeader ? new Date(lastModHeader).getTime() : undefined;
-          const text = await res.text();
+          const text = decodeMusicBytes(await res.arrayBuffer(), res.headers.get("content-type") || "");
           if (!text) continue;
           if (text === localFileContentRef.current) return;
           // Guarda de recência: não voltar para uma leitura mais antiga do que a já aplicada.

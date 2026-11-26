@@ -5,7 +5,11 @@ import PlayerBrandCorner from "@/components/player/PlayerBrandCorner";
 import { toast } from "sonner";
 import { markPlayerSession } from "@/lib/playerSession";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
-import { getTvAppLoginPath, isPlayerTvApp } from "@/lib/playerTvApp";
+import { getTvAppLoginPath, isPlayerOtt, isPlayerTvApp } from "@/lib/playerTvApp";
+
+import OttArtwork from "@/components/player/tv/OttArtwork";
+import { OttBackdrop, OttClientBrand, OttFrame } from "@/components/player/tv/OttFrame";
+import "./PlayerOttWeb.css";
 
 interface AccessScreenProps {
   logoUrl?: string | null;
@@ -13,9 +17,10 @@ interface AccessScreenProps {
   music?: { title?: string; artist?: string; cover?: string | null } | null;
   radioUserId?: string | null;
   onLoginSuccess: () => void;
+  onGuest?: () => void;
 }
 
-export default function AccessScreen({ logoUrl, backgroundUrl, music, radioUserId, onLoginSuccess }: AccessScreenProps) {
+export default function AccessScreen({ logoUrl, backgroundUrl, music, radioUserId, onLoginSuccess, onGuest }: AccessScreenProps) {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { userSlug } = useParams();
@@ -36,6 +41,25 @@ export default function AccessScreen({ logoUrl, backgroundUrl, music, radioUserI
   };
 
   if (isPlayerTvApp() && userSlug) return <Navigate to={`/${userSlug}/player/tv`} replace />;
+
+  if (isPlayerOtt()) return (
+    <OttFrame className="ott-web-access">
+      <OttBackdrop image={backgroundUrl} />
+      <header className="ott-header"><OttClientBrand logo={logoUrl} name={userSlug || "Nexo Player"} /></header>
+      <main className="ott-web-access-content" aria-label="Acesso ao Nexo Player">
+        <button className="ott-primary" type="button" onClick={handleGoogleAuth} disabled={loading}>
+          {loading ? "Conectando ao Google..." : "Entrar com Google"}
+        </button>
+        {onGuest && <button className="ott-web-guest" type="button" onClick={onGuest} disabled={loading}>Continuar como visitante</button>}
+        {(music?.title || music?.artist) && (
+          <div className="ott-web-access-track">
+            <OttArtwork sources={[music.cover]} />
+            <div><p>Tocando agora</p><strong>{music.title}</strong><p>{music.artist}</p></div>
+          </div>
+        )}
+      </main>
+    </OttFrame>
+  );
 
   return (
     <main className="fixed inset-0 z-50 overflow-hidden bg-black text-white antialiased">

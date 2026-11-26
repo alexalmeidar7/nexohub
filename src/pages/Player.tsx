@@ -1,6 +1,10 @@
+import { useTvNowPlaying, registerTvSyncClock, readTvHlsClock } from "@/components/player/tv/tvNowPlaying";
+// NEXO_V716_POSITIVA_VIDEO
+// NEXO_V7_13_CONTINUOUS_AUDIO
 import { createLiveMediaRecovery } from "@/lib/liveMediaRecovery";
-import { isPlayerTvApp } from "@/lib/playerTvApp";
-import { stopTvAudio } from "@/components/player/tv/tvAudio";
+import { isPlayerOtt, isPlayerTvApp } from "@/lib/playerTvApp";
+import { OttFrame } from "@/components/player/tv/OttFrame";
+import { stopTvAudio, getTvAudioMedia, retainTvAudio, tvRadioVolume } from "@/components/player/tv/tvAudio";
 import { useEffect, useLayoutEffect, useRef, useState, useCallback, useMemo, Suspense } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { toast } from "sonner";
@@ -59,15 +63,18 @@ const PlayerGradeDialog = lazyRetry(() => import("@/components/player/PlayerGrad
 const KaraokeOverlay = lazyRetry(() => import("@/components/KaraokeOverlay"));
 const WatchProfilePopup = lazyRetry(() => import("@/components/player/WatchProfilePopup"));
 import PlayerShopProduct from "@/components/player/PlayerShopProduct";
+import {useTvCommercialPlayback,TvCommercialPlayback,isSmartBreak} from "@/components/player/tv/TvCommercialPlayback";
 import PreRollOverlay from "@/components/PreRollOverlay";
 import { saveMiniPlayerData, clearMiniPlayerData, unlockAndPrepareMiniAudio, destroyMiniAudio } from "@/components/player/MiniPlayerWidget";
 import PlayerSkeleton from "@/components/skeletons/PlayerSkeleton";
 import PlayerLoadingOverlay from "@/components/player/PlayerLoadingOverlay";
 import PlayerSyncLoader from "@/components/player/PlayerSyncLoader";
 
-const AudioPlayerScreen = lazyRetry(() => import("@/pages/player/AudioPlayerScreen"));
+import AudioPlayerScreen from "@/pages/player/AudioPlayerScreen";
 
 import { normalizeMusicText } from "@/lib/textEncoding";
+import { normalizeTvMusicText, decodeTvMusicXml } from "@/lib/tvMusicEncoding";
+import { tvWatchProfile } from "@/lib/tvWatchProfile";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
 import { emitProfileChanged, onProfileChanged } from "@/lib/profileSync";
 import { fetchPlayerListenerProfile } from "@/lib/playerListenerProfile";
@@ -121,6 +128,7 @@ interface Programa {
   capa: string | null;
   thumb: string | null;
   descricao: string | null;
+  classificacao_etaria?: string | null;
   apresentador_id: string | null;
 }
 
@@ -323,7 +331,7 @@ function useBufferingDetection(videoRef: React.RefObject<HTMLVideoElement | null
 
     const onWaiting = () => setBuffering(true);
     const onReady = () => setBuffering(false);
-
+    
     elements.forEach(el => {
       el.addEventListener("waiting", onWaiting);
       el.addEventListener("playing", onReady);
@@ -386,6 +394,15 @@ export default function PlayerPage() {
   const isTop10Mode = searchParams.get("top10") === "1";
   const navigate = useNavigate();
   const location = useLocation();
+  // NEXO_LOADING_UNICO_V1: dados da Home chegam pela navegacao, sem novo splash.
+  const tvBootstrap = isPlayerOtt()
+    ? (location.state as { tvBootstrap?: {
+        channels: Canal[]; programs: Programa[]; presenters: Apresentador[];
+        ownerUserId?: string | null; radioName?: string | null;
+        logoUrl?: string | null; nowPlaying?: { musica: string; artista: string; capa?: string } | null;
+      } } | null)?.tvBootstrap
+    : undefined;
+  const hasTvBootstrap = !!tvBootstrap?.channels?.length;
   const isWatchRoute = location.pathname.includes("/player/watch") || searchParams.get("step") === "watch";
   const isPublicMode = !!userSlug && !userSlug.startsWith(":");
   usePublicHead(isPublicMode ? userSlug : null, "Player");
@@ -406,12 +423,19 @@ export default function PlayerPage() {
     emitProfileChanged({ reason: "edit" });
     navigate(`${playerWelcomePath}?edit=1`);
   }, [clearHomeSkipFlag, navigate, playerWelcomePath]);
+  const tvProfileNavigation = useRef<() => void>(()=>{});
   const handleSwitchProfile = useCallback(() => {
     clearHomeSkipFlag();
     emitProfileChanged({ reason: "switch" });
+    if (isPlayerOtt()) {
+      tvProfileNavigation.current();
+      return;
+    }
     navigate(playerWelcomePath);
   }, [clearHomeSkipFlag, navigate, playerWelcomePath]);
-  const { user, loading: authLoading } = usePlayerAuth();
+  const { user: authUser, loading: authLoading } = usePlayerAuth();
+  const tvProfile = isPlayerOtt() ? tvWatchProfile(authUser, userSlug) : null;
+  const user = tvProfile ? tvProfile.user : authUser;
   const userId = user?.id ?? null;
   const hadPlayerSessionRef = useRef(false);
 
@@ -441,15 +465,28 @@ export default function PlayerPage() {
   // Diagnostic logs — disabled in production
   // useEffect(() => { console.log("[PLAYER-DIAG] Auth/user state changed", { userId, authLoading }); }, [userId, authLoading]);
 
-  const [publicUserId, setPublicUserId] = useState<string | null>(null);
+  const [publicUserId, setPublicUserId] = useState<string | null>(tvBootstrap?.ownerUserId || null);
   const publicBootstrapRef = useRef<{ slug: string | null; loaded: boolean }>({ slug: null, loaded: false });
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const tvAudioAdoptedRef = useRef(false);
   const hlsRef = useRef<HlsType | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [canais, setCanais] = useState<Canal[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [programas, setProgramas] = useState<Programa[]>([]);
+  const [stationCanais, setCanais] = useState<Canal[]>(() => hasTvBootstrap ? tvBootstrap!.channels : []);
+  // Virtual channel only for the Positiva TV watch route; never written to the database.
+  const canais = useMemo(() => {
+    if (!isPlayerOtt() || !isWatchRoute || !/^(positiva|positivafm)$/i.test(userSlug || "")) return stationCanais;
+    const main = stationCanais.find(c => c.type === "video_live" && c.active !== false && !!c.url && !/cast|podcast/i.test(c.name));
+    if (!main) return stationCanais;
+    const cast = { ...main, id: "nexo-positiva-twitch", name: "Positiva Cast", url: "https://youtu.be/uPeZ68nIPUY", numero_canal: "2" };
+    const oldCast = stationCanais.findIndex(c => c.type === "video_live" && /cast|podcast/i.test(c.name));
+    return oldCast >= 0 ? stationCanais.map((c,i)=>i===oldCast?cast:c) : [...stationCanais,cast];
+  }, [stationCanais, userSlug, isWatchRoute]);
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    if (!hasTvBootstrap || !requestedChannelId) return 0;
+    return Math.max(0, tvBootstrap!.channels.findIndex(channel => channel.id === requestedChannelId));
+  });
+  const [programas, setProgramas] = useState<Programa[]>(() => tvBootstrap?.programs || []);
   const [playing, setPlaying] = useState(false);
   const tvUserPausedRef = useRef(false);
   const [muted, setMuted] = useState<boolean>(() => {
@@ -470,16 +507,16 @@ export default function PlayerPage() {
   const [volumeHover, setVolumeHover] = useState(false);
   const volumeHideTimeout = useRef<ReturnType<typeof setTimeout>>();
   const [fullscreen, setFullscreen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!hasTvBootstrap);
   const [streamLoading, setStreamLoading] = useState(false);
-
+  
   // Update streamLoading based on URL params to handle direct navigation
   useEffect(() => {
     const ch = searchParams.get("ch");
     const vid = searchParams.get("vid");
     const top10 = searchParams.get("top10") === "1";
     const isWatch = location.pathname.includes("/watch") || searchParams.get("step") === "watch";
-
+    
     if (isWatch && (ch || vid || top10)) {
       setStreamLoading(true);
     }
@@ -490,7 +527,14 @@ export default function PlayerPage() {
   const [pageFadeOut, setPageFadeOut] = useState(false);
   const [musicData, setMusicData] = useState<MusicData | null>(() => {
     // In public mode, don't initialize from localStorage (it belongs to the logged-in user)
-    if (isPublicMode) return null;
+    if (isPublicMode) {
+      return tvBootstrap?.nowPlaying ? {
+        titulo: tvBootstrap.nowPlaying.musica,
+        artista: tvBootstrap.nowPlaying.artista,
+        capa: tvBootstrap.nowPlaying.capa || "",
+        duracao: 0,
+      } : null;
+    }
     try {
       const stored = localStorage.getItem(MUSIC_DATA_KEY);
       return stored ? JSON.parse(stored) : null;
@@ -505,13 +549,13 @@ export default function PlayerPage() {
   const [chatOpen, setChatOpen] = useState(false);
   const [presenterMenuOpen, setPresenterMenuOpen] = useState(false);
   const [clock, setClock] = useState(0);
-  const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
+  const [apresentadores, setApresentadores] = useState<Apresentador[]>(() => tvBootstrap?.presenters || []);
   const [whatsappPhone, setWhatsappPhone] = useState<string | null>(null);
-  const [empresaLogo, setEmpresaLogo] = useState<string | null>(null);
+  const [empresaLogo, setEmpresaLogo] = useState<string | null>(tvBootstrap?.logoUrl || null);
   const [profileName, setProfileName] = useState("");
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
   const [watchProfileOpen, setWatchProfileOpen] = useState(false);
-  const [empresaNome, setEmpresaNome] = useState<string | null>(null);
+  const [empresaNome, setEmpresaNome] = useState<string | null>(tvBootstrap?.radioName || null);
   const [artistBgUrl, setArtistBgUrl] = useState<string | null>(null);
   const artistBgCacheRef = useRef<Record<string, string>>({});
   const profileRadioUserId = isPublicMode ? publicUserId : (user?.id || publicUserId);
@@ -593,6 +637,16 @@ export default function PlayerPage() {
     [canais]
   );
   const isAudio = canal?.type === "audio_live" || canal?.type === "audio";
+  const adsEntryChannel = loading ? null : canal;
+  const adsStudioPrograms = adsEntryChannel?.estudio ? programas.filter(p=>p.estudio===adsEntryChannel.estudio) : programas;
+  const adsProgramId = getCurrentProgram(adsStudioPrograms.length?adsStudioPrograms:programas)?.id;
+  const tvCommercial = useTvCommercialPlayback({enabled:isPlayerOtt()&&isWatchRoute&&!!adsEntryChannel&&adsEntryChannel.id!=="nexo-positiva-twitch"&&["audio_live","audio","video_live","video"].includes(adsEntryChannel.type),radioId:profileRadioUserId,channelKey:adsEntryChannel?.id,programId:adsProgramId,audio:isAudio,breakActive:isSmartBreak(musicData?.titulo,musicData?.artista),paused:tvUserPausedRef.current});
+  const tvAdsBlocked=tvCommercial.blocked;
+  const tvAudioWarmRef=useRef<{channel:string;audio:boolean;phase:"warming"|"fading";session:number;frame?:number}|null>(null);
+  const tvAdsBlockedRef=useRef(false);tvAdsBlockedRef.current=tvAdsBlocked;
+  const tvDigitalPrerollRef=useRef(false);
+  if(tvCommercial.run?.kind==="preroll")tvDigitalPrerollRef.current=true;
+
   const isYoutube = canal?.type === "video_youtube" || canal?.type === "youtube";
   const isCatalog = canal?.type === "catalog" || (!canal && requestedVideoId && !isTop10Mode);
   const isVideo = canal?.type === "video" || canal?.type === "video_live" || isCatalog;
@@ -634,11 +688,18 @@ export default function PlayerPage() {
   }, [musicData?.artista, isAudio, isBreakTrack]);
   const isAutoplayChannel = useCallback((c?: Canal | null) => normalizeChannelNumber(c?.numero_canal) === "991-1", []);
   const autoPlayedRef = useRef(false);
-
+  
   const is991Channel = normalizeChannelNumber(canal?.numero_canal) === "991-1" || normalizeChannelNumber(canal?.numero_canal) === "991-2" || isCatalog;
 
-  const handleHomeClick = useCallback(() => {
-    const tv = isPlayerTvApp();
+  const handleHomeClick = useCallback((destination?: unknown) => {
+    const tv = isPlayerOtt();
+    const keepRadio = Boolean(tv && !tvAdsBlockedRef.current && !tvAudioWarmRef.current && isAudio && audioRef.current && (audioRef.current.currentSrc || audioRef.current.src || hlsRef.current));
+    if (keepRadio && audioRef.current) {
+      // Entrega o proprio elemento e o engine HLS ao controlador permanente da Home.
+      retainTvAudio(audioRef.current, hlsRef.current, tvUserPausedRef.current,
+        canal?.url, profileRadioUserId || empresaNome || undefined);
+      hlsRef.current = null; // O controlador passou a ser o dono do HLS.
+    }
     if (tv) {
       tvUserPausedRef.current = true;
       playbackSessionRef.current++;
@@ -653,15 +714,17 @@ export default function PlayerPage() {
     }
     // Full media reset — pause, remove src, and call load() to abort any pending network requests
     if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); }
+    if (audioRef.current && !keepRadio) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); }
     destroyMiniAudio();
     if (tv) {
-      navigate(playerHomePath);
+      navigate(typeof destination === "string" ? destination : playerHomePath, {state:{tvInternal:true}});
       return;
     }
     setPageFadeOut(true);
     setTimeout(() => navigate(playerHomePath), 400);
-  }, [playerHomePath, navigate]);
+  }, [playerHomePath, navigate, isAudio, canal?.url, profileRadioUserId, empresaNome]);
+
+  tvProfileNavigation.current = () => handleHomeClick(`${playerWelcomePath}?${isPlayerTvApp() ? "tv=1&" : ""}step=profiles${searchParams.get("tvGuest") === "1" ? "&tvGuest=1" : ""}`);
 
   // Record watch history when channel changes
   const watchHistoryRecordedRef = useRef<string | null>(null);
@@ -675,11 +738,11 @@ export default function PlayerPage() {
     }
 
     // Ao entrar em um canal de áudio, força o volume inicial em 40%
-    if (canal.type === "audio_live" || canal.type === "audio") {
+    if (!isPlayerOtt() && (canal.type === "audio_live" || canal.type === "audio")) {
       handleVolumeChange(40);
     }
 
-
+    
     const recordHistory = async () => {
       const { error } = await playerSupabase.from("watch_history").insert({
         user_id: userId,
@@ -776,7 +839,29 @@ export default function PlayerPage() {
 
   // Unified buffering detection
   const { buffering, setBuffering } = useBufferingDetection(videoRef, audioRef);
+  const handleTvAudioAdopt = useCallback((hls: HlsType | null, _userPaused: boolean) => {
+    // OttAudioHost foi montado: nao chamar playStream novamente para esta mesma radio.
+    hlsRef.current = hls;
+    if(tvAdsBlockedRef.current){audioRef.current?.pause();return;}
+    // Entering the live audio channel requests playback, even if Home was paused.
+    tvUserPausedRef.current = false;
+    tvAudioAdoptedRef.current = true;
+    autoPlayedRef.current = true;
+    setStreamRequested(true);
+    setPlaying(!!audioRef.current && !audioRef.current.paused);
+    setPrerollDone(true);
+    setBuffering(false);
+    setStreamLoading(false);
+    const resume = () => {
+      const media = audioRef.current;
+      if (!tvUserPausedRef.current && media?.paused) void media.play().then(() => { if (!tvUserPausedRef.current) setPlaying(true); }).catch(error => {
+        if (error?.name === "NotAllowedError") setTvPlaybackBlocked(true);
+      });
+    };
+    queueMicrotask(resume);
+  }, [setBuffering]);
   const [streamStalled, setStreamStalled] = useState(false);
+  const [tvPlaybackBlocked, setTvPlaybackBlocked] = useState(false);
   const stallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [streamRequested, setStreamRequested] = useState(false);
   const connectRetryRef = useRef<{ chId: string | null; n: number }>({ chId: null, n: 0 });
@@ -784,6 +869,8 @@ export default function PlayerPage() {
 
   const stopAllPlayback = useCallback((clearChannelState = false) => {
     playbackSessionRef.current += 1;
+    if(tvAudioWarmRef.current?.frame)cancelAnimationFrame(tvAudioWarmRef.current.frame);
+    tvAudioWarmRef.current=null;
     destroyMiniAudio();
     clearMiniPlayerData();
     if (hlsRef.current) {
@@ -825,7 +912,9 @@ export default function PlayerPage() {
     }
   }, []);
 
-  const activePublicSlugRef = useRef<string | null>(null);
+  // NEXO_LOADING_UNICO_V1: evitar limpar os dados transferidos da Home no mount.
+  const activePublicSlugRef = useRef<string | null>(hasTvBootstrap && isPublicMode && userSlug
+    ? userSlug.toLowerCase().trim() : null);
   useEffect(() => {
     const slug = isPublicMode && userSlug && !userSlug.startsWith(":") ? userSlug.toLowerCase().trim() : null;
     if (activePublicSlugRef.current === slug) return;
@@ -967,7 +1056,7 @@ export default function PlayerPage() {
   }, []);
   const [likeAnimating, setLikeAnimating] = useState(false);
   const [floatingHearts, setFloatingHearts] = useState<{ id: number; x: number; delay: number }[]>([]);
-
+  
 
   useEffect(() => {
     const musicKey = `${musicData?.titulo}||${musicData?.artista}`;
@@ -996,24 +1085,27 @@ export default function PlayerPage() {
     }
     if (!profileRadioUserId || !songLikeKey || !likedTitle || !likedArtist || liked || savingLikes.current.has(songLikeKey)) return false;
     savingLikes.current.add(songLikeKey);
-    let inserted: boolean | null;
+    // NEXO_V7_2_LIKE_DB: a funcao RPC antiga nao esta publicada; usar tabela existente e RLS do proprio ouvinte.
     try {
-      const { data, error } = await playerSupabase.rpc("save_player_music_like", {
-        p_radio_user_id: profileRadioUserId,
-        p_titulo: likedTitle,
-        p_artista: likedArtist,
-        p_capa: musicData?.capa || "",
+      const { data: existing, error: lookupError } = await playerSupabase.from("music_likes").select("id")
+        .eq("user_id", user.id).eq("radio_user_id", profileRadioUserId)
+        .eq("titulo", likedTitle).eq("artista", likedArtist).limit(1);
+      if (lookupError) throw lookupError;
+      if (existing?.length) { rememberLike(songLikeKey); return false; }
+      const { error: insertError } = await playerSupabase.from("music_likes").insert({
+        user_id: user.id, radio_user_id: profileRadioUserId,
+        titulo: likedTitle, musica: likedTitle, artista: likedArtist, capa: musicData?.capa || null,
       });
-      if (error || typeof data !== "boolean") throw error;
-      inserted = data;
+      if (insertError) throw insertError;
       rememberLike(songLikeKey);
-    } catch {
-      toast.error("Não foi possível salvar a curtida. Tente novamente.");
+    } catch (error) {
+      console.warn("[Nexo Player] Falha ao registrar curtida:", error);
+      toast.error("Não foi possível salvar a curtida. Confira a sessão e tente novamente.");
       return false;
     } finally {
       savingLikes.current.delete(songLikeKey);
     }
-    if (!inserted) return false;
+
     emitProfileChanged({ userId: user.id, radioUserId: profileRadioUserId });
     setLikeAnimating(true);
     setTimeout(() => setLikeAnimating(false), 600);
@@ -1058,16 +1150,16 @@ export default function PlayerPage() {
       }
 
       publicBootstrapRef.current = { slug, loaded: false };
-      setLoading(true);
+      if (!hasTvBootstrap) setLoading(true);
       setLoadingStatus("Carregando canais...");
 
       playerSupabase.functions.invoke("public-player-data", { body: { slug } })
-        .then(({ data, error }) => {
+        .then(async ({ data, error }) => {
           if (cancelled) return;
           publicBootstrapRef.current = { slug, loaded: true };
 
           if (error || !data) {
-            setCanais([]);
+            if (!hasTvBootstrap) setCanais([]);
             setPrerollDone(true);
             setLoading(false);
             return;
@@ -1080,13 +1172,14 @@ export default function PlayerPage() {
             .filter((c) => !ownerId || !c.user_id || c.user_id === ownerId)
             .filter(c => c.type !== "catalog" || c.id === requestedChannelId);
           setCanais(ownerChannels);
+          if(!hasTvBootstrap&&requestedChannelId){const requested=ownerChannels.findIndex(c=>c.id===requestedChannelId);if(requested>=0)setCurrentIndex(requested)}
           setProgramas((data.programas || []) as Programa[]);
           setApresentadores((data.apresentadores || []) as Apresentador[]);
           setShopProducts(data.shopProducts || []);
           if (data.empresa?.telefone_participacao) setWhatsappPhone(data.empresa.telefone_participacao);
           if (data.empresa?.logo) setEmpresaLogo(data.empresa.logo);
           if (data.empresa?.nome) setEmpresaNome(data.empresa.nome);
-          if (data.musicData?.titulo && data.musicData.titulo !== "Sem título") {
+          if (data.musicData?.titulo && data.musicData.titulo !== "Sem título" && !isPlayerOtt()) {
             setMusicData({
               titulo: data.musicData.titulo,
               artista: data.musicData.artista || "Desconhecido",
@@ -1112,7 +1205,7 @@ export default function PlayerPage() {
               )
             : [];
 
-          if (prerolls.length > 0 && !prerollDone) {
+          if (prerolls.length > 0 && !prerollDone && !tvAudioAdoptedRef.current && !tvDigitalPrerollRef.current) {
             const selected = prerolls[Math.floor(Math.random() * prerolls.length)];
             setPrerollUrl(selected.video_url);
             setPrerollLinkUrl(selected.link_url || null);
@@ -1130,7 +1223,7 @@ export default function PlayerPage() {
         .catch(() => {
           if (cancelled) return;
           publicBootstrapRef.current = { slug, loaded: true };
-          setCanais([]);
+          if (!hasTvBootstrap) setCanais([]);
           setPrerollDone(true);
           setLoading(false);
         });
@@ -1159,7 +1252,7 @@ export default function PlayerPage() {
           isWatchRoute && !prerollDone
             ? playerSupabase.from("comercial_preroll").select("*").eq("user_id", userId).eq("active", true).lte("horario_inicio", currentTime).gte("horario_fim", currentTime).order("priority", { ascending: true })
             : Promise.resolve({ data: null, error: null } as const),
-          playerSupabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, tipo_programa, capa, thumb, descricao, apresentador_id, apresentadores_ids").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
+          playerSupabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, tipo_programa, capa, thumb, descricao, classificacao_etaria, apresentador_id, apresentadores_ids").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
           playerSupabase.from("apresentadores").select("id, nome, foto, instagram").eq("user_id", userId).eq("ativo", true),
           playerSupabase.from("empresa_config").select("telefone_participacao, logo, nome").eq("user_id", userId).maybeSingle(),
         ]);
@@ -1398,6 +1491,18 @@ export default function PlayerPage() {
   // In public mode, always use publicUserId for music sync (never the logged-in user)
   const effectiveUserId = isPublicMode ? publicUserId : (user?.id || publicUserId);
   useEffect(() => {
+    if (!isPlayerOtt() || !isPublicMode || !isWatchRoute || !userSlug) return;
+    // A mounted watch route takes precedence over the Home audio controller.
+    return registerTvSyncClock(userSlug, () => {
+      if (tvAdsBlockedRef.current || tvAudioWarmRef.current || !canal ||
+          !["audio_live", "video_live"].includes(canal.type) || isYoutube) return null;
+      return readTvHlsClock(hlsRef.current, isAudio ? audioRef.current : videoRef.current);
+    });
+  }, [userSlug, isPublicMode, isWatchRoute, canal?.id, canal?.type, isAudio, isYoutube]);
+  const tvTrack = useTvNowPlaying(userSlug, publicUserId, isPlayerOtt() && isPublicMode);
+  useEffect(() => { if (isPlayerOtt() && isPublicMode && tvTrack) setMusicData(tvTrack); }, [tvTrack, isPublicMode]);
+  useEffect(() => {
+    if (isPlayerOtt() && isPublicMode) return;
     const isPlaceholderTrack = (track: { titulo?: string; artista?: string }) => {
       const titulo = (track.titulo || "").trim().toLowerCase();
       const artista = (track.artista || "").trim().toLowerCase();
@@ -1414,13 +1519,14 @@ export default function PlayerPage() {
 
       let cancelled = false;
       let inFlight = false;
-
+      let tvRequestSequence = 0;
+      let lastRealtimeMusic = "";
       const applyPublicMusic = (incoming: Partial<MusicData> | null | undefined, musicStartTime?: number | null) => {
         if (!incoming) return;
 
         const normalized: MusicData = {
-          titulo: normalizeMusicText(incoming.titulo || "") || "Sem título",
-          artista: normalizeMusicText(incoming.artista || "") || "Desconhecido",
+          titulo: (isPlayerOtt() ? normalizeTvMusicText : normalizeMusicText)(incoming.titulo || "") || "Sem título",
+          artista: (isPlayerOtt() ? normalizeTvMusicText : normalizeMusicText)(incoming.artista || "") || "Desconhecido",
           duracao: Number(incoming.duracao) > 0 ? Number(incoming.duracao) : 0,
           capa: incoming.capa || "",
           horario: incoming.horario || "",
@@ -1435,6 +1541,13 @@ export default function PlayerPage() {
           const incomingIsPlaceholder = isPlaceholderTrack(normalized);
           if (prevHasRealTrack && incomingIsPlaceholder) return prev;
 
+          if (isPlayerOtt() && prev) {
+            const matches=(damaged:string,good:string)=>{const a=Array.from(damaged.toUpperCase()),b=Array.from(good.toUpperCase());return a.length===b.length&&a.every((c,i)=>c==="�"||c===b[i]);};
+            if(matches(normalized.titulo,prev.titulo)&&matches(normalized.artista,prev.artista)) {
+              if(normalized.titulo.includes("�")&&!prev.titulo.includes("�")) normalized.titulo=prev.titulo;
+              if(normalized.artista.includes("�")&&!prev.artista.includes("�")) normalized.artista=prev.artista;
+            }
+          }
           const songChanged = !prev || prev.titulo !== normalized.titulo || prev.artista !== normalized.artista;
           if (songChanged) {
             if (!(typeof musicStartTime === "number" && musicStartTime > 0)) {
@@ -1463,6 +1576,8 @@ export default function PlayerPage() {
       // refresh em focus/online.
       let inFlightSince = 0;
       let lastSuccessAt = Date.now();
+      let rawXmlUrl: string | null = null;
+      let lastRawAttempt = 0;
       const FETCH_TIMEOUT_MS = 6000;
 
       const fetchPublicMusic = async () => {
@@ -1470,19 +1585,20 @@ export default function PlayerPage() {
         // Se o lock está preso há mais de FETCH_TIMEOUT_MS, libera à força.
         if (inFlight && Date.now() - inFlightSince < FETCH_TIMEOUT_MS) return;
         inFlight = true;
+        const requestSequence = ++tvRequestSequence;
         inFlightSince = Date.now();
         const controller = new AbortController();
         const timeoutId = window.setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
         try {
-          const { data, error } = await playerSupabase.functions.invoke("public-player-data", {
-            body: { slug: userSlug, section: "now_playing" },
-          });
+          const { data, error } = await Promise.race([playerSupabase.functions.invoke("public-player-data", {
+            body: { slug: userSlug, section: "now_playing" }, signal: controller.signal,
+          }), new Promise<never>((_, reject) => controller.signal.addEventListener("abort", () => reject(new Error("music timeout")), {once:true}))]);
           // Aborta manualmente se o timeout disparou
           if (controller.signal.aborted) return;
           if (cancelled || error || !data) return;
 
           if (publicUserId && typeof data.userId === "string" && data.userId !== publicUserId) return;
-          const incoming = data.musicData || (data.musica
+          const incoming = (data.musicData?.titulo ? data.musicData : null) || (data.musica
             ? {
                 titulo: data.musica,
                 artista: data.artista || "Desconhecido",
@@ -1492,17 +1608,38 @@ export default function PlayerPage() {
               }
             : null);
 
+          if (isPlayerOtt() && incoming && /�/.test(`${incoming.titulo || ""} ${incoming.artista || ""}`) && Date.now()-lastRawAttempt>10000) {
+            lastRawAttempt=Date.now();
+            try {
+              const owner=publicUserId || data.userId;
+              if (!rawXmlUrl && owner) {
+                const {data: settings}=await playerSupabase.from("user_settings").select("music_xml_url").eq("user_id",owner).maybeSingle();
+                rawXmlUrl=settings?.music_xml_url || null;
+              }
+              if(rawXmlUrl) {
+                const response=await fetch(rawXmlUrl,{cache:"no-store",signal:AbortSignal.timeout(1800)});
+                if(response.ok){
+                  const xml=new DOMParser().parseFromString(decodeTvMusicXml(await response.arrayBuffer(),response.headers.get("content-type")||""),"application/xml");
+                  const title=xml.querySelector("nome_musica,musica_atual,titulo,title")?.textContent?.trim();
+                  const artist=xml.querySelector("interprete,nome_interprete,artista_atual,artista,artist")?.textContent?.trim();
+                  const matches=(damaged:string,good:string)=>{const a=Array.from(damaged.toUpperCase()), b=Array.from(good.toUpperCase());return a.length===b.length&&a.every((c,i)=>c==="�"||c===b[i]);};
+                  if(title&&artist&&!/�/.test(title+artist)&&matches(incoming.titulo||"",title)&&matches(incoming.artista||"",artist)){incoming.titulo=title;incoming.artista=artist;}
+                }
+              }
+            } catch { /* original XML may be unavailable to a public listener */ }
+          }
+          if(cancelled || controller.signal.aborted || (isPlayerOtt() && requestSequence !== tvRequestSequence)) return;
           applyPublicMusic(incoming, typeof data.musicStartTime === "number" ? data.musicStartTime : null);
           lastSuccessAt = Date.now();
         } catch {
         } finally {
           window.clearTimeout(timeoutId);
-          inFlight = false;
+          if (requestSequence === tvRequestSequence) inFlight = false;
         }
       };
 
       fetchPublicMusic();
-      const interval = setInterval(fetchPublicMusic, 3000); // Fallback polling every 3s (Realtime is primary)
+      const interval = setInterval(() => { if (!document.hidden) void fetchPublicMusic(); }, isPlayerOtt() ? 2000 : 3000); // Fallback polling every 3s (Realtime is primary)
       // Watchdog: se ninguém teve sucesso há >30s e a aba está visível,
       // força uma nova tentativa (mesmo que `inFlight` esteja preso).
       const watchdog = setInterval(() => {
@@ -1533,10 +1670,17 @@ export default function PlayerPage() {
               const items = (payload.new as any)?.dashboard_items;
               if (items && typeof items === "object") {
                 const m = items.musicData || items.music;
-                if (m) applyPublicMusic(m, typeof m.startTime === "number" ? m.startTime : null);
+                if (isPlayerOtt() && typeof items.music_current_title === "string" && items.music_current_title.trim()) {
+                  const snapshot = {titulo:items.music_current_title, artista:items.music_current_artist || "", capa:items.music_current_cover || ""};
+                  const signature = JSON.stringify(snapshot);
+                  if (signature === lastRealtimeMusic) return;
+                  lastRealtimeMusic = signature;
+                  ++tvRequestSequence; inFlight = false;
+                  applyPublicMusic(snapshot, typeof items.music_start_time === "number" ? items.music_start_time : null);
+                } else if (m && !isPlayerOtt()) applyPublicMusic(m, typeof m.startTime === "number" ? m.startTime : null);
               }
-              // Also trigger a full fetch for any data the Realtime payload may not include
-              fetchPublicMusic();
+              // Polling covers unrelated dashboard updates.
+              if (!isPlayerOtt() || typeof items?.music_current_title === "string") fetchPublicMusic();
             }
           )
           .subscribe();
@@ -1649,7 +1793,10 @@ export default function PlayerPage() {
             });
             if (directRes.ok) {
               directFetchOk = true;
-              text = await directRes.text();
+              if (isPlayerOtt()) {
+                const bytes = await directRes.arrayBuffer();
+                text = decodeTvMusicXml(bytes, directRes.headers.get("content-type") || "");
+              } else text = await directRes.text();
             }
           } catch {
             if (directFetchOk === null) directFetchOk = false;
@@ -1774,9 +1921,19 @@ export default function PlayerPage() {
 
   // Play stream
   const playStream = useCallback(
-    async (url: string, type: string, forceAutoplay?: boolean, userInitiated?: boolean) => {
-      if (isPlayerTvApp()) stopTvAudio();
+    async (url: string, type: string, forceAutoplay?: boolean, userInitiated?: boolean, commercialWarmup = false) => {
+      if(isPlayerOtt()&&tvAdsBlockedRef.current&&!commercialWarmup)return;
+      if(!commercialWarmup && tvAudioWarmRef.current?.phase==="fading" && !userInitiated)return;
+      if (isPlayerOtt()) {
+        const adopted = audioRef.current;
+        if (!userInitiated && tvAudioAdoptedRef.current && (type === "audio_live" || type === "audio") && adopted && adopted.dataset.tvResumeUrl === url && !adopted.error && !adopted.paused && adopted.readyState >= 2) {
+          setPlaying(true); setBuffering(false); return;
+        }
+        stopTvAudio(); setTvPlaybackBlocked(false);
+      }
       const sessionId = ++playbackSessionRef.current;
+      if(commercialWarmup&&tvAudioWarmRef.current)tvAudioWarmRef.current.session=sessionId;
+      else if(tvAudioWarmRef.current){if(tvAudioWarmRef.current.frame)cancelAnimationFrame(tvAudioWarmRef.current.frame);tvAudioWarmRef.current=null;}
       destroyMiniAudio();
       if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
       resetMediaElement(audioRef.current);
@@ -1788,6 +1945,9 @@ export default function PlayerPage() {
       setStreamStalled(false);
       setStreamRequested(true);
 
+      if (isPlayerOtt() && (url === "https://www.twitch.tv/posicast" || url === "https://youtu.be/uPeZ68nIPUY")) {
+        setBuffering(false); setStreamLoading(false); setPlaying(false); return;
+      }
       const isAudioType = type === "audio_live" || type === "audio";
       const shouldResetAutoplayMute = Boolean(userInitiated && autoplayMutedRef.current && volumeRef.current > 0);
 
@@ -1804,21 +1964,22 @@ export default function PlayerPage() {
       const handlePlayStarted = () => {
         if (playbackSessionRef.current !== sessionId) return;
         if (!shouldStartMuted) autoplayMutedRef.current = false;
-
+        
         // Safety timeout to ensure loading screen stays for at least 3s total from start
         setTimeout(() => {
-          if (playbackSessionRef.current !== sessionId) return;
+          if (playbackSessionRef.current !== sessionId || (isPlayerOtt() && tvUserPausedRef.current)) return;
           setStreamLoading(false);
           setPlaying(true);
           setBuffering(false);
-        }, 1500); // Buffer a bit more time for media to stabilize
+        }, isPlayerOtt() ? 0 : 1500); // play() has already resolved
       };
 
       const handlePlayBlocked = (label: string, error: unknown) => {
         if (playbackSessionRef.current !== sessionId) return;
         console.warn(label, error);
+        if (isPlayerOtt() && error instanceof DOMException && error.name === "NotAllowedError") setTvPlaybackBlocked(true);
         // If play was blocked and we weren't muted, retry muted (autoplay policy)
-        if (!isPlayerTvApp() && !shouldStartMuted && forceAutoplay && error instanceof DOMException && error.name === "NotAllowedError") {
+        if ((!isPlayerOtt() || !isAudioType) && !shouldStartMuted && forceAutoplay && error instanceof DOMException && error.name === "NotAllowedError") {
           console.log("Retrying playback muted due to autoplay policy...");
           autoplayMutedRef.current = true;
           mutedRef.current = true;
@@ -1827,6 +1988,7 @@ export default function PlayerPage() {
           if (media) {
             media.muted = true;
             media.play().then(() => {
+              setTvPlaybackBlocked(false);
               if (playbackSessionRef.current !== sessionId) return;
       setStreamLoading(false);
       setPlaying(true);
@@ -1845,10 +2007,12 @@ export default function PlayerPage() {
 
       const playLabel = isAudioType ? "Audio play blocked:" : "Video play blocked:";
       const fadeInMedia = (media: HTMLMediaElement) => {
+        if (tvAudioWarmRef.current?.session===sessionId) return;
         if (media.muted) return;
-        const target = Math.max(0, Math.min(1, volumeRef.current / 100));
+        const rawTarget = Math.max(0, Math.min(1, volumeRef.current / 100));
+        const target = isAudioType && isPlayerOtt() ? tvRadioVolume(rawTarget) : rawTarget;
         if (target <= 0) return;
-        if (isAudioType) {
+        if (isAudioType || isPlayerOtt()) {
           try { media.volume = target; } catch {}
           return;
         }
@@ -1865,12 +2029,13 @@ export default function PlayerPage() {
         requestAnimationFrame(step);
       };
       const requestPlay = (media: HTMLMediaElement) => {
-        media.muted = shouldStartMuted;
-        media.volume = (shouldStartMuted || isAudioType) ? volumeRef.current / 100 : 0;
+        media.muted = shouldStartMuted || (tvAudioWarmRef.current?.session===sessionId && tvAudioWarmRef.current?.phase==="warming");
+        if (tvAudioWarmRef.current?.session===sessionId && tvAudioWarmRef.current?.phase==="warming") media.volume=0;
+        else if (!(tvAudioWarmRef.current?.session===sessionId && tvAudioWarmRef.current?.phase==="fading")) media.volume = (shouldStartMuted || isAudioType || isPlayerOtt()) ? (isAudioType && isPlayerOtt() ? tvRadioVolume(volumeRef.current / 100) : Math.max(0,Math.min(1,volumeRef.current / 100))) : 0;
         return media.play().then(() => {
           fadeInMedia(media);
-          if (isAudioType && !shouldStartMuted) {
-            const targetVolume = Math.max(0, Math.min(1, volumeRef.current / 100));
+          if (isAudioType && !shouldStartMuted && !commercialWarmup) {
+            const targetVolume = isPlayerOtt() ? tvRadioVolume(volumeRef.current / 100) : Math.max(0, Math.min(1, volumeRef.current / 100));
             window.setTimeout(() => {
               if (playbackSessionRef.current !== sessionId) return;
               if (media.paused || media.muted) return;
@@ -1896,8 +2061,9 @@ export default function PlayerPage() {
       if (isAudioType) {
         const audio = audioRef.current;
         if (!audio) return;
-        audio.volume = volumeRef.current / 100;
-        audio.muted = shouldStartMuted;
+        audio.volume = isPlayerOtt() ? tvRadioVolume(volumeRef.current / 100) : volumeRef.current / 100;
+        audio.muted = shouldStartMuted || tvAudioWarmRef.current?.phase==="warming";
+        if(tvAudioWarmRef.current?.phase==="fading")audio.volume=0;
         if (Hls && Hls.isSupported()) {
           let playRequested = false;
           const requestAudioPlay = () => {
@@ -1908,15 +2074,15 @@ export default function PlayerPage() {
           const hls = new Hls({
             enableWorker: true,
             lowLatencyMode: false,
-            maxBufferLength: 60,
-            maxMaxBufferLength: 120,
+            maxBufferLength: isPlayerOtt() ? 30 : 60,
+            maxMaxBufferLength: isPlayerOtt() ? 60 : 120,
             maxBufferHole: 0.5,
             liveSyncDurationCount: 3,
             liveMaxLatencyDurationCount: 10,
             liveDurationInfinity: true,
             // Timeshift: manter 30 min (1800s) de áudio para trás no buffer
-            backBufferLength: 1800,
-            liveBackBufferLength: 1800,
+            backBufferLength: isPlayerOtt() ? 20 : 1800,
+            liveBackBufferLength: isPlayerOtt() ? 20 : 1800,
             fragLoadingMaxRetry: 8,
             fragLoadingMaxRetryTimeout: 15000,
             fragLoadingRetryDelay: 500,
@@ -1930,10 +2096,10 @@ export default function PlayerPage() {
           hlsRef.current = hls;
           hls.loadSource(freshUrl);
           hls.attachMedia(audio);
-          if (userInitiated || forceAutoplay) requestAudioPlay();
+          if (!isPlayerOtt() && (userInitiated || forceAutoplay)) requestAudioPlay();
           hls.on(Hls.Events.MANIFEST_PARSED, () => {
             if (playbackSessionRef.current !== sessionId) return;
-            if (!playRequested || audio.paused) requestAudioPlay();
+            if ((!isPlayerOtt() || !tvUserPausedRef.current) && (!playRequested || audio.paused)) requestAudioPlay();
           });
           hls.on(Hls.Events.FRAG_BUFFERED, () => {
             if (playbackSessionRef.current === sessionId) setBuffering(false);
@@ -1941,6 +2107,7 @@ export default function PlayerPage() {
           hls.on(Hls.Events.ERROR, (_event, data) => {
             if (playbackSessionRef.current !== sessionId) return;
             if (data.fatal) {
+              if (isPlayerOtt() && (tvUserPausedRef.current || (tvAdsBlockedRef.current && !commercialWarmup))) return;
               console.warn("HLS fatal error on audio, recovering...", data.type);
               if (data.type === Hls.ErrorTypes.NETWORK_ERROR) hls.startLoad();
               else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) hls.recoverMediaError();
@@ -1949,7 +2116,7 @@ export default function PlayerPage() {
           });
         } else {
           // Direct Icecast/Shoutcast stream — native HTML5 audio
-          audio.preload = "none";
+          audio.preload = isPlayerOtt() ? "auto" : "none";
           audio.src = freshUrl;
           audio.load();
           // Add error handler for reconnection on stream failures
@@ -1958,7 +2125,7 @@ export default function PlayerPage() {
             console.warn("Native audio stream error, will retry...");
             setBuffering(true);
             setTimeout(() => {
-              if (playbackSessionRef.current === sessionId && audio.error) {
+              if (playbackSessionRef.current === sessionId && audio.error && (!isPlayerOtt() || (!tvUserPausedRef.current && !tvAdsBlockedRef.current && !tvAudioWarmRef.current))) {
                 audio.src = normalizedUrl;
                 audio.load();
                 void requestPlay(audio);
@@ -1970,7 +2137,7 @@ export default function PlayerPage() {
         }
       } else {
         const video = videoRef.current;
-        if (!video) return;
+        if (!video) { if (isPlayerOtt()) setStreamRequested(false); return; }
         if (Hls && Hls.isSupported()) {
           let playRequested = false;
           const requestVideoPlay = () => {
@@ -1981,18 +2148,18 @@ export default function PlayerPage() {
           const hls = new Hls({
             enableWorker: true,
             lowLatencyMode: false,
-            capLevelToPlayerSize: false,
+            capLevelToPlayerSize: isPlayerOtt(),
             startLevel: -1,
             autoStartLoad: true,
-            maxBufferLength: 40,
-            maxMaxBufferLength: 90,
-            maxBufferSize: 60 * 1000 * 1000,
+            maxBufferLength: isPlayerOtt() ? 25 : 40,
+            maxMaxBufferLength: isPlayerOtt() ? 45 : 90,
+            maxBufferSize: (isPlayerOtt() ? 24 : 60) * 1000 * 1000,
             maxBufferHole: 0.5,
             liveSyncDurationCount: 3,
             liveMaxLatencyDurationCount: 8,
             liveDurationInfinity: true,
             liveBackBufferLength: 30,
-            abrEwmaDefaultEstimate: 3000000,
+            abrEwmaDefaultEstimate: isPlayerOtt() ? 900000 : 3000000,
             abrBandWidthUpFactor: 0.7,
             abrBandWidthFactor: 0.95,
             fragLoadingMaxRetry: 10,
@@ -2009,7 +2176,7 @@ export default function PlayerPage() {
           hlsRef.current = hls;
           hls.loadSource(freshUrl);
           hls.attachMedia(video);
-          if (userInitiated || forceAutoplay) requestVideoPlay();
+          if (!isPlayerOtt() && (userInitiated || forceAutoplay)) requestVideoPlay();
           hls.on(Hls.Events.MANIFEST_PARSED, (_e, data) => {
             if (playbackSessionRef.current !== sessionId) return;
             if (data.levels && data.levels.length > 0) {
@@ -2021,7 +2188,7 @@ export default function PlayerPage() {
               setHlsLevels(levels);
               setHlsCurrentLevel(-1);
             }
-            if (!playRequested || video.paused) requestVideoPlay();
+            if ((!isPlayerOtt() || !tvUserPausedRef.current) && (!playRequested || video.paused)) requestVideoPlay();
           });
           hls.on(Hls.Events.FRAG_BUFFERED, () => {
             if (playbackSessionRef.current === sessionId) setBuffering(false);
@@ -2030,7 +2197,9 @@ export default function PlayerPage() {
           let networkRetries = 0;
           hls.on(Hls.Events.ERROR, (_event, data) => {
             if (playbackSessionRef.current !== sessionId) return;
+            if (isPlayerOtt() && (tvUserPausedRef.current || (tvAdsBlockedRef.current && !commercialWarmup))) return;
             if (!data.fatal) {
+              if (isPlayerOtt()) return; // HLS handles buffer holes; do not jump to the live edge.
               if (data.details === "bufferStalledError" && video.readyState >= 2) {
                 const buffered = video.buffered;
                 if (buffered.length > 0) {
@@ -2054,7 +2223,7 @@ export default function PlayerPage() {
                 hls.destroy();
                 hlsRef.current = null;
                 setTimeout(() => {
-                  if (playbackSessionRef.current === sessionId) playStream(url, type);
+                  if (playbackSessionRef.current === sessionId && !isPlayerOtt()) playStream(url, type);
                 }, 1500);
               }
             } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
@@ -2066,7 +2235,7 @@ export default function PlayerPage() {
                 hls.destroy();
                 hlsRef.current = null;
                 setTimeout(() => {
-                  if (playbackSessionRef.current === sessionId) playStream(url, type);
+                  if (playbackSessionRef.current === sessionId && !isPlayerOtt()) playStream(url, type);
                 }, 1500);
               }
             } else {
@@ -2101,7 +2270,7 @@ export default function PlayerPage() {
   // Detect stream stall and auto-reconnect — conservative approach for live streams
   const streamStalledRef = useRef(false);
   useEffect(() => {
-    if (isPlayerTvApp()) return;
+    if (isPlayerOtt()) return;
     if (!playing || !canal || canal.type === "youtube" || canal.type === "catalog") {
       setStreamStalled(false);
       streamStalledRef.current = false;
@@ -2207,8 +2376,8 @@ export default function PlayerPage() {
   }, [playing, canal, playStream]);
 
   useEffect(() => {
-    if (!prerollDone) return;
-    if (autoPlayedRef.current || canais.length === 0 || playing) return;
+    if (!prerollDone || tvAdsBlocked) return;
+    if (autoPlayedRef.current || canais.length === 0 || playing || (isPlayerOtt() && loading)) return;
     autoPlayedRef.current = true;
 
     // If a specific channel was requested via ?ch= query param, use it
@@ -2219,6 +2388,10 @@ export default function PlayerPage() {
     if (startIndex < 0) {
       const preferredIndex = canais.findIndex((c) => isAutoplayChannel(c));
       startIndex = preferredIndex >= 0 ? preferredIndex : 0;
+    }
+    if (isPlayerOtt() && canais[startIndex]?.id === "nexo-positiva-twitch") {
+      const main = canais.findIndex(c => c.type === "video_live" && c.id !== "nexo-positiva-twitch");
+      if (main >= 0) startIndex = main;
     }
     const first = canais[startIndex];
     if (!first) return;
@@ -2232,7 +2405,7 @@ export default function PlayerPage() {
       setSidebarOpen(false);
     } else {
       const pendingSession = playbackSessionRef.current;
-      const waitForTvMedia = isPlayerTvApp();
+      const waitForTvMedia = isPlayerOtt();
       const needsAudio = first.type === "audio_live" || first.type === "audio";
       const deadline = performance.now() + 15000;
       const startWhenReady = () => {
@@ -2242,15 +2415,49 @@ export default function PlayerPage() {
           if (performance.now() < deadline) setTimeout(startWhenReady, 100);
           return;
         }
+        if (waitForTvMedia && (tvUserPausedRef.current || (needsAudio && tvAudioAdoptedRef.current))) return;
         void playStream(first.url, first.type, true);
       };
       setTimeout(startWhenReady, 120);
     }
-  }, [canais, playing, playStream, prerollDone, isAutoplayChannel, requestedChannelId]);
+  }, [canais, playing, playStream, prerollDone, isAutoplayChannel, requestedChannelId, loading,tvAdsBlocked]);
+
+  // TV entry safety net: verify the actual media after the lazy watch screen mounts.
+  // The normal autoplay and channel-switch paths have priority; never start a second stream.
+  useEffect(() => {
+    if (tvAdsBlocked || !isPlayerOtt() || !isWatchRoute || loading || !prerollDone || isPrerollVisible || !canal?.url || canal.id === "nexo-positiva-twitch" || !["audio_live", "audio", "video_live", "video"].includes(canal.type) || streamRequested || tvPlaybackBlocked) return;
+    const session = playbackSessionRef.current;
+    const deadline = Date.now() + 25000;
+    let timer: ReturnType<typeof setTimeout>;
+    let cancelled = false;
+    const check = () => {
+      if (cancelled || playbackSessionRef.current !== session || tvUserPausedRef.current) return;
+      const media = isAudio ? audioRef.current : videoRef.current;
+      if (!media) { if (Date.now() < deadline) timer = setTimeout(check, 250); return; }
+      if (!media.paused && !media.ended && !media.error && (media.currentSrc || media.getAttribute("src"))) {
+        setStreamRequested(true); setPlaying(true); return;
+      }
+      if (media.currentSrc || media.getAttribute("src")) {
+        if (!media.error && !media.ended) {
+          void media.play().then(() => {
+            if (!cancelled && playbackSessionRef.current === session && !tvUserPausedRef.current) { setStreamRequested(true); setPlaying(true); }
+          }).catch(error => {
+            if (cancelled || playbackSessionRef.current !== session || tvUserPausedRef.current || tvAdsBlockedRef.current) return;
+            if (error?.name === "NotAllowedError") setTvPlaybackBlocked(true);
+            else void playStream(canal.url, canal.type, true);
+          });
+          return;
+        }
+      }
+      void playStream(canal.url, canal.type, true);
+    };
+    timer = setTimeout(check, 1000);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [isWatchRoute, loading, prerollDone, isPrerollVisible, canal?.id, canal?.url, canal?.type, isAudio, streamRequested, tvPlaybackBlocked, playStream,tvAdsBlocked]);
 
   // Safety net: if stream was requested but playing never became true, auto-retry once
   useEffect(() => {
-    if (isPlayerTvApp() || !canal || isYoutube || isCatalog || playing || !streamRequested) return;
+    if (isPlayerOtt() || !canal || isYoutube || isCatalog || playing || !streamRequested) return;
     if (connectRetryRef.current.chId !== canal.id) {
       connectRetryRef.current = { chId: canal.id, n: 0 };
     }
@@ -2266,7 +2473,7 @@ export default function PlayerPage() {
 
   // Recurring pre-roll every 15 minutes
   const fetchAndShowPreroll = useCallback(async () => {
-    if (!user || prerollShowing || isYoutube) return;
+    if (tvAdsBlockedRef.current || !user || prerollShowing || isYoutube) return;
     const now = new Date();
     const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
@@ -2306,9 +2513,9 @@ export default function PlayerPage() {
   }, []);
 
   const handlePlayCanal = useCallback(() => {
-    if (!canal) return;
+    if (tvAdsBlockedRef.current || !canal) return;
     const media = canal.type === "audio_live" || canal.type === "audio" ? audioRef.current : videoRef.current;
-    const isTvStream = isPlayerTvApp() && canal.type !== "youtube" && media;
+    const isTvStream = isPlayerOtt() && canal.type !== "youtube" && media;
     if (isTvStream ? !media.paused && !media.ended : playing) {
       tvUserPausedRef.current = true;
       if (audioRef.current) audioRef.current.pause();
@@ -2317,30 +2524,40 @@ export default function PlayerPage() {
       return;
     }
     tvUserPausedRef.current = false;
+    setTvPlaybackBlocked(false);
     if (canal.type === "youtube") { setPlaying(true); setBuffering(false); return; }
+    if (isPlayerOtt() && ["audio_live", "audio", "video_live", "video"].includes(canal.type) && media && (media.currentSrc || media.src) && !media.error) {
+      // Retomar o mesmo fluxo, sem criar outro audio nem reiniciar o buffering.
+      void media.play().then(() => { setPlaying(true); setBuffering(false); }).catch((error) => { setPlaying(false); if (error?.name === "NotAllowedError") setTvPlaybackBlocked(true); });
+      return;
+    }
     playStream(canal.url, canal.type, false, true);
   }, [canal, playing, playStream]);
 
   const tvReconnectRef = useRef(playStream); tvReconnectRef.current = playStream;
   useEffect(() => {
-    if (!isPlayerTvApp() || !canal || !["audio_live", "audio", "video_live"].includes(canal.type)) return;
+    if (tvAdsBlocked || !isPlayerOtt() || !isWatchRoute || !prerollDone || isPrerollVisible || !streamRequested || !canal || canal.id === "nexo-positiva-twitch" || !["audio_live", "audio", "video_live", "video"].includes(canal.type)) return;
     const recovery = createLiveMediaRecovery({
-      startupGraceMs:16000,
+      startupGraceMs:20000,
+      stallGraceMs:18000,
+      recoverMissingSource:true,
       media: () => isAudio ? audioRef.current : videoRef.current,
-      wanted: () => !tvUserPausedRef.current,
+      wanted: () => !tvAdsBlockedRef.current && !tvAudioWarmRef.current && !tvUserPausedRef.current && !tvPlaybackBlocked,
       reconnect: () => tvReconnectRef.current(canal.url, canal.type, false),
     });
     return () => recovery.stop();
-  }, [canal?.id, isAudio]);
+  }, [canal?.id, canal?.url, canal?.type, isAudio, tvPlaybackBlocked, isWatchRoute, prerollDone, isPrerollVisible, streamRequested,tvAdsBlocked]);
 
-  const navigateChannel = useCallback((dir: 1 | -1) => {
+  const navigateChannel = useCallback((dir: 1 | -1, targetVideoId?: string) => {
     if (liveChannels.length === 0) return;
 
-    const currentLiveIndex = canal ? liveChannels.findIndex((c) => c.id === canal.id) : -1;
+    const navigationChannels = isPlayerOtt() ? liveChannels.filter(c => c.id !== "nexo-positiva-twitch") : liveChannels;
+    if (!navigationChannels.length) return;
+    const currentLiveIndex = canal ? navigationChannels.findIndex(c => c.id === canal.id || (canal.id === "nexo-positiva-twitch" && c.type === "video_live")) : -1;
     const baseIndex = currentLiveIndex >= 0 ? currentLiveIndex : 0;
-    const nextLiveIndex = (baseIndex + dir + liveChannels.length) % liveChannels.length;
-    const nextChannel = liveChannels[nextLiveIndex];
-    if (!nextChannel) return;
+    const nextLiveIndex = (baseIndex + dir + navigationChannels.length) % navigationChannels.length;
+    const nextChannel = targetVideoId ? liveChannels.find((c) => String(c.id) === targetVideoId && (c.type === "video_live" || c.type === "audio_live" || c.type === "audio")) : navigationChannels[nextLiveIndex];
+    if (!nextChannel || (targetVideoId && String(nextChannel.id) === String(canal?.id))) return;
 
     const nextIndex = canais.findIndex((c) => c.id === nextChannel.id);
     if (nextIndex < 0) return;
@@ -2359,13 +2576,27 @@ export default function PlayerPage() {
     setHlsLevels([]);
     setHlsCurrentLevel(-1);
 
+    if (nextChannel.id === "nexo-positiva-twitch") {
+      setPlaying(false); setBuffering(false); setStreamLoading(false); return;
+    }
     if (nextChannel.type === "youtube") {
       setPlaying(true);
       setBuffering(false);
       setSelectedVideoId(null);
       setSidebarOpen(false);
     } else {
-      void playStream(nextChannel.url, nextChannel.type, false, true);
+      if (isPlayerOtt()) {
+        const session = playbackSessionRef.current;
+        const deadline = performance.now() + 15000;
+        const start = () => {
+          if (session !== playbackSessionRef.current) return;
+          const media = nextChannel.type === "audio_live" || nextChannel.type === "audio" ? audioRef.current : videoRef.current;
+          if (!media) { if (performance.now() < deadline) setTimeout(start, 100); return; }
+          tvAudioAdoptedRef.current = false;
+          void playStream(nextChannel.url, nextChannel.type, true, true);
+        };
+        setTimeout(start, 120);
+      } else void playStream(nextChannel.url, nextChannel.type, false, true);
     }
   }, [canal, canais, liveChannels, playStream]);
 
@@ -2463,8 +2694,8 @@ export default function PlayerPage() {
     mutedRef.current = newMuted;
     if (!newMuted) autoplayMutedRef.current = false;
     setMuted(newMuted);
-    if (videoRef.current) videoRef.current.muted = newMuted;
-    if (audioRef.current) audioRef.current.muted = newMuted;
+    if (videoRef.current) videoRef.current.muted = newMuted || (tvAudioWarmRef.current?.audio===false && tvAudioWarmRef.current.phase==="warming");
+    if (audioRef.current) audioRef.current.muted = newMuted || tvAudioWarmRef.current?.phase==="warming";
     try { localStorage.setItem("player:lastMuted", newMuted ? "1" : "0"); } catch {}
   }, []);
 
@@ -2480,16 +2711,16 @@ export default function PlayerPage() {
     const newMuted = val === 0;
     mutedRef.current = newMuted;
     if (val > 0) autoplayMutedRef.current = false;
-    if (videoRef.current) { videoRef.current.volume = v; videoRef.current.muted = newMuted; }
-    if (audioRef.current) { audioRef.current.volume = v; audioRef.current.muted = newMuted; }
+    if (videoRef.current && tvAudioWarmRef.current?.audio!==false) { videoRef.current.volume = v; videoRef.current.muted = newMuted; }
+    if (audioRef.current && !tvAudioWarmRef.current) { audioRef.current.volume = isPlayerOtt() ? tvRadioVolume(v) : v; audioRef.current.muted = newMuted; }
     setMuted(newMuted);
     try { localStorage.setItem("player:lastMuted", newMuted ? "1" : "0"); } catch {}
   }, []);
 
   // Keep media elements in sync with muted/volume state
   useEffect(() => {
-    if (videoRef.current) { videoRef.current.muted = muted; videoRef.current.volume = volume / 100; }
-    if (audioRef.current) { audioRef.current.muted = muted; audioRef.current.volume = volume / 100; }
+    if (videoRef.current && tvAudioWarmRef.current?.audio!==false) { videoRef.current.muted = muted; videoRef.current.volume = volume / 100; }
+    if (audioRef.current && !tvAudioWarmRef.current) { audioRef.current.muted = muted; audioRef.current.volume = isPlayerOtt() ? tvRadioVolume(volume / 100) : volume / 100; }
   }, [muted, volume]);
 
   // Safety net for live audio: autoplay retries and DJ/fade effects can leave
@@ -2501,7 +2732,8 @@ export default function PlayerPage() {
     if (!audio) return;
 
     const restoreAudibleVolume = () => {
-      const target = Math.max(0, Math.min(1, volumeRef.current / 100));
+      if(tvAudioWarmRef.current){if(tvAudioWarmRef.current.phase==="warming"&&!audio.muted)audio.muted=true;return;}
+      const target = isPlayerOtt() ? tvRadioVolume(volumeRef.current / 100) : Math.max(0, Math.min(1, volumeRef.current / 100));
       const shouldMute = mutedRef.current || target <= 0;
       try { audio.muted = shouldMute; } catch {}
       if (!shouldMute && audio.volume < Math.max(0.05, target * 0.5)) {
@@ -2798,7 +3030,7 @@ export default function PlayerPage() {
     const handleVisibility = () => {
       if (document.visibilityState === "visible") {
         const media = isAudio ? audioRef.current : videoRef.current;
-        if (media && media.paused && playing) {
+        if (media && media.paused && playing && !tvAdsBlockedRef.current) {
           media.play().catch(() => {});
         }
       }
@@ -2814,13 +3046,13 @@ export default function PlayerPage() {
 
   // Destroy any lingering MiniPlayer audio & cleanup on unmount
   useLayoutEffect(() => {
-    stopTvAudio();
+    // A Home pode estar tocando a radio; OttAudioHost assume a MESMA conexao.
     destroyMiniAudio();
     return () => {
       playbackSessionRef.current++;
       if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
       if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
-      if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); }
+      if (audioRef.current && audioRef.current !== getTvAudioMedia()) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); }
     };
   }, []);
 
@@ -2834,6 +3066,7 @@ export default function PlayerPage() {
   useEffect(() => {
     if (isYoutube) return;
     if (!playing && !(musicData && musicData.duracao > 0)) return;
+    if (isPlayerOtt()) return;
     const interval = setInterval(() => setMusicTick(t => t + 1), 1000);
     return () => clearInterval(interval);
   }, [playing, isYoutube, musicData?.duracao]);
@@ -2846,6 +3079,60 @@ export default function PlayerPage() {
   }, [programas, canal?.estudio]);
 
   const currentProg = getCurrentProgram(filteredProgramas);
+  useLayoutEffect(()=>{
+    if(!tvAdsBlocked)return;
+    stopAllPlayback();tvAudioAdoptedRef.current=false;
+  },[tvAdsBlocked,canal?.id,stopAllPlayback]);
+  useEffect(()=>{
+    if(tvCommercial.run?.kind!=="preroll")return;
+    setPrerollDone(true);setPrerollShowing(false);setPrerollUrl(null);setPrerollYoutubeUrl(null);
+  },[tvCommercial.run?.kind]);
+
+  // Warm the existing live element: audio 10s, video 15s, while the spot plays.
+  useEffect(()=>{
+    const el=videoRef.current;
+    if(!el||isAudio||tvCommercial.run?.kind!=="preroll")return;
+    const enforce=()=>{const warm=tvAudioWarmRef.current;if(warm?.audio===false&&warm.phase==="warming"){if(!el.muted)el.muted=true;}};
+    el.addEventListener("volumechange",enforce);
+    return()=>el.removeEventListener("volumechange",enforce);
+  },[isAudio,canal?.id,tvCommercial.run?.kind]);
+  const warmCommercialStream = useCallback(() => {
+    const el=isAudio?audioRef.current:videoRef.current;
+    if(tvCommercial.run?.kind!=="preroll" || !canal?.url || !el || tvAudioWarmRef.current)return;
+    tvAudioWarmRef.current={channel:canal.id,audio:isAudio,phase:"warming",session:0};
+    el.muted=true;el.volume=0;
+    tvUserPausedRef.current=false;
+    autoPlayedRef.current=true;
+    void playStream(canal.url,canal.type,true,false,true).catch(()=>{});
+  },[isAudio,tvCommercial.run?.kind,canal?.id,canal?.url,canal?.type,playStream]);
+  useLayoutEffect(()=>{
+    const warm=tvAudioWarmRef.current;
+    if(!warm)return;
+    if(warm.audio!==isAudio||warm.channel!==canal?.id|| (tvAdsBlocked&&tvCommercial.run?.kind!=="preroll")){
+      stopAllPlayback();autoPlayedRef.current=false;return;
+    }
+    if(tvAdsBlocked||warm.phase!=="warming")return;
+    const el=warm.audio?audioRef.current:videoRef.current;
+    if(!el||el.error||warm.session!==playbackSessionRef.current){stopAllPlayback();autoPlayedRef.current=false;return;}
+    warm.phase="fading";
+    el.volume=0;el.muted=mutedRef.current||volumeRef.current===0;
+    let start:number|null=null;
+    const deadline=performance.now()+12000;
+    const step=(now:number)=>{
+      if(tvAudioWarmRef.current!==warm||playbackSessionRef.current!==warm.session)return;
+      if(tvUserPausedRef.current){tvAudioWarmRef.current=null;el.volume=warm.audio?tvRadioVolume(volumeRef.current/100):volumeRef.current/100;return;}
+      if(el.error|| (start===null&&now>deadline)){stopAllPlayback();autoPlayedRef.current=false;return;}
+      if(el.paused||el.readyState<2){warm.frame=requestAnimationFrame(step);return;}
+      if(start===null)start=now;
+      const t=Math.min(1,(now-start)/1500);
+      el.muted=mutedRef.current||volumeRef.current===0;
+      el.volume=(warm.audio?tvRadioVolume(volumeRef.current/100):volumeRef.current/100)*t;
+      if(t<1)warm.frame=requestAnimationFrame(step);else{tvAudioWarmRef.current=null;setPlaying(true);setBuffering(false);}
+    };
+    warm.frame=requestAnimationFrame(step);
+  },[tvAdsBlocked,tvCommercial.run?.kind,canal?.id,isAudio,stopAllPlayback]);
+  useEffect(()=>()=>{const warm=tvAudioWarmRef.current;if(warm?.frame)cancelAnimationFrame(warm.frame);tvAudioWarmRef.current=null;},[]);
+
   const prevProgIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (currentProg?.id !== prevProgIdRef.current) {
@@ -3105,7 +3392,7 @@ export default function PlayerPage() {
 
   const showShopIcon = shopActive && currentShopProducts.length > 0;
   // playerHomePath is now defined earlier in the component
-  const userDisplayName = profileName || user?.email?.split("@")[0] || "Visitante";
+  const userDisplayName = tvProfile?.name || profileName || user?.email?.split("@")[0] || "Visitante";
 
   // Shopping popup is manual-only via icon click
 
@@ -3121,19 +3408,41 @@ export default function PlayerPage() {
     ];
   }, [handleHomeClick, user, is991Channel, shopActive]);
 
-  if (loading) {
-    // Padrão global de sincronização do player
-    return <PlayerSyncLoader />;
+  // NEXO_LOADING_UNICO_V1: nenhum splash de tela inteira entre Home e Ouvir/Assistir.
+  const tvConnectionView = (
+    <OttFrame className="ott-media-connecting">
+      <div className="ott-media-connecting-content" role="status">
+        <span>CONEXÃO AO VIVO</span>
+        <h1>Conectando à rádio</h1>
+        <p>A tela do player será aberta assim que os canais estiverem disponíveis.</p>
+        <button type="button" onClick={handleHomeClick}>Voltar à Home</button>
+      </div>
+    </OttFrame>
+  );
+  if (loading) return isPlayerOtt() ? tvConnectionView : <PlayerSyncLoader />;
+  if (isPlayerOtt() && !canal && !isTop10Mode) {
+    return <OttFrame className="ott-media-connecting">
+      <div className="ott-media-connecting-content" role="alert">
+        <h1>Canal indisponível</h1>
+        <p>Não foi possível carregar este canal.</p>
+        <button type="button" onClick={handleHomeClick}>Voltar à Home</button>
+      </div>
+    </OttFrame>;
   }
 
 
   // ===== New Apple-TV player screen (for audio and video channels) =====
   if (canal && (isAudio || isVideo) && (!isYoutube || isCatalog)) {
     return (
-      <Suspense fallback={<PlayerSyncLoader />}>
+      <Suspense fallback={isPlayerOtt() ? tvConnectionView : <PlayerSyncLoader />}>
         <div className="relative min-h-screen">
         <AudioPlayerScreen
           audioRef={audioRef}
+          onTvAudioAdopt={handleTvAudioAdopt}
+          tvPlaybackBlocked={tvPlaybackBlocked}
+          tvUserPaused={tvUserPausedRef.current}
+          tvStreamRequested={streamRequested && prerollDone && !tvAdsBlocked}
+          commercialPlayback={tvAdsBlocked}
           videoRef={videoRef}
           canal={canal}
           canais={canais}
@@ -3164,7 +3473,7 @@ export default function PlayerPage() {
           empresaLogo={empresaLogo}
           empresaNome={empresaNome}
           user={user}
-          profileAvatar={profileAvatar}
+          profileAvatar={tvProfile ? tvProfile.avatar : profileAvatar}
           userDisplayName={userDisplayName}
           userEmail={user?.email ?? null}
           effectiveUserId={effectiveUserId}
@@ -3179,7 +3488,8 @@ export default function PlayerPage() {
           isCatalog={isCatalog}
         />
 
-        {isPrerollVisible && (
+        {tvCommercial.run && <TvCommercialPlayback key={`${tvCommercial.run.key}:${tvCommercial.run.kind}:${tvCommercial.run.serial}`} run={tvCommercial.run} audio={isAudio} muted={muted} volume={volume} onFinish={tvCommercial.finish} onBack={handleHomeClick} onWarmStream={warmCommercialStream}/>}
+        {isPrerollVisible && !tvAdsBlocked && (
           <div className="fixed inset-0 z-[100] bg-black">
             <PreRollOverlay
               prerollUrl={prerollUrl || ""}
@@ -3223,10 +3533,10 @@ export default function PlayerPage() {
 
   return (
     <div ref={containerRef} className={`relative h-screen w-screen bg-black overflow-hidden select-none cursor-default nexo-player-container ${pageFadeOut ? 'opacity-0 scale-95 transition-all duration-700' : 'opacity-100 scale-100'}`}>
-      <PlayerLoadingOverlay
+      {!isPlayerOtt() && <PlayerLoadingOverlay
         isLoading={loading || streamLoading}
         minDurationMs={3000}
-      />
+      />}
 
       {/* Dynamic background: gradient from user colors for audio, thumb for video/catalog */}
       {(() => {

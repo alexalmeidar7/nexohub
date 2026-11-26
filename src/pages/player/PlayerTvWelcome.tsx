@@ -11,8 +11,9 @@ import { upgradeArtistImageResolution } from "@/lib/artistImageCache";
 import PlayerBrandCorner from "@/components/player/PlayerBrandCorner";
 import { isPlayerTvApp } from "@/lib/playerTvApp";
 import OttPair from "@/components/player/tv/OttPair";
-import { markPlayerSession } from "@/lib/playerSession";
-import { clearLinkedTv, saveLinkedTv } from "@/lib/nexoTvDevice";
+import { completeSecurePairing } from "@/lib/nexoTvPairClient";
+import { hashTvPairSecret } from "@/lib/tvSecureHash";
+// TV proof-of-possession replaces legacy token sync and device redeem.
 
 const CANONICAL_PAIR_ORIGIN = "https://housemix.nexobrasil.net";
 
@@ -24,7 +25,7 @@ const CANONICAL_PAIR_ORIGIN = "https://housemix.nexobrasil.net";
 function getPairOrigin() {
   if (typeof window === "undefined") return CANONICAL_PAIR_ORIGIN;
   const host = window.location.hostname.toLowerCase();
-  if (host === "localhost" || host === "127.0.0.1") return window.location.origin;
+  if (host === "localhost" || host === "127.0.0.1") return CANONICAL_PAIR_ORIGIN;
   return CANONICAL_PAIR_ORIGIN;
 }
 
@@ -62,12 +63,12 @@ export default function PlayerTvWelcome() {
       const k = `nexohub_tv_session_${userSlug}`;
       let v = localStorage.getItem(k);
       if (!v) {
-        v = crypto.randomUUID();
+        v = (typeof crypto.randomUUID === "function" ? crypto.randomUUID() : Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,"0")).join(""));
         localStorage.setItem(k, v);
       }
       return v;
     } catch {
-      return crypto.randomUUID();
+      return (typeof crypto.randomUUID === "function" ? crypto.randomUUID() : Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,"0")).join(""));
     }
   }, [userSlug]);
   const claimedRef = useRef(false);
@@ -78,84 +79,29 @@ export default function PlayerTvWelcome() {
     if (!row || generating.current || claimedRef.current || row.status !== "claimed") return;
     claimedRef.current = true;
     const isGuestClaim = !row.paired_user_id && !row.paired_email;
-
-    // Primeiro, tenta restaurar sessão sincronizada do celular
-    if (!isGuestClaim && row.paired_user_id) {
-      try {
-        // Verifica se há sessão sincronizada disponível
-        const { data: syncData, error: syncError } = await playerSupabase.functions.invoke(
-          "tv-pair-get-session",
-          { body: { pairedUserId: row.paired_user_id, userSlug } }
-        );
-
-        if (!syncError && syncData?.ok && syncData.sessionTokens) {
-          // Restaura sessão a partir dos tokens sincronizados
-          const { data: sessionData, error: sessionError } = await playerSupabase.auth.setSession({
-            access_token: syncData.sessionTokens.access_token,
-            refresh_token: syncData.sessionTokens.refresh_token,
-          });
-
-          if (!sessionError && sessionData?.session?.user?.id === row.paired_user_id) {
-            markPlayerSession(sessionData.session.user.id);
-
-            try {
-              localStorage.removeItem(`nexohub_tv_guest_${userSlug}`);
-              localStorage.removeItem(`player-step-home:${userSlug}`);
-            } catch { /* Storage may be unavailable. */ }
-
-            navigate(`/${userSlug}/player?tv=1&step=profiles`, { replace: true });
-            return;
-          }
-        }
-      } catch (syncError) {
-        console.warn("Falha ao restaurar sessão sincronizada:", syncError);
-        // Continua com o fluxo normal
+    if (!isGuestClaim) {
+      if (!row.paired_user_id || !proofRef.current) {
+        setError("O servidor ainda não habilitou o pareamento seguro. Gere outro código após a atualização.");
+        return;
       }
-    }
-
-    // Fluxo original se não houver sessão sincronizada ou falhou
-    if (!isGuestClaim && proofRef.current) {
       try {
-        const { code: pendingCode, secret } = proofRef.current;
-        const { data, error: redeemError } = await playerSupabase.functions.invoke("nexo-tv-device", {
-          body: { action: "redeem", code: pendingCode, proof: secret },
+        await completeSecurePairing({
+          code: proofRef.current.code, secret: proofRef.current.secret, tvSessionId,
+          expectedUserId: row.paired_user_id, slug: userSlug,
         });
-        if (redeemError || !data?.ok) throw new Error("redeem_failed");
-        saveLinkedTv({ deviceId: data.deviceId, userId: row.paired_user_id, slug: userSlug });
-        const installed = await playerSupabase.auth.setSession({
-          access_token: data.access_token, refresh_token: data.refresh_token,
-        });
-        if (installed.error || installed.data.user?.id !== row.paired_user_id) throw new Error("session_mismatch");
-        markPlayerSession(installed.data.user.id);
-        try {
-          localStorage.removeItem(`nexohub_tv_guest_${userSlug}`);
-          localStorage.removeItem(`player-step-home:${userSlug}`);
-        } catch { /* Storage may be unavailable. */ }
-        navigate(`/${userSlug}/player?tv=1&step=profiles`, { replace: true });
-      } catch {
-        clearLinkedTv();
-        setError("Não foi possível conectar sua conta à TV. Gere um novo código e tente novamente.");
+        setClaimedName(row.paired_name || "Conta Google");
+        window.location.replace(`/${encodeURIComponent(userSlug)}/player?tv=1&step=profiles`);
+      } catch (error) {
+        setError(error instanceof Error ? error.message : "Falha ao conectar a conta Google na TV.");
       }
       return;
     }
-
-    // Fluxo para visitante
-    try {
-      const guest = {
-        name: isGuestClaim ? "Visitante" : row.paired_name || row.paired_email || "Convidado",
-        email: row.paired_email || null,
-        avatar_url: row.paired_avatar || "/avatars/usr-default.png",
-        pairedAt: Date.now(),
-      };
-      localStorage.setItem(`nexohub_tv_guest_${userSlug}`, JSON.stringify(guest));
-      if (isGuestClaim) localStorage.removeItem(`player-step-home:${userSlug}`);
-    } catch { /* ignore */ }
-
-    setClaimedName(isGuestClaim ? "Visitante" : row.paired_name || row.paired_email || "Convidado");
-    setTimeout(() => {
-      navigate(`/${userSlug}/player?tvGuest=1&step=home`, { replace: true });
-    }, 900);
-  }, [navigate, userSlug]);
+    // Only an explicit guest claim goes to guest; Google failures NEVER downgrade.
+    try {localStorage.setItem(`nexohub_tv_guest_${userSlug}`,
+      JSON.stringify({name:"Visitante",avatar_url:"/avatars/usr-default.png",pairedAt:Date.now()}));}catch{}
+    setClaimedName("Visitante");
+    navigate(`/${userSlug}/player?tv=1&tvGuest=1&step=home`, {replace:true});
+  }, [navigate,userSlug,tvSessionId]);
 
   // Auto-fullscreen quando aberto em navegador de TV (WebOS/Tizen/AndroidTV/etc).
   // Alguns navegadores só permitem via gesto — nesse caso, o primeiro clique/tecla dispara.
@@ -304,9 +250,7 @@ export default function PlayerTvWelcome() {
     try {
       const hex = (bytes: Uint8Array) => Array.from(bytes, value => value.toString(16).padStart(2, "0")).join("");
       const secret = hex(crypto.getRandomValues(new Uint8Array(32)));
-      const proofHash = crypto.subtle
-        ? hex(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(secret))))
-        : undefined;
+      const proofHash = await hashTvPairSecret(secret);
       const result = await playerSupabase.functions.invoke("tv-pair-create", { body: { userSlug, tvSessionId, proofHash } });
       ({ data, error: fnErr } = result);
       if (data?.devicePairing && data?.code) proofRef.current = { secret, code: data.code };
@@ -319,9 +263,14 @@ export default function PlayerTvWelcome() {
       setError("Não foi possível gerar o código. Verifique sua conexão e tente novamente.");
       return;
     }
+    if (!/^\d{4}$/.test(String(data.displayCode || ""))) {
+      setError("O servidor não retornou os quatro números de pareamento.");
+      return;
+    }
     setCode(data.code);
-    setDisplayCode(data.displayCode || null);
+    setDisplayCode(data.displayCode);
     setExpiresAt(data.expiresAt);
+    if (!data.devicePairing) setError("Servidor sem o pareamento seguro. A conta Google não pode ser concluída nesta versão.");
   }, [userSlug, tvSessionId]);
 
   useEffect(() => {

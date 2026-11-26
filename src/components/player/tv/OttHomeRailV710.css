@@ -1,0 +1,76 @@
+/* NEXO_V7_10_GRADE_MENU_FIX: somente a Home com menu lateral, sem alterar /watch. */
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-actions { gap: calc(4 * var(--ott-u)) !important; }
+/* Quarta opcao do menu herda dimensoes, gradiente, animacao e respiro dos demais botoes. */
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-button[aria-label="Grade de programação"] {
+  flex-shrink: 0 !important;
+}
+/* A borda antes era cortada pelo overflow do painel de informacoes. */
+.nexo-tv.ott-home.ott-rail-layout .ott-now {
+  overflow: visible !important;
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+  min-width: 0 !important;
+}
+.nexo-tv.ott-home.ott-rail-layout .ott-now-grade {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  width: max-content !important;
+  max-width: 100% !important;
+  min-height: calc(54 * var(--ott-u)) !important;
+  padding: calc(10 * var(--ott-u)) calc(24 * var(--ott-u)) !important;
+  border: calc(2 * var(--ott-u)) solid rgba(255,255,255,.88) !important;
+  border-radius: calc(40 * var(--ott-u)) !important;
+  outline: none !important;
+  overflow: visible !important;
+  white-space: nowrap !important;
+  background: transparent !important;
+}
+.nexo-tv.ott-home.ott-rail-layout .ott-now-grade:is(:focus,:focus-visible,:hover) {
+  border-color: #fff !important;
+  outline: calc(2 * var(--ott-u)) solid rgba(255,255,255,.9) !important;
+  outline-offset: calc(3 * var(--ott-u)) !important;
+}
+
+/* NEXO startup: Home interactivity, fixed to avatar baseline. */
+.nexo-tv.ott-home .ott-home-interactivity{position:absolute!important;right:calc(100 * var(--ott-u));bottom:calc(54 * var(--ott-u));z-index:9;}
+.nexo-tv .ott-home-interaction-dialog{position:absolute;right:calc(100 * var(--ott-u));bottom:calc(145 * var(--ott-u));width:calc(460 * var(--ott-u));max-height:75%;overflow:auto;background:#303030;border-radius:calc(24 * var(--ott-u));padding:calc(20 * var(--ott-u));display:flex;flex-direction:column;gap:calc(12 * var(--ott-u));}
+.nexo-tv .ott-home-interaction-dialog>button{display:flex;align-items:center;gap:calc(16 * var(--ott-u));background:#222;color:white;padding:calc(14 * var(--ott-u));border-radius:calc(16 * var(--ott-u));}
+.nexo-tv .ott-home-interaction-dialog>button:focus{outline:2px solid white;}
+
+.nexo-tv.ott-home .ott-home-interactivity{width:calc(76 * var(--ott-u));height:calc(76 * var(--ott-u));border-radius:50%;border:calc(3 * var(--ott-u)) solid var(--ott-accent,#e21b23);background:rgba(0,0,0,.65);color:white;display:grid;place-items:center;}
+.nexo-tv.ott-home .ott-home-interactivity svg{width:calc(32 * var(--ott-u));height:calc(32 * var(--ott-u));}
+.nexo-tv.ott-home .ott-home-interactivity:focus-visible{outline:2px solid white;outline-offset:3px;}
+
+.nexo-tv.ott-home .ott-home-interaction-tools{position:absolute;right:calc(100 * var(--ott-u));bottom:calc(54 * var(--ott-u));z-index:10;}
+.nexo-tv.ott-home .ott-home-interaction-rail{position:absolute;left:25%;right:calc(200 * var(--ott-u));bottom:calc(54 * var(--ott-u));height:calc(152 * var(--ott-u));z-index:9;pointer-events:none;}
+.nexo-tv.ott-home .ott-home-interaction-rail .ott-interactivity-shortcuts{left:auto!important;right:0;bottom:0;}
+.nexo-tv.ott-home .ott-interactivity-panel{z-index:11;}
+
+/* NEXO TV: largura intrinseca, respiro uniforme, foco real e rodape alinhado ao No Ar. */
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-button,
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-profile {
+  width:max-content!important; max-width:calc(76 * var(--ott-u))!important;
+  padding-right:calc(5 * var(--ott-u))!important;
+  transition:max-width 260ms cubic-bezier(.2,.82,.2,1),padding-right 260ms ease,background-color 220ms ease,border-color 220ms ease!important;
+}
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-button:is(:hover,:focus-visible),
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-profile:is(:hover,:focus-visible) {
+  width:max-content!important; max-width:calc(1200 * var(--ott-u))!important;
+  padding-right:calc(26 * var(--ott-u))!important;
+}
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-button > .ott-home-rail-name,
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-profile > .ott-home-rail-name {
+  flex:0 0 auto!important; max-width:none!important; padding-right:0!important;
+  text-overflow:clip!important; white-space:nowrap!important;
+}
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-actions { pointer-events:none; }
+.nexo-tv.ott-home.ott-rail-layout .ott-footer:not(.ott-footer-subpage) {
+  left:calc(265 * var(--ott-u))!important; right:auto!important;
+  justify-content:flex-start!important; width:max-content!important;
+}
+@media(prefers-reduced-motion:reduce){
+  .nexo-tv.ott-home.ott-rail-layout .ott-home-rail-button,
+  .nexo-tv.ott-home.ott-rail-layout .ott-home-rail-profile{transition:none!important;}
+}

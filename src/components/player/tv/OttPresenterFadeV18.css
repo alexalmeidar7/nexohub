@@ -1,0 +1,1 @@
+.nexo-tv .nexo-presenter-v18{animation:none!important}.nexo-tv .nexo-presenter-v18>img{animation:nexo-presenter-v18-enter 600ms ease-out both!important}@keyframes nexo-presenter-v18-enter{from{opacity:0;transform:translateX(3%)}to{opacity:1;transform:translateX(0)}}@media(prefers-reduced-motion:reduce){.nexo-tv .nexo-presenter-v18>img{animation:none!important}}

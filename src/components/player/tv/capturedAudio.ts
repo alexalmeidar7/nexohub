@@ -10,7 +10,9 @@ export function acquireCapturedAudio(element: HTMLMediaElement) {
   }
   record.users++;
   const retained = record;
+  let released = false;
   return { stream: record.stream, release() {
+    if (released) return; released = true;
     retained.users--;
     if (retained.users === 0) { retained.stream.getTracks().forEach(track => track.stop()); if(captures.get(element)===retained)captures.delete(element); }
   } };

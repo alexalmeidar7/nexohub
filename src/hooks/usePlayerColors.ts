@@ -1,8 +1,11 @@
+import { isPlayerOtt } from "@/lib/playerTvApp";
 import { useEffect, useLayoutEffect, useState, useCallback } from "react";
 import { playerSupabase } from "@/integrations/supabase/playerClient";
 import { usePlayerAuth } from "@/hooks/usePlayerAuth";
 import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
 import { defaultPlayerColors, resolvePlayerColors, type PlayerColors, type ScreenBgConfig, buildBgStyle, defaultScreenBg } from "@/components/PlayerLayoutCustomizer";
+
+const tvAccentMemory = new Map<string, string>();
 
 type ScreenTab = "loading" | "login" | "home" | "live" | "catalog";
 type ScreenBgConfigs = Record<ScreenTab, ScreenBgConfig>;
@@ -55,6 +58,21 @@ export function usePlayerColors(externalUserId?: string | null, publicSlug?: str
   const rawTargetId = externalUserId || acc?.parentUserId || acc?.id || user?.id || null;
   const effectiveUserId = rawTargetId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawTargetId) ? rawTargetId : null;
 
+  const tvMode = isPlayerOtt();
+  const tvSlug = publicSlug || (typeof window !== "undefined" ? window.location.pathname.match(/^\/([^/]+)\/(?:player|watch)(?:\/|$)/i)?.[1] : undefined);
+  const tvAccentKey = tvMode && tvSlug ? `nexo-tv-accent:${tvSlug.toLowerCase()}` : null;
+  const cachedTvAccent = () => {
+    if (tvAccentKey && tvAccentMemory.has(tvAccentKey)) return tvAccentMemory.get(tvAccentKey)!;
+    try { const value = tvAccentKey && localStorage.getItem(tvAccentKey); if (value && /^#[0-9a-f]{6}$/i.test(value)) return value; } catch {}
+    return tvSlug?.toLowerCase() === "positivafm" ? "#f20d0f" : (defaultPlayerColors.dominantColor || defaultPlayerColors.homeAccent);
+  };
+  const storeTvAccent = (value: PlayerColors) => {
+    const accent = value.dominantColor || value.homeAccent;
+    if (tvAccentKey && /^#[0-9a-f]{6}$/i.test(accent)) {
+      tvAccentMemory.set(tvAccentKey, accent);
+      try { localStorage.setItem(tvAccentKey, accent); } catch {}
+    }
+  };
   const fetchColors = useCallback(async () => {
     if (publicSlug) {
       const { data, error } = await playerSupabase.functions.invoke("public-player-data", {
@@ -63,7 +81,9 @@ export function usePlayerColors(externalUserId?: string | null, publicSlug?: str
       if (!error && data && !data.error) {
         let receivedPlayerConfig = false;
         if (data.playerColors && typeof data.playerColors === "object") {
-          setColors(resolvePlayerColors(data.playerColors));
+          const resolved = resolvePlayerColors(data.playerColors);
+          storeTvAccent(resolved);
+          setColors(resolved);
           receivedPlayerConfig = true;
         }
         if (data.playerBgConfigs && typeof data.playerBgConfigs === "object") {
@@ -87,13 +107,15 @@ export function usePlayerColors(externalUserId?: string | null, publicSlug?: str
     if (data?.dashboard_items && typeof data.dashboard_items === "object") {
       const di = data.dashboard_items as any;
       if (di.player_colors) {
-        setColors(resolvePlayerColors(di.player_colors));
+        const resolved = resolvePlayerColors(di.player_colors);
+        storeTvAccent(resolved);
+        setColors(resolved);
       }
       if (di.player_bg_configs) {
         setBgConfigs({ ...defaultBgConfigs, ...di.player_bg_configs });
       }
     }
-  }, [effectiveUserId, publicSlug]);
+  }, [effectiveUserId, publicSlug, tvAccentKey]);
 
   useEffect(() => {
     let active = true;
@@ -141,7 +163,7 @@ export function usePlayerColors(externalUserId?: string | null, publicSlug?: str
     // Map player colors to CSS variables
     // Do not paint the default station red while the saved brand color is
     // still loading. This avoids a red flash behind the user's chosen color.
-    const dominantColor = colorsReady ? (colors.dominantColor || colors.homeAccent) : "#111214";
+    const dominantColor = tvMode ? cachedTvAccent() : (colorsReady ? (colors.dominantColor || colors.homeAccent) : "#111214");
     const accentHsl = hexToHsl(dominantColor);
     const accentHoverHsl = hexToHsl(dominantColor);
     const bgHsl = hexToHsl(colors.homeBg);
@@ -224,7 +246,7 @@ export function usePlayerColors(externalUserId?: string | null, publicSlug?: str
     if (loadingBgStyle.background) root.style.setProperty("--player-loading-background", loadingBgStyle.background as string);
     else if (loadingBgStyle.backgroundColor) root.style.setProperty("--player-loading-background", loadingBgStyle.backgroundColor as string);
 
-  }, [colors, bgConfigs, colorsReady]);
+  }, [colors, bgConfigs, colorsReady, tvAccentKey, tvMode]);
 
   return { colors, bgConfigs };
 }

@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import { Cloud, CloudLightning, CloudRain, CloudSnow, CloudSun, Sun, CloudDrizzle } from "lucide-react";
+import { Cloud, CloudDrizzle, CloudLightning, CloudRain, CloudSnow, CloudSun, Sun, Umbrella } from "lucide-react";
 import { playerSupabase } from "@/integrations/supabase/playerClient";
 
 type Day = { date: string; min: number | null; max: number | null; rain: number | null; chance: number | null; code: number };
 type Coordinates = { lat: number; lon: number };
 const MANUAL_CITY_KEY = "nexo_tv_manual_city";
 
-function WeatherSymbol({ code }: { code: number }) {
+function WeatherSymbol({ code, size = 38 }: { code: number; size?: number }) {
   const Icon = code === 0 ? Sun : code <= 2 ? CloudSun : code === 3 || code === 45 || code === 48 ? Cloud : code >= 71 && code <= 77 ? CloudSnow : code >= 95 ? CloudLightning : code === 51 || code === 53 || code === 55 ? CloudDrizzle : CloudRain;
-  return <Icon aria-hidden="true" size={38} strokeWidth={1.4} />;
+  return <Icon aria-hidden="true" size={size} strokeWidth={1.4} />;
 }
 const numberOrNull = (value: unknown): number | null => typeof value === "number" && Number.isFinite(value) ? value : null;
 function savedLocation(): Coordinates | null {
@@ -16,11 +16,10 @@ function savedLocation(): Coordinates | null {
     const saved = localStorage.getItem(MANUAL_CITY_KEY);
     if (!saved) return null;
     const parsed: unknown = JSON.parse(saved);
-    if (parsed && typeof parsed === "object" && "lat" in parsed && "lon" in parsed &&
-        typeof parsed.lat === "number" && typeof parsed.lon === "number") {
+    if (parsed && typeof parsed === "object" && "lat" in parsed && "lon" in parsed && typeof parsed.lat === "number" && typeof parsed.lon === "number") {
       return { lat: parsed.lat, lon: parsed.lon };
     }
-  } catch { /* storage may be unavailable */ }
+  } catch {}
   return null;
 }
 function deviceLocation(): Promise<Coordinates | null> {
@@ -31,34 +30,33 @@ function deviceLocation(): Promise<Coordinates | null> {
     { timeout: 5000, maximumAge: 300000, enableHighAccuracy: false },
   ));
 }
-function dateLabel(date: string, today: boolean) {
-  if (today) return "HOJE";
-  return new Intl.DateTimeFormat("pt-BR", { weekday: "short", timeZone: "UTC" })
-    .format(new Date(`${date}T12:00:00Z`)).replace(".", "").toUpperCase();
+function weekdayShort(date: string) {
+  return new Intl.DateTimeFormat("pt-BR", { weekday: "short", timeZone: "UTC" }).format(new Date(`${date}T12:00:00Z`)).replace(".", "").toLowerCase();
 }
-function formatDate(date: string) {
-  const [, month, day] = date.split("-");
-  return `${day}/${month}`;
+function monthShort(date: string) {
+  return new Intl.DateTimeFormat("pt-BR", { month: "short", timeZone: "UTC" }).format(new Date(`${date}T12:00:00Z`)).replace(".", "").toLowerCase();
 }
+function dayNumber(date: string) {
+  return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", timeZone: "UTC" }).format(new Date(`${date}T12:00:00Z`));
+}
+
 export default function OttWeatherForecast({ radioUserId }: { radioUserId?: string | null }) {
   const [days, setDays] = useState<Day[]>([]);
-  const firstCard = useRef<HTMLButtonElement>(null);
   const [currentTemp, setCurrentTemp] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const firstRow = useRef<HTMLButtonElement>(null);
+
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
       setLoading(true);
       setError("");
       try {
-        // Keep the same preference as the header: manual city, device, then station.
         const coords = savedLocation() ?? await deviceLocation();
         if (cancelled) return;
         if (!coords && !radioUserId) throw new Error("Cidade indisponível");
-        const body = coords
-          ? { action: "forecast", lat: coords.lat, lon: coords.lon, forecast_days: 7 }
-          : { action: "forecast", user_id: radioUserId, forecast_days: 7 };
+        const body = coords ? { action: "forecast", lat: coords.lat, lon: coords.lon, forecast_days: 7 } : { action: "forecast", user_id: radioUserId, forecast_days: 7 };
         const { data, error: invokeError } = await playerSupabase.functions.invoke("fetch-weather", { body });
         if (invokeError || !data?.ok) throw invokeError || new Error(data?.error || "Falha na previsão");
         const forecast = data.data;
@@ -88,67 +86,169 @@ export default function OttWeatherForecast({ radioUserId }: { radioUserId?: stri
     return () => { cancelled = true; window.clearInterval(interval); };
   }, [radioUserId]);
 
-  useEffect(() => { if (days.length) firstCard.current?.focus({ preventScroll: true }); }, [days.length]);
-  const navigate = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
-    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
-    event.preventDefault(); event.stopPropagation();
-    const next = Math.max(0, Math.min(days.length - 1, index + (event.key === "ArrowRight" ? 1 : -1)));
-    const cards = event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>("[data-forecast-card]");
-    cards?.[next]?.focus({ preventScroll: true });
-    cards?.[next]?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
-  };
+  useEffect(() => {
+    if (days.length > 1) firstRow.current?.focus({ preventScroll: true });
+  }, [days.length]);
+
   if (loading && !days.length) return <p role="status">Carregando previsão…</p>;
   if (error && !days.length) return <p role="alert">{error}</p>;
-  return <div className="ott-weather-forecast" aria-label="Previsão para sete dias">
+
+  const today = days[0];
+  const nextDays = days.slice(1, 7);
+
+  return <div className="ott-weather-forecast-card" aria-label="Previsão do tempo">
     <style>{`
-      /* Painel da previsão: sem fundo, véu ou desfoque sobre o apresentador. */
-      .nexo-tv .ott-interactivity-panel-weather,
-      .nexo-tv .ott-interactivity-panel-weather.ott-interactivity-rail,
-      .nexo-tv .ott-interactivity-panel-weather > header,
-      .nexo-tv .ott-interactivity-panel-weather .ott-interaction-content {
-        background: transparent !important;
-        background-image: none !important;
-        box-shadow: none !important;
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
+      .ott-weather-forecast-card {
+        width: min(calc(470 * var(--ott-u)), 100%);
+        margin: 0 auto;
+        padding: calc(18 * var(--ott-u));
+        border-radius: calc(32 * var(--ott-u));
+        background: rgba(58,58,58,.58);
+        -webkit-backdrop-filter: blur(calc(18 * var(--ott-u)));
+        backdrop-filter: blur(calc(18 * var(--ott-u)));
       }
-      .nexo-tv .ott-interactivity-panel-weather::before,
-      .nexo-tv .ott-interactivity-panel-weather::after {
-        content: none !important;
-        display: none !important;
+      .ott-weather-forecast-card .ott-weather-now-card {
+        display: grid;
+        grid-template-columns: minmax(0,1fr) auto;
+        gap: calc(14 * var(--ott-u));
+        padding: calc(22 * var(--ott-u));
+        border-radius: calc(28 * var(--ott-u));
+        background: linear-gradient(135deg, rgba(135,135,135,.72), rgba(92,92,92,.72));
       }
-      .ott-weather-forecast { width:100%; max-width:100%; overflow-x:auto; padding:6px 4px 12px; background:transparent!important; scrollbar-width:none; }
-      .ott-weather-forecast::-webkit-scrollbar { display:none; }
-      .ott-weather-forecast .ott-weather-forecast-row { display:flex; flex-flow:row nowrap; align-items:stretch; gap:14px; width:max-content; }
-      .ott-weather-forecast .ott-weather-day {
-        box-sizing:border-box!important; position:relative; flex:0 0 180px!important; width:180px!important;
-        min-width:180px!important; max-width:180px!important; height:192px!important; min-height:192px!important;
-        display:flex!important; flex-direction:column!important; align-items:stretch!important;
-        justify-content:space-between!important; padding:17px 16px 14px!important;
-        margin:0!important; border:2px solid transparent!important; border-radius:22px!important;
-        background:rgba(47,43,52,.66)!important; color:#fff!important; text-align:left!important;
-        backdrop-filter:blur(12px) saturate(135%); -webkit-backdrop-filter:blur(12px) saturate(135%);
-        box-shadow:none!important; outline:none!important; font:inherit; cursor:pointer;
+      .ott-weather-forecast-card .ott-weather-now-copy { min-width: 0; }
+      .ott-weather-forecast-card .ott-weather-now-label {
+        display: block;
+        margin-bottom: calc(8 * var(--ott-u));
+        text-align: center;
+        font-size: calc(16 * var(--ott-u));
+        font-weight: 700;
+        text-transform: lowercase;
       }
-      .ott-weather-forecast .ott-weather-day:focus,
-      .ott-weather-forecast .ott-weather-day:focus-visible { border-color:#fff!important; outline:none!important; }
-      .ott-weather-forecast .ott-weather-day-head { display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; font-size:12px; line-height:1.25; }
-      .ott-weather-forecast .ott-weather-day-head strong { font-size:14px; font-weight:700; text-transform:lowercase; }
-      .ott-weather-forecast .ott-weather-now { display:inline-block; align-self:flex-start; border-radius:5px; background:#e51b23; padding:3px 6px; font-size:11px; font-weight:700; margin-top:6px; }
-      .ott-weather-forecast .ott-weather-day-main { display:flex; align-items:center; justify-content:space-between; gap:14px; width:100%; min-height:52px; margin:10px 0; }
-      .ott-weather-forecast .ott-weather-day-main svg { width:34px!important; height:34px!important; flex:0 0 34px; margin-right:2px; }
-      .ott-weather-forecast .ott-weather-current { font-size:27px; font-weight:400; white-space:nowrap; }
-      .ott-weather-forecast .ott-weather-range { font-size:12px; line-height:1.5; opacity:.95; white-space:nowrap; }
-      .ott-weather-forecast .ott-weather-day-footer { display:flex; align-items:center; justify-content:space-between; gap:6px; width:100%; border-top:1px solid rgba(255,255,255,.22); padding-top:10px; margin-top:auto; font-size:11px; white-space:nowrap; }
+      .ott-weather-forecast-card .ott-weather-now-main {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: calc(16 * var(--ott-u));
+      }
+      .ott-weather-forecast-card .ott-weather-temp {
+        font-size: calc(68 * var(--ott-u));
+        line-height: .95;
+        font-weight: 300;
+        letter-spacing: calc(-2 * var(--ott-u));
+      }
+      .ott-weather-forecast-card .ott-weather-meta {
+        margin-top: calc(8 * var(--ott-u));
+        font-size: calc(17 * var(--ott-u));
+        line-height: 1.28;
+      }
+      .ott-weather-forecast-card .ott-weather-rain {
+        display: inline-flex;
+        align-items: center;
+        gap: calc(6 * var(--ott-u));
+        margin-top: calc(6 * var(--ott-u));
+        font-size: calc(16 * var(--ott-u));
+      }
+      .ott-weather-forecast-card .ott-weather-rain svg,
+      .ott-weather-forecast-card .ott-weather-row-rain svg {
+        width: calc(16 * var(--ott-u));
+        height: calc(16 * var(--ott-u));
+      }
+      .ott-weather-forecast-card .ott-weather-now-icon {
+        display: grid;
+        place-items: center;
+        align-self: center;
+        color: #d9d9d9;
+      }
+      .ott-weather-forecast-card .ott-weather-now-icon svg {
+        width: calc(110 * var(--ott-u));
+        height: calc(110 * var(--ott-u));
+      }
+      .ott-weather-forecast-card .ott-weather-list {
+        display: flex;
+        flex-direction: column;
+        gap: calc(10 * var(--ott-u));
+        margin-top: calc(14 * var(--ott-u));
+      }
+      .ott-weather-forecast-card .ott-weather-row {
+        display: grid;
+        grid-template-columns: minmax(0,1fr) auto auto;
+        align-items: center;
+        gap: calc(14 * var(--ott-u));
+        width: 100%;
+        min-height: calc(54 * var(--ott-u));
+        padding: calc(10 * var(--ott-u)) calc(18 * var(--ott-u));
+        border: 0;
+        border-radius: calc(999 * var(--ott-u));
+        background: rgba(72,72,72,.9);
+        color: #fff;
+        text-align: left;
+      }
+      .ott-weather-forecast-card .ott-weather-row:focus,
+      .ott-weather-forecast-card .ott-weather-row:focus-visible {
+        outline: calc(3 * var(--ott-u)) solid #fff;
+        outline-offset: calc(4 * var(--ott-u));
+      }
+      .ott-weather-forecast-card .ott-weather-row-date {
+        display: inline-flex;
+        align-items: baseline;
+        gap: calc(7 * var(--ott-u));
+        min-width: 0;
+        font-size: calc(16 * var(--ott-u));
+        white-space: nowrap;
+      }
+      .ott-weather-forecast-card .ott-weather-row-date strong { font-weight: 700; }
+      .ott-weather-forecast-card .ott-weather-row-date span:last-child { color: rgba(255,255,255,.7); }
+      .ott-weather-forecast-card .ott-weather-row-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #d7d7d7;
+      }
+      .ott-weather-forecast-card .ott-weather-row-icon svg {
+        width: calc(28 * var(--ott-u));
+        height: calc(28 * var(--ott-u));
+      }
+      .ott-weather-forecast-card .ott-weather-row-range {
+        display: inline-flex;
+        align-items: center;
+        gap: calc(8 * var(--ott-u));
+        font-size: calc(18 * var(--ott-u));
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .ott-weather-forecast-card .ott-weather-empty {
+        padding: calc(30 * var(--ott-u));
+        text-align: center;
+      }
     `}</style>
-    <div className="ott-weather-forecast-row" role="group" aria-label="Dias da previsão">
-      {days.map((day, index) => <button key={day.date} ref={index === 0 ? firstCard : undefined} type="button" data-forecast-card className="ott-weather-day" onKeyDown={event => navigate(event, index)} aria-label={`${index === 0 ? "Hoje" : dateLabel(day.date, false)}, ${formatDate(day.date)}, máxima ${day.max ?? "indisponível"} graus, mínima ${day.min ?? "indisponível"} graus`}>
-        <div className="ott-weather-day-head"><strong>{index === 0 ? "hoje" : new Intl.DateTimeFormat("pt-BR", { weekday:"long", timeZone:"UTC" }).format(new Date(`${day.date}T12:00:00Z`))}</strong><span>{formatDate(day.date)}</span></div>
-        {index === 0 && <span className="ott-weather-now">agora</span>}
-        <div className="ott-weather-day-main">{index === 0 ? <span className="ott-weather-current">{currentTemp === null ? "—" : Math.round(currentTemp)}°C</span> : <span className="ott-weather-range">min. {day.min === null ? "—" : Math.round(day.min)}°C<br/>máx. {day.max === null ? "—" : Math.round(day.max)}°C</span>}<WeatherSymbol code={day.code}/></div>
-        {index === 0 && <div className="ott-weather-range">min. {day.min === null ? "—" : Math.round(day.min)}°C / máx. {day.max === null ? "—" : Math.round(day.max)}°C</div>}
-        <div className="ott-weather-day-footer"><span>☔ {day.rain === null ? "—" : `${day.rain.toFixed(1)}mm`}</span><span>💧 {day.chance === null ? "—" : `${Math.round(day.chance)}%`}</span></div>
-      </button>)}
-    </div>
+    {!today ? <div className="ott-weather-empty">Previsão indisponível.</div> : <>
+      <div className="ott-weather-now-card">
+        <div className="ott-weather-now-copy">
+          <span className="ott-weather-now-label">tempo agora</span>
+          <div className="ott-weather-now-main">
+            <span className="ott-weather-temp">{currentTemp === null ? "—" : `${Math.round(currentTemp)}°`}</span>
+          </div>
+          <div className="ott-weather-meta">
+            <div>min. {today.min === null ? "—" : `${Math.round(today.min)}°`}</div>
+            <div>máx. {today.max === null ? "—" : `${Math.round(today.max)}°`}</div>
+          </div>
+          <div className="ott-weather-rain"><Umbrella aria-hidden="true"/> {today.rain === null ? "—" : `${Math.round(today.rain)}mm`}</div>
+        </div>
+        <div className="ott-weather-now-icon"><WeatherSymbol code={today.code} size={88}/></div>
+      </div>
+      <div className="ott-weather-list" role="group" aria-label="Próximos dias">
+        {nextDays.map((day, index) => <button
+          key={day.date}
+          ref={index === 0 ? firstRow : undefined}
+          type="button"
+          className="ott-weather-row"
+          aria-label={`${dayNumber(day.date)} de ${monthShort(day.date)}, ${weekdayShort(day.date)}, mínima ${day.min ?? "indisponível"} graus e máxima ${day.max ?? "indisponível"} graus`}
+        >
+          <span className="ott-weather-row-date"><strong>{dayNumber(day.date)} {monthShort(day.date)}</strong><span>{weekdayShort(day.date)}</span></span>
+          <span className="ott-weather-row-icon"><WeatherSymbol code={day.code} size={26}/></span>
+          <span className="ott-weather-row-range">{day.min === null ? "—" : `${Math.round(day.min)}°`}/{day.max === null ? "—" : `${Math.round(day.max)}°`}</span>
+        </button>)}
+      </div>
+    </>}
   </div>;
 }

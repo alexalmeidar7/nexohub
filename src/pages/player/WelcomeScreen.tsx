@@ -1,3 +1,7 @@
+import {selectReminderProfile} from "@/components/player/tv/TvProgramReminders";
+import { peekTvProfile, warmTvProfile } from "@/components/player/tv/tvProfileWarm";
+// NEXO_V717_QR_GOOGLE_POSITIVA
+import "@/components/player/tv/OttProfilesV74.css";
 import { useNavigate } from "react-router-dom";
 import { unlockTvRadio } from "@/components/player/tv/tvAudio";
 import { DateInput } from "@/components/ui/date-input";
@@ -29,7 +33,7 @@ import { startPlayerGoogleLogin } from "@/lib/playerGoogleLogin";
 import { markPlayerSession } from "@/lib/playerSession";
 import PlayerBrandCorner from "@/components/player/PlayerBrandCorner";
 import { ANIVERSARIOS_CIDADES } from "@/data/aniversariosCidades";
-import { isPlayerTvApp } from "@/lib/playerTvApp";
+import { isPlayerOtt, isPlayerTvApp } from "@/lib/playerTvApp";
 import OttProfiles, { type OttProfileData } from "@/components/player/tv/OttProfiles";
 import { OttFrame } from "@/components/player/tv/OttFrame";
 
@@ -79,6 +83,16 @@ interface WelcomeScreenProps {
 
 const COUNTDOWN_SECONDS = 3;
 
+// NEXO_V7_3_TV_ID: randomUUID is unavailable on non-HTTPS TV WebViews.
+function createLocalTvProfileId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  if (typeof crypto === "undefined" || typeof crypto.getRandomValues !== "function") throw new Error("Gerador seguro indisponível na TV.");
+  const buf = new Uint8Array(16); crypto.getRandomValues(buf);
+  buf[6] = (buf[6] & 15) | 64; buf[8] = (buf[8] & 63) | 128;
+  const x = Array.from(buf, n => n.toString(16).padStart(2,"0")).join("");
+  return [x.slice(0,8),x.slice(8,12),x.slice(12,16),x.slice(16,20),x.slice(20)].join("-");
+}
+
 export default function WelcomeScreen({
   userName,
   avatarUrl,
@@ -98,9 +112,10 @@ export default function WelcomeScreen({
 
   const navigate = useNavigate();
   const { user } = usePlayerAuth();
-  const [ottProfileReady, setOttProfileReady] = useState(false);
   const [ottProfileError, setOttProfileError] = useState(false);
-  const radioUserId = publicUserId || user?.id || null;
+  const radioUserId = publicUserId || (/^(positivafm|positiva)$/i.test(String(userSlug || "")) ? "452ebd1e-61a0-42dd-bf80-231a3f426c83" : null) || user?.id || null;
+  const cachedTvProfile = isPlayerOtt() ? peekTvProfile(user,radioUserId) : undefined;
+  const [ottProfileReady, setOttProfileReady] = useState(!!cachedTvProfile);
   // Mantém a sincronização da "música no ar" ativa também na tela de boas-vindas,
   // para que a imagem do artista (Deezer) apareça sem depender do PlayerHome.
   useGlobalMusicSync(undefined, true, true);
@@ -109,7 +124,7 @@ export default function WelcomeScreen({
   const [addProfileOpen, setAddProfileOpen] = useState(false);
   const [newProfileName, setNewProfileName] = useState("");
   const [newProfileAvatar, setNewProfileAvatar] = useState<string>("/avatars/usr-default.png");
-  const [subProfiles, setSubProfiles] = useState<Array<{ id: string; name: string; avatar_url: string }>>([]);
+  const [subProfiles, setSubProfiles] = useState<Array<{ id: string; name: string; avatar_url: string }>>(()=>cachedTvProfile?.sub_profiles || []);
   const [profilesLoading, setProfilesLoading] = useState(false);
   // Permite recarregar a lista de perfis após o login com Google.
   const [profilesReloadKey, setProfilesReloadKey] = useState(0);
@@ -128,15 +143,20 @@ export default function WelcomeScreen({
     } catch { /* ignore */ }
     let cancelled = false;
     setProfilesLoading(!hadCache);
-    fetchPlayerListenerProfile(user, radioUserId, userName)
+    (isPlayerOtt() ? warmTvProfile(user,radioUserId,userName) : fetchPlayerListenerProfile(user, radioUserId, userName))
       .then((data) => {
         if (cancelled) return;
         const remote = Array.isArray(data.sub_profiles) ? data.sub_profiles : [];
+        // NEXO_V7_3_PENDING_MERGE: pending local profiles must not disappear on a remote refresh.
+        const pendingKey=`nexohub_pending_sub_profiles_${user.id}_${radioUserId}`;
+        let pending:Array<{id:string;name:string;avatar_url:string}>=[];
+        try { const raw=JSON.parse(localStorage.getItem(pendingKey)||"[]"); if(Array.isArray(raw)) pending=raw; } catch {}
+        const merged=[...remote,...pending.filter(x=>x&&typeof x.id==="string"&&!remote.some((r:{id:string})=>r.id===x.id))];
         // Só sobrescreve o cache quando o backend retornou perfis, evitando
         // "piscar" uma lista vazia logo após o login com o Google.
-        if (remote.length || !hadCache) {
-          setSubProfiles(remote);
-          try { localStorage.setItem(cacheKey, JSON.stringify(remote)); } catch { /* ignore */ }
+        if (merged.length || !hadCache) {
+          setSubProfiles(merged);
+          try { localStorage.setItem(cacheKey, JSON.stringify(merged)); } catch { /* ignore */ }
         }
       })
       .finally(() => { if (!cancelled) setProfilesLoading(false); });
@@ -196,7 +216,7 @@ export default function WelcomeScreen({
   const interactedRef = useRef(false);
   // Spatial keyboard navigation (arrows) + Enter/Space to activate
   useEffect(() => {
-    if (isPlayerTvApp()) return;
+    if (isPlayerOtt()) return;
     const getNodes = () =>
       Array.from(document.querySelectorAll<HTMLElement>('[data-ws-focusable="true"]'))
         .filter(el => el.offsetParent !== null && !el.hasAttribute("disabled"));
@@ -244,7 +264,7 @@ export default function WelcomeScreen({
 
     const onKey = (e: KeyboardEvent) => {
       if (!["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Enter"," "].includes(e.key)) return;
-
+      
       const isProfileStep = document.querySelector('[data-ws-profile-main="true"]');
       if (isProfileStep && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
         const nodes = getNodes();
@@ -252,7 +272,7 @@ export default function WelcomeScreen({
         if (active && nodes.includes(active)) {
           const isMain = active.hasAttribute("data-ws-profile-main");
           const subId = active.getAttribute("data-ws-profile-sub");
-
+          
           if (e.key === "ArrowDown") {
             if (isMain && subProfiles.length > 0) {
               e.preventDefault();
@@ -386,6 +406,7 @@ export default function WelcomeScreen({
     cpf: "", whatsapp: "", sexo: "",
     estado: "", cidade: "", setor: "", data_nascimento: "",
     avatar_url: avatarUrl || "/avatars/usr-default.png",
+    ...(cachedTvProfile || {}),
   });
 
   // UFs brasileiras + cidades (IBGE)
@@ -433,7 +454,7 @@ export default function WelcomeScreen({
   useEffect(() => {
     if (!user || !radioUserId) return;
     let cancelled = false;
-    setOttProfileReady(false);
+    if(!cachedTvProfile) setOttProfileReady(false);
     setOttProfileError(false);
     // Foto da conta Google (identidade OAuth ou metadados do usuário)
     const gIdentity = (user as any)?.identities?.find?.((i: any) => i.provider === "google");
@@ -441,9 +462,9 @@ export default function WelcomeScreen({
     const meta: any = (user as any)?.user_metadata || {};
     const googlePhoto: string | null =
       gData.avatar_url || gData.picture || meta.avatar_url || meta.picture || null;
-    const isDefaultAvatar = (url?: string | null) => !url || url.includes("usr-default");
 
-    fetchPlayerListenerProfile(user, radioUserId, userName).then(async (data) => {
+
+    (isPlayerOtt() ? warmTvProfile(user,radioUserId,userName) : fetchPlayerListenerProfile(user, radioUserId, userName)).then(async (data) => {
       const d = (data || {}) as any;
       // Dados do CADASTRO DE OUVINTE (fonte oficial) via função pública
       let listener: any = null;
@@ -465,9 +486,7 @@ export default function WelcomeScreen({
         cidade: listener?.cidade || d.cidade || "",
         setor: listener?.setor || d.setor || "",
         data_nascimento: listener?.data_nascimento || d.data_nascimento || "",
-        avatar_url: isDefaultAvatar(d.avatar_url)
-          ? (googlePhoto || d.avatar_url || "/avatars/usr-default.png")
-          : d.avatar_url,
+        avatar_url: googlePhoto || d.avatar_url || "/avatars/usr-default.png",
       });
       setOttProfileReady(true);
     }).catch(() => { if (!cancelled) setOttProfileError(true); });
@@ -520,7 +539,7 @@ export default function WelcomeScreen({
         if (url) artistImgCacheRef.current[key] = url;
       }
       if (cancelled) return;
-      if (!url) { setArtistImg(null); return; }
+      if (!url) { if (lastArtistRef.current?.toLowerCase() === key) setArtistImg(null); return; }
       try { await preloadImage(url); } catch {}
       if (cancelled || lastArtistRef.current?.toLowerCase() !== key) return;
       setArtistImg(url);
@@ -595,7 +614,7 @@ export default function WelcomeScreen({
     let showArtist = true;
     const cycle = () => {
       setShowArtistBg(showArtist);
-      alternateTimerRef.current = window.setTimeout(cycle, showArtist ? 10000 : 7000);
+      alternateTimerRef.current = window.setTimeout(cycle, showArtist ? 20000 : 10000);
       showArtist = !showArtist;
     };
     cycle();
@@ -771,18 +790,68 @@ export default function WelcomeScreen({
   const displayName = profile.nome || userName;
   const displayAvatar = profile.avatar_url || "/avatars/usr-default.png";
 
-  if (isPlayerTvApp() && user && !guestMode && !ottProfileReady) return <OttFrame className="ott-black">{ottProfileError ? <div className="ott-profile-load-error" role="alert"><p>Não foi possível carregar seu perfil.</p><button onClick={()=>window.location.reload()}>Tentar novamente</button><button onClick={onContinue}>Voltar ao player</button></div>:<div className="ott-spinner" role="status" aria-label="Carregando perfil" />}</OttFrame>;
+  if (isPlayerOtt() && user && !guestMode && !ottProfileReady) return <OttFrame className="ott-black" loading={!ottProfileError} skeletonVariant="profiles">{ottProfileError ? <div className="ott-profile-load-error" role="alert"><p>Não foi possível carregar seu perfil.</p><button onClick={()=>window.location.reload()}>Tentar novamente</button><button onClick={onContinue}>Voltar ao player</button></div>:<span className="sr-only" role="status" aria-label="Carregando perfis" />}</OttFrame>;
 
-  if (isPlayerTvApp()) return <OttProfiles
-    profile={guestMode ? { ...profile, nome: "Visitante", avatar_url: "/avatars/usr-default.png" } : profile}
-    authenticated={!!user && !guestMode} logo={logoUrl} radioName={channelName} background={backgroundUrl || artistImg} accent={avatarAccent}
+  const tvGooglePhoto = user?.identities?.find(i=>i.provider==="google")?.identity_data?.avatar_url || user?.identities?.find(i=>i.provider==="google")?.identity_data?.picture || user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
+  const tvMainProfile = {...profile, avatar_url: typeof tvGooglePhoto === "string" && tvGooglePhoto ? tvGooglePhoto : profile.avatar_url};
+  if (isPlayerOtt()) return <OttProfiles userSlug={userSlug} radioUserId={radioUserId}
+    profile={guestMode ? { ...profile, nome: "Visitante", avatar_url: "/avatars/usr-default.png" } : tvMainProfile}
+    authenticated={!!user && !guestMode} logo={logoUrl} radioName={channelName} background={showArtistBg && artistImg ? artistImg : null} accent={avatarAccent}
     presentationOnly={!!user && readLinkedTv()?.userId === user.id}
     initialEdit={initialEditOpen} profiles={guestMode ? [] : subProfiles} avatars={AVATARS}
-    onContinue={()=>{if (user && !guestMode) onSelectTvProfile?.({ name: profile.nome, avatar: profile.avatar_url });unlockTvRadio();onContinue();}}
-    onSwitch={sp=>{if (user && !guestMode) onSelectTvProfile?.({ name: sp.name, avatar: sp.avatar_url });setProfile(p=>({...p,nome:sp.name,avatar_url:sp.avatar_url}));emitProfileChanged({userId:user?.id ?? null,radioUserId,nome:sp.name,avatar_url:sp.avatar_url,reason:"switch"});unlockTvRadio();onContinue();}}
+    onContinue={()=>{selectReminderProfile("main");if (user && !guestMode) onSelectTvProfile?.({ name: profile.nome, avatar: tvMainProfile.avatar_url });unlockTvRadio();onContinue();}}
+    onSwitch={sp=>{selectReminderProfile(sp.id);if (user && !guestMode) onSelectTvProfile?.({ name: sp.name, avatar: sp.avatar_url });setProfile(p=>({...p,nome:sp.name,avatar_url:sp.avatar_url}));emitProfileChanged({userId:user?.id ?? null,radioUserId,nome:sp.name,avatar_url:sp.avatar_url,reason:"switch"});unlockTvRadio();onContinue();}}
     onSave={async draft=>!!(await handleSave(draft))}
-    onAdd={async(name,avatar)=>{if(!user || guestMode)return; const next=[...subProfiles,{id:crypto.randomUUID(),name,avatar_url:avatar}];const {error}=await upsertPlayerListenerProfile(user.id,radioUserId || user.id,{sub_profiles:next as any});if(error)throw error;setSubProfiles(next);try{localStorage.setItem(`nexohub_sub_profiles_${user.id}_${radioUserId}`,JSON.stringify(next));}catch{}}}
-    onLogin={()=>navigate(`/${userSlug}/player/tv?tv=1`)} onLogout={confirmLogout}
+    onAdd={async(name,avatar)=>{
+      // NEXO_V7_3_LOCAL_FALLBACK: cloud RLS may deny listener writes. Never fake cloud persistence.
+      if(!user || guestMode)throw new Error("Entre com a conta Google para criar perfis.");
+      const id=createLocalTvProfileId();
+      const next=[...subProfiles,{id,name,avatar_url:avatar}];
+      const cacheKey=`nexohub_sub_profiles_${user.id}_${radioUserId}`;
+      const pendingKey=`nexohub_pending_sub_profiles_${user.id}_${radioUserId}`;
+      let storedLocally=false;
+      const store=()=>{ localStorage.setItem(cacheKey,JSON.stringify(next));storedLocally=true;setSubProfiles(next); };
+      try {
+        const {error}=await upsertPlayerListenerProfile(user.id,radioUserId || user.id,{sub_profiles:next as any});
+        if(error)throw error;
+        store();
+        try{localStorage.removeItem(pendingKey)}catch{}
+      }catch(e){
+        // Do not loosen database security or call privileged APIs from the TV.
+        try {
+          const existing:unknown=JSON.parse(localStorage.getItem(pendingKey)||"[]");
+          const pending=Array.isArray(existing)?existing:[];
+          localStorage.setItem(pendingKey,JSON.stringify([...pending,{id,name,avatar_url:avatar}]));
+          store();
+        }catch(storageError){throw e;}
+        console.warn("[Nexo TV] Perfil salvo apenas neste aparelho; sincronizacao pendente:",e);
+        return "local" as const;
+      }
+    }}
+    // NEXO_V7_4_WELCOME: cloud first, no accidental edits to the primary Google profile.
+    onUpdateSub={async(updated)=>{
+      if(!user || guestMode)throw new Error("Entre com Google para editar perfis.");
+      const next=subProfiles.map(item=>item.id===updated.id?updated:item);
+      if(!subProfiles.some(item=>item.id===updated.id))throw new Error("Perfil não encontrado.");
+      const cacheKey=`nexohub_sub_profiles_${user.id}_${radioUserId}`;
+      const pendingKey=`nexohub_pending_sub_profiles_${user.id}_${radioUserId}`;
+      const {error}=await upsertPlayerListenerProfile(user.id,radioUserId || user.id,{sub_profiles:next as any});
+      if(error)throw new Error("Não foi possível salvar as mudanças no Supabase. Tente novamente.");
+      setSubProfiles(next);
+      try{localStorage.setItem(cacheKey,JSON.stringify(next));localStorage.removeItem(pendingKey);}catch{}
+    }}
+    onDeleteSub={async(selected)=>{
+      if(!user || guestMode)throw new Error("Entre com Google para excluir perfis.");
+      if(!subProfiles.some(item=>item.id===selected.id))throw new Error("Perfil não encontrado.");
+      const next=subProfiles.filter(item=>item.id!==selected.id);
+      const cacheKey=`nexohub_sub_profiles_${user.id}_${radioUserId}`;
+      const pendingKey=`nexohub_pending_sub_profiles_${user.id}_${radioUserId}`;
+      const {error}=await upsertPlayerListenerProfile(user.id,radioUserId || user.id,{sub_profiles:next as any});
+      if(error)throw new Error("Não foi possível excluir no Supabase. O perfil foi preservado.");
+      setSubProfiles(next);
+      try{localStorage.setItem(cacheKey,JSON.stringify(next));localStorage.removeItem(pendingKey);}catch{}
+    }}
+    onLogin={isPlayerTvApp() ? ()=>navigate(`/${userSlug}/player/tv?tv=1`) : handleGoogleLogin} onLogout={confirmLogout}
   />;
 
   return (
@@ -1133,7 +1202,7 @@ export default function WelcomeScreen({
           ) : (
             <div className="w-full flex items-center justify-center gap-5">
               {[
-
+                
                 {
                   key: "google",
                   label: "entrar com google",
@@ -1653,7 +1722,7 @@ export default function WelcomeScreen({
                 onClick={() => {
                   const name = newProfileName.trim();
                   if (!name || !user) return;
-                  const next = [...subProfiles, { id: crypto.randomUUID(), name, avatar_url: newProfileAvatar }];
+                  const next = [...subProfiles, { id: createLocalTvProfileId(), name, avatar_url: newProfileAvatar }];
                   persistSubProfiles(next);
                   setNewProfileName("");
                   setNewProfileAvatar("/avatars/usr-default.png");

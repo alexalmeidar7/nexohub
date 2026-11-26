@@ -49,7 +49,7 @@
         var nextScore = Math.abs(primary) + cross * 2.2;
         if (nextScore < score) { best = el; score = nextScore; }
       });
-      if (best) { best.focus({ preventScroll: true }); best.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' }); }
+      if (best) { best.focus({ preventScroll: true }); if (!best.closest(".ott-positiva-channel-tray")) best.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' }); }
     }, 0);
   });
   ensureFocus();

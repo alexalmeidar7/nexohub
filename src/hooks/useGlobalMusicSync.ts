@@ -1,3 +1,4 @@
+import { decodeMusicBytes } from "@/lib/musicByteEncoding";
 import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -69,14 +70,14 @@ function parseXml(xmlStr: string): { titulo: string; artista: string; duracao: n
     const parser = new DOMParser();
     const doc = parser.parseFromString(xmlStr, "application/xml");
     if (doc.querySelector("parsererror")) return null;
-    const rawTitulo = doc.querySelector("nome_musica")?.textContent || doc.querySelector("titulo")?.textContent || doc.querySelector("title")?.textContent || "";
-    const rawArtista = doc.querySelector("interprete")?.textContent || doc.querySelector("nome_interprete")?.textContent || doc.querySelector("artista")?.textContent || doc.querySelector("artist")?.textContent || "";
+    const rawTitulo = doc.querySelector("nome_musica,musica_atual")?.textContent || doc.querySelector("titulo")?.textContent || doc.querySelector("title")?.textContent || "";
+    const rawArtista = doc.querySelector("interprete,artista_atual")?.textContent || doc.querySelector("nome_interprete")?.textContent || doc.querySelector("artista")?.textContent || doc.querySelector("artist")?.textContent || "";
     const titulo = normalizeMusicText(rawTitulo);
     const artista = normalizeMusicText(rawArtista);
     const categoria = (doc.querySelector("categoria")?.textContent || "").trim().toUpperCase();
     if (!titulo && !artista) return categoria === "STOPPED" || categoria === "" ? "stopped" : null;
     const duracaoStr = doc.querySelector("duracao")?.textContent || doc.querySelector("duration")?.textContent || "0";
-    const capa = doc.querySelector("capa")?.textContent || doc.querySelector("cover")?.textContent || "";
+    const capa = doc.querySelector("capa,musica_capa")?.textContent || doc.querySelector("cover")?.textContent || "";
     let duracao = 0;
     if (duracaoStr.includes(":")) {
       const parts = duracaoStr.split(":").map(Number);
@@ -490,7 +491,7 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
           });
           if (directRes.ok) {
             directFetchOkRef.current = true;
-            return await directRes.text();
+            return decodeMusicBytes(await directRes.arrayBuffer(), directRes.headers.get("content-type") || "");
           }
         } catch {
           if (directFetchOkRef.current === null) directFetchOkRef.current = false;
@@ -582,7 +583,7 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
             if (!res.ok) continue;
             const lastModHeader = res.headers.get("last-modified");
             const fileModifiedAt = lastModHeader ? new Date(lastModHeader).getTime() : undefined;
-            const rawText = await res.text();
+            const rawText = decodeMusicBytes(await res.arrayBuffer(), res.headers.get("content-type") || "");
             if (!rawText) continue;
             // Jornal FM: se o arquivo local é TXT ("ARTISTA - MUSICA"),
             // convertemos on-the-fly para o pseudo-XML antes de parsear.

@@ -14,11 +14,13 @@ export default function OttAudioHost({mediaRef,url,onAdopt}:{mediaRef:RefObject<
    if(media&&media!==transfer.media){media.pause();media.removeAttribute("src");media.load();media.remove();}
    media=transfer.media as HTMLAudioElement;
    media.dataset.tvResumeUrl=url;
-   callback.current?.(transfer.hls,transfer.userPaused);
+
   }
   if(!media){media=new Audio();media.crossOrigin="anonymous";media.preload="none";}
   (mediaRef as MutableRefObject<HTMLAudioElement|null>).current=media;
-  host.current?.appendChild(media);
+  media.style.display="none";
+  if (media.parentNode !== document.body) document.body.appendChild(media);
+  if (transfer) callback.current?.(transfer.hls,transfer.userPaused);
  },[url,mediaRef]);
  useLayoutEffect(()=>()=>{
   const media = mediaRef.current;

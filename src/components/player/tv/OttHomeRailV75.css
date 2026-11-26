@@ -1,0 +1,115 @@
+/* NEXO_V7_5_HOME_RAIL — Menu vertical somente na HOME, inspirado no controle do /watch.
+   Os estilos não afetam /watch, perfis ou On Demand. Unidade baseada no viewport 1920×1080. */
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail {
+  position:absolute!important;
+  z-index:7!important;
+  left:calc(108 * var(--ott-u))!important;
+  top:25.2%!important;
+  bottom:12.4%!important;
+  width:calc(254 * var(--ott-u))!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:space-between!important;
+  align-items:flex-start!important;
+  overflow:visible!important;
+  pointer-events:none;
+}
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-actions {
+  display:flex;flex-direction:column;gap:calc(14 * var(--ott-u));
+  width:100%;align-items:flex-start;pointer-events:auto;
+}
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-button,
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-profile {
+  position:relative!important;
+  display:flex!important;align-items:center!important;justify-content:flex-start!important;
+  width:calc(76 * var(--ott-u))!important;
+  height:calc(76 * var(--ott-u))!important;
+  min-height:calc(76 * var(--ott-u))!important;
+  min-width:0!important;
+  gap:calc(13 * var(--ott-u))!important;
+  padding:calc(5 * var(--ott-u))!important;
+  border:calc(2 * var(--ott-u)) solid transparent!important;
+  border-radius:calc(45 * var(--ott-u))!important;
+  background:transparent!important;
+  color:#fff!important;box-shadow:none!important;outline:none!important;
+  text-align:left!important;
+  overflow:hidden!important;
+  white-space:nowrap!important;
+  transition:width 260ms cubic-bezier(.2,.82,.2,1),background-color 220ms ease,border-color 220ms ease!important;
+  pointer-events:auto;
+}
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-button>.ott-home-rail-circle,
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-profile>.ott-home-rail-circle {
+  display:grid!important;place-items:center!important;
+  width:calc(62 * var(--ott-u))!important;
+  height:calc(62 * var(--ott-u))!important;
+  min-width:calc(62 * var(--ott-u))!important;
+  flex:0 0 calc(62 * var(--ott-u))!important;
+  border-radius:50%!important;
+  background:rgba(45,13,16,.75)!important;
+  overflow:hidden!important;
+  transition:background-color 220ms ease!important;
+}
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-button>.ott-home-rail-circle svg {
+  width:calc(30 * var(--ott-u))!important;
+  height:calc(30 * var(--ott-u))!important;
+  stroke-width:2.2;
+  color:#fff!important;
+}
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-name {
+  font-family:inherit!important;
+  font-size:calc(24 * var(--ott-u))!important;
+  font-weight:600!important;
+  letter-spacing:0!important;
+  line-height:1.1!important;
+  opacity:0;
+  transform:translateX(calc(-8 * var(--ott-u)));
+  transition:opacity 220ms ease 60ms,transform 260ms ease!important;
+  overflow:visible!important;
+  pointer-events:none;
+}
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-button:is(:hover,:focus-visible),
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-profile:is(:hover,:focus-visible) {
+  width:calc(240 * var(--ott-u))!important;
+  border-color:#fff!important;
+  background:rgba(141,29,34,.88)!important;
+  outline:0!important;
+  outline-offset:0!important;
+  box-shadow:none!important;
+}
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-button:is(:hover,:focus-visible)>.ott-home-rail-circle,
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-profile:is(:hover,:focus-visible)>.ott-home-rail-circle {
+  background:rgba(80,12,18,.88)!important;
+}
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-button:is(:hover,:focus-visible)>.ott-home-rail-name,
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-profile:is(:hover,:focus-visible)>.ott-home-rail-name {
+  opacity:1;transform:translateX(0);
+}
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-button:disabled {
+  opacity:.55!important;
+  pointer-events:none;
+}
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-profile>.ott-home-rail-circle {
+  background:rgba(45,13,16,.75)!important;
+}
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-profile .ott-avatar,
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-profile img,
+.nexo-tv.ott-home.ott-rail-layout .ott-home-rail-profile .ott-account {
+  height:100%!important;width:100%!important;
+  border-radius:50%!important;object-fit:cover!important;
+  margin:0!important;
+}
+/* O avatar da Home sai do cabeçalho. Nas telas /watch permanece inalterado. */
+.nexo-tv.ott-home.ott-rail-layout .ott-header-right-group .ott-home-account,
+.nexo-tv.ott-home.ott-rail-layout .ott-header-right-group>button.ott-account,
+.nexo-tv.ott-home.ott-rail-layout .ott-header-right-group>button.ott-home-account-action {
+  display:none!important;
+}
+/* Suprimir a antiga grade de cartões, se uma personalização residual tiver sobrevivido. */
+.nexo-tv.ott-home.ott-rail-layout .ott-destinations,
+.nexo-tv.ott-home.ott-rail-layout .ott-destination-row {display:none!important;}
+@media (prefers-reduced-motion:reduce) {
+  .nexo-tv.ott-home.ott-rail-layout .ott-home-rail-button,
+  .nexo-tv.ott-home.ott-rail-layout .ott-home-rail-profile,
+  .nexo-tv.ott-home.ott-rail-layout .ott-home-rail-name {transition:none!important;}
+}

@@ -1,0 +1,48 @@
+/* NEXO V7.3 — profile focus targets: ONLY the round avatar receives the ring. */
+.nexo-tv.ott-profiles-refined .ott-profile-add-button,
+.nexo-tv.ott-profiles-refined .ott-profile-existing,
+.nexo-tv.ott-profiles-refined .ott-profile-avatar-picker {
+  border:0!important;outline:0!important;box-shadow:none!important;
+  background:transparent!important;
+}
+.nexo-tv.ott-profiles-refined .ott-profile-add-button:is(:hover,:focus,:focus-visible),
+.nexo-tv.ott-profiles-refined .ott-profile-existing:is(:hover,:focus,:focus-visible),
+.nexo-tv.ott-profiles-refined .ott-profile-avatar-picker:is(:hover,:focus,:focus-visible){
+  outline:none!important;box-shadow:none!important;border:none!important;
+}
+.nexo-tv.ott-profiles-refined .ott-profile-add-button:is(:hover,:focus,:focus-visible)>.ott-avatar,
+.nexo-tv.ott-profiles-refined .ott-profile-existing:is(:hover,:focus,:focus-visible)>.ott-avatar,
+.nexo-tv.ott-profiles-refined .ott-profile-avatar-picker:is(:hover,:focus,:focus-visible)>.ott-avatar {
+  outline:calc(3 * var(--ott-u)) solid #fff!important;
+  outline-offset:calc(5 * var(--ott-u))!important;
+  border-radius:50%!important;
+}
+.nexo-tv.ott-profiles-refined .ott-profile-add-row {overflow-x:visible;overflow-y:auto;padding:calc(16 * var(--ott-u)) calc(22 * var(--ott-u))!important;gap:calc(35 * var(--ott-u))}
+/* Keep keyboard focus rings and all controls INSIDE the safe TV area. */
+.nexo-tv.ott-profiles-refined .ott-profile-create {
+  position:absolute!important;left:7.5%!important;top:18.5%!important;
+  width:calc(820 * var(--ott-u))!important;max-width:83%!important;
+  right:auto!important;bottom:12%!important;
+  box-sizing:border-box!important;min-width:0!important;
+  display:flex;flex-direction:column;align-items:stretch;
+  padding:calc(19 * var(--ott-u)) calc(28 * var(--ott-u)) calc(35 * var(--ott-u))!important;
+  gap:calc(24 * var(--ott-u));overflow-x:hidden;overflow-y:auto;
+  scrollbar-width:thin;
+}
+.nexo-tv.ott-profiles-refined .ott-profile-create>header {width:100%;min-height:calc(76 * var(--ott-u));display:flex;align-items:center;gap:calc(25 * var(--ott-u));padding:calc(4 * var(--ott-u))}
+.nexo-tv.ott-profiles-refined .ott-profile-create-back {width:calc(62 * var(--ott-u));height:calc(62 * var(--ott-u));min-width:calc(62 * var(--ott-u));border-radius:50%!important;display:grid;place-items:center;flex:0 0 auto;outline-offset:calc(2 * var(--ott-u))}
+.nexo-tv.ott-profiles-refined .ott-profile-create>label {width:100%!important;max-width:100%!important;box-sizing:border-box;min-width:0;padding:0 calc(4 * var(--ott-u));}
+.nexo-tv.ott-profiles-refined .ott-profile-create>label input {
+  display:block;width:100%!important;max-width:100%!important;min-width:0;
+  box-sizing:border-box;margin:0;border:calc(2 * var(--ott-u)) solid transparent!important;
+  border-radius:calc(18 * var(--ott-u))!important;
+  background:rgba(20,20,22,.82)!important;
+  padding:0 calc(25 * var(--ott-u))!important;
+  box-shadow:none!important;outline:0!important;
+}
+.nexo-tv.ott-profiles-refined .ott-profile-create>label input:focus-visible {outline:0!important;box-shadow:none!important;border-color:#fff!important;}
+.nexo-tv.ott-profiles-refined .ott-profile-avatar-picker {align-self:flex-start;max-width:100%;min-height:calc(118 * var(--ott-u));padding:calc(7 * var(--ott-u)) calc(12 * var(--ott-u))!important;gap:calc(24 * var(--ott-u))!important;text-align:left}
+.nexo-tv.ott-profiles-refined .ott-profile-avatar-picker>.ott-avatar {width:calc(92 * var(--ott-u));height:calc(92 * var(--ott-u));}
+.nexo-tv.ott-profiles-refined .ott-profile-create-save {align-self:flex-start;min-height:calc(66 * var(--ott-u));margin-left:calc(3 * var(--ott-u));}
+.nexo-tv.ott-profiles-refined .ott-profile-create .ott-error {position:static;max-width:100%;font-size:calc(21 * var(--ott-u));line-height:1.4;overflow-wrap:anywhere;color:#fff0ca;}
+.nexo-tv.ott-profiles-refined .ott-profile-save-notice {position:absolute;bottom:12%;left:8%;max-width:55%;background:rgba(0,0,0,.48);border-radius:calc(14 * var(--ott-u));padding:calc(13 * var(--ott-u)) calc(18 * var(--ott-u));font-size:calc(20 * var(--ott-u));color:#ffe9c9;z-index:9;}

@@ -1,3 +1,4 @@
+import { decodeMusicBytes } from "../_shared/musicByteEncoding.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -172,7 +173,7 @@ Deno.serve(async (req) => {
             signal: AbortSignal.timeout(4000),
           });
           const buffer = await response.arrayBuffer();
-          text = decodeXmlBuffer(buffer, response.headers.get("content-type") || "");
+          text = decodeMusicBytes(buffer, response.headers.get("content-type") || "");
         }
 
         if (useLocal || !text) {
@@ -196,7 +197,7 @@ Deno.serve(async (req) => {
               });
               if (!res.ok) continue;
               const buffer = await res.arrayBuffer();
-              const localText = decodeXmlBuffer(buffer, res.headers.get("content-type") || "");
+              const localText = decodeMusicBytes(buffer, res.headers.get("content-type") || "");
               if (localText && localText.trim()) {
                 text = localText;
                 break;
@@ -214,6 +215,10 @@ Deno.serve(async (req) => {
         const artista = normalizeMusicText(extractTag(text, "interprete", "nome_interprete", "artista", "artist"));
 
         if (!titulo || titulo === "Sem título" || !artista || artista === "Desconhecido") return;
+        if (/\uFFFD/.test(titulo + artista)) {
+          console.warn("Music metadata already contains replacement characters after byte decoding; skipping corrupt history entry");
+          return;
+        }
 
         // Skip if this exact song is already the last recorded for this user.
         const { data: lastSong } = await supabase
