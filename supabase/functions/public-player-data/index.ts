@@ -116,7 +116,7 @@ async function fetchMusicFromXml(xmlUrl: string): Promise<MusicPayload | null> {
 
 // The physical automation file is uploaded to xml-files by MusicaNoAr.
 // Use the station's configured storage object, never another station's file.
-async function fetchMusicSource(client: ReturnType<typeof createClient>, userId:string, settings: any, current:MusicPayload|null):Promise<MusicPayload|null> {
+async function fetchMusicSource(client: Pick<ReturnType<typeof createClient<any>>, "storage">, userId:string, settings: any, current:MusicPayload|null):Promise<MusicPayload|null> {
  const items=settings?.dashboard_items || {};
  const localPath=typeof items.local_xml_storage_path==="string"?items.local_xml_storage_path:"";
  const candidates:string[]=[];
