@@ -26,6 +26,7 @@ function readMusicFromDashboard(dashboardItems: Record<string, any> | null) {
       titulo: title,
       artista: dashboardItems.music_current_artist || "",
       capa: dashboardItems.music_current_cover || "",
+      duracao: Number(dashboardItems.music_current_duration) || 0,
     } as MusicPayload,
     musicStartTime: typeof dashboardItems.music_start_time === "number"
       ? dashboardItems.music_start_time
@@ -37,6 +38,8 @@ function readMusicFromDashboard(dashboardItems: Record<string, any> | null) {
 function mergeMusicPayload(primary: MusicPayload | null, fallback: MusicPayload | null): MusicPayload | null {
   if (!primary) return fallback;
   if (!fallback) return primary;
+  if (primary.titulo.trim().toLowerCase() !== fallback.titulo.trim().toLowerCase() ||
+      primary.artista.trim().toLowerCase() !== fallback.artista.trim().toLowerCase()) return primary;
 
   return {
     titulo: primary.titulo,
@@ -313,7 +316,7 @@ Deno.serve(async (req) => {
         .eq("user_id", userId)
         .maybeSingle();
 
-      if (settingsError) console.warn("[public-player-data] now_playing error:", settingsError.message);
+      if (settingsError) return new Response(JSON.stringify({error:"now_playing unavailable"}), {status:503,headers:{...corsHeaders,"Content-Type":"application/json","Cache-Control":"no-store"}});
 
       const dashboardItems = (settingsData?.dashboard_items ?? null) as Record<string, any> | null;
 
@@ -321,7 +324,7 @@ Deno.serve(async (req) => {
       let musicData = dbMusic?.musicData ?? null;
 
       // If the DB snapshot still has no cover, try to enrich it from XML before returning.
-      if ((!musicData || !musicData.capa) && settingsData?.music_xml_url) {
+      if (!musicData && settingsData?.music_xml_url) {
         const xmlMusic = await fetchMusicFromXml(settingsData.music_xml_url);
         musicData = mergeMusicPayload(musicData, xmlMusic);
       }
@@ -337,7 +340,7 @@ Deno.serve(async (req) => {
           musicData,
           musicStartTime: dbMusic?.musicStartTime ?? (typeof dashboardItems?.music_start_time === "number" ? dashboardItems.music_start_time : null),
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" } }
       );
     }
 
