@@ -75,12 +75,28 @@ class MainActivity : Activity() {
         startupCover=null
         if(fade) cover.animate().alpha(0f).setDuration(650).withEndAction {root.removeView(cover)}.start() else root.removeView(cover)
     }
-    private fun waitForWebSplash() {
-        if(startupCover==null || webViewReleased || startupFailed || !pageFinished) return
-        webView.evaluateJavascript("""(function(){if(document.querySelector('.ott-profiles,.ott-home,.ott-profile-load-error'))return 'ready';return 'wait'})()""") { result ->
-            if(startupCover!=null && !webViewReleased) when(result) {
-                "\"ready\"" -> dismissStartupCover(true)
-                else -> startupHandler.postDelayed({waitForWebSplash()},350)
+    private fun waitForReactStartup() {
+        if (startupCover == null || webViewReleased || startupFailed) return
+        val url = webView.url?.let(Uri::parse)
+        if (url == null || !isPlayerOrigin(url) || wrongStation(url)) {
+            startupHandler.postDelayed(::waitForReactStartup, 350)
+            return
+        }
+        // React marks the committed surface. The profile screen owns its own
+        // loading and retry states, so the native cover must not hide them.
+        webView.evaluateJavascript(
+            """(function() {
+                var surface = document.querySelector('[data-nexo-startup-surface]');
+                return surface ? surface.getAttribute('data-nexo-startup-surface') : null;
+            })()"""
+        ) { result ->
+            if (startupCover == null || webViewReleased || startupFailed) return@evaluateJavascript
+            when (result) {
+                "\"profiles\"", "\"home\"", "\"login\"", "\"retry\"" -> {
+                    Log.i("NexoStartup", "React startup surface: $result")
+                    dismissStartupCover(true)
+                }
+                else -> startupHandler.postDelayed(::waitForReactStartup, 350)
             }
         }
     }
@@ -140,7 +156,6 @@ class MainActivity : Activity() {
                 view.evaluateJavascript(assets.open("tv-remote.js").bufferedReader().use { it.readText() }, null)
                 pageFinished = true
                 Log.i("NexoStartup", "Documento carregado: $url")
-                waitForWebSplash()
                 view.requestFocus()
                 immersive()
             }
@@ -182,6 +197,7 @@ class MainActivity : Activity() {
         showStartupCover()
         if (BuildConfig.DEBUG) android.util.Log.i("NexoOrigin", "Loading $startUrl")
         webView.loadUrl(startUrl, mapOf("Cache-Control" to "no-cache"))
+        startupHandler.post(::waitForReactStartup)
         startupHandler.postDelayed({
             if(startupCover!=null && !webViewReleased && !startupFailed) {
                 Log.e("NexoStartup", "Tempo de inicializacao excedido; documento=$pageFinished")

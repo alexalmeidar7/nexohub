@@ -1,0 +1,2 @@
+#- File Locator -
+listingFile=../../../../outputs/apk/interativa/debug/output-metadata.json

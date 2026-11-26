@@ -1,3 +1,4 @@
+import NexoHistoryCover from "./NexoHistoryCover";
 // NEXO_V7_15_AUDIO_HISTORICO_FLUIDEZ
 import OttCommercialSlot, {useCommercialMedia} from "./OttCommercialSlot";
 import { OttSkeletonContent } from "./OttSkeleton";
@@ -34,7 +35,7 @@ function normalize(items: unknown): Track[] {
     artista: track.artista.trim(),
     horario: String(track.horario || "").slice(0, 8),
     dia: track.dia || null,
-    capa_url: typeof track.capa_url === "string" ? track.capa_url : null,
+    capa_url: [track.capa_url, (track as Track & { capa?: string; cover_url?: string }).capa, (track as Track & { cover_url?: string }).cover_url].find(value => typeof value === "string" && value.trim()) || null,
   })) : [];
 }
 
@@ -87,9 +88,6 @@ export default function NexoTvHistoryCarousel({ owner, loadCover }: Props) {
   const nexoHistoryTimer = useRef<number | null>(null);
   const [status, setStatus] = useState("Carregando músicas tocadas...");
   const [covers, setCovers] = useState<Record<string, string>>({});
-  const ownerRef = useRef(owner);
-  ownerRef.current = owner;
-  const requested = useRef(new Set<string>());
   const downRef = useRef<HTMLButtonElement>(null);
   const current = tracks[index];
   const ad=useCommercialMedia(owner,"history_ads");
@@ -104,7 +102,6 @@ export default function NexoTvHistoryCarousel({ owner, loadCover }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    requested.current.clear();
     setIndex(0); setTracks(owner ? nexoHistoryCache.get(owner) || [] : []); setCovers({});
     setStatus(owner ? "Carregando músicas tocadas..." : "Emissora não identificada.");
     if (!owner) return;
@@ -130,19 +127,7 @@ export default function NexoTvHistoryCarousel({ owner, loadCover }: Props) {
     return () => { cancelled = true; window.clearInterval(interval); };
   }, [owner]);
 
-  useEffect(() => {
-    if (!loadCover || !tracks.length) return;
-    const requestOwner = owner;
-    const queue = tracks.slice(Math.max(0, index - 1), Math.min(tracks.length, index + 4));
-    for (const track of queue) {
-      const key = trackKey(track);
-      if (covers[key] || track.capa_url || requested.current.has(key)) continue;
-      requested.current.add(key);
-      void loadCover(track.artista, track.musica).then(url => {
-        if (url && requestOwner === ownerRef.current) setCovers(prev => ({ ...prev, [key]: url }));
-      }).catch(() => { requested.current.delete(key); });
-    }
-  }, [tracks, index, loadCover, covers, owner]);
+
 
   useEffect(() => {
     // NEXO_V7_1_HISTORY_FOCUS: mesmo com uma faixa a seta inferior recebe foco.
@@ -169,18 +154,16 @@ export default function NexoTvHistoryCarousel({ owner, loadCover }: Props) {
     </div> : <>
       <div className="nexo-history-selected" data-history-transition={nexoHistoryLeaving ? "out" : "in"} aria-live="polite">
         <div key={`${index}-${trackKey(current)}-${adStep}`} className="nexo-history-info">
-          <time>{adStep?"Publicidade":current.horario?.slice(0, 5) || "--:--"}</time>
+          <time className={adStep?"nexo-lote8-history-ad":undefined}>{adStep?"publicidade":current.horario?.slice(0, 5) || "--:--"}</time>
           <strong>{adStep?"":current.musica}</strong>
           <span>{adStep?"":current.artista}</span>
         </div>
         <button type="button" className="nexo-history-up" aria-label="Música mais recente" aria-disabled={index === 0} onClick={() => move(-1)}><ChevronUp aria-hidden="true"/></button>
-        {adStep&&ad?<div className="nexo-history-cover"><OttCommercialSlot radioId={owner} placement="history_ads"/></div>:<button type="button" className="nexo-history-cover nexo-history-like" aria-label={liked?"Remover curtida":"Curtir música"} aria-pressed={liked} disabled={saving} onClick={()=>void toggleHistoryLike()}>
-          {covers[trackKey(current)] || current.capa_url ?
-            <img src={covers[trackKey(current)] || current.capa_url || undefined} alt={`Capa de ${current.musica}`} /> :
-            <Music2 aria-hidden="true" strokeWidth={1.5} />}
+        <div className="nexo-history-media-space">{adStep&&ad?<div className="nexo-history-cover"><OttCommercialSlot radioId={owner} placement="history_ads"/></div>:<button type="button" className="nexo-history-cover nexo-history-like" aria-label={liked?"Remover curtida":"Curtir música"} aria-pressed={liked} disabled={saving} onClick={()=>void toggleHistoryLike()}>
+          <NexoHistoryCover key={`${owner||""}:${currentKey}`} artist={current.artista} title={current.musica} stored={current.capa_url} loadCover={loadCover} onResolved={url=>setCovers(previous=>previous[currentKey]===url?previous:{...previous,[currentKey]:url})}/>
           <Heart className="nexo-history-heart" fill={liked?"currentColor":"none"} aria-hidden="true"/>
         </button>}
-        {!adStep&&likeMessage&&<small role="status">{likeMessage}</small>}
+        {!adStep&&likeMessage&&<small className="nexo-history-feedback" role="status">{likeMessage}</small>}</div>
       </div>
       <div className="nexo-history-controls" role="group" aria-label="Navegar pelas músicas">
         

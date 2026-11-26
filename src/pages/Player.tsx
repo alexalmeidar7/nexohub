@@ -4,7 +4,7 @@ import { useTvNowPlaying, registerTvSyncClock, readTvHlsClock } from "@/componen
 import { createLiveMediaRecovery } from "@/lib/liveMediaRecovery";
 import { isPlayerOtt, isPlayerTvApp } from "@/lib/playerTvApp";
 import { OttFrame } from "@/components/player/tv/OttFrame";
-import { stopTvAudio, getTvAudioMedia, retainTvAudio, tvRadioVolume } from "@/components/player/tv/tvAudio";
+import { stopTvAudio, getTvAudioMedia, retainTvAudio, tvRadioVolume, setTvRadioStandby } from "@/components/player/tv/tvAudio";
 import { useEffect, useLayoutEffect, useRef, useState, useCallback, useMemo, Suspense } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { toast } from "sonner";
@@ -63,7 +63,7 @@ const PlayerGradeDialog = lazyRetry(() => import("@/components/player/PlayerGrad
 const KaraokeOverlay = lazyRetry(() => import("@/components/KaraokeOverlay"));
 const WatchProfilePopup = lazyRetry(() => import("@/components/player/WatchProfilePopup"));
 import PlayerShopProduct from "@/components/player/PlayerShopProduct";
-import {useTvCommercialPlayback,TvCommercialPlayback,isSmartBreak} from "@/components/player/tv/TvCommercialPlayback";
+import {useTvCommercialPlayback,TvCommercialPlayback,isSmartBreak,markTvCommercialHome} from "@/components/player/tv/TvCommercialPlayback";
 import PreRollOverlay from "@/components/PreRollOverlay";
 import { saveMiniPlayerData, clearMiniPlayerData, unlockAndPrepareMiniAudio, destroyMiniAudio } from "@/components/player/MiniPlayerWidget";
 import PlayerSkeleton from "@/components/skeletons/PlayerSkeleton";
@@ -90,6 +90,97 @@ const getHls = async () => {
     hlsModule = await import("hls.js");
   }
   return (hlsModule as any)?.default || hlsModule;
+};
+
+// Nexo Smart Buffer: bounded, per-player HLS segment cache; no extra database reads.
+function createSmartBuffer() {
+  type Entry = { bytes: ArrayBuffer; at: number };
+  const cache = new Map<string, Entry>();
+  let controller: AbortController | null = null;
+  let generation = 0;
+  const maxBytes = 6 * 1024 * 1024;
+  const ttl = 12000;
+  const prune = () => {
+    for (const [key, value] of cache) if (Date.now() - value.at > ttl) cache.delete(key);
+    let size = [...cache.values()].reduce((sum, value) => sum + value.bytes.byteLength, 0);
+    for (const [key, value] of cache) { if (size <= maxBytes) break; size -= value.bytes.byteLength; cache.delete(key); }
+  };
+  const cancel = (clear = false) => { generation++; controller?.abort(); controller = null; if (clear) cache.clear(); };
+  const warm = async (targets: {url:string; seconds:number}[]) => {
+    cancel(); prune();
+    const token = generation;
+    const abort = new AbortController(); controller = abort;
+    const timeout = setTimeout(() => abort.abort(), 6500);
+    const read = async (url:string) => {
+      const res = await fetch(url, {signal:abort.signal, credentials:"omit", cache:"no-cache"});
+      if (!res.ok) throw new Error("playlist unavailable");
+      return {text:await res.text(), url:res.url || url};
+    };
+    try {
+      for (const target of targets) {
+        if (abort.signal.aborted || token !== generation) break;
+        try {
+          let playlist = await read(target.url);
+          const lines = playlist.text.split(/\r?\n/);
+          const variants = lines.flatMap((line,i) => line.startsWith("#EXT-X-STREAM-INF:") && lines[i+1] && !lines[i+1].startsWith("#") ? [{url:new URL(lines[i+1].trim(),playlist.url).href,rate:Number(/(?:^|,)BANDWIDTH=(\d+)/.exec(line.slice(18))?.[1] || 0)}] : []);
+          if (variants.length) playlist = await read(variants.sort((a,b)=>Math.abs(a.rate-900000)-Math.abs(b.rate-900000))[0].url);
+          // Skip special layouts and byte-range requests; ordinary HLS can reuse exact full segments.
+          if (!playlist.text.startsWith("#EXTM3U") || /#EXT-X-(BYTERANGE|MAP|PART|KEY):/.test(playlist.text)) continue;
+          const mediaLines = playlist.text.split(/\r?\n/);
+          const segments = mediaLines.flatMap((line,i) => {
+            if (!line.startsWith("#EXTINF:")) return [];
+            const next = mediaLines[i+1]?.trim(); const duration = Number.parseFloat(line.slice(8));
+            return next && !next.startsWith("#") && duration > 0 ? [{url:new URL(next,playlist.url).href,duration}] : [];
+          });
+          // Near the usual 3-segment live sync position, not the newest incomplete edge.
+          let seconds = 0;
+          for (const segment of segments.slice(Math.max(0,segments.length-3))) {
+            if (seconds >= target.seconds || abort.signal.aborted || token !== generation) break;
+            if (!cache.has(segment.url)) {
+              const response = await fetch(segment.url,{signal:abort.signal,credentials:"omit"});
+              if (!response.ok || !response.body) break;
+              const reader = response.body.getReader(); const chunks:Uint8Array[]=[]; let size=0;
+              while (true) { const {done,value}=await reader.read(); if(done)break; size+=value.byteLength; if(size>maxBytes){await reader.cancel();break;} chunks.push(value); }
+              if(size>maxBytes || !size || token!==generation || abort.signal.aborted) break;
+              const bytes=new Uint8Array(size); let offset=0; for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength;}
+              cache.set(segment.url,{bytes:bytes.buffer,at:Date.now()}); prune();
+            }
+            seconds += segment.duration;
+          }
+        } catch { /* optional warmup never interrupts playback */ }
+      }
+    } finally { clearTimeout(timeout); if(controller===abort)controller=null; }
+  };
+  const loader = (Hls:any): any => {
+    const Base = Hls.DefaultConfig.loader;
+    return class extends Base {
+      private cachedTimer: ReturnType<typeof setTimeout> | undefined;
+      load(context:any, config:any, callbacks:any) {
+        prune();
+        const hit = !context.rangeStart && !context.rangeEnd && context.responseType === "arraybuffer" ? cache.get(context.url) : undefined;
+        if (!hit) return super.load(context,config,callbacks);
+        cache.delete(context.url);
+        this.context=context;
+        const now=performance.now();
+        this.stats.loading.start=now-Math.max(50,hit.bytes.byteLength*8/900); this.stats.loading.first=this.stats.loading.start; this.stats.loading.end=now;
+        this.stats.loaded=hit.bytes.byteLength; this.stats.total=hit.bytes.byteLength;
+        this.cachedTimer=setTimeout(()=>callbacks.onSuccess({url:context.url,data:hit.bytes},this.stats,context,null),0);
+      }
+      abort(){clearTimeout(this.cachedTimer);super.abort();}
+      destroy(){clearTimeout(this.cachedTimer);super.destroy();}
+    };
+  };
+  return {warm,cancel,loader};
+}
+
+// Same bounded HLS cache survives Home -> Watch. No second decoder is started.
+const tvSharedSmartBuffer = createSmartBuffer();
+export const cancelTvHomeBuffer = () => tvSharedSmartBuffer.cancel();
+export const warmTvHomeBuffer = (channels: {url?:string;type:string}[]) => {
+ const network=(navigator as Navigator & {connection?:{saveData?:boolean;effectiveType?:string;downlink?:number}}).connection;
+ if(document.hidden || network?.saveData || /2g|3g/i.test(network?.effectiveType||"") || (network?.downlink!==undefined && network.downlink<3))return Promise.resolve();
+ const video=channels.find(c=>c.type==="video_live"&&c.url&&/\.m3u8(?:[?#]|$)/i.test(c.url));
+ return video?.url ? tvSharedSmartBuffer.warm([{url:normalizeLivePlaylistUrl(video.url,video.type),seconds:5}]) : Promise.resolve();
 };
 
 interface YoutubeVideo {
@@ -482,9 +573,10 @@ export default function PlayerPage() {
     const oldCast = stationCanais.findIndex(c => c.type === "video_live" && /cast|podcast/i.test(c.name));
     return oldCast >= 0 ? stationCanais.map((c,i)=>i===oldCast?cast:c) : [...stationCanais,cast];
   }, [stationCanais, userSlug, isWatchRoute]);
+  const autoPlayedRef = useRef(false);
   const [currentIndex, setCurrentIndex] = useState(() => {
     if (!hasTvBootstrap || !requestedChannelId) return 0;
-    return Math.max(0, tvBootstrap!.channels.findIndex(channel => channel.id === requestedChannelId));
+    return canais.findIndex(channel => channel.id === requestedChannelId);
   });
   const [programas, setProgramas] = useState<Programa[]>(() => tvBootstrap?.programs || []);
   const [playing, setPlaying] = useState(false);
@@ -507,7 +599,8 @@ export default function PlayerPage() {
   const [volumeHover, setVolumeHover] = useState(false);
   const volumeHideTimeout = useRef<ReturnType<typeof setTimeout>>();
   const [fullscreen, setFullscreen] = useState(false);
-  const [loading, setLoading] = useState(!hasTvBootstrap);
+  const [loading, setLoading] = useState(!hasTvBootstrap || (!!requestedChannelId && !canais.some(c=>c.id===requestedChannelId)));
+  const [bootstrapRetry,setBootstrapRetry]=useState(0);
   const [streamLoading, setStreamLoading] = useState(false);
   
   // Update streamLoading based on URL params to handle direct navigation
@@ -551,6 +644,7 @@ export default function PlayerPage() {
   const [clock, setClock] = useState(0);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>(() => tvBootstrap?.presenters || []);
   const [whatsappPhone, setWhatsappPhone] = useState<string | null>(null);
+  const [commercialPhone,setCommercialPhone]=useState<string|null>(null);
   const [empresaLogo, setEmpresaLogo] = useState<string | null>(tvBootstrap?.logoUrl || null);
   const [profileName, setProfileName] = useState("");
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
@@ -637,10 +731,12 @@ export default function PlayerPage() {
     [canais]
   );
   const isAudio = canal?.type === "audio_live" || canal?.type === "audio";
-  const adsEntryChannel = loading ? null : canal;
+  const adsEntryChannel = loading ? null : (!autoPlayedRef.current && requestedChannelId ? canais.find(c=>c.id===requestedChannelId) || null : canal);
+  const adsEntryAudio = adsEntryChannel?.type === "audio_live" || adsEntryChannel?.type === "audio";
   const adsStudioPrograms = adsEntryChannel?.estudio ? programas.filter(p=>p.estudio===adsEntryChannel.estudio) : programas;
   const adsProgramId = getCurrentProgram(adsStudioPrograms.length?adsStudioPrograms:programas)?.id;
-  const tvCommercial = useTvCommercialPlayback({enabled:isPlayerOtt()&&isWatchRoute&&!!adsEntryChannel&&adsEntryChannel.id!=="nexo-positiva-twitch"&&["audio_live","audio","video_live","video"].includes(adsEntryChannel.type),radioId:profileRadioUserId,channelKey:adsEntryChannel?.id,programId:adsProgramId,audio:isAudio,breakActive:isSmartBreak(musicData?.titulo,musicData?.artista),paused:tvUserPausedRef.current});
+  const tvCommercial = useTvCommercialPlayback({enabled:isPlayerOtt()&&isWatchRoute&&!!adsEntryChannel&&adsEntryChannel.id!=="nexo-positiva-twitch"&&["audio_live","audio","video_live","video"].includes(adsEntryChannel.type),radioId:profileRadioUserId,channelKey:adsEntryChannel?.id,programId:adsProgramId,audio:adsEntryAudio,breakActive:isSmartBreak(musicData?.titulo,musicData?.artista),paused:tvUserPausedRef.current,trackChannel:isPlayerOtt()&&isWatchRoute&&!!adsEntryChannel&&["audio_live","audio","video_live","video","video_youtube","youtube"].includes(adsEntryChannel.type)});
+  const tvPrerollGate = isPlayerOtt() && isWatchRoute && Boolean(adsEntryChannel && adsEntryChannel.id!=="nexo-positiva-twitch" && ["audio_live","audio","video_live","video"].includes(adsEntryChannel.type)) && (tvCommercial.checking || tvCommercial.run?.kind === "preroll");
   const tvAdsBlocked=tvCommercial.blocked;
   const tvAudioWarmRef=useRef<{channel:string;audio:boolean;phase:"warming"|"fading";session:number;frame?:number}|null>(null);
   const tvAdsBlockedRef=useRef(false);tvAdsBlockedRef.current=tvAdsBlocked;
@@ -687,12 +783,13 @@ export default function PlayerPage() {
     return () => { cancelled = true; };
   }, [musicData?.artista, isAudio, isBreakTrack]);
   const isAutoplayChannel = useCallback((c?: Canal | null) => normalizeChannelNumber(c?.numero_canal) === "991-1", []);
-  const autoPlayedRef = useRef(false);
+
   
   const is991Channel = normalizeChannelNumber(canal?.numero_canal) === "991-1" || normalizeChannelNumber(canal?.numero_canal) === "991-2" || isCatalog;
 
   const handleHomeClick = useCallback((destination?: unknown) => {
     const tv = isPlayerOtt();
+    if(tv)markTvCommercialHome(profileRadioUserId);
     const keepRadio = Boolean(tv && !tvAdsBlockedRef.current && !tvAudioWarmRef.current && isAudio && audioRef.current && (audioRef.current.currentSrc || audioRef.current.src || hlsRef.current));
     if (keepRadio && audioRef.current) {
       // Entrega o proprio elemento e o engine HLS ao controlador permanente da Home.
@@ -717,6 +814,7 @@ export default function PlayerPage() {
     if (audioRef.current && !keepRadio) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); }
     destroyMiniAudio();
     if (tv) {
+      setTvRadioStandby(false);
       navigate(typeof destination === "string" ? destination : playerHomePath, {state:{tvInternal:true}});
       return;
     }
@@ -866,8 +964,12 @@ export default function PlayerPage() {
   const [streamRequested, setStreamRequested] = useState(false);
   const connectRetryRef = useRef<{ chId: string | null; n: number }>({ chId: null, n: 0 });
   const playbackSessionRef = useRef(0);
+  // TV video recovery is scoped to the current playback session.
+  const tvVideoFatalRef = useRef<number | null>(null);
+  const [smartBuffer] = useState(()=>isPlayerOtt()?tvSharedSmartBuffer:createSmartBuffer());
 
   const stopAllPlayback = useCallback((clearChannelState = false) => {
+    smartBuffer.cancel(clearChannelState && !isPlayerOtt());
     playbackSessionRef.current += 1;
     if(tvAudioWarmRef.current?.frame)cancelAnimationFrame(tvAudioWarmRef.current.frame);
     tvAudioWarmRef.current=null;
@@ -908,7 +1010,7 @@ export default function PlayerPage() {
       setPlayerColorUserId(null);
       setEmpresaLogo(null);
       setEmpresaNome(null);
-      setWhatsappPhone(null);
+      setWhatsappPhone(null);setCommercialPhone(null);
     }
   }, []);
 
@@ -1158,7 +1260,8 @@ export default function PlayerPage() {
           if (cancelled) return;
           publicBootstrapRef.current = { slug, loaded: true };
 
-          if (error || !data) {
+          if (error || !data || data.error || !Array.isArray(data.channels) || !data.channels.length) {
+            if (!hasTvBootstrap && isPlayerOtt() && bootstrapRetry<2) { publicBootstrapRef.current={slug,loaded:false}; setTimeout(()=>{if(!cancelled)setBootstrapRetry(v=>v+1)},700); return; }
             if (!hasTvBootstrap) setCanais([]);
             setPrerollDone(true);
             setLoading(false);
@@ -1172,11 +1275,12 @@ export default function PlayerPage() {
             .filter((c) => !ownerId || !c.user_id || c.user_id === ownerId)
             .filter(c => c.type !== "catalog" || c.id === requestedChannelId);
           setCanais(ownerChannels);
-          if(!hasTvBootstrap&&requestedChannelId){const requested=ownerChannels.findIndex(c=>c.id===requestedChannelId);if(requested>=0)setCurrentIndex(requested)}
+          if(!autoPlayedRef.current && requestedChannelId){const requested=ownerChannels.findIndex(c=>c.id===requestedChannelId);if(requested>=0)setCurrentIndex(requested);else if(requestedChannelId!=="nexo-positiva-twitch")setCurrentIndex(-1)}
           setProgramas((data.programas || []) as Programa[]);
           setApresentadores((data.apresentadores || []) as Apresentador[]);
           setShopProducts(data.shopProducts || []);
           if (data.empresa?.telefone_participacao) setWhatsappPhone(data.empresa.telefone_participacao);
+          setCommercialPhone(data.empresa?.telefone_comercial||null);
           if (data.empresa?.logo) setEmpresaLogo(data.empresa.logo);
           if (data.empresa?.nome) setEmpresaNome(data.empresa.nome);
           if (data.musicData?.titulo && data.musicData.titulo !== "Sem título" && !isPlayerOtt()) {
@@ -1196,7 +1300,7 @@ export default function PlayerPage() {
           const initialChannel = requestedChannelId
             ? ownerChannels.find((channel) => channel.id === requestedChannelId)
             : ownerChannels.find((channel) => isAutoplayChannel(channel) && (channel.type === "audio_live" || channel.type === "audio")) || ownerChannels[0];
-          const prerolls = isWatchRoute
+          const prerolls = isWatchRoute && !isPlayerOtt()
             ? filterCampaignsByType(
                 data.prerolls || [],
                 now,
@@ -1223,6 +1327,7 @@ export default function PlayerPage() {
         .catch(() => {
           if (cancelled) return;
           publicBootstrapRef.current = { slug, loaded: true };
+          if (!hasTvBootstrap && isPlayerOtt() && bootstrapRetry<2) { publicBootstrapRef.current={slug,loaded:false}; setTimeout(()=>{if(!cancelled)setBootstrapRetry(v=>v+1)},700); return; }
           if (!hasTvBootstrap) setCanais([]);
           setPrerollDone(true);
           setLoading(false);
@@ -1249,12 +1354,12 @@ export default function PlayerPage() {
         // STAGE 1 — Critical: all data in a single parallel burst for faster hydration
         const [channelsRes, prerollRes, programasRes, apresentadoresRes, empresaRes] = await Promise.all([
           playerSupabase.from("streaming_channels").select("*").eq("user_id", userId).eq("active", true).order("numero_canal"),
-          isWatchRoute && !prerollDone
+          isWatchRoute && !isPlayerOtt() && !prerollDone
             ? playerSupabase.from("comercial_preroll").select("*").eq("user_id", userId).eq("active", true).lte("horario_inicio", currentTime).gte("horario_fim", currentTime).order("priority", { ascending: true })
             : Promise.resolve({ data: null, error: null } as const),
           playerSupabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, tipo_programa, capa, thumb, descricao, classificacao_etaria, apresentador_id, apresentadores_ids").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
           playerSupabase.from("apresentadores").select("id, nome, foto, instagram").eq("user_id", userId).eq("ativo", true),
-          playerSupabase.from("empresa_config").select("telefone_participacao, logo, nome").eq("user_id", userId).maybeSingle(),
+          playerSupabase.from("empresa_config").select("telefone_participacao, telefone_comercial, logo, nome").eq("user_id", userId).maybeSingle(),
         ]);
 
         if (cancelled) return;
@@ -1271,7 +1376,7 @@ export default function PlayerPage() {
           setCanais(canaisData.filter(c => c.type !== "catalog" || c.id === requestedChannelId));
         }
 
-        if (isWatchRoute && !prerollDone && prerollRes.data && prerollRes.data.length > 0) {
+        if (isWatchRoute && !isPlayerOtt() && !prerollDone && prerollRes.data && prerollRes.data.length > 0) {
           const initialChannel = requestedChannelId
             ? canaisData?.find((channel) => channel.id === requestedChannelId)
             : canaisData?.find((channel) => isAutoplayChannel(channel) && (channel.type === "audio_live" || channel.type === "audio")) || canaisData?.[0];
@@ -1301,6 +1406,7 @@ export default function PlayerPage() {
         setProgramas(fetchedProgramas);
         if (!apresentadoresRes.error && apresentadoresRes.data) setApresentadores(apresentadoresRes.data as Apresentador[]);
         if (!empresaRes.error && empresaRes.data?.telefone_participacao) setWhatsappPhone(empresaRes.data.telefone_participacao);
+        if(!empresaRes.error)setCommercialPhone(empresaRes.data?.telefone_comercial||null);
         if (!empresaRes.error && empresaRes.data?.logo) setEmpresaLogo(empresaRes.data.logo);
         if (!empresaRes.error && empresaRes.data?.nome) setEmpresaNome(empresaRes.data.nome);
 
@@ -1327,7 +1433,7 @@ export default function PlayerPage() {
 
     fetchAll();
     return () => { cancelled = true; };
-  }, [authLoading, isPublicMode, userId, userSlug]);
+  }, [authLoading, isPublicMode, userId, userSlug, bootstrapRetry]);
 
   // Top 10 mode: inject virtual catalog channel with playlist
   useEffect(() => {
@@ -1929,9 +2035,12 @@ export default function PlayerPage() {
         if (!userInitiated && tvAudioAdoptedRef.current && (type === "audio_live" || type === "audio") && adopted && adopted.dataset.tvResumeUrl === url && !adopted.error && !adopted.paused && adopted.readyState >= 2) {
           setPlaying(true); setBuffering(false); return;
         }
-        stopTvAudio(); setTvPlaybackBlocked(false);
+        if(type === "audio_live" || type === "audio")stopTvAudio(); else setTvRadioStandby(true);
+        setTvPlaybackBlocked(false);
       }
+      smartBuffer.cancel();
       const sessionId = ++playbackSessionRef.current;
+      tvVideoFatalRef.current = null;
       if(commercialWarmup&&tvAudioWarmRef.current)tvAudioWarmRef.current.session=sessionId;
       else if(tvAudioWarmRef.current){if(tvAudioWarmRef.current.frame)cancelAnimationFrame(tvAudioWarmRef.current.frame);tvAudioWarmRef.current=null;}
       destroyMiniAudio();
@@ -2055,7 +2164,17 @@ export default function PlayerPage() {
         ? (normalizedUrl.includes("?") ? `${normalizedUrl}&_t=${Date.now()}` : `${normalizedUrl}?_t=${Date.now()}`)
         : normalizedUrl;
       let Hls: typeof HlsType | null = null;
-      if (useHls) Hls = await getHls();
+      if (useHls) {
+        try { Hls = await getHls(); }
+        catch (error) {
+          if (!isPlayerOtt() || isAudioType) throw error;
+          if (playbackSessionRef.current === sessionId) {
+            tvVideoFatalRef.current = sessionId;
+            setStreamStalled(true); setBuffering(true); setPlaying(false);
+          }
+          return;
+        }
+      }
       if (playbackSessionRef.current !== sessionId) return;
 
       if (isAudioType) {
@@ -2072,6 +2191,7 @@ export default function PlayerPage() {
           };
 
           const hls = new Hls({
+            ...(isPlayerOtt() ? { fLoader: smartBuffer.loader(Hls) } : {}),
             enableWorker: true,
             lowLatencyMode: false,
             maxBufferLength: isPlayerOtt() ? 30 : 60,
@@ -2141,11 +2261,13 @@ export default function PlayerPage() {
         if (Hls && Hls.isSupported()) {
           let playRequested = false;
           const requestVideoPlay = () => {
+            if (playbackSessionRef.current !== sessionId || (isPlayerOtt() && (tvUserPausedRef.current || (tvAdsBlockedRef.current && !commercialWarmup)))) return;
             playRequested = true;
             void requestPlay(video);
           };
 
           const hls = new Hls({
+            ...(isPlayerOtt() ? { fLoader: smartBuffer.loader(Hls) } : {}),
             enableWorker: true,
             lowLatencyMode: false,
             capLevelToPlayerSize: isPlayerOtt(),
@@ -2196,7 +2318,7 @@ export default function PlayerPage() {
           let mediaErrorRecoveries = 0;
           let networkRetries = 0;
           hls.on(Hls.Events.ERROR, (_event, data) => {
-            if (playbackSessionRef.current !== sessionId) return;
+            if (playbackSessionRef.current !== sessionId || (isPlayerOtt() && hlsRef.current !== hls)) return;
             if (isPlayerOtt() && (tvUserPausedRef.current || (tvAdsBlockedRef.current && !commercialWarmup))) return;
             if (!data.fatal) {
               if (isPlayerOtt()) return; // HLS handles buffer holes; do not jump to the live edge.
@@ -2213,6 +2335,21 @@ export default function PlayerPage() {
               return;
             }
             console.warn("HLS fatal error:", data.type, data.details);
+            if (isPlayerOtt()) {
+              // HLS already exhausted its internal retries before a fatal error.
+              // Give it one in-place recovery, then hand off to the single video watchdog.
+              if (data.type === Hls.ErrorTypes.NETWORK_ERROR && networkRetries++ === 0) {
+                try { hls.startLoad(); return; } catch {}
+              } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR && mediaErrorRecoveries++ === 0) {
+                try { hls.recoverMediaError(); return; } catch {}
+              }
+              tvVideoFatalRef.current = sessionId;
+              if (hlsRef.current === hls) hlsRef.current = null;
+              try { hls.destroy(); } catch {}
+              resetMediaElement(video);
+              setStreamStalled(true); setBuffering(true); setPlaying(false);
+              return;
+            }
             if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
               networkRetries++;
               if (networkRetries <= 5) {
@@ -2254,6 +2391,21 @@ export default function PlayerPage() {
     },
     []
   );
+
+  // Warm only while the active stream is healthy. Never compete with ads or startup.
+  useEffect(() => {
+    if (!isPlayerOtt() || !isWatchRoute || !playing || buffering || streamStalled || tvAdsBlocked || !canal) {
+      smartBuffer.cancel(); return;
+    }
+    const network = (navigator as Navigator & {connection?: {saveData?:boolean;effectiveType?:string;downlink?:number}}).connection;
+    const healthy = () => !network?.saveData && !/2g|3g/i.test(network?.effectiveType || "") && (network?.downlink === undefined || network.downlink >= 3);
+    const targets = liveChannels.filter(c=>c.id!==canal.id && /\.m3u8(?:[?#]|$)/i.test(c.url)).slice(0,2).map((c,i)=>({url:normalizeLivePlaylistUrl(c.url,c.type),seconds:isAudio&&c.type==="video_live"&&i===0?5:3}));
+    if (!targets.length) return;
+    const tick=()=>{if(!document.hidden && healthy() && !tvAdsBlockedRef.current && !tvUserPausedRef.current && !tvAudioWarmRef.current) void smartBuffer.warm(targets);else smartBuffer.cancel();};
+    const first=setTimeout(tick,2000); const interval=setInterval(tick,10000);
+    return ()=>{clearTimeout(first);clearInterval(interval);smartBuffer.cancel();};
+  }, [isWatchRoute, playing, buffering, streamStalled, tvAdsBlocked, canal?.id, liveChannels, isAudio, smartBuffer]);
+  useEffect(()=>()=>smartBuffer.cancel(!isPlayerOtt()),[smartBuffer]);
 
   useEffect(() => {
     if (!isAudio) {
@@ -2385,6 +2537,7 @@ export default function PlayerPage() {
     if (requestedChannelId) {
       startIndex = canais.findIndex((c) => c.id === requestedChannelId);
     }
+    if (startIndex < 0 && requestedChannelId && isPlayerOtt()) { autoPlayedRef.current=false; return; }
     if (startIndex < 0) {
       const preferredIndex = canais.findIndex((c) => isAutoplayChannel(c));
       startIndex = preferredIndex >= 0 ? preferredIndex : 0;
@@ -2413,6 +2566,7 @@ export default function PlayerPage() {
         // The Fire TV may still be loading the lazy watch screen and its refs.
         if (waitForTvMedia && !(needsAudio ? audioRef.current : videoRef.current)) {
           if (performance.now() < deadline) setTimeout(startWhenReady, 100);
+          else autoPlayedRef.current=false;
           return;
         }
         if (waitForTvMedia && (tvUserPausedRef.current || (needsAudio && tvAudioAdoptedRef.current))) return;
@@ -2434,7 +2588,7 @@ export default function PlayerPage() {
       if (cancelled || playbackSessionRef.current !== session || tvUserPausedRef.current) return;
       const media = isAudio ? audioRef.current : videoRef.current;
       if (!media) { if (Date.now() < deadline) timer = setTimeout(check, 250); return; }
-      if (!media.paused && !media.ended && !media.error && (media.currentSrc || media.getAttribute("src"))) {
+      if (!media.paused && !media.ended && !media.error && media.readyState>=2 && (media.currentSrc || media.getAttribute("src"))) {
         setStreamRequested(true); setPlaying(true); return;
       }
       if (media.currentSrc || media.getAttribute("src")) {
@@ -2473,7 +2627,7 @@ export default function PlayerPage() {
 
   // Recurring pre-roll every 15 minutes
   const fetchAndShowPreroll = useCallback(async () => {
-    if (tvAdsBlockedRef.current || !user || prerollShowing || isYoutube) return;
+    if (isPlayerOtt() || tvAdsBlockedRef.current || !user || prerollShowing || isYoutube) return;
     const now = new Date();
     const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
@@ -2496,7 +2650,7 @@ export default function PlayerPage() {
   }, [user, prerollShowing, isYoutube, isAudio]);
 
   useEffect(() => {
-    if (!prerollDone || !playing || isYoutube) return;
+    if (isPlayerOtt() || !prerollDone || !playing || isYoutube) return;
     prerollIntervalRef.current = setInterval(fetchAndShowPreroll, 15 * 60 * 1000);
     return () => { if (prerollIntervalRef.current) clearInterval(prerollIntervalRef.current); };
   }, [prerollDone, playing, isYoutube, fetchAndShowPreroll]);
@@ -2537,6 +2691,41 @@ export default function PlayerPage() {
   const tvReconnectRef = useRef(playStream); tvReconnectRef.current = playStream;
   useEffect(() => {
     if (tvAdsBlocked || !isPlayerOtt() || !isWatchRoute || !prerollDone || isPrerollVisible || !streamRequested || !canal || canal.id === "nexo-positiva-twitch" || !["audio_live", "audio", "video_live", "video"].includes(canal.type)) return;
+    if (!isAudio) {
+      // One watchdog per selected TV video. No new ads or channel navigation on retry.
+      let session = playbackSessionRef.current;
+      let lastTime = -1, lastProgress = Date.now(), lastRetry = 0, attempts = 0;
+      let healthySince = 0;
+      const tick = () => {
+        const now = Date.now();
+        if (document.hidden || tvAdsBlockedRef.current || tvAudioWarmRef.current || tvUserPausedRef.current || tvPlaybackBlocked) {
+          lastProgress = now; healthySince = 0; lastTime = -1; return;
+        }
+        if (session !== playbackSessionRef.current) {
+          session = playbackSessionRef.current; lastTime = -1; lastProgress = now; healthySince = 0;
+        }
+        const video = videoRef.current;
+        if (!video) return;
+        const fatal = tvVideoFatalRef.current === session || Boolean(video.error || video.ended);
+        const progressing = !fatal && !video.paused && video.readyState >= 2 && video.currentTime > 0 && lastTime >= 0 && video.currentTime > lastTime + 0.01;
+        lastTime = video.currentTime;
+        if (progressing) {
+          lastProgress = now;
+          if (!healthySince) healthySince = now;
+          if (now - healthySince >= 5000) attempts = 0;
+          setStreamStalled(false); setBuffering(false); setPlaying(true); setStreamLoading(false);
+          return;
+        }
+        healthySince = 0;
+        const backoff = Math.min(2000 * 2 ** Math.min(attempts, 4), 30000);
+        if ((!fatal && now - lastProgress < 12000) || now - lastRetry < backoff) return;
+        lastRetry = now; lastProgress = now; attempts++;
+        setStreamStalled(true); setBuffering(true);
+        void tvReconnectRef.current(canal.url, canal.type, true).catch(() => {});
+      };
+      const timer = window.setInterval(tick, 1000);
+      return () => window.clearInterval(timer);
+    }
     const recovery = createLiveMediaRecovery({
       startupGraceMs:20000,
       stallGraceMs:18000,
@@ -3121,7 +3310,7 @@ export default function PlayerPage() {
     const step=(now:number)=>{
       if(tvAudioWarmRef.current!==warm||playbackSessionRef.current!==warm.session)return;
       if(tvUserPausedRef.current){tvAudioWarmRef.current=null;el.volume=warm.audio?tvRadioVolume(volumeRef.current/100):volumeRef.current/100;return;}
-      if(el.error|| (start===null&&now>deadline)){stopAllPlayback();autoPlayedRef.current=false;return;}
+      if(el.error || (!warm.audio && tvVideoFatalRef.current===warm.session) || (start===null&&now>deadline) || (!warm.audio && now>deadline+1500)){autoPlayedRef.current=false;stopAllPlayback();return;}
       if(el.paused||el.readyState<2){warm.frame=requestAnimationFrame(step);return;}
       if(start===null)start=now;
       const t=Math.min(1,(now-start)/1500);
@@ -3425,6 +3614,7 @@ export default function PlayerPage() {
       <div className="ott-media-connecting-content" role="alert">
         <h1>Canal indisponível</h1>
         <p>Não foi possível carregar este canal.</p>
+        <button type="button" onClick={()=>{publicBootstrapRef.current={slug:null,loaded:false};setLoading(true);setBootstrapRetry(v=>v+1)}}>Tentar novamente</button>
         <button type="button" onClick={handleHomeClick}>Voltar à Home</button>
       </div>
     </OttFrame>;
@@ -3435,7 +3625,8 @@ export default function PlayerPage() {
   if (canal && (isAudio || isVideo) && (!isYoutube || isCatalog)) {
     return (
       <Suspense fallback={isPlayerOtt() ? tvConnectionView : <PlayerSyncLoader />}>
-        <div className="relative min-h-screen">
+        <div className="relative min-h-screen" style={tvPrerollGate ? {backgroundColor:"#000"} : undefined}>
+        <div aria-hidden={tvPrerollGate || undefined} ref={node=>{node?.toggleAttribute("inert",tvPrerollGate);}} style={tvPrerollGate ? {visibility:"hidden",pointerEvents:"none"} : undefined}>
         <AudioPlayerScreen
           audioRef={audioRef}
           onTvAudioAdopt={handleTvAudioAdopt}
@@ -3487,8 +3678,9 @@ export default function PlayerPage() {
           isVideoChannel={isVideo}
           isCatalog={isCatalog}
         />
-
-        {tvCommercial.run && <TvCommercialPlayback key={`${tvCommercial.run.key}:${tvCommercial.run.kind}:${tvCommercial.run.serial}`} run={tvCommercial.run} audio={isAudio} muted={muted} volume={volume} onFinish={tvCommercial.finish} onBack={handleHomeClick} onWarmStream={warmCommercialStream}/>}
+        </div>
+        {tvPrerollGate && !tvCommercial.run && <div role="status" aria-label="Preparando reprodução" style={{position:"fixed",inset:0,background:"#000",zIndex:99,display:"grid",placeItems:"center"}}><span className="h-8 w-8 animate-spin rounded-full border-2 border-white/25 border-t-white" aria-hidden="true" /></div>}
+        {tvCommercial.run && <TvCommercialPlayback key={`${tvCommercial.run.key}:${tvCommercial.run.kind}:${tvCommercial.run.serial}`} run={tvCommercial.run} audio={adsEntryAudio} onStarted={tvCommercial.started} muted={muted} volume={volume} onFinish={tvCommercial.finish} onBack={handleHomeClick} onWarmStream={warmCommercialStream} commercialPhone={commercialPhone} breakDuration={tvTrack?.duracao} breakStartedAt={tvTrack?.startedAt}/>}
         {isPrerollVisible && !tvAdsBlocked && (
           <div className="fixed inset-0 z-[100] bg-black">
             <PreRollOverlay

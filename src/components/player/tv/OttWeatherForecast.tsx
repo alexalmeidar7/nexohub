@@ -1,3 +1,4 @@
+import { OttSkeletonContent } from "./OttSkeleton";
 import { useEffect, useRef, useState } from "react";
 import { Cloud, CloudDrizzle, CloudLightning, CloudRain, CloudSnow, CloudSun, Sun, Umbrella } from "lucide-react";
 import { playerSupabase } from "@/integrations/supabase/playerClient";
@@ -90,7 +91,7 @@ export default function OttWeatherForecast({ radioUserId }: { radioUserId?: stri
     if (days.length > 1) firstRow.current?.focus({ preventScroll: true });
   }, [days.length]);
 
-  if (loading && !days.length) return <p role="status">Carregando previsão…</p>;
+  if (loading && !days.length) return <OttSkeletonContent variant="weather"/>;
   if (error && !days.length) return <p role="alert">{error}</p>;
 
   const today = days[0];

@@ -8,3 +8,28 @@
 .nexo-tv.ott-home .ott-destinations,.nexo-tv.ott-home .ott-now{z-index:2}
 @keyframes nexoHomeArtistZoom{from{transform:scale(1.02)}to{transform:scale(1.11)}}
 @media(prefers-reduced-motion:reduce){.nexo-tv.ott-home .ott-home-artist-cycle{transition:none}.nexo-tv.ott-home .ott-home-artist-cycle>img{animation:none!important;transform:none}}
+
+/* HOME ANTI-BLINK: stable decoded layers; no keyframe conflict with the shared player.
+   The gradient remains behind the image at all times. No whole-screen opacity animation. */
+.nexo-tv.ott-home .nexo-home-stable-artist{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+.nexo-tv.ott-home .nexo-home-stable-artist>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 35%;filter:brightness(.72) saturate(1.05);opacity:0;transition:opacity 1.5s ease-out;animation:nexo-v73-image-motion-home-stable 21s ease-in-out infinite alternate;animation-play-state:paused;pointer-events:none;}
+.nexo-tv.ott-home .ott-home-artist-cycle.is-visible .nexo-home-stable-artist>img[data-revealed="true"]{animation-play-state:running;}
+.nexo-tv.ott-home .nexo-home-stable-artist>img[data-revealed="true"]{opacity:1;}
+@keyframes nexo-v73-image-motion-home-stable{from{transform:scale(1.025)}to{transform:scale(1.105)}}
+.nexo-tv.ott-home .nexo-home-stable-presenter{animation:none!important;opacity:0;transition:opacity 600ms ease-out;pointer-events:none;}
+.nexo-tv.ott-home .nexo-home-stable-presenter[data-visible="true"]{opacity:1;}
+.nexo-tv.ott-home .nexo-home-stable-presenter>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;opacity:0;transform:translateX(3%);animation:none!important;transition:opacity 600ms ease-out,transform 600ms ease-out;}
+.nexo-tv.ott-home .nexo-home-stable-presenter>img[data-revealed="true"]{opacity:1;transform:translateX(0);}
+@media(prefers-reduced-motion:reduce){.nexo-tv.ott-home .nexo-home-stable-artist>img,.nexo-tv.ott-home .nexo-home-stable-presenter,.nexo-tv.ott-home .nexo-home-stable-presenter>img{animation:none!important;transition:none!important;transform:none!important;}}
+
+/* L4: avoid GPU offscreen filter surfaces on low-memory Fire TV. Darkening is done by the existing scrim. */
+.nexo-tv.ott-home .ott-home-artist-cycle {isolation:isolate;contain:paint;will-change:auto;}
+.nexo-tv.ott-home .nexo-home-stable-artist>img {filter:none!important;}
+.nexo-tv.ott-home .ott-home-artist-scrim {background:linear-gradient(90deg,rgba(12,10,10,.74) 0%,rgba(12,10,10,.58) 48%,rgba(12,10,10,.45) 100%),linear-gradient(0deg,rgba(0,0,0,.78),transparent 40%);}
+
+
+/* Keep continuous spectrum paints off the static Home tiles in the Fire TV WebView. */
+.nexo-tv.ott-home:not(.ott-web) .ott-header-track .ott-circular-spectrum {
+  contain: paint;
+  will-change: transform;
+}

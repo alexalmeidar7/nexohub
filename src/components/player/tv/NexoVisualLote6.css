@@ -1,0 +1,12 @@
+/* Home: somente fundo do espectro, rodape de versao e posicao do banner. */
+.nexo-tv.ott-home .ott-header-track .ott-circular-spectrum{background:transparent!important;}
+.nexo-tv.nexo-tv.ott-home.ott-rail-layout .nexo-home-commercial-banner{
+ --nexo-lote6-home:1;
+ left:calc(265 * var(--ott-u))!important; /* nexo-lote8: banner alinhado */
+ bottom:calc(54 * var(--ott-u))!important;
+ top:auto!important;
+}
+.nexo-tv.ott-home .ott-home-interaction-tools.nexo-lote6-tools{display:flex!important;align-items:center;gap:calc(18 * var(--ott-u));width:max-content;max-width:90%;}
+.nexo-tv.ott-home .nexo-lote6-version{font-size:calc(14 * var(--ott-u));font-weight:500;line-height:1.3;white-space:nowrap;color:#fff;opacity:.36;pointer-events:none;transition:opacity 150ms ease;}
+.nexo-tv.ott-home .nexo-lote6-version.is-hidden{opacity:0;visibility:hidden;}
+@media(prefers-reduced-motion:reduce){.nexo-tv.ott-home .nexo-lote6-version{transition:none;}}

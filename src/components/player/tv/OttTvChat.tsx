@@ -1,3 +1,5 @@
+import { OttSkeletonContent } from "./OttSkeleton";
+import NexoLoadingImage from "./NexoLoadingImage";
 import { Fragment } from "react";
 import OttCommercialSlot from "./OttCommercialSlot";
 import { useEffect, useRef, useState } from "react";
@@ -30,6 +32,7 @@ export default function OttTvChat({ radioUserId, onClose }: Props) {
   const slug = window.location.pathname.split("/").filter(Boolean)[0]?.toLowerCase() || "";
   const [resolvedRadioId, setResolvedRadioId] = useState<string | null>(() => validRadio(radioUserId));
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [nexoLote14ChatLoaded,setNexoLote14ChatLoaded]=useState(false);
   const [showQr, setShowQr] = useState(false);
   // NEXO_CHAT_SESSAO_TV_V1: ID estavel do aparelho TV. O QR permanece o mesmo apos reiniciar.
   const [chatTvDeviceId] = useState<string>(() => {
@@ -94,7 +97,7 @@ export default function OttTvChat({ radioUserId, onClose }: Props) {
   }, [radioUserId, slug]);
 
   useEffect(() => {
-    setMessages([]);
+    setMessages([]);setNexoLote14ChatLoaded(false);
     setShowQr(false);
     if (!channelId) return;
     let active = true;
@@ -109,7 +112,7 @@ export default function OttTvChat({ radioUserId, onClose }: Props) {
         .order("created_at", { ascending: false })
         .limit(5);
       if (!active || current !== latest) return;
-      if (readError) { setError("Não foi possível carregar as conversas."); return; }
+      setNexoLote14ChatLoaded(true);if (readError) { setError("Não foi possível carregar as conversas."); return; }
       setError("");
       setMessages(((data || []) as ChatMessage[]).filter(m => m.channel_id === channelId).reverse());
     };
@@ -146,15 +149,15 @@ export default function OttTvChat({ radioUserId, onClose }: Props) {
       if (event.key === "Escape" || event.key === "Backspace") { event.preventDefault(); onClose(); }
     }}>
       <div className="ott-tv-chat-top">
-        <button type="button" className="ott-tv-chat-back" onClick={onClose} aria-label="Voltar">
-          <Undo2 aria-hidden="true" />
+        <button type="button" className="ott-tv-chat-back ott-standard-back" onClick={onClose} aria-label="Voltar">
+          <Undo2 aria-hidden="true" strokeWidth={2.5} />
         </button>
       </div>
       {showQr && !chatHasParticipant ? (
         <div className="ott-tv-chat-qr">
           <h2>Entre na conversa</h2>
           <p>Escaneie no celular, faça login e envie sua mensagem.</p>
-          {chatSessionPhoneUrl ? <div className="ott-tv-chat-qr-code"><QRCodeSVG value={chatSessionPhoneUrl} size={240} level="M" includeMargin /></div> : <p role="status">{"Preparando QR Code..."}</p>}
+          {chatSessionPhoneUrl ? <div className="ott-tv-chat-qr-code"><QRCodeSVG value={chatSessionPhoneUrl} size={240} level="M" includeMargin /></div> : <OttSkeletonContent variant="generic"/>}
           <button type="button" className="ott-tv-chat-qr-return" ref={returnRef} onClick={() => setShowQr(false)}>Ver mensagens</button>
         </div>
       ) : (
@@ -164,10 +167,10 @@ export default function OttTvChat({ radioUserId, onClose }: Props) {
             <span>entrar na conversa</span><MessagesSquare aria-hidden="true" />
           </button>
           <div className="ott-tv-chat-messages" aria-live="polite" aria-relevant="additions text">
-            {messages.length === 0 && !error && <p className="ott-tv-chat-empty">Aguardando mensagens dos ouvintes.</p>}
+            {messages.length === 0 && !error && (!nexoLote14ChatLoaded ? <OttSkeletonContent variant="generic"/> : <p className="ott-tv-chat-empty">Aguardando mensagens dos ouvintes.</p>)}
             {messages.map((item,index) => (
               <Fragment key={item.id}><article className="ott-tv-chat-message">
-                {item.avatar_url ? <img src={item.avatar_url} alt="" onError={e => { e.currentTarget.src = "/avatars/usr-default.png"; }} /> : <span className="ott-tv-chat-initial">{item.nome.slice(0,1).toUpperCase()}</span>}
+                {item.avatar_url ? <NexoLoadingImage src={item.avatar_url} alt="" onError={e => { e.currentTarget.src = "/avatars/usr-default.png"; }} /> : <span className="ott-tv-chat-initial">{item.nome.slice(0,1).toUpperCase()}</span>}
                 <div><strong>{item.nome}</strong><p>{item.message}</p></div>
               </article>{(index+1)%5===0&&<OttCommercialSlot radioId={radioUserId} placement="chat_ads"/>}</Fragment>
             ))}

@@ -27,7 +27,7 @@ export function OttSkeletonPage({ variant = "generic" }: { variant?: OttSkeleton
       <div className="ott-skeleton-watch-description"><Bone kind="badge"/><Bone className="ott-skeleton-line-xl"/><Bone className="ott-skeleton-line-l"/><Bone className="ott-skeleton-line-m"/></div>
       <div className="ott-skeleton-watch-footer"><Bone kind="button"/><Bone className="ott-skeleton-line-m"/><Bone kind="badge"/></div>
     </main> : variant === "home" ? <main className="ott-skeleton-home" aria-hidden="true">
-      <div className="ott-skeleton-home-cards">{[0,1,2].map(n=><Bone key={n} kind="card" className="ott-skeleton-home-card" />)}</div>
+      <div className="ott-skeleton-home-cards nexo-lote14-home-layout" style={{flexDirection:"column",gap:"calc(16 * var(--ott-u))"}}>{[0,1,2,3,4].map(n=><Bone key={n} kind="avatar" />)}</div>
       <div className="ott-skeleton-home-info"><Bone kind="badge"/><Bone className="ott-skeleton-line-xl"/><Bone className="ott-skeleton-line-l"/><Bone className="ott-skeleton-line-s"/><Bone kind="button"/></div>
     </main> : <main className="ott-skeleton-generic" aria-hidden="true">
       <Bone className="ott-skeleton-line-l" />

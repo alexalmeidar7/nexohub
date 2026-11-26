@@ -419,3 +419,19 @@ NUNCA inserir:
 Ambientes de desenvolvimento ou testes que precisem de mocks devem operar isolados em memória local, mocks de código ou bancos de dados locais e descartáveis, NUNCA no banco real de usuários.
 - GitHub Action `.github/workflows/build-check.yml` typechecks and builds every push; keep it passing so broken GitHub commits are caught before they freeze the Lovable preview.
 - Global music synchronization uses completion-based polling with failure backoff and immediate realtime events; never overlap requests or repeat successful track enrichment, to bound Cloud traffic while preserving live updates.
+
+
+<!-- NEXO_TV_CONTINUIDADE_V1 -->
+# Nexo Player TV — regras obrigatórias de continuidade
+
+Antes de editar qualquer arquivo, leia `NEXO_CONTINUIDADE.md`, inspecione `git status --short` e `git diff` e confirme o estado real do código local. O diretório de trabalho pode conter alterações ainda não commitadas; nunca use um ZIP anterior ou origin/main como substituto automático do estado local.
+
+- Único projeto: `D:\ONEDRIVE\0 - NEXO\5 - House Mix\nexohub-git`. Único build: `dist`. Única porta: `8080` (strictPort). Não executar `artifacts/positiva-debug-webview`, cópias paralelas ou servidores em outras portas.
+- Antes de corrigir interface, confirme a rota e o componente efetivamente renderizados no Nexo Preview e na Fire TV. Ambos devem usar a mesma implementação OTT e o mesmo build. Não confundir adaptações de dispositivo com duplicidade de componentes. Verifique o asset JS realmente servido via HTTP, não apenas a existência do arquivo em dist.
+- Respeitar mudanças locais, inclusive as feitas por Codex. Não resetar, sobrescrever, fazer checkout, merge, commit ou push sem autorização. Entregar alterações mínimas e verificáveis, com proteção contra conflitos de versão. Não alterar HMO, HMD ou Supabase em tarefas exclusivamente TV.
+- Não alterar layout, animações, espaçamentos ou funcionalidades fora do pedido. Antes de modificar um componente compartilhado, conferir os impactos nas funcionalidades aprovadas.
+- Preservar Smart Sync, Realtime, Smart Buffer, Ads Cache, Smart Break, Pre-Roll (últimos 5 s para Pular; intervalo compartilhado de 15 min), login, pareamento e continuidade de áudio. Não aumentar consultas por conveniência.
+- Build e tipos não provam funcionamento na TV. Validar o comportamento pedido, a ausência de regressões e a entrega do novo build em 8080; reiniciar o Player após instalação quando necessário. Se não houver acesso ao aparelho, marcar o teste como pendente, nunca como aprovado.
+- Ao terminar cada tarefa, atualizar `NEXO_CONTINUIDADE.md`: data, arquivos alterados, testes realmente realizados, regressões, itens pendentes e versão/base utilizada. No próximo início, ler esse registro antes de começar. Não apagar histórico nem presumir conclusão com base em um ZIP gerado.
+- Não delegar ao usuário a reconstrução do histórico. Respostas objetivas; não afirmar trabalho em segundo plano ou resultados não realizados.
+

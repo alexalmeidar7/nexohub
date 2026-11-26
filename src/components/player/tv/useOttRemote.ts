@@ -4,24 +4,46 @@ import { useEffect, useRef } from "react";
 export function useOttRemote(onBack?: () => void, focusKey: unknown = "initial", beforeKey?: () => boolean) {
   const root = useRef<HTMLDivElement>(null);
   const lastFocus = useRef<HTMLElement | null>(null);
+  const homeWasVisible = useRef(false);
+  const homeAwaitingInput = useRef(false);
   const back = useRef(onBack);
   back.current = onBack;
   const intercept = useRef(beforeKey);
   intercept.current = beforeKey;
   useEffect(() => {
+    // nexo-lote8-home-focus: no automatic focus when entering the Home.
+    const host = root.current;
+    const home = !!host?.matches('.ott-home.ott-rail-layout');
+    if (home && !homeWasVisible.current) {
+      homeAwaitingInput.current = true;
+      lastFocus.current = null;
+      host?.setAttribute('data-nexo-home-awaiting-focus','true');
+      const focused = document.activeElement;
+      if (focused instanceof HTMLElement && host?.contains(focused)) focused.blur();
+    }
+    if (!home) { homeAwaitingInput.current = false; host?.removeAttribute('data-nexo-home-awaiting-focus'); }
+    homeWasVisible.current = home;
     if (isPlayerOtt() && !isPlayerTvApp()) return;
     const previous = document.activeElement as HTMLElement | null;
     const frame = requestAnimationFrame(() => {
+      if (root.current?.matches(".ott-video") && focusKey === false) return;
+      if (homeAwaitingInput.current && !root.current?.querySelector('[role="dialog"], [data-nexo-program-details]')) return;
       const scope = root.current?.querySelector<HTMLElement>('[data-nexo-program-details]') || root.current?.querySelector<HTMLElement>('[role="dialog"]') || root.current;
-      (scope?.querySelector<HTMLElement>('.nexo-grade-programa[data-ao-vivo="true"]') || scope?.querySelector<HTMLElement>('.ott-video .ott-interactivity-button:not(:disabled)') || (scope?.matches('.ott-video') ? scope.querySelector<HTMLElement>('.ott-interactivity-button:not(:disabled)') : null) || scope?.querySelector<HTMLElement>('[data-ott-initial]:not(:disabled)') || scope?.querySelector<HTMLElement>('button:not(:disabled), input, select, [tabindex="0"]'))?.focus({ preventScroll: true });
+      (scope?.querySelector<HTMLElement>('.ott-watch-chrome[aria-hidden="false"] .ott-play:not(:disabled)') || scope?.querySelector<HTMLElement>('.nexo-grade-programa[data-ao-vivo="true"]') || scope?.querySelector<HTMLElement>('.ott-video .ott-interactivity-button:not(:disabled)') || (scope?.matches('.ott-video') ? scope.querySelector<HTMLElement>('.ott-interactivity-button:not(:disabled)') : null) || scope?.querySelector<HTMLElement>('[data-ott-initial]:not(:disabled)') || scope?.querySelector<HTMLElement>('button:not(:disabled), input, select, [tabindex="0"]'))?.focus({ preventScroll: true });
     });
-    return () => { cancelAnimationFrame(frame); if (previous?.isConnected) previous.focus({ preventScroll: true }); };
+    return () => { cancelAnimationFrame(frame); if (!homeAwaitingInput.current && previous?.isConnected && !previous.closest('[aria-hidden="true"], [inert]')) previous.focus({ preventScroll: true }); };
   }, [focusKey]);
   useEffect(() => {
     const rememberFocus = (event: FocusEvent) => {
       if (event.target instanceof HTMLElement && root.current?.contains(event.target)) lastFocus.current = event.target;
     };
     window.addEventListener("focusin", rememberFocus, true);
+    const activateHomeByPointer = (event: PointerEvent) => {
+      if (homeAwaitingInput.current && event.target instanceof Element && root.current?.contains(event.target)) {
+        homeAwaitingInput.current=false;root.current?.removeAttribute('data-nexo-home-awaiting-focus');
+      }
+    };
+    window.addEventListener('pointerdown',activateHomeByPointer,true);
     const handleBack = (event: Event) => { if(document.querySelector(".nexo-tv-commercial-playback"))return; event.preventDefault(); event.stopImmediatePropagation(); const detail=root.current?.querySelector<HTMLButtonElement>('[data-nexo-detail-close]');if(detail){detail.click();return;}back.current?.(); };
     const onKey = (event: KeyboardEvent) => {
       if(document.querySelector(".nexo-tv-commercial-playback"))return;
@@ -31,6 +53,13 @@ export function useOttRemote(onBack?: () => void, focusKey: unknown = "initial",
       const scope = root.current?.querySelector<HTMLElement>('[data-nexo-program-details]') || root.current?.querySelector<HTMLElement>('[role="dialog"]') || root.current;
       if (!scope) return;
       const web = isPlayerOtt() && !isPlayerTvApp();
+      if (homeAwaitingInput.current && scope === root.current && scope.matches('.ott-home.ott-rail-layout') && ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter',' '].includes(event.key) && !event.defaultPrevented && !event.altKey && !event.ctrlKey && !event.metaKey && !event.isComposing && !(event.target instanceof Element && event.target.closest('input,textarea,select,[contenteditable="true"]'))) {
+        if (web && event.target instanceof Element && event.target !== document.body && event.target !== document.documentElement && !scope.contains(event.target)) return;
+        event.preventDefault();event.stopImmediatePropagation();
+        const listen=scope.querySelector<HTMLButtonElement>('.ott-home-rail-button[aria-label="Ouvir"]:not(:disabled)');
+        if(listen){homeAwaitingInput.current=false;scope.removeAttribute('data-nexo-home-awaiting-focus');listen.focus({preventScroll:true});}
+        return;
+      }
       if (web && (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.isComposing || (event.target instanceof Element && !scope.contains(event.target) && event.key !== "Escape"))) return;
       const active = document.activeElement as HTMLElement | null;
       const target = active && scope.contains(active) ? active : lastFocus.current && scope.contains(lastFocus.current) ? lastFocus.current : null;
@@ -71,7 +100,7 @@ export function useOttRemote(onBack?: () => void, focusKey: unknown = "initial",
         const dir=event.key==="ArrowUp"?-1:1;
         if(dir<0?target.scrollTop>0:target.scrollTop+target.clientHeight<target.scrollHeight-1){target.scrollBy({top:dir*100,behavior:"smooth"});return;}
       }
-      const nodes = Array.from((chat || scope).querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled),select:not(:disabled),.ott-player-chat textarea:not(:disabled),[tabindex="0"]')).filter(el => !el.closest("[inert]") && el.getClientRects().length && getComputedStyle(el).visibility !== "hidden");
+      const nodes = Array.from((chat || scope).querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled),select:not(:disabled),.ott-player-chat textarea:not(:disabled),[tabindex="0"]')).filter(el => !el.closest("[inert]") && el.getClientRects().length && getComputedStyle(el).visibility !== "hidden" && !el.closest('[aria-hidden="true"]') && el.getAttribute("aria-disabled") !== "true" && el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().height > 0);
       if (!target || !nodes.includes(target)) { nodes[0]?.focus({ preventScroll: true }); return; }
       if (event.key === "Enter" || event.key === " ") { target.click(); return; }
       if (target.closest(".nexo-history-carousel") && (event.key === "ArrowUp" || event.key === "ArrowDown")) {
@@ -82,13 +111,39 @@ export function useOttRemote(onBack?: () => void, focusKey: unknown = "initial",
       }
       const rail = scope.querySelector<HTMLElement>(".ott-home-rail");
       if (rail) {
-        const menu = Array.from(rail.querySelectorAll<HTMLElement>(".ott-home-rail-button:not(:disabled),.ott-home-rail-profile"));
-        const index = menu.indexOf(target);
-        const mini = scope.querySelector<HTMLElement>(".ott-header-track");
-        if (target === mini && event.key === "ArrowDown") { menu[0]?.focus({preventScroll:true}); return; }
-        if (index >= 0 && event.key === "ArrowRight") { scope.querySelector<HTMLElement>(".ott-now-grade")?.focus({preventScroll:true}); return; }
-        if (index >= 0 && event.key === "ArrowDown") { menu[Math.min(index+1,menu.length-1)]?.focus({preventScroll:true}); return; }
-        if (index >= 0 && event.key === "ArrowUp") { (index === 0 ? mini : menu[index-1])?.focus({preventScroll:true}); return; }
+        const menu = nodes.filter(el => rail.contains(el) && el.matches(".ott-home-rail-button,.ott-home-rail-profile"));
+        const grade = scope.querySelector<HTMLElement>(".ott-now-grade");
+        const banner = scope.querySelector<HTMLElement>(".nexo-home-commercial-trigger");
+        const destinations = [grade, banner].filter((el): el is HTMLElement => !!el && nodes.includes(el));
+        const nearestY = (items: HTMLElement[]) => {
+          const r = target.getBoundingClientRect(), y = r.top + r.height / 2;
+          return items.reduce<HTMLElement | undefined>((best, el) => {
+            const delta = (node: HTMLElement) => { const b = node.getBoundingClientRect(); return Math.abs(b.top + b.height / 2 - y); };
+            return !best || delta(el) < delta(best) ? el : best;
+          }, undefined);
+        };
+        if (menu.includes(target)) {
+          if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+            const ordered = [...menu].sort((a,b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top);
+            ordered[ordered.indexOf(target) + (event.key === "ArrowUp" ? -1 : 1)]?.focus({preventScroll:true}); return;
+          }
+          if (event.key === "ArrowRight") nearestY(destinations)?.focus({preventScroll:true});
+          return;
+        }
+        if (destinations.includes(target)) {
+          if (event.key === "ArrowLeft") { nearestY(menu)?.focus({preventScroll:true}); return; }
+          if (event.key === "ArrowDown" && target === grade) { if (banner && nodes.includes(banner)) banner.focus({preventScroll:true}); return; }
+          if (event.key === "ArrowUp" && target === banner) { if (grade && nodes.includes(grade)) grade.focus({preventScroll:true}); return; }
+        }
+      }
+      // Audio transport: vertical arrows stay inside channel selector.
+      if (scope.matches(".ott-audio") && target.matches(".ott-play,.ott-channel-up,.ott-open-schedule") && ["ArrowUp","ArrowDown"].includes(event.key)) {
+        const play = scope.querySelector<HTMLElement>(".ott-play");
+        const up = scope.querySelector<HTMLElement>(".ott-channel-up");
+        const down = scope.querySelector<HTMLElement>('.ott-open-schedule[aria-label="Próximo canal"]');
+        const next = target === play ? (event.key === "ArrowUp" ? up : down) : target === up && event.key === "ArrowDown" || target === down && event.key === "ArrowUp" ? play : null;
+        if(next && nodes.includes(next)) next.focus({preventScroll:true});
+        return;
       }
       const tray = scope.querySelector<HTMLElement>(".ott-positiva-channel-tray");
       if (tray && event.key === "ArrowDown" && target.matches(".ott-play,.ott-open-schedule,.ott-watch-program")) {
@@ -102,15 +157,18 @@ export function useOttRemote(onBack?: () => void, focusKey: unknown = "initial",
       const candidates = nodes.filter(el => el !== target).map(el => {
         const r = el.getBoundingClientRect(), dx = r.x + r.width / 2 - x, dy = r.y + r.height / 2 - y;
         const distance = (horizontal ? dx : dy) * sign;
-        return { el, distance, score: distance + Math.abs(horizontal ? dy : dx) * 2.5 };
-      }).filter(item => item.distance > 2).sort((a, b) => a.score - b.score);
+        const overlap = horizontal ? Math.min(rect.bottom,r.bottom)-Math.max(rect.top,r.top) : Math.min(rect.right,r.right)-Math.max(rect.left,r.left);
+        const crossGap = Math.max(0,-overlap);
+        // Prefer targets sharing the current row/column, then the nearest diagonal.
+        return { el, distance, aligned: overlap > 0, score: distance + crossGap * 3 + Math.abs(horizontal ? dy : dx) * .25 };
+      }).filter(item => item.distance > 2).sort((a, b) => Number(b.aligned)-Number(a.aligned) || a.score - b.score);
       const next = candidates[0]?.el;
       next?.focus({ preventScroll: true });
       if (next?.closest('[data-ott-scroll]')) next.scrollIntoView({ block: "nearest", inline: "nearest" });
     };
     window.addEventListener("keydown", onKey, true);
     window.addEventListener("nexo:tv-back", handleBack, true);
-    return () => { window.removeEventListener("focusin", rememberFocus, true); window.removeEventListener("keydown", onKey, true); window.removeEventListener("nexo:tv-back", handleBack, true); };
+    return () => { window.removeEventListener("focusin", rememberFocus, true); window.removeEventListener("pointerdown",activateHomeByPointer,true); window.removeEventListener("keydown", onKey, true); window.removeEventListener("nexo:tv-back", handleBack, true); };
   }, []);
   return root;
 }

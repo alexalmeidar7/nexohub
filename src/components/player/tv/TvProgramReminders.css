@@ -13,3 +13,33 @@
 .nexo-program-details .nexo-detail-copy footer{padding:6px 8px 10px 4px;gap:0;box-sizing:border-box;overflow:visible}
 .nexo-program-details .nexo-detail-copy footer button{flex-shrink:0;white-space:nowrap;max-width:100%;margin-bottom:4px}
 .nexo-program-details .nexo-detail-copy footer button+button{margin-left:16px}
+
+/* Same dialog footprint across programs; only description scrolls. */
+.nexo-tv.nexo-tv .nexo-program-details{width:min(82vw,calc(1000 * var(--ott-u)));height:min(76vh,calc(520 * var(--ott-u)));min-height:0;max-height:76vh;display:grid;grid-template-columns:34% minmax(0,1fr);gap:calc(20 * var(--ott-u));padding:calc(24 * var(--ott-u));overflow:hidden;}
+.nexo-tv.nexo-tv .nexo-program-details .nexo-detail-portraits{position:relative;inset:auto;width:100%;height:100%;min-height:0;align-self:end;}
+.nexo-tv.nexo-tv .nexo-program-details .nexo-detail-portraits img{height:100%;width:100%;left:0;object-fit:contain;object-position:center bottom;}
+.nexo-tv.nexo-tv .nexo-program-details .nexo-detail-portraits:has(img:nth-child(2)) img:first-child{width:76%;left:0;}
+.nexo-tv.nexo-tv .nexo-program-details .nexo-detail-portraits img:nth-child(2){left:28%;width:72%;height:94%;}
+.nexo-tv.nexo-tv .nexo-program-details .nexo-detail-copy{margin:0;min-width:0;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;height:100%;}
+.nexo-tv.nexo-tv .nexo-program-details .nexo-detail-copy>p.nexo-detail-description{margin:calc(14 * var(--ott-u)) 0;max-height:none;min-height:0;overflow:auto;overflow-wrap:anywhere;scrollbar-width:thin;padding-right:calc(8 * var(--ott-u));}
+.nexo-tv.nexo-tv .nexo-program-details .nexo-detail-copy footer{padding:0;align-items:center;gap:calc(12 * var(--ott-u));flex-wrap:nowrap;}
+.nexo-tv.nexo-tv .nexo-program-details .nexo-detail-copy footer button.ott-standard-back{display:grid;place-items:center;width:calc(55 * var(--ott-u));height:calc(55 * var(--ott-u));min-width:calc(55 * var(--ott-u));min-height:calc(55 * var(--ott-u));border-radius:50%;padding:0;margin:0;background:rgba(255,255,255,.20)!important;}
+.nexo-tv.nexo-tv .nexo-program-details .nexo-detail-copy footer button.ott-standard-back svg{width:calc(27 * var(--ott-u));height:calc(27 * var(--ott-u));}
+.nexo-tv.nexo-tv .nexo-program-details:has(.nexo-detail-portraits:empty){grid-template-columns:minmax(0,1fr);}
+.nexo-tv.nexo-tv .nexo-program-details .nexo-detail-portraits:empty{display:none;}
+
+/* Compact landscape programme popup; retain scroll and controls. */
+.nexo-tv.nexo-tv .nexo-program-details{width:min(86vw,calc(1080 * var(--ott-u)));height:min(55vh,calc(360 * var(--ott-u)));max-height:55vh;grid-template-columns:30% minmax(0,1fr);gap:calc(18 * var(--ott-u));padding:calc(18 * var(--ott-u));}
+.nexo-tv.nexo-tv .nexo-program-details .nexo-detail-copy>p.nexo-detail-description{margin:calc(8 * var(--ott-u)) 0;}
+
+/* Lote 3: fixed controls, breathable popup, external focus ring fits inside padding. */
+.nexo-tv.nexo-tv .nexo-program-details{padding:calc(32 * var(--ott-u));gap:calc(26 * var(--ott-u));overflow:visible;box-sizing:border-box;}
+.nexo-tv.nexo-tv .nexo-program-details .nexo-detail-copy{grid-template-rows:auto minmax(0,1fr) auto;gap:calc(12 * var(--ott-u));overflow:visible;}
+.nexo-tv.nexo-tv .nexo-program-details .nexo-detail-copy>p.nexo-detail-description{margin:0;min-height:0;overflow-y:auto;overflow-x:hidden;padding:calc(4 * var(--ott-u)) calc(12 * var(--ott-u)) calc(4 * var(--ott-u)) calc(4 * var(--ott-u));scroll-padding:calc(8 * var(--ott-u));}
+.nexo-tv.nexo-tv .nexo-program-details .nexo-detail-copy footer{padding:calc(10 * var(--ott-u));gap:calc(20 * var(--ott-u));margin:0;overflow:visible;}
+.nexo-tv.nexo-tv .nexo-program-details .nexo-detail-copy footer button{margin:0;}
+.nexo-tv.nexo-tv .nexo-program-details[data-phase="enter"]{animation:nexo-l3-detail-in 200ms ease-out both;}
+.nexo-tv.nexo-tv .nexo-program-details[data-phase="exit"]{animation:nexo-l3-detail-out 200ms ease-in both;pointer-events:none;}
+@keyframes nexo-l3-detail-in{from{opacity:0;transform:translate(-50%,calc(-50% + 12px))}to{opacity:1;transform:translate(-50%,-50%)}}
+@keyframes nexo-l3-detail-out{from{opacity:1;transform:translate(-50%,-50%)}to{opacity:0;transform:translate(-50%,calc(-50% + 12px))}}
+@media(prefers-reduced-motion:reduce){.nexo-tv.nexo-tv .nexo-program-details[data-phase]{animation:none!important;}}

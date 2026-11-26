@@ -1,0 +1,6 @@
+/* Smart Break only; leave Pre-Roll styles unchanged. */
+.nexo-tv-commercial-playback .nexo-commercial-top .nexo-lote6-smart-back{position:relative!important;inset:auto!important;flex:0 0 auto;}
+.nexo-tv-commercial-playback .nexo-lote6-smart-qr{position:absolute;right:5%;bottom:5%;border:0!important;overflow:visible!important;}
+.nexo-tv-commercial-playback button.nexo-lote6-smart-qr:not(:disabled)::after,
+.nexo-tv-commercial-playback button.nexo-lote6-smart-back:not(:disabled)::after{inset:calc(-5 * var(--ott-u));box-shadow:0 0 0 var(--ott-focus-width) white!important;}
+.nexo-tv-commercial-playback svg.nexo-lote6-progress{width:clamp(30px,3vw,52px)!important;height:auto!important;display:block;}

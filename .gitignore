@@ -40,3 +40,5 @@ tools/NexoHubBridge/obj/
 /src/pages/PairPage-backup.tsx
 /src/pages/PairPage-fixed.tsx
 /src/pages/PairPage-old.tsx
+
+/artifacts/

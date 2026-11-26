@@ -47,7 +47,7 @@ export default function OttCircularSpectrum({ media }: { media: () => HTMLMediaE
         if (!analyser) {
           analyser = audioContext.createAnalyser();
           analyser.fftSize = 256;
-          analyser.smoothingTimeConstant = 0.82;
+          analyser.smoothingTimeConstant = 0.28; // nexo-lote8-spectrum
           silentOutput = audioContext.createGain();
           silentOutput.gain.value = 0;
           analyser.connect(silentOutput);
@@ -106,18 +106,24 @@ export default function OttCircularSpectrum({ media }: { media: () => HTMLMediaE
       const realSignal = !!(playing && analyser && frequencyBins && connectedTrack);
       const energy = (index: number) => {
         if (realSignal && frequencyBins) {
-          const bin = Math.min(frequencyBins.length - 1, Math.floor(index / 62 * (frequencyBins.length - 1)));
-          return frequencyBins[bin] / 255;
+          // More useful musical bands, rather than almost-empty high-frequency bins.
+          const i=Math.max(0,Math.min(8,Math.round(index/7)));
+          const edges=[1,2,3,5,8,12,18,28,44,70];
+          const from=edges[i],to=Math.min(edges[i+1],frequencyBins.length);
+          let sum=0,peak=0;
+          for(let j=from;j<to;j++){const x=frequencyBins[j]/255;sum+=x;peak=Math.max(peak,x);}
+          return (sum/Math.max(1,to-from))*.65+peak*.35;
         }
         return 0; // Do not simulate signal when capture is unavailable.
       };
 
       graphics.save();
       graphics.translate(width / 2, height / 2);
-      graphics.strokeStyle = "#fff"; graphics.lineWidth = 5; graphics.lineCap = "round";
-      const shape = [.2,.35,.55,.8,1,.8,.55,.35,.2];
+      graphics.strokeStyle = "#fff"; graphics.lineWidth = 4; // nexo-lote13-mini graphics.lineCap = "round";
+      const shape = [.62,.76,.88,.96,1,.96,.88,.76,.62];
       for(let i=0;i<9;i++){
-        const e=energy(i*7); const length=playing? 7+48*shape[i]*Math.max(.12,e):5;
+        const e=energy(i*7); const level=Math.min(1,Math.max(0,(e-.24)/.66));
+        const length=playing&&realSignal?4.25+61.2*shape[i]*Math.pow(level,1.55):5;
         const x=(i-4)*9; graphics.beginPath(); graphics.moveTo(x,-length/2);graphics.lineTo(x,length/2);graphics.stroke();
       }
       graphics.restore();

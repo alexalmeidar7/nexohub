@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import NexoLoadingImage from "./NexoLoadingImage";
+import "./NexoVisualLote9.css";
+import { memo, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { Undo2, Clock3 } from "lucide-react";
 import "./NexoTvScheduleGridPortraits.css";
 import {ReminderToggle} from "./TvProgramReminders";
@@ -25,6 +27,7 @@ type Programa = {
 type Apresentador = { id?: string; nome?: string; foto?: string | null };
 
 type Props = {
+  loading?: boolean;
   programs: Programa[];
   presenters?: Apresentador[];
   studio?: string | null;
@@ -135,14 +138,40 @@ function montarDia(programas: Programa[], data: Date, indiceDia: number, atual?:
   return resultado.sort((a, b) => a.inicio - b.inicio);
 }
 
-export default function NexoTvScheduleGridPortraits({ programs, presenters = [], studio, currentProgramId, onClose }: Props) {
+function NexoTvScheduleGridPortraits({ programs, presenters = [], studio, currentProgramId, onClose, loading=false }: Props) {
   const [details,setDetails]=useState<Segmento|null>(null);
   const trigger=useRef<HTMLButtonElement|null>(null);
   const detailBack=useRef<HTMLButtonElement>(null);
-  const closeDetails=()=>{setDetails(null);requestAnimationFrame(()=>trigger.current?.focus({preventScroll:true}));};
+  const [detailClosing,setDetailClosing]=useState(false);
+  const detailExitTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
+  const detailRestoreFrame=useRef(0);
+  const scrollFrame=useRef(0);
+  useEffect(()=>()=>{if(detailExitTimer.current!==null)clearTimeout(detailExitTimer.current);cancelAnimationFrame(detailRestoreFrame.current);cancelAnimationFrame(scrollFrame.current);},[]);
+  const closeDetails=()=>{
+    if(detailExitTimer.current!==null)return;
+    setDetailClosing(true);
+    detailExitTimer.current=setTimeout(()=>{detailExitTimer.current=null;setDetails(null);setDetailClosing(false);detailRestoreFrame.current=requestAnimationFrame(()=>trigger.current?.focus({preventScroll:true}));},window.matchMedia('(prefers-reduced-motion: reduce)').matches?0:200);
+  };
   useEffect(()=>{if(details)detailBack.current?.focus({preventScroll:true});},[details]);
   const viewport = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  // One cancellable scroll animation; repeated D-pad presses replace the target.
+  const scrollToProgram=(button:HTMLButtonElement)=>{
+    const el=viewport.current;if(!el)return;
+    cancelAnimationFrame(scrollFrame.current);
+    const r=button.getBoundingClientRect(),v=el.getBoundingClientRect();
+    const margin=12;const from=el.scrollTop;
+    let to=from;
+    if(r.height>v.height-2*margin)to=from+r.top-v.top-margin;
+    else if(r.top<v.top+margin)to=from+r.top-v.top-margin;
+    else if(r.bottom>v.bottom-margin)to=from+r.bottom-v.bottom+margin;
+    to=Math.max(0,Math.min(el.scrollHeight-el.clientHeight,to));
+    if(Math.abs(to-from)<1)return;
+    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){el.scrollTop=to;return;}
+    const start=performance.now();
+    const tick=(now:number)=>{const t=Math.min(1,(now-start)/200);el.scrollTop=from+(to-from)*(1-Math.pow(1-t,3));if(t<1)scrollFrame.current=requestAnimationFrame(tick);};
+    scrollFrame.current=requestAnimationFrame(tick);
+  };
   const hoje = useMemo(() => {
     const agora = new Date();
     // O fuso de Brasilia e usado pelo proprio Player para a programacao.
@@ -172,6 +201,8 @@ export default function NexoTvScheduleGridPortraits({ programs, presenters = [],
     [datas, programasEstudio, currentProgramId, fotos]);
 
   const gridInitialized = useRef(false);
+  const navNodes=useRef<HTMLButtonElement[]>([]);
+  useEffect(()=>{navNodes.current=Array.from(viewport.current?.querySelectorAll<HTMLButtonElement>(".nexo-grade-programa")||[]);},[colunas]);
   useEffect(() => {
     const target = viewport.current;
     if (!target) return;
@@ -199,7 +230,7 @@ export default function NexoTvScheduleGridPortraits({ programs, presenters = [],
     if (!atual) return;
     const dia = Number(atual.dataset.dia);
     const minuto = Number(atual.dataset.minuto);
-    const todos = Array.from(viewport.current?.querySelectorAll<HTMLButtonElement>(".nexo-grade-programa") || []);
+    const todos = navNodes.current.length ? navNodes.current : Array.from(viewport.current?.querySelectorAll<HTMLButtonElement>(".nexo-grade-programa") || []);
     let opcoes = todos.filter(button => button !== atual);
     if (event.key === "ArrowUp") opcoes = opcoes.filter(b => Number(b.dataset.dia) === dia && Number(b.dataset.minuto) < minuto);
     if (event.key === "ArrowDown") opcoes = opcoes.filter(b => Number(b.dataset.dia) === dia && Number(b.dataset.minuto) > minuto);
@@ -207,15 +238,10 @@ export default function NexoTvScheduleGridPortraits({ programs, presenters = [],
     if (event.key === "ArrowRight") opcoes = opcoes.filter(b => Number(b.dataset.dia) > dia);
     event.preventDefault(); event.stopPropagation();
     if (!opcoes.length) return;
-    opcoes.sort((a,b) => {
-      const pontuacao = (button: HTMLButtonElement) =>
-        Math.abs(Number(button.dataset.dia) - dia) * (event.key === "ArrowUp" || event.key === "ArrowDown" ? 10000 : 1440)
-        + Math.abs(Number(button.dataset.minuto) - minuto);
-      return pontuacao(a) - pontuacao(b);
-    });
-    event.preventDefault();
-    opcoes[0]?.focus({ preventScroll: true });
-    opcoes[0]?.scrollIntoView({ behavior: "instant", block: "nearest", inline: "nearest" });
+    const pontuacao=(b:HTMLButtonElement)=>Math.abs(Number(b.dataset.dia)-dia)*(event.key==="ArrowUp"||event.key==="ArrowDown"?10000:1440)+Math.abs(Number(b.dataset.minuto)-minuto);
+    const next=opcoes.reduce((best,b)=>pontuacao(b)<pontuacao(best)?b:best);
+    next.focus({ preventScroll: true });
+    scrollToProgram(next);
   };
 
   const horarioAgora = new Intl.DateTimeFormat("pt-BR", {
@@ -228,8 +254,8 @@ export default function NexoTvScheduleGridPortraits({ programs, presenters = [],
   const superficie = { "--nexo-grade-step": "calc(56 * var(--ott-u))" } as CSSProperties;
 
   return <section className="nexo-grade-agenda" role="dialog" aria-modal="true" aria-label="Grade de programação de sete dias">
-    <button ref={closeRef} type="button" className="nexo-grade-voltar" onClick={onClose} aria-label="Fechar grade de programação">
-      <Undo2 aria-hidden="true" strokeWidth={1.7} />
+    <button ref={closeRef} type="button" className="nexo-grade-voltar ott-standard-back" onClick={onClose} aria-label="Fechar grade de programação">
+      <Undo2 aria-hidden="true" strokeWidth={2.5} />
     </button>
     <div className="nexo-grade-moldura" style={superficie} ref={el=>{el?.toggleAttribute("inert",!!details);}}>
       <div className="nexo-grade-cabecalho">
@@ -266,7 +292,7 @@ export default function NexoTvScheduleGridPortraits({ programs, presenters = [],
                 {segmento.noAr && <span className="nexo-grade-no-ar">no ar</span>}
                 {segmento.fotos.length > 0 && <span className="nexo-grade-apresentadores" aria-label={`${segmento.fotos.length} foto(s) de apresentador(es)`}>
                   {segmento.fotos.map((foto, indice) => <span className="nexo-grade-retrato" key={`${foto}-${indice}`}>
-                    <img src={foto} alt="" loading="lazy" />
+                    <NexoLoadingImage src={foto} alt="" loading="lazy" />
                   </span>)}
                 </span>}
                 <small>{horario(segmento.inicio)}–{horario(segmento.fim)}</small>
@@ -275,11 +301,13 @@ export default function NexoTvScheduleGridPortraits({ programs, presenters = [],
           </div>)}
         </div>
       </div>
-      {!programasEstudio.length && <p className="nexo-grade-vazia">Nenhum programa cadastrado para esta rádio.</p>}
+      {!programasEstudio.length && (loading ? <div className="nexo-lote14-skeleton-grid" role="status" aria-label="Carregando programação">{Array.from({length:7},(_,i)=><div key={i}>{[0,1,2,3].map(j=><span key={j} className="nexo-lote14-bone"/>)}</div>)}</div> : <p className="nexo-grade-vazia">Nenhum programa cadastrado para esta rádio.</p>)}
     </div>
-    {details && <section className="nexo-program-details" data-nexo-program-details role="dialog" aria-modal="true" aria-label={details.programa.nome}>
-      <div className="nexo-detail-portraits" aria-hidden="true">{details.fotos.slice(0,2).map(foto=><img key={foto} src={foto} alt=""/>)}</div><div className="nexo-detail-copy"><header><div><h2>{details.programa.nome}</h2><p>{details.programa.horario_inicio?.slice(0,5)} – {details.programa.horario_fim?.slice(0,5)}<br/>{details.programa.variavel?details.programa.data_variavel:(details.programa.dias_semana||[]).join(', ')||'Todos os dias'}</p></div>{details.programa.classificacao_etaria&&<span className="nexo-rating" aria-label={`Classificação etária ${details.programa.classificacao_etaria}`} style={{background:({L:'#07853c','10':'#0076bb','12':'#d7a300','14':'#df7200','16':'#bd202b','18':'#000'} as Record<string,string>)[details.programa.classificacao_etaria]||'#555'}}>{details.programa.classificacao_etaria}</span>}</header>
-      <p>{details.programa.descricao||'Descrição não cadastrada.'}</p><footer><ReminderToggle reminder={{id:details.programa.id||details.programa.nome,name:details.programa.nome,start:details.programa.horario_inicio||'',days:details.programa.dias_semana||[],date:details.programa.variavel?details.programa.data_variavel:null}}/><button ref={detailBack} type="button" onClick={closeDetails} data-nexo-detail-close><Undo2/>Voltar</button></footer></div>
+    {details && <section className="nexo-program-details" data-phase={detailClosing?"exit":"enter"} data-nexo-program-details role="dialog" aria-modal="true" aria-label={details.programa.nome}>
+      <div className="nexo-detail-portraits nexo-lote9-portraits" aria-hidden="true">{details.fotos.slice(0,2).map(foto=><NexoLoadingImage key={foto} src={foto} alt=""/>)}</div><div className="nexo-detail-copy"><header><div><h2>{details.programa.nome}</h2><p>{details.programa.horario_inicio?.slice(0,5)} – {details.programa.horario_fim?.slice(0,5)}<br/>{details.programa.variavel?details.programa.data_variavel:(details.programa.dias_semana||[]).join(', ')||'Todos os dias'}</p></div>{details.programa.classificacao_etaria&&<span className="nexo-rating" aria-label={`Classificação etária ${details.programa.classificacao_etaria}`} style={{background:({L:'#07853c','10':'#0076bb','12':'#d7a300','14':'#df7200','16':'#bd202b','18':'#000'} as Record<string,string>)[details.programa.classificacao_etaria]||'#555'}}>{details.programa.classificacao_etaria}</span>}</header>
+      <p className="nexo-detail-description" tabIndex={0} data-ott-scroll aria-label="Descrição do programa">{details.programa.descricao||'Descrição não cadastrada.'}</p><footer><ReminderToggle reminder={{id:details.programa.id||details.programa.nome,name:details.programa.nome,start:details.programa.horario_inicio||'',days:details.programa.dias_semana||[],date:details.programa.variavel?details.programa.data_variavel:null}}/><button ref={detailBack} type="button" className="ott-standard-back" onClick={closeDetails} data-nexo-detail-close aria-label="Voltar"><Undo2 strokeWidth={2.5}/></button></footer></div>
     </section>}
   </section>;
 }
+
+export default memo(NexoTvScheduleGridPortraits);

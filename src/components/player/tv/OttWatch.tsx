@@ -1,3 +1,6 @@
+import { useNexoAudioIdle } from "./useNexoAudioIdle";
+import "./NexoAudioIdle.css";
+import NexoLoadingImage from "./NexoLoadingImage";
 import { isPlayerOtt, isPlayerTvApp } from "@/lib/playerTvApp";
 import OttCommercialSlot from "./OttCommercialSlot";
 import {useTvVisualAds,usePauseAd,useSplashAd} from "./useTvVisualAds";
@@ -192,6 +195,8 @@ export default function OttWatch(p:Props){
  useEffect(()=>{if(p.video){setVisible(true);}},[p.video,p.channelKey,videoReady]);
  const controlsPhase=useOttControlsMotion(showChrome&&!leaving,p.channelKey);
  const closeModal = () => setModal(null);
+ // Lote 15: the hook registers its capture listener before the existing navigation handler.
+ useNexoAudioIdle(()=>root.current,!p.video&&!leaving&&!modal&&!panel&&!shortcutsOpen&&!offlineOpen&&!p.commercialPlayback,p.channelKey);
  const videoNavRef=useRef({video:p.video,modal,panel,shortcutsOpen,offlineOpen,showChrome,onChannel:p.onChannel});
  videoNavRef.current={video:p.video,modal,panel,shortcutsOpen,offlineOpen,showChrome,onChannel:p.onChannel};
  useLayoutEffect(()=>{
@@ -261,23 +266,25 @@ export default function OttWatch(p:Props){
       />
      ))}
     </span>}
-   </button></div><section><span className="ott-eyebrow ott-playing-label">tocando</span><h1>{track.displayed.title}</h1><p>{track.displayed.subtitle}</p>{!p.video && <OttAudioSpectrum media={p.audioMedia} variant="ribbon" />}{!p.video && <OttCommercialSlot radioId={p.radioUserId} programId={p.currentProgram?.id} placement="naming_rights" visible={visualAd==="naming_rights"} fallback={<OttProgramSponsors radioUserId={p.radioUserId} programId={p.currentProgram?.id} variant="audio" />} />}</section></div>
+   </button></div><section><span className="ott-eyebrow ott-playing-label">tocando</span><h1>{track.displayed.title}</h1><p>{track.displayed.subtitle}</p>{!p.video && <OttAudioSpectrum media={p.audioMedia} variant="ribbon" />}</section></div>
  );
  return <OttFrame root={root} className={`ott-watch-controls ${p.video ? "ott-video":"ott-audio ott-home-gradient"}${p.video && p.videoChannels?.length ? " ott-positiva-multivideo" : ""}${panel ? " ott-presenter-centered" : ""}${panel === "weather" ? " ott-weather-open" : ""}`} loading={!p.video && !!p.buffering && !p.playing && !hasPlayed.current && !Boolean(p.cover?.trim() || songTitle?.trim() || p.currentProgram?.nome?.trim())} skeletonVariant="watch">
  <ProgramReminderToast/>
   {!p.video && <OttCommercialSlot radioId={p.radioUserId} programId={p.currentProgram?.id} placement="background_ads" visible={visualAd==="background_ads"} fallback={<OttWatchArtistCycle artist={/^(break|hora certa)$/i.test(songTitle?.trim() || "") ? null : songArtist} />} />}
   {!p.video && <OttPresenterBackdrop key={p.programKey} photos={p.presenterPhotos?.length ? p.presenterPhotos : p.presenterPhoto ? [p.presenterPhoto] : []} />}
   <div ref={overlay} className="ott-watch-surface" onPointerDown={()=>{if(!visible){setVisible(true);setActivity(v=>v+1);}}}>
+   {p.video&&p.buffering&&!p.unavailable&&!p.playbackBlocked&&!p.commercialPlayback&&!hasPlayed.current&&<div className="nexo-lote14-watch-pending" role="status" aria-label="Carregando vídeo"><span className="nexo-lote14-bone"/><span className="nexo-lote14-bone"/></div>}
    {!p.video && nowPlaying}
    <OttCommercialSlot radioId={p.radioUserId} programId={p.currentProgram?.id} placement="pause_ads" visible={pauseAd} />
    <OttCommercialSlot radioId={p.radioUserId} programId={p.currentProgram?.id} placement="splash_sponsor" visible={splashAd&&!pauseAd} />
    <div className="ott-watch-chrome" data-controls-phase={controlsPhase} aria-hidden={!showChrome} data-video-tray-open={videoTrayFocused||videoTrayHovered} style={{visibility:controlsPhase === "hidden" ? "hidden":"visible",pointerEvents:showChrome&&!leaving ? "auto":"none"}}>
     {p.video && !shortcutsOpen && !panel && p.channelKey !== "nexo-positiva-twitch" && p.musicTitle && <div className="ott-video-now-playing"><OttArtwork className="ott-video-now-cover" sources={[cover]} programSeal={p.programSeal}/><section><span className="ott-eyebrow ott-playing-label">tocando</span><h2>{songTitle}</h2><p>{songArtist}</p></section></div>}
-    <header className="ott-watch-header">{p.logo ? <img src={p.logo} alt={p.radioName||"Emissora"}/>:<OttBrand/>}<span>{p.radioName}</span><span className="ott-channel-type">{p.video ? "Vídeo" : "Áudio"}</span><span className="ott-live-label"><i/> AO VIVO</span><NexoTvClimateHeader radioUserId={p.radioUserId} />{(p.onProfile || p.renderProfile) && <button ref={profileButtonRef} className="ott-account" onClick={() => {
+    <header className="ott-watch-header">{p.logo ? <NexoLoadingImage src={p.logo} alt={p.radioName||"Emissora"}/>:<OttBrand/>}<span>{p.radioName}</span><span className="ott-channel-type">{p.video ? "Vídeo" : "Áudio"}</span><span className="ott-live-label"><i/> AO VIVO</span><NexoTvClimateHeader radioUserId={p.radioUserId} />{(p.onProfile || p.renderProfile) && <button ref={profileButtonRef} className="ott-account" onClick={() => {
      // All TV screens must open the same profile page, not an inline popup.
      p.onProfile?.();
     }} aria-label="Perfil"><OttAvatar src={p.avatar}/></button>}</header>
 
+    <div className="nexo-lote12-watch-sponsor" hidden={shortcutsOpen || !!panel}>{!p.video && <OttCommercialSlot radioId={p.radioUserId} programId={p.currentProgram?.id} placement="naming_rights" visible={visualAd==="naming_rights"} fallback={<OttProgramSponsors radioUserId={p.radioUserId} programId={p.currentProgram?.id} variant="audio" />} />}{p.video && <OttProgramSponsors radioUserId={p.radioUserId} programId={p.currentProgram?.id} variant="audio" />}</div>
     <footer className="ott-watch-footer" data-nexo-box-open={panel !== null ? "true" : "false"} data-shortcuts-open={shortcutsOpen}>
      <button className="ott-watch-back" onClick={leave} aria-label="Voltar ao início">
       <ChevronLeft aria-hidden="true" className="ott-watch-back-icon"/><House aria-hidden="true" className="ott-watch-home-icon"/>
@@ -320,7 +327,7 @@ export default function OttWatch(p:Props){
         aria-pressed={p.channelKey === channel.id}
         
         onClick={() => {if(channel.available) p.onSelectVideoChannel?.(channel.id);else setMissingChannel(true);}}>
-        <img src={channel.cover} alt="" loading="eager"/>
+        <NexoLoadingImage src={channel.cover} alt="" loading="eager"/>
         <span className="ott-positiva-channel-title" aria-hidden="true">{channel.label}</span>
         <span className="nexo-v16-live-status" data-live={channel.liveStatus === "live"} aria-hidden="true">{channel.liveStatus === "live" ? "ao vivo agora" : !channel.available || channel.liveStatus === "offline" ? "sem transmissão no momento" : "status indisponível"}</span>
        </button>

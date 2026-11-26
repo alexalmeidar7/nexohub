@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
-import { Moon, CloudMoon, Settings2, X } from "lucide-react";
+import { NexoRoundedWeather } from "./NexoRoundedWeather";
+import "./NexoVisualLote5.css";
+import { Settings2, Undo2 } from "lucide-react";
 import { playerSupabase } from "@/integrations/supabase/playerClient";
-import { ClimateIcon } from "./NexoTvWeatherPanel";
 
 const LOCATION_KEY = "nexo_tv_manual_city";
 const CEP_KEY = "nexo_tv_manual_cep";
@@ -42,11 +43,32 @@ function formatCep(value: string) {
 export default function NexoTvClimateHeader({ radioUserId }: { radioUserId?: string | null }) {
   const [now, setNow] = useState(() => new Date());
   const [weather, setWeather] = useState<Weather | null>(null);
+  const [nexoWeatherPending,setNexoWeatherPending]=useState(true);
   const [location, setLocation] = useState<Location | null>(previousLocation);
   const [open, setOpen] = useState(false);
   const [cep, setCep] = useState(storedCep);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [editingCep,setEditingCep] = useState(false);
+  type CepAddress = {localidade:string;uf:string;estado?:string};
+  const [previewAddress,setPreviewAddress] = useState<{digits:string;address:CepAddress}|null>(null);
+  const [lookupStatus,setLookupStatus] = useState('');
+  const lookupCache=useRef(new Map<string,Promise<CepAddress>>());
+  const saveButton=useRef<HTMLButtonElement>(null);
+  const lookupCep=(digits:string):Promise<CepAddress>=>{
+    const cached=lookupCache.current.get(digits);if(cached)return cached;
+    const promise=(async()=>{
+      const response=await fetch('https://viacep.com.br/ws/'+digits+'/json/');
+      if(!response.ok)throw Error('Não foi possível consultar o CEP.');
+      const value=await response.json();
+      if(value.erro||typeof value.localidade!=='string'||!value.localidade||typeof value.uf!=='string'||!value.uf)throw Error('CEP não encontrado.');
+      return {localidade:value.localidade,uf:value.uf,estado:typeof value.estado==='string'?value.estado:undefined};
+    })();
+    if(lookupCache.current.size>=20)lookupCache.current.delete(lookupCache.current.keys().next().value!);
+    lookupCache.current.set(digits,promise);
+    void promise.catch(()=>{if(lookupCache.current.get(digits)===promise)lookupCache.current.delete(digits);});
+    return promise;
+  };
   const input = useRef<HTMLInputElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
 
@@ -54,7 +76,24 @@ export default function NexoTvClimateHeader({ radioUserId }: { radioUserId?: str
     const interval = window.setInterval(() => setNow(new Date()), 1000);
     return () => window.clearInterval(interval);
   }, []);
-  useEffect(() => { if (open) input.current?.focus({ preventScroll: true }); }, [open]);
+  // nexo-lote8-cep: existing CEP never opens the IME automatically.
+  useEffect(() => { if(open){if(codeDigits(storedCep()).length===8)saveButton.current?.focus({preventScroll:true});else input.current?.focus({preventScroll:true});} }, [open]);
+  useEffect(()=>{
+    if(!open)return;
+    const digits=codeDigits(cep);let cancelled=false;
+    setPreviewAddress(null);setLookupStatus('');
+    if(digits.length!==8)return;
+    const timer=window.setTimeout(()=>{
+      setLookupStatus('Consultando CEP...');
+      void lookupCep(digits).then(address=>{if(!cancelled){setPreviewAddress({digits,address});setLookupStatus('');}}).catch(error=>{if(!cancelled)setLookupStatus(error instanceof Error?error.message:'CEP indisponível.');});
+    },200);
+    return()=>{cancelled=true;window.clearTimeout(timer);};
+  },[open,cep]);
+  const activateCepInput=()=>{
+    setEditingCep(true);
+    // A direct user gesture allows Android WebView to show its native keyboard.
+    if(input.current){input.current.readOnly=false;input.current.focus({preventScroll:true});}
+  };
   useEffect(() => {
     let cancelled = false;
     async function updateWeather() {
@@ -97,10 +136,7 @@ export default function NexoTvClimateHeader({ radioUserId }: { radioUserId?: str
     setSaving(true);
     setMessage("");
     try {
-      const addressResponse = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
-      if (!addressResponse.ok) throw new Error("Não foi possível consultar o CEP.");
-      const address: { erro?: boolean; localidade?: string; uf?: string; estado?: string } = await addressResponse.json();
-      if (address.erro || !address.localidade || !address.uf) throw new Error("CEP não encontrado.");
+      const address = await lookupCep(digits);
       const { data, error } = await playerSupabase.functions.invoke("fetch-weather", {
         body: { action: "geocode", query: address.localidade, count: 20 },
       });
@@ -127,6 +163,8 @@ export default function NexoTvClimateHeader({ radioUserId }: { radioUserId?: str
     } finally { setSaving(false); }
   }
 
+  useEffect(()=>{if(weather)setNexoWeatherPending(false);},[weather]);
+  useEffect(()=>{const id=window.setTimeout(()=>setNexoWeatherPending(false),10000);return()=>clearTimeout(id);},[]);
   const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
   return <>
     <div className="nexo-tv-climate-header">
@@ -135,27 +173,26 @@ export default function NexoTvClimateHeader({ radioUserId }: { radioUserId?: str
       <button ref={trigger} className="nexo-tv-climate-trigger" type="button"
         aria-label="Configurar previsão do tempo pelo CEP"
         aria-haspopup="dialog" aria-expanded={open}
-        onClick={() => { setCep(storedCep()); setMessage(""); setOpen(true); }}>
-        <span className="nexo-tv-climate-glyph">{!weather || weather.code === null ? <span aria-label="Clima indisponível">—</span> : (weather.isDay === false || (weather.isDay === null && (now.getHours() < 6 || now.getHours() >= 18))) && weather.code <= 2
-          ? (weather.code === 0 ? <Moon strokeWidth={1.65} aria-hidden="true"/> : <CloudMoon strokeWidth={1.65} aria-hidden="true"/>)
-          : <ClimateIcon code={weather.code}/>}</span>
-        <span className="nexo-tv-climate-degree">{weather ? `${weather.temp}°` : "--°"}</span>
+        onClick={() => { const saved=storedCep();setCep(saved);setEditingCep(codeDigits(saved).length!==8);setMessage("");setOpen(true); }}>
+        <span className="nexo-tv-climate-glyph nexo-lote5-weather">{!weather || weather.code === null ? <span aria-label="Clima indisponível">—</span> : <NexoRoundedWeather code={weather.code} night={weather.isDay === false || (weather.isDay === null && (now.getHours() < 6 || now.getHours() >= 18))} />}</span>
+        <span className="nexo-tv-climate-degree">{weather ? `${weather.temp}°` : nexoWeatherPending ? <span className="nexo-lote14-bone nexo-lote14-weather-bone" role="status" aria-label="Carregando temperatura"/> : "--°"}</span>
         <span className="nexo-tv-climate-settings" aria-hidden="true"><Settings2 strokeWidth={1.65}/></span>
       </button>
     </div>
-    {open && createPortal(<div className="nexo-tv-cep-overlay" onMouseDown={event => { if (event.target === event.currentTarget) close(); }}>
+    {open && createPortal(<div className="nexo-tv-cep-overlay" data-nexo-lote10-home={Boolean(trigger.current?.closest(".ott-home.ott-rail-layout"))} onMouseDown={event => { if (event.target === event.currentTarget) close(); }}>
       <section className="nexo-tv-cep-dialog" role="dialog" aria-modal="true" aria-label="Configurar tempo pelo CEP"
-        onKeyDown={event => { event.stopPropagation(); if (event.key === "Escape") { event.preventDefault(); close(); } }}>
+        onKeyDown={event => { event.stopPropagation(); if (event.key === "Escape") { event.preventDefault(); close(); return; } if(["ArrowUp","ArrowDown"].includes(event.key)){const nodes=Array.from(event.currentTarget.querySelectorAll<HTMLElement>("button:not(:disabled),input:not(:disabled)"));const at=nodes.indexOf(document.activeElement as HTMLElement);const next=nodes[at+(event.key==="ArrowUp"?-1:1)];if(next){event.preventDefault();next.focus({preventScroll:true});}} }}>
         <header>
           <h2>previsão do tempo</h2>
-          <button type="button" onClick={close} aria-label="Fechar" disabled={saving}><X aria-hidden="true"/></button>
+          <button type="button" onClick={close} aria-label="Voltar" className="ott-standard-back" disabled={saving}><Undo2 aria-hidden="true" strokeWidth={2.5}/></button>
         </header>
         <p>Informe seu CEP para buscar o tempo da sua região.</p>
         <form onSubmit={event => void saveCep(event)}>
           <input id="nexo-tv-weather-cep" aria-label="CEP" ref={input} type="text" inputMode="numeric" autoComplete="postal-code"
-            placeholder="00000-000" maxLength={9} value={formatCep(cep)} onChange={event => setCep(codeDigits(event.target.value))}/>
+            placeholder="00000-000" maxLength={9} value={formatCep(cep)} readOnly={!editingCep} onClick={activateCepInput} onKeyDown={event=>{if(!editingCep&&(event.key==="Enter"||event.key===" ")){event.preventDefault();activateCepInput();}}} onChange={event => setCep(codeDigits(event.target.value))}/>
           {message && <p className="nexo-tv-cep-error" role="alert">{message}</p>}
-          <button className="nexo-tv-cep-save" type="submit" disabled={saving}>{saving ? "localizando..." : "salvar CEP"}</button>
+          <button ref={saveButton} className="nexo-tv-cep-save" type="submit" disabled={saving}>{saving ? "localizando..." : "salvar CEP"}</button>
+          <p className="nexo-lote8-cep-city" aria-live="polite">{previewAddress?.digits===codeDigits(cep)?'Tempo para: '+previewAddress.address.localidade+' / '+(previewAddress.address.estado||STATE_NAMES[previewAddress.address.uf]||previewAddress.address.uf):lookupStatus.startsWith('Consultando')?<span className="nexo-lote14-bone nexo-lote14-cep-bone" role="status" aria-label="Consultando CEP"/>:lookupStatus}</p>
         </form>
       </section>
     </div>, document.body)}

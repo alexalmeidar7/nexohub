@@ -2570,3 +2570,100 @@
 .nexo-tv.ott-video.ott-positiva-multivideo .ott-positiva-channel-track {left:calc(9 * var(--ott-u)); -webkit-box-reflect:none!important;}
 .nexo-tv.ott-video.ott-positiva-multivideo .ott-watch-chrome[data-video-tray-open="true"] .ott-positiva-channel-track {top:calc(9 * var(--ott-u));}
 .nexo-tv.ott-video.ott-positiva-multivideo .ott-positiva-channel-card, .nexo-tv.ott-video.ott-positiva-multivideo .ott-positiva-channel-card img {-webkit-box-reflect:none!important;backface-visibility:hidden;}
+
+
+/* NEXO SMOOTH UI — original outward focus gap. */
+.nexo-tv { --ott-focus-width: max(2px, calc(3 * var(--ott-u))); --ott-box-radius: calc(16 * var(--ott-u)); }
+.nexo-tv.nexo-tv.nexo-tv button:not(:disabled):not(.ott-profile-entry):not(.nexo-home-commercial-trigger):is(:hover,:focus-visible,[data-ott-focused="true"]) {
+  outline: var(--ott-focus-width) solid #fff !important;
+  outline-offset: calc(5 * var(--ott-u)) !important;
+  box-shadow: none !important;
+}
+.nexo-tv.nexo-tv.nexo-tv .ott-profile-entry:is(:hover,:focus-visible,:focus) > .ott-avatar {
+  outline: var(--ott-focus-width) solid #fff !important;
+  outline-offset: calc(5 * var(--ott-u)) !important;
+  box-shadow: none !important;
+}
+.nexo-tv.nexo-tv.nexo-tv button.ott-standard-back,
+.nexo-tv.nexo-tv.nexo-tv .ott-interactivity-panel > header > button.ott-standard-back {
+  width: calc(55 * var(--ott-u)) !important; height: calc(55 * var(--ott-u)) !important;
+  min-width: calc(55 * var(--ott-u)) !important; min-height: calc(55 * var(--ott-u)) !important;
+  padding: 0 !important; border: 0 !important; border-radius: 50% !important;
+  display: inline-flex !important; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.20) !important; color: #fff !important; flex-shrink: 0;
+}
+.nexo-tv.nexo-tv.nexo-tv button.ott-standard-back > svg { width:calc(27 * var(--ott-u)) !important; height:calc(27 * var(--ott-u)) !important; stroke-width:2.5; }
+.nexo-tv.nexo-tv .ott-interactivity-panel, .nexo-tv.nexo-tv .ott-home-history-dialog { border-radius:var(--ott-box-radius); }
+.nexo-tv-cep-dialog header button.ott-standard-back { width:44px;height:44px;border:0;border-radius:50%;padding:0;display:grid;place-items:center;background:rgba(255,255,255,.20);color:white; }
+.nexo-tv-cep-dialog header button.ott-standard-back:is(:hover,:focus-visible) {outline:3px solid white;outline-offset:3px;box-shadow:none;}
+.nexo-tv-cep-dialog header button.ott-standard-back svg {width:22px;height:22px;stroke-width:2.5;}
+/* Keep existing entry/exit transitions; remove per-image pulse that can flash on refresh. */
+.nexo-tv.nexo-tv img.ott-skeleton-media-pending {animation:none !important;opacity:1 !important;}
+
+
+/* NEXO SMOOTH UI V5 — one selection ring, including legacy rail styles.
+   Keep the existing layout and reserved border space; restore original outward spacing. */
+.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv button:not(:disabled):not(.ott-profile-entry):not(.nexo-home-commercial-trigger):is(:hover,:focus,:focus-visible,[data-ott-focused="true"]) {
+  outline: var(--ott-focus-width) solid #fff !important;
+  outline-offset: calc(5 * var(--ott-u)) !important;
+  box-shadow: none !important;
+}
+.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.ott-home.ott-rail-layout :is(.ott-home-rail-button,.ott-home-rail-profile,.ott-now-grade):not(:disabled):is(:hover,:focus,:focus-visible,[data-ott-focused="true"]) {
+  border-color: transparent !important;
+  outline: var(--ott-focus-width) solid #fff !important;
+  outline-offset: calc(5 * var(--ott-u)) !important;
+  box-shadow: none !important;
+}
+/* The avatar, rather than the entire profile tile, owns the focus ring. */
+.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv .ott-profile-entry:not(:disabled):is(:hover,:focus,:focus-visible,[data-ott-focused="true"]) > .ott-avatar {
+  outline: var(--ott-focus-width) solid white !important;
+  outline-offset: calc(6 * var(--ott-u)) !important;
+  box-shadow:none !important;
+}
+.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv .ott-profile-entry:not(:disabled):is(:hover,:focus,:focus-visible,[data-ott-focused="true"]) > .ott-avatar.ott-add {
+  border-color:transparent !important;
+}
+/* Match the poll panel back button without affecting shortcut animation. */
+.nexo-tv.nexo-tv.nexo-tv .ott-interactivity-shortcuts .ott-interactivity-back {
+  width:calc(55 * var(--ott-u));height:calc(55 * var(--ott-u));
+  min-width:calc(55 * var(--ott-u));min-height:calc(55 * var(--ott-u));
+  border:0;border-radius:50%;background:rgba(255,255,255,.20)!important;
+}
+.nexo-tv.nexo-tv.nexo-tv .ott-interactivity-shortcuts .ott-interactivity-back > svg {
+  width:calc(27 * var(--ott-u));height:calc(27 * var(--ott-u));stroke-width:2.5;
+}
+.nexo-tv-cep-dialog header button.ott-standard-back:is(:hover,:focus,:focus-visible) {
+  outline: max(2px, calc(3 * var(--ott-u, 1px))) solid white !important;
+  outline-offset: 3px !important;
+}
+
+/* Header weather: rounded bold white, motion limited to the glyph. */
+.nexo-tv .nexo-tv-climate-glyph{color:#fff;}
+.nexo-tv .nexo-tv-climate-glyph .nexo-wx-icon{stroke-width:5.2!important;stroke-linecap:round;stroke-linejoin:round;}
+.nexo-tv .nexo-tv-climate-glyph .nexo-wx-icon>path:not(.nexo-wx-flash),.nexo-tv .nexo-tv-climate-glyph .nexo-header-weather-night{animation:nexo-header-weather-breathe 3.2s ease-in-out infinite;transform-origin:center;}
+.nexo-tv .nexo-tv-climate-glyph .nexo-header-weather-night{width:calc(34 * var(--ott-u));height:calc(34 * var(--ott-u));}
+@keyframes nexo-header-weather-breathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@media(prefers-reduced-motion:reduce){.nexo-tv .nexo-tv-climate-glyph *{animation:none!important;}}
+
+/* NEXO lote 3: one external avatar ring; retain original avatar size. */
+.nexo-tv.ott-profiles-refined .ott-profile-select:has(> .ott-profile-add-row){padding:calc(24 * var(--ott-u))!important;scroll-padding:calc(24 * var(--ott-u));}
+.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.ott-profiles-refined .ott-profile-select :is(.ott-profile-main,.ott-profile-add-button,.ott-profile-connect):is(:hover,:focus,:focus-visible,[data-ott-focused="true"]){outline:none!important;box-shadow:none!important;overflow:visible!important;}
+.nexo-tv.ott-profiles-refined .ott-profile-select :is(.ott-profile-main,.ott-profile-add-button,.ott-profile-connect)::after{content:none!important;display:none!important;}
+.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.ott-profiles-refined .ott-profile-select :is(.ott-profile-main,.ott-profile-add-button,.ott-profile-connect):is(:hover,:focus,:focus-visible,[data-ott-focused="true"])>.ott-avatar{outline:var(--ott-focus-width,3px) solid white!important;outline-offset:calc(6 * var(--ott-u))!important;box-shadow:none!important;border-color:transparent!important;}
+/* The modal remains mounted for its exit animation. Do not animate the Home or media. */
+.nexo-tv .ott-modal-scrim[data-nexo-schedule="true"][data-phase="enter"] .nexo-grade-agenda{animation:nexo-l3-grade-in 200ms ease-out both;}
+.nexo-tv .ott-modal-scrim[data-nexo-schedule="true"][data-phase="exit"] .nexo-grade-agenda{animation:nexo-l3-grade-out 200ms ease-in both;pointer-events:none;}
+@keyframes nexo-l3-grade-in{from{opacity:0;transform:translateY(calc(20 * var(--ott-u)))}to{opacity:1;transform:translateY(0)}}
+@keyframes nexo-l3-grade-out{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(calc(20 * var(--ott-u)))}}
+@media(prefers-reduced-motion:reduce){.nexo-tv .ott-modal-scrim[data-nexo-schedule="true"] .nexo-grade-agenda{animation:none!important;}}
+
+/* NEXO L4: profile focus ring is painted outside the circular button, not on the clipped avatar. */
+.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.ott-profiles-refined .ott-profile-select {padding:calc(26 * var(--ott-u))!important;scroll-padding:calc(26 * var(--ott-u));box-sizing:border-box;}
+.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-row {overflow:visible!important;}
+.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-add-row {overflow:visible!important;}
+.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.ott-profiles-refined .ott-profile-select :is(.ott-profile-main,.ott-profile-add-button) {position:relative!important;overflow:visible!important;outline:none!important;box-shadow:none!important;isolation:isolate;}
+.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.ott-profiles-refined .ott-profile-select :is(.ott-profile-main,.ott-profile-add-button)>.ott-avatar {outline:none!important;box-shadow:none!important;transform:none!important;}
+.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.ott-profiles-refined .ott-profile-select :is(.ott-profile-main,.ott-profile-add-button)::before {content:none!important;}
+.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.ott-profiles-refined .ott-profile-select :is(.ott-profile-main,.ott-profile-add-button)::after {content:""!important;display:block!important;position:absolute!important;inset:calc(-6 * var(--ott-u))!important;border:var(--ott-focus-width,3px) solid transparent!important;border-radius:50%!important;box-shadow:none!important;outline:none!important;transform:none!important;pointer-events:none!important;z-index:5!important;}
+.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.ott-profiles-refined .ott-profile-select :is(.ott-profile-main,.ott-profile-add-button):is(:hover,:focus,:focus-visible,[data-ott-focused="true"])::after {border-color:white!important;}
+.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.ott-profiles-refined .ott-profile-select :is(.ott-profile-main,.ott-profile-add-button):is(:hover,:focus,:focus-visible,[data-ott-focused="true"])>.ott-avatar {border-color:transparent!important;outline:none!important;box-shadow:none!important;transform:none!important;}

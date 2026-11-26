@@ -135,8 +135,8 @@ export default function OttProgramSponsors({ radioUserId, programId, variant }: 
     return () => window.clearInterval(timer);
   }, [available]);
   if (!radioUserId || !programId || !current) return null;
-  return <div className={`ott-program-sponsors ott-program-sponsors--${variant}`} aria-label="Patrocinadores do programa no ar">
-    <span className="ott-program-sponsors-label">oferecimento</span>
+  return <div className={`ott-program-sponsors ott-program-sponsors--${variant}${variant === "home" ? " nexo-lote9-sponsor" : ""}`} aria-label="Patrocinadores do programa no ar">
+    {variant !== "home" && <span className="ott-program-sponsors-label">oferecimento</span>}
     <div className="ott-program-sponsors-logo-wrap">
       {available.map(logo => <img key={logo.url} className={logo.url === current.url ? "is-current" : "is-preloaded"}
         src={logo.url} alt={logo.name} aria-hidden={logo.url !== current.url} loading="eager" decoding="async"

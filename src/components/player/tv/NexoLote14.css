@@ -1,0 +1,30 @@
+/* Glass only on requested On Demand UI; same shared header as Home. */
+.nexo-tv.nexo-tv.ott-content-view :is(.ott-header-track,.ott-search,.nexo-tv-climate-header,.ott-home-search-close,.ott-subpage-bottom-back,.ott-demand-video,.ott-demand-message){background:var(--nexo-glass-neutral,linear-gradient(145deg,#ffffff26,#18181b88))!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+.nexo-tv.nexo-tv.ott-content-view :is(.ott-header-track,.ott-search,.nexo-tv-climate-header,.ott-home-search-close,.ott-subpage-bottom-back,.ott-demand-video):not(:hover):not(:focus):not([data-ott-focused="true"]){box-shadow:var(--nexo-glass-edge,inset 0 0 0 1px #ffffff22)!important;}
+.nexo-tv.nexo-tv.ott-content-view :is(.ott-home-search-expand,.ott-home-search-results,.ott-home-history-dialog){background:var(--nexo-glass-panel,#29292de6)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+.nexo-tv.nexo-tv.ott-content-view .ott-demand-video img{opacity:1;filter:none;}
+.nexo-tv.nexo-tv.ott-content-view .ott-demand-video:is(:hover,:focus,:focus-visible,[data-ott-focused="true"]){outline:2px solid #ffffffe0!important;outline-offset:3px!important;border-color:transparent!important;}
+/* Restore transparent spectrum; no changes to analyser, bars or mini player. */
+.nexo-tv.nexo-tv.ott-audio .ott-spectrum-ribbon{background:transparent!important;box-shadow:none!important;border:0!important;border-radius:0!important;padding:0!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+/* Local, lightweight placeholders. Never mask ready content on refresh. */
+.nexo-tv img[data-nexo-image-pending="true"]{background-color:#ffffff1c!important;}
+.nexo-tv .nexo-lote14-bone,.nexo-tv-cep-overlay .nexo-lote14-bone{display:block;background:linear-gradient(120deg,#ffffff12,#ffffff26,#ffffff12);border-radius:8px;min-height:12px;}
+.nexo-tv .nexo-lote14-art-pending{background:#ffffff18!important;}
+.nexo-tv .nexo-lote14-art-pending .nexo-lote14-bone{width:100%;height:100%;min-height:24px;border-radius:inherit;}
+.nexo-tv .nexo-lote14-watch-pending{position:absolute;top:42%;left:40%;width:20%;height:12%;z-index:2;pointer-events:none;display:grid;gap:10px;align-content:center;}
+.nexo-tv .nexo-lote14-watch-pending .nexo-lote14-bone{height:calc(17 * var(--ott-u));}
+.nexo-tv .nexo-lote14-search-pending{padding:12px;display:grid;gap:10px;}
+.nexo-tv .nexo-lote14-skeleton-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:calc(12 * var(--ott-u));position:absolute;inset:16% 2% 3% 10%;pointer-events:none;}
+.nexo-tv .nexo-lote14-skeleton-grid>div{display:grid;gap:10px;grid-template-rows:repeat(4,1fr);}
+.nexo-tv-cep-overlay .nexo-lote14-bone{width:65%;height:12px;margin:6px auto;}
+.nexo-tv .nexo-lote14-weather-bone{width:calc(35 * var(--ott-u));height:calc(23 * var(--ott-u));display:inline-block;vertical-align:middle;}
+/* TV composition: static bones (no per-card animation layer), bounded paint. */
+.nexo-tv .ott-skeleton-bone:after,.nexo-tv .ott-skeleton-qr-bone{animation:none!important;}
+.nexo-tv .ott-skeleton-bone:after{display:none!important;}
+.nexo-tv .ott-skeleton-bone{background:linear-gradient(120deg,#ffffff10,#ffffff22,#ffffff10);}
+.nexo-tv .nexo-grade-agenda :is(.nexo-grade-programa,.nexo-grade-retrato img,.nexo-grade-dia-titulo,.nexo-grade-horario){backdrop-filter:none!important;-webkit-backdrop-filter:none!important;will-change:auto!important;}
+.nexo-tv .nexo-grade-agenda .nexo-grade-programa{transition:background-color 100ms ease,outline-color 100ms ease!important;}
+/* Skip painting offscreen content, keeping the real focusable button and geometry. */
+@supports(content-visibility:auto){.nexo-tv .nexo-grade-agenda .nexo-grade-programa:not(:focus):not(:hover)>.nexo-grade-conteudo{content-visibility:auto;contain-intrinsic-size:auto 90px;}}
+.nexo-tv .nexo-home-commercial-banner[data-nexo-lote14-banner-pending="true"] .nexo-home-commercial-trigger{background:linear-gradient(120deg,#ffffff12,#ffffff24,#ffffff12)!important;pointer-events:none!important;}
+.nexo-tv .nexo-home-commercial-banner[data-nexo-lote14-banner-pending="true"] .nexo-home-commercial-label{visibility:hidden;}

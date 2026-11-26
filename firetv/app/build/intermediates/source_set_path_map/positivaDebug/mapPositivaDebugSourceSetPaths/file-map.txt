@@ -1,0 +1,9 @@
+br.com.nexobrasil.nexoplayer.firetv.app-positiva-0 D:\ONEDRIVE\0 - NEXO\5 - House Mix\nexohub-git\firetv\app\build\generated\res\pngs\positiva\debug
+br.com.nexobrasil.nexoplayer.firetv.app-positiva-1 D:\ONEDRIVE\0 - NEXO\5 - House Mix\nexohub-git\firetv\app\build\generated\res\resValues\positiva\debug
+br.com.nexobrasil.nexoplayer.firetv.app-packagePositivaDebugResources-2 D:\ONEDRIVE\0 - NEXO\5 - House Mix\nexohub-git\firetv\app\build\intermediates\incremental\positivaDebug\packagePositivaDebugResources\merged.dir
+br.com.nexobrasil.nexoplayer.firetv.app-packagePositivaDebugResources-3 D:\ONEDRIVE\0 - NEXO\5 - House Mix\nexohub-git\firetv\app\build\intermediates\incremental\positivaDebug\packagePositivaDebugResources\stripped.dir
+br.com.nexobrasil.nexoplayer.firetv.app-positivaDebug-4 D:\ONEDRIVE\0 - NEXO\5 - House Mix\nexohub-git\firetv\app\build\intermediates\merged_res\positivaDebug\mergePositivaDebugResources
+br.com.nexobrasil.nexoplayer.firetv.app-debug-5 D:\ONEDRIVE\0 - NEXO\5 - House Mix\nexohub-git\firetv\app\src\debug\res
+br.com.nexobrasil.nexoplayer.firetv.app-main-6 D:\ONEDRIVE\0 - NEXO\5 - House Mix\nexohub-git\firetv\app\src\main\res
+br.com.nexobrasil.nexoplayer.firetv.app-positiva-7 D:\ONEDRIVE\0 - NEXO\5 - House Mix\nexohub-git\firetv\app\src\positiva\res
+br.com.nexobrasil.nexoplayer.firetv.app-positivaDebug-8 D:\ONEDRIVE\0 - NEXO\5 - House Mix\nexohub-git\firetv\app\src\positivaDebug\res

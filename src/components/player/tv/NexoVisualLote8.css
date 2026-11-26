@@ -1,0 +1,11 @@
+/* Mesmo selo em todos os formatos existentes; nao altera as artes. */
+.nexo-tv.ott-home .nexo-home-commercial-label,
+.nexo-ad-slot .nexo-ad-label,
+.nexo-tv-commercial-playback .nexo-tv-commercial-label,
+.nexo-tv .nexo-history-info .nexo-lote8-history-ad {
+  background:rgba(255,255,255,.20)!important;
+  color:#fff!important;
+}
+.nexo-tv .nexo-history-info .nexo-lote8-history-ad {border-radius:999px;padding:calc(5 * var(--ott-u)) calc(12 * var(--ott-u));}
+.nexo-tv-cep-dialog .nexo-lote8-cep-city {color:#fff;text-align:center;margin:12px 0 0;font-size:14px;min-height:0;}
+.nexo-tv-cep-dialog .nexo-lote8-cep-city:empty {display:none;}

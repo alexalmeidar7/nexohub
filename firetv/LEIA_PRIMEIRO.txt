@@ -1,0 +1,7 @@
+NEXO PLAYER FIRE TV — PROJETO ANDROID STUDIO
+
+Abra a pasta firetv no Android Studio. Selecione a variante positivaDebug e clique em Run.
+
+Atualizações aplicadas: login e QR com tentativas automáticas; persistência de visitante e pareamento; tela inicial nativa; músicas tocadas (até 50) via public-music-history; programação em painel com fundo preto 50%; previsão de 5 dias via fetch-weather; ícones e logo de Positiva FM; Gradle wrapper incluído.
+
+Atenção: compilação e testes na Fire TV não foram executados neste ambiente. O app depende dos serviços Supabase disponíveis.

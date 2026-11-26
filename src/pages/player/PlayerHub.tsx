@@ -18,8 +18,7 @@ import PlayerHome from "./PlayerHome";
 import { resolveEffectiveOnAir } from "@/lib/onAirResolver";
 import { getStationLogoFallback } from "@/lib/playerBranding";
 import { clearPlayerSession, getPlayerSessionUserId } from "@/lib/playerSession";
-import { ensureTvRadio, unlockTvRadio } from "@/components/player/tv/tvAudio";
-import { warmTvAudioConnection } from "@/lib/tvAudioWarmup";
+import { ensureTvRadio, unlockTvRadio, setTvRadioStandby } from "@/components/player/tv/tvAudio";
 import { isPlayerOtt, isPlayerTvApp } from "@/lib/playerTvApp";
 
 // Injects <link rel="preload" as="image"> for the LCP background so the
@@ -89,10 +88,14 @@ export default function PlayerHub() {
     searchParams.get("step") === "home" ||
     (!tvStartup && typeof window !== "undefined" && window.localStorage.getItem(storageKey) === "1");
   const [step, setStep] = useState<Step>((internalTv || (webOtt && tvGuestMode)) && searchParams.get("step") === "profiles" ? "welcome" : tvStartup && searchParams.get("step") !== "home" ? "splash" : skipToHome ? "home" : "login");
-  const [prepared, setPrepared] = useState(!!(internalTv && initialCache?.channels?.length));
   const [prepareError, setPrepareError] = useState(false);
   const [radioSource, setRadioSource] = useState<string>(initialCache?.channels?.find((c:any)=>c.type === "audio_live" && c.active !== false)?.url || "");
-  useEffect(() => { if (tvStartup && (step === "welcome" || step === "home") && radioSource) void ensureTvRadio(radioSource, userSlug || "radio"); }, [tvStartup, step, radioSource, userSlug]);
+  useEffect(() => {
+ if(!tvStartup||!radioSource||!['splash','welcome','home'].includes(step))return;
+ // The profile and Home use the same element; no standby toggle after startup.
+ setTvRadioStandby(step==='splash');
+ void ensureTvRadio(radioSource,userSlug||"radio");
+ }, [tvStartup, step, radioSource, userSlug]);
 
   // Se chegou com ?step=home, grava a preferência e reflete na URL de forma estável.
   useEffect(() => {
@@ -245,19 +248,31 @@ export default function PlayerHub() {
           if (!error && data && !data.error) {
             // NEXO_V5_AUDIO_PREPARE: preconexao da emissora sem iniciar som antes da escolha do perfil.
             if (tvStartup) {
-              if (!internalTv) warmTvAudioConnection(data.channels);
               const channels = data.channels || [];
               setRadioSource(channels.find((c:any) => c.type === "audio_live" && c.active !== false)?.url || "");
               const cache = {channels, logoUrl:data.empresa?.logo || data.empresa?.logo_url || getStationLogoFallback(userSlug), channelName:data.empresa?.nome || "", timezone:data.empresa?.timezone || null, programas:data.programas || [], presenters:data.apresentadores || [], ownerUserId:data.userId, artistBackground:data.musicDeezerArtistImg || null, nowPlaying:data.musicData?.titulo ? {musica:data.musicData.titulo, artista:data.musicData.artista || "", capa:data.musicData.capa || ""} : null, _ts:Date.now()};
               try { localStorage.setItem("player_home_cache_pub_"+userSlug, JSON.stringify(cache)); } catch {}
-              const images = [cache.logoUrl, data.musicDeezerArtistImg, data.musicData?.capa, pickCurrentProgramThumb(data.programas, "public", data.empresa?.timezone || null)].filter(Boolean) as string[];
-              try {
-                await Promise.race([Promise.all([prepareVideoStatuses(channels), import("../Player"), import("./AudioPlayerScreen"), import("./PlayerHome"), document.fonts?.ready, ...(user && data.userId ? [warmTvProfile(user,data.userId,user.email?.split("@")[0] || "Visitante").then(profile=>Promise.all([profile.avatar_url,...(profile.sub_profiles||[]).map(p=>p.avatar_url)].filter(Boolean).slice(0,8).map(preloadImage)))] : []), ...images.map(preloadImage)]), new Promise((_,reject)=>setTimeout(()=>reject(new Error("preload timeout")),15000))]);
-                if (!channels.length) throw new Error("no channels");
-                setPrepared(true);
-              } catch { setPrepareError(true); }
+              const images = [cache.logoUrl, cache.artistBackground, cache.nowPlaying?.capa,
+                pickCurrentProgramThumb(data.programas, "public", cache.timezone)].filter(Boolean) as string[];
+              // Prepare critical chunks before leaving Splash, bounded to avoid blocking profiles.
+              const portraits=(data.apresentadores||[]).map((person:any)=>person.foto).filter(Boolean).slice(0,8) as string[];
+              const modulePrep=Promise.allSettled([
+                Promise.resolve().then(() => prepareVideoStatuses(channels)),
+                import("../Player"),
+                import("./AudioPlayerScreen"),
+                ...images.map(url => Promise.resolve().then(() => preloadImage(url))),
+              ]);
+              void Promise.allSettled(portraits.map(url=>preloadImage(url)));
+              if(!internalTv){
+                const warm=import("../Player").then(m=>m.warmTvHomeBuffer(channels)).catch(()=>{});
+                await Promise.race([Promise.allSettled([modulePrep,warm]),new Promise<void>(resolve=>setTimeout(resolve,2500))]);
+              }
             }
-            if (data.userId) setPublicUserId(data.userId);
+            if (data.userId) {
+              setPublicUserId(data.userId);
+              // Keep the confirmed Splash -> Profiles flow independent of ads.
+              if (tvStartup || webOtt) void import("@/components/player/tv/OttCommercialHomeBanner").then(m=>m.preloadCampaignImages(data.userId)).catch(()=>{});
+            }
             setLogoUrl(data.empresa?.logo || data.empresa?.logo_url || data.channels?.find((c: any) => c?.active && c?.logo_url)?.logo_url || getStationLogoFallback(userSlug));
             if (data.empresa?.nome) setChannelName(data.empresa.nome);
             setLoginBackground(data.musicDeezerArtistImg || null);
@@ -369,7 +384,7 @@ export default function PlayerHub() {
 
   // NEXO_V7_15_PRELOAD: pre-carregamento de modulos, sem solicitar audio/video.
   useEffect(() => {
-    if (step !== "home" || !dataReady) return;
+    if (tvStartup || step !== "home" || !dataReady) return;
     const network = (navigator as Navigator & {connection?:{saveData?:boolean;effectiveType?:string}}).connection;
     if (network?.saveData || /2g/i.test(network?.effectiveType || "")) return;
     const timeout = window.setTimeout(() => {
@@ -377,22 +392,29 @@ export default function PlayerHub() {
       void import("./PlayerCatalog").catch(() => {});
     }, 1500);
     return () => window.clearTimeout(timeout);
-  }, [step, dataReady]);
+  }, [step, dataReady, tvStartup]);
   // NOTE: do NOT use `scale-*` on this wrapper. Any CSS transform here creates a
   // containing block for descendants with `position: fixed` (like SplashScreen),
   // which then collapse to the wrapper's 0px height and become invisible.
   // NEXO_V5_NO_FULL_SCREEN_FADE: nao apagar a tela inteira nas transicoes internas da TV.
-  const [profilePrepared,setProfilePrepared]=useState(false);
-  useEffect(()=>{if(!tvStartup||loading||!dataReady)return;let cancelled=false;if(!user||!publicUserId){setProfilePrepared(true);return;}void warmTvProfile(user,publicUserId,user.email?.split("@")[0]||"Visitante").then(profile=>Promise.all([profile.avatar_url,...(profile.sub_profiles||[]).map(p=>p.avatar_url)].filter(Boolean).slice(0,8).map(preloadImage))).catch(()=>{}).finally(()=>{if(!cancelled)setProfilePrepared(true);});return()=>{cancelled=true;};},[tvStartup,loading,dataReady,user?.id,publicUserId]);
+  useEffect(() => {
+    if (!tvStartup || loading || !user || !publicUserId) return;
+    // WelcomeScreen shares this request and owns the profile loading/error state.
+    void warmTvProfile(user, publicUserId, user.email?.split("@")[0] || "Visitante")
+      .then(profile => Promise.allSettled(
+        [profile.avatar_url, ...(profile.sub_profiles || []).map(item => item.avatar_url)]
+          .filter(Boolean).slice(0, 8).map(preloadImage),
+      )).catch(() => {});
+  }, [tvStartup, loading, user, publicUserId]);
   const wrapperClass = tvStartup || webOtt ? "player-scope" : `player-scope transition-opacity duration-700 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)] ${fadeOut ? "opacity-0" : "opacity-100"}`;
 
   // A native TV must finish restoring its verified session before the login route can redirect.
-  if (tvStartup && step === "splash" && prepareError) return <div className="player-scope">{prepareError ? <div className="fixed inset-0 bg-black text-white flex flex-col items-center justify-center gap-4"><p>Não foi possível preparar a rádio.</p><button autoFocus onClick={()=>window.location.reload()}>Tentar novamente</button></div> : <SplashScreen logoUrl={logoUrl} ready={false} onFinish={onSplashFinish}/>}</div>;
+  if (tvStartup && step === "splash" && prepareError && !publicUserId) return <div className="player-scope" data-nexo-startup-surface="retry"> <div className="fixed inset-0 bg-black text-white flex flex-col items-center justify-center gap-4"><p>Não foi possível preparar a rádio.</p><button autoFocus onClick={()=>window.location.reload()}>Tentar novamente</button></div></div>;
   if (step === "login" && tvStartup && user) return <TvSplashVisual logoUrl={logoUrl} />;
   if (webOtt && loading && !tvGuestMode) return <TvSplashVisual logoUrl={logoUrl} />;
   if ((step === "login" && !(webOtt && user)) || (!loading && !user && !tvGuestMode && !tvStartup && !(isPlayerTvApp() && searchParams.get("step") === "profiles"))) {
     return (
-      <div className={wrapperClass}>
+      <div className={wrapperClass} data-nexo-startup-surface={tvStartup ? "login" : undefined}>
         <AccessScreen
           logoUrl={logoUrl}
           backgroundUrl={loginBackground}
@@ -433,7 +455,7 @@ export default function PlayerHub() {
         <SplashScreen
           logoUrl={logoUrl}
           onFinish={onSplashFinish}
-          ready={tvStartup ? prepared && !loading && dataReady && profilePrepared : tvGuestMode ? true : !loading && dataReady}
+          ready={tvStartup ? !loading && dataReady : tvGuestMode ? true : !loading && dataReady}
           maxDurationMs={tvStartup ? 100 : tvGuestMode ? 4200 : 5000}
           progress={loadProgress}
         />
@@ -446,7 +468,7 @@ export default function PlayerHub() {
   if (step === "welcome" || (user && step !== "home")) {
     const userNameDisplay = user?.email?.split("@")[0] || "visitante";
     return (
-      <div className={wrapperClass}>
+      <div className={wrapperClass} data-nexo-startup-surface={tvStartup ? "profiles" : undefined}>
         <WelcomeScreen
           userName={userNameDisplay}
           avatarUrl={null}
@@ -490,7 +512,7 @@ export default function PlayerHub() {
   }
 
   return (
-    <div className={wrapperClass}>
+    <div className={wrapperClass} data-nexo-startup-surface={tvStartup ? "home" : undefined}>
       <PlayerHome
         tvGuestMode={tvGuestMode}
         tvProfile={tvProfile}

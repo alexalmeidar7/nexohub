@@ -19,3 +19,12 @@
 
 .nexo-tv.ott-home.ott-rail-layout .ott-now,
 .nexo-tv.ott-home.ott-rail-layout .ott-now:has(.ott-program-sponsors) { top:25.2%!important; bottom:auto!important; left:calc(265 * var(--ott-u))!important; transform:none!important; }
+
+/* Outward focus ring, including non-clickable campaigns. */
+.nexo-tv.ott-home .nexo-home-commercial-banner .nexo-home-commercial-trigger{pointer-events:auto!important;isolation:isolate;outline:none!important;}
+.nexo-tv.ott-home .nexo-home-commercial-banner .nexo-home-commercial-trigger::after{content:"";position:absolute;inset:calc(-5 * var(--ott-u));z-index:20;border-radius:calc(17 * var(--ott-u));pointer-events:none;box-shadow:0 0 0 var(--ott-focus-width,3px) white;opacity:0;transition:opacity 120ms ease;}
+.nexo-tv.ott-home .nexo-home-commercial-banner .nexo-home-commercial-trigger:is(:hover,:focus,:focus-visible)::after{opacity:1!important;}
+
+/* Keep the decoded image mounted under modal panels, without capturing input. */
+.nexo-tv.ott-home .nexo-home-commercial-banner[data-interactive="false"] .nexo-home-commercial-trigger{pointer-events:none!important;outline:none!important;}
+.nexo-tv.ott-home .nexo-home-commercial-banner[data-interactive="false"] .nexo-home-commercial-trigger::after{opacity:0!important;}

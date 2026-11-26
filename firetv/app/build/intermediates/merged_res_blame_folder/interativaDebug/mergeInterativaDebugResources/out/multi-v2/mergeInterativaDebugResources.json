@@ -1,0 +1,43 @@
+{
+    "logs": [
+        {
+            "outputFile": "br.com.nexobrasil.nexoplayer.firetv.app-interativaDebug-4:/values_values.arsc.flat",
+            "map": [
+                {
+                    "source": "D:\\ONEDRIVE\\0 - NEXO\\5 - House Mix\\nexohub-git\\firetv\\app\\src\\main\\res\\values\\ic_launcher_background.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "57",
+                        "endColumns": "56",
+                        "endOffsets": "109"
+                    },
+                    "to": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "56",
+                        "endOffsets": "107"
+                    }
+                },
+                {
+                    "source": "D:\\ONEDRIVE\\0 - NEXO\\5 - House Mix\\nexohub-git\\firetv\\app\\build\\generated\\res\\resValues\\interativa\\debug\\values\\gradleResValues.xml",
+                    "from": {
+                        "startLines": "6",
+                        "startColumns": "4",
+                        "startOffsets": "170",
+                        "endColumns": "71",
+                        "endOffsets": "237"
+                    },
+                    "to": {
+                        "startLines": "3",
+                        "startColumns": "4",
+                        "startOffsets": "112",
+                        "endColumns": "71",
+                        "endOffsets": "179"
+                    }
+                }
+            ]
+        }
+    ]
+}
