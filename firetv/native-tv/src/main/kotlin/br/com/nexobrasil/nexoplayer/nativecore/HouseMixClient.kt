@@ -28,6 +28,12 @@ class HouseMixClient(supabaseOrigin: String, private val publishableKey: String)
             function("tv-pair-status", body = JSONObject().put("code", code).put("tvSessionId", deviceSessionId))
         )
 
+    suspend fun campaigns(ownerId: String): JSONObject =
+        function("public-player-ads", query = mapOf("radio_id" to ownerId))
+
+    suspend fun sponsors(ownerId: String, day: String, time: String): JSONObject =
+        function("public-cenario-data", query = mapOf("uid" to ownerId, "dia" to day, "hora" to time))
+
     private suspend fun function(
         name: String,
         query: Map<String, String> = emptyMap(),

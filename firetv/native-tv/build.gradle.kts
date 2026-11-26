@@ -11,6 +11,7 @@ val stageReferenceResources by tasks.registering(Sync::class) {
         into("font")
         rename { "ott_roboto.ttf" }
     }
+    from("../../public/avatars/usr-default.png") { into("drawable-nodpi"); rename { "visitor_avatar.png" } }
     from("../app/src/positiva/res/drawable-nodpi/tv_launcher.png") {
         into("drawable-nodpi")
         rename { "positiva_tv_launcher.png" }
