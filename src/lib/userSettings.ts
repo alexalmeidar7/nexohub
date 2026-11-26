@@ -61,6 +61,7 @@ export async function mergeUserDashboardItems(userId: string, patch: JsonRecord)
     const { data: existing, error: readError } = await supabase
       .from("user_settings")
       .select("updated_at, dashboard_items")
+      .abortSignal(AbortSignal.timeout(8000))
       .eq("user_id", userId)
       .maybeSingle();
 
