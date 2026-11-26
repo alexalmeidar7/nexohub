@@ -45,3 +45,6 @@ tools/NexoHubBridge/obj/
 
 /firetv/.gradle/
 /firetv/app/build/
+
+/firetv/native-tv/.gradle/
+/firetv/native-tv/build/

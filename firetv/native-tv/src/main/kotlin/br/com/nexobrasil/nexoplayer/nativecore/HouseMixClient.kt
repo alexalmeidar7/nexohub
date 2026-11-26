@@ -12,8 +12,10 @@ class HouseMixClient(supabaseOrigin: String, private val publishableKey: String)
         require(it.scheme == "https" && it.host != null && it.encodedUserInfo == null)
     }
 
-    suspend fun station(slug: String): StationBootstrap =
-        StationBootstrap.fromJson(function("public-player-data", body = JSONObject().put("slug", slug)))
+    suspend fun stationPayload(slug: String): JSONObject =
+        function("public-player-data", body = JSONObject().put("slug", slug))
+
+    suspend fun station(slug: String): StationBootstrap = StationBootstrap.fromJson(stationPayload(slug))
 
     suspend fun nowPlaying(slug: String): JSONObject =
         function("public-player-data", body = JSONObject().put("slug", slug).put("section", "now_playing"))
