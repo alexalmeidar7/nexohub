@@ -27,8 +27,10 @@ jobs:
       - name: Reject WebView in native app sources
         run: |
           if grep -R -nE 'android\.webkit|WebView|loadUrl\(' firetv/native-tv/src/main/kotlin; then exit 1; fi
-      - name: Compile native app and test both flavors
-        run: gradle -p firetv/native-tv --no-daemon testPositivaDebugUnitTest testInterativaDebugUnitTest assemblePositivaDebug assembleInterativaDebug
+      - name: Compile and test Positiva
+        run: gradle -p firetv/native-tv --no-daemon --max-workers=2 -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8" -Pkotlin.compiler.execution.strategy=in-process testPositivaDebugUnitTest assemblePositivaDebug
+      - name: Compile and test Interativa
+        run: gradle -p firetv/native-tv --no-daemon --max-workers=2 -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8" -Pkotlin.compiler.execution.strategy=in-process testInterativaDebugUnitTest assembleInterativaDebug
       - uses: actions/upload-artifact@v4
         with:
           name: nexo-tv-compose-pilot
