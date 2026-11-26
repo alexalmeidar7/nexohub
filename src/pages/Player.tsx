@@ -1414,9 +1414,14 @@ export default function PlayerPage() {
 
       let cancelled = false;
       let inFlight = false;
+      let latestMusicStart = 0;
 
       const applyPublicMusic = (incoming: Partial<MusicData> | null | undefined, musicStartTime?: number | null) => {
         if (!incoming) return;
+        if (typeof musicStartTime === "number" && musicStartTime > 0) {
+          if (musicStartTime < latestMusicStart) return;
+          latestMusicStart = musicStartTime;
+        }
 
         const normalized: MusicData = {
           titulo: normalizeMusicText(incoming.titulo || "") || "Sem título",
@@ -1532,8 +1537,8 @@ export default function PlayerPage() {
               if (cancelled) return;
               const items = (payload.new as any)?.dashboard_items;
               if (items && typeof items === "object") {
-                const m = items.musicData || items.music;
-                if (m) applyPublicMusic(m, typeof m.startTime === "number" ? m.startTime : null);
+                const m = items.music_current_title ? { titulo: items.music_current_title, artista: items.music_current_artist || "", capa: items.music_current_cover || "", duracao: Number(items.music_current_duration) || 0 } : null;
+                if (m) applyPublicMusic(m, typeof items.music_start_time === "number" ? items.music_start_time : null);
               }
               // Also trigger a full fetch for any data the Realtime payload may not include
               fetchPublicMusic();
