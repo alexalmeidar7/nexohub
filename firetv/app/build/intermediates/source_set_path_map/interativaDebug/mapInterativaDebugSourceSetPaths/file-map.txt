@@ -1,9 +1,0 @@
-br.com.nexobrasil.nexoplayer.firetv.app-interativa-0 D:\ONEDRIVE\0 - NEXO\5 - House Mix\nexohub-git\firetv\app\build\generated\res\pngs\interativa\debug
-br.com.nexobrasil.nexoplayer.firetv.app-interativa-1 D:\ONEDRIVE\0 - NEXO\5 - House Mix\nexohub-git\firetv\app\build\generated\res\resValues\interativa\debug
-br.com.nexobrasil.nexoplayer.firetv.app-packageInterativaDebugResources-2 D:\ONEDRIVE\0 - NEXO\5 - House Mix\nexohub-git\firetv\app\build\intermediates\incremental\interativaDebug\packageInterativaDebugResources\merged.dir
-br.com.nexobrasil.nexoplayer.firetv.app-packageInterativaDebugResources-3 D:\ONEDRIVE\0 - NEXO\5 - House Mix\nexohub-git\firetv\app\build\intermediates\incremental\interativaDebug\packageInterativaDebugResources\stripped.dir
-br.com.nexobrasil.nexoplayer.firetv.app-interativaDebug-4 D:\ONEDRIVE\0 - NEXO\5 - House Mix\nexohub-git\firetv\app\build\intermediates\merged_res\interativaDebug\mergeInterativaDebugResources
-br.com.nexobrasil.nexoplayer.firetv.app-debug-5 D:\ONEDRIVE\0 - NEXO\5 - House Mix\nexohub-git\firetv\app\src\debug\res
-br.com.nexobrasil.nexoplayer.firetv.app-interativa-6 D:\ONEDRIVE\0 - NEXO\5 - House Mix\nexohub-git\firetv\app\src\interativa\res
-br.com.nexobrasil.nexoplayer.firetv.app-interativaDebug-7 D:\ONEDRIVE\0 - NEXO\5 - House Mix\nexohub-git\firetv\app\src\interativaDebug\res
-br.com.nexobrasil.nexoplayer.firetv.app-main-8 D:\ONEDRIVE\0 - NEXO\5 - House Mix\nexohub-git\firetv\app\src\main\res
