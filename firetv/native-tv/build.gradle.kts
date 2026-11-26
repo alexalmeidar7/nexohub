@@ -7,10 +7,7 @@ plugins {
 val referenceResources = layout.buildDirectory.dir("generated/reference-resources")
 val stageReferenceResources by tasks.registering(Sync::class) {
     into(referenceResources)
-    from("../../public/fonts/Roboto.ttf") {
-        into("font")
-        rename { "ott_roboto.ttf" }
-    }
+    from("../../src/components/player/tv/nexo-lote13-hotpark.png") { into("drawable-nodpi"); rename { "home_hotpark.png" } }
     from("../../public/avatars/usr-default.png") { into("drawable-nodpi"); rename { "visitor_avatar.png" } }
     from("../app/src/positiva/res/drawable-nodpi/tv_launcher.png") {
         into("drawable-nodpi")
@@ -26,8 +23,8 @@ android {
         applicationId = "br.com.nexobrasil.nexoplayer.nativepilot"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0-native-preview"
+        versionCode = 2
+        versionName = "0.1.1-native-preview"
         buildConfigField("String", "SUPABASE_URL", "\"https://qazvgmgdidjhbvcuinpy.supabase.co\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"sb_publishable_BzjxF3H_PSgFYVA3OQIaoA_Pytdg2V3\"")
     }

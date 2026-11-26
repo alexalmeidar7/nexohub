@@ -38,6 +38,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.tv.material3.Text
@@ -50,8 +53,8 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 private fun TvUnits.at(x:Number,y:Number,w:Number,h:Number) = Modifier.offset(space(x),space(y)).size(space(w),space(h))
-private val glass = Brush.linearGradient(listOf(Color(0x665F5F63),Color(0x5518181B),Color(0x88202023)))
-private fun accentGlass(c:Color)=Brush.linearGradient(listOf(Color.White.copy(alpha=.27f),c,Color(0xFF292124)))
+private val glass = Brush.linearGradient(listOf(Color(0x705C5C60),Color(0x80232327),Color(0xA018181B)))
+private fun accentGlass(c:Color)=Brush.linearGradient(listOf(androidx.compose.ui.graphics.lerp(c,Color.White,.24f),c,Color(0xFF292124)))
 private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
 
 @Composable private fun Copy(text:String,u:TvUnits,size:Int,weight:Int=400,modifier:Modifier=Modifier,lines:Int=1,color:Color=Color.White,align:TextAlign=TextAlign.Start) {
@@ -60,12 +63,12 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
 @Composable private fun Artwork(model:Any?,modifier:Modifier,desc:String?=null,scale:ContentScale=ContentScale.Fit) {
     if(model!=null && model!="") AsyncImage(model,desc,modifier,contentScale=scale)
 }
-@Composable private fun GlassButton(u:TvUnits,label:String,modifier:Modifier=Modifier,icon:String?=null,accent:Color?=null,enabled:Boolean=true,onClick:()->Unit) {
+@Composable private fun GlassButton(u:TvUnits,label:String,modifier:Modifier=Modifier,icon:String?=null,accent:Color?=null,enabled:Boolean=true,outline:Boolean=false,accentRing:Boolean=false,onClick:()->Unit) {
     var focused by remember { mutableStateOf(false) }
     val shape=u.round(40)
     Row(modifier.onFocusChanged { focused=it.isFocused }.focusProperties { canFocus=enabled }
-        .background(if(accent!=null) accentGlass(accent) else glass,shape)
-        .border(u.space(if(focused) 3 else 1),if(focused) Color.White else Color.White.copy(alpha=.16f),shape)
+        .background(if(outline) Brush.linearGradient(listOf(Color.Transparent,Color.Transparent)) else if(accent!=null && !accentRing) accentGlass(accent) else glass,shape)
+        .border(u.space(if(focused || accentRing) 3 else if(outline) 2 else 1),if(focused || outline) Color.White else if(accentRing) accent ?: Color.White else Color.White.copy(alpha=.16f),shape)
         .clickable(enabled=enabled,onClick=onClick).semantics { contentDescription=label.ifEmpty{when(icon){"play"->"Reproduzir";"pause"->"Pausar";"left"->"Voltar";"up"->"Canal anterior";"down"->"Próximo canal";"search"->"Buscar";"spark"->"Interatividade";else->"Controle"}} }
         .padding(horizontal=u.space(if(icon!=null && label.isEmpty()) 0 else 20)),
         verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.Center) {
@@ -98,6 +101,7 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
             "spark" -> { path(.5f to .10f,.60f to .39f,.88f to .50f,.60f to .61f,.50f to .90f,.40f to .61f,.12f to .50f,.40f to .39f,.50f to .10f) }
             "sun" -> {drawCircle(Color.White,w*.23f,p(.50f,.50f),style=Stroke(sw));repeat(8){i->val a=i*Math.PI/4;val x=kotlin.math.cos(a).toFloat();val y=kotlin.math.sin(a).toFloat();line(p(.5f+x*.34f,.5f+y*.34f),p(.5f+x*.46f,.5f+y*.46f))}}
             "cloud" -> {drawRoundRect(Color.White,p(.10f,.45f),Size(w*.80f,h*.34f),androidx.compose.ui.geometry.CornerRadius(w*.16f),style=Stroke(sw));drawArc(Color.White,190f,160f,false,p(.23f,.18f),Size(w*.47f,h*.48f),style=Stroke(sw))}
+            "mic" -> {drawRoundRect(Color.White,p(.36f,.07f),Size(w*.28f,h*.54f),androidx.compose.ui.geometry.CornerRadius(w*.14f),style=Stroke(sw));drawArc(Color.White,0f,180f,false,p(.20f,.25f),Size(w*.60f,h*.52f),style=Stroke(sw));line(p(.50f,.77f),p(.50f,.92f));line(p(.33f,.92f),p(.67f,.92f))}
             "music" -> { line(p(.53f,.12f),p(.53f,.70f));line(p(.53f,.12f),p(.82f,.28f));drawOval(Color.White,p(.20f,.65f),Size(w*.33f,h*.22f),style=Stroke(sw)) }
             "user" -> { drawCircle(Color.White,w*.18f,p(.50f,.30f),style=Stroke(sw));drawArc(Color.White,180f,180f,false,p(.15f,.54f),Size(w*.70f,h*.60f),style=Stroke(sw)) }
         }
@@ -148,14 +152,14 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
         Box(Modifier.fillMaxSize().background(Color.Black)) {
             val watch=screen==Screen.VIDEO||screen==Screen.AUDIO
             if(screen!=Screen.VIDEO) {
-                Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(accent.copy(alpha=.93f),Color(red=accent.red*.56f,green=accent.green*.56f,blue=accent.blue*.56f),Color(0xFF111114)))))
+                Box(Modifier.fillMaxSize().background(Brush.linearGradient(if(BuildConfig.STATION_SLUG=="positivafm") listOf(Color(0xFFDF1B22),Color(0xFF8D1E23),Color(0xFF111114)) else listOf(accent,Color(red=accent.red*.56f,green=accent.green*.56f,blue=accent.blue*.56f),Color(0xFF111114)))))
                 if(screen==Screen.HOME||screen==Screen.AUDIO||screen==Screen.SCHEDULE) {
                     var showArtist by remember(artistPhoto){mutableStateOf(true)}
                     LaunchedEffect(artistPhoto){while(artistPhoto.isNotBlank()){delay(if(showArtist) 20000 else 10000);showArtist=!showArtist}}
-                    val fade by androidx.compose.animation.core.animateFloatAsState(if(showArtist) 1f else 0f,tween(1500),label="artist")
+                    val fade by androidx.compose.animation.core.animateFloatAsState(if(showArtist && artistPhoto.isNotBlank()) 1f else 0f,tween(1500),label="artist")
                     Artwork(safeImage(artistPhoto),Modifier.fillMaxSize().alpha(fade),scale=ContentScale.Crop)
-                    Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(listOf(Color.Black.copy(alpha=.70f),Color.Black.copy(alpha=.22f)))))
-                    Artwork(safeImage(presenterPhoto),u.at(1135,102,785,978),scale=ContentScale.Fit)
+                    Box(Modifier.fillMaxSize().alpha(fade).background(Brush.horizontalGradient(listOf(Color.Black.copy(alpha=.74f),Color.Black.copy(alpha=.45f)))))
+                    Artwork(safeImage(presenterPhoto),u.at(1152,108,768,972),scale=ContentScale.Fit)
                     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent,Color.Transparent,Color.Black.copy(alpha=.78f)))))
                 }
             }
@@ -170,25 +174,32 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                 Copy(failure,u,35,500,u.at(100,300,1500,70))
                 GlassButton(u,"Tentar novamente",u.at(100,400,330,64).focusRequester(focus),onClick=onRetry)
             } else {
-                if(!watch) Header(u,logo,title,artist,cover,playing,accent,screen,weather,onToggle,{onOpen(Screen.SEARCH)})
+                if(!watch) Header(u,logo,title,artist,cover,playing,accent,screen,weather,if(screen==Screen.HOME) Modifier.focusRequester(focus) else Modifier,onToggle,{onOpen(Screen.SEARCH)})
                 if(screen==Screen.HOME) {
-                    Box(u.at(96,254,102,420).background(glass,CircleShape).border(u.space(1),Color.White.copy(alpha=.16f),CircleShape))
-                    Column(Modifier.offset(u.space(108),u.space(272)).zIndex(2f),verticalArrangement=Arrangement.spacedBy(u.space(4))) {
-                        RailItem(u,"audio","Ouvir",accent,Modifier.focusRequester(focus)){onOpen(Screen.AUDIO)}
+                    var railWidthPx by remember { mutableIntStateOf(0) }
+                    val railWidth = (railWidthPx / u.pixelsPerUnit).coerceAtLeast(76f)
+                    val programLeft = maxOf(265f,108f+railWidth+24f)
+                    Box(u.at(96,254,102,432).background(glass,CircleShape).border(u.space(1),Color.White.copy(alpha=.16f),CircleShape))
+                    Column(Modifier.offset(u.space(108),u.space(272)).zIndex(2f).onSizeChanged { railWidthPx=it.width },verticalArrangement=Arrangement.spacedBy(u.space(4))) {
+                        RailItem(u,"audio","Ouvir",accent){onOpen(Screen.AUDIO)}
                         RailItem(u,"video","Assistir",accent){onOpen(Screen.VIDEO)}
                         RailItem(u,"catalog","On Demand",accent){onOpen(Screen.CATALOG)}
                         RailItem(u,"calendar","Grade de programação",accent){onOpen(Screen.SCHEDULE)}
                         RailItem(u,"user","Olá, visitante",accent){onOpen(Screen.PROFILE)}
                     }
-                    Column(u.at(265,272,680,300),verticalArrangement=Arrangement.spacedBy(u.space(14))) {
-                        Badge(u,"NO AR",accent)
-                        Copy(program.str("nome").ifBlank{stationName},u,40,700,lines=2)
-                        Copy(presenter.str("nome"),u,25,400)
-                        GlassButton(u,"programação",Modifier.height(u.space(54)),icon="plus"){onOpen(Screen.SCHEDULE)}
+                    Column(u.at(programLeft,272,505,310),verticalArrangement=Arrangement.spacedBy(u.space(12))) {
+                        Badge(u,"NO AR",accent,compact=true)
+                        Copy(program.str("nome").ifBlank{stationName},u,35,700,lines=3)
+                        Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(10))) { Symbol("mic",Modifier.size(u.space(24)));Copy(presenter.str("nome"),u,24,400) }
+                        Spacer(Modifier.height(u.space(6)))
+                        GlassButton(u,"programação",Modifier.height(u.space(54)),icon="plus",outline=true){onOpen(Screen.SCHEDULE)}
                     }
-                    if(sponsor!=null) Artwork(sponsor,u.at(265,590,270,105))
-                    if(banner.isNotBlank()) Artwork(safeImage(banner),u.at(265,886,1320,140).clip(u.round(12)),scale=ContentScale.Fit)
-                    GlassButton(u,"",u.at(1744,950,76,76),icon="spark"){onInteraction()}
+                    if(sponsor!=null) Artwork(sponsor,u.at(1641,746,202,202))
+                    if(banner.isNotBlank()) {
+                        val model:Any?=if(banner.substringBefore("?")=="https://qazvgmgdidjhbvcuinpy.supabase.co/storage/v1/object/public/comercial/452ebd1e-61a0-42dd-bf80-231a3f426c83/player-ads/00198081-b99d-4548-8561-ff953209d17a.png") R.drawable.home_hotpark else safeImage(banner)
+                        Artwork(model,u.at(265,886,1320,140).clip(u.round(12)),scale=ContentScale.Fit)
+                    }
+                    GlassButton(u,"",u.at(1744,950,76,76),icon="spark",accent=accent,accentRing=true){onInteraction()}
                 }
                 if(watch) {
                     if(screen==Screen.AUDIO) {
@@ -295,8 +306,8 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     }
 }
 
-@Composable private fun Badge(u:TvUnits,label:String,accent:Color) {
-    Box(Modifier.background(accentGlass(accent),u.round(13)).border(u.space(1),Color.White.copy(alpha=.25f),u.round(13)).padding(horizontal=u.space(15),vertical=u.space(6))) { Copy(label,u,21,600) }
+@Composable private fun Badge(u:TvUnits,label:String,accent:Color,compact:Boolean=false) {
+    Box(Modifier.background(accentGlass(accent),u.round(if(compact)10 else 13)).border(u.space(1),Color.White.copy(alpha=.25f),u.round(if(compact)10 else 13)).padding(horizontal=u.space(if(compact)13 else 15),vertical=u.space(if(compact)5 else 6))) { Copy(label,u,if(compact)15 else 21,650) }
 }
 @Composable private fun Clock(u:TvUnits,modifier:Modifier,weather:JSONObject?) {
     var clock by remember { mutableStateOf(LocalTime.now(brasilia)) }
@@ -308,13 +319,17 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
         if(temp!=null){Spacer(Modifier.width(u.space(12)));Copy("|",u,22,400,color=Color.White.copy(alpha=.55f));Spacer(Modifier.width(u.space(12)));Symbol(if(weatherCode==0)"sun" else "cloud",Modifier.size(u.space(30)));Spacer(Modifier.width(u.space(8)));Copy(kotlin.math.round(temp.toDouble()).toInt().toString()+"°",u,28,400)}
     }
 }
-@Composable private fun Header(u:TvUnits,logo:String?,title:String,artist:String,cover:String,playing:Boolean,accent:Color,screen:Screen,weather:JSONObject?,onToggle:()->Unit,onSearch:()->Unit) {
-    Artwork(logo,u.at(100,76,100,64))
-    Row(u.at(210,70,400,76).clip(u.round(16)).background(glass).clickable(onClick=onToggle).padding(u.space(8)),verticalAlignment=Alignment.CenterVertically) {
+@OptIn(ExperimentalFoundationApi::class)
+@Composable private fun Header(u:TvUnits,logo:String?,title:String,artist:String,cover:String,playing:Boolean,accent:Color,screen:Screen,weather:JSONObject?,trackFocus:Modifier,onToggle:()->Unit,onSearch:()->Unit) {
+    Artwork(logo,u.at(100,63,90,90))
+    var focused by remember { mutableStateOf(false) }
+    val shape=u.round(16)
+    Row(u.at(214,70,400,76).then(trackFocus).onFocusChanged{focused=it.isFocused}.background(glass,shape).border(u.space(if(focused)3 else 1),Color.White.copy(alpha=if(focused)1f else .15f),shape).clickable(onClick=onToggle).padding(u.space(8)),verticalAlignment=Alignment.CenterVertically) {
         Artwork(safeImage(cover)?:logo,Modifier.size(u.space(60)).clip(u.round(8)),scale=ContentScale.Crop)
         Spacer(Modifier.width(u.space(15)))
-        Column(Modifier.weight(1f)){Copy(title.uppercase(),u,22,700);Copy(artist,u,18)}
-        Symbol(if(playing)"pause" else "play",Modifier.size(u.space(30)))
+        Column(Modifier.weight(1f)){Copy(title.uppercase(),u,22,700,Modifier.basicMarquee(iterations=Int.MAX_VALUE,initialDelayMillis=2000,repeatDelayMillis=3000));Copy(artist,u,18,400,Modifier.basicMarquee(iterations=Int.MAX_VALUE,initialDelayMillis=2000,repeatDelayMillis=3000))}
+        // The reference uses a neutral nine-line spectrum when no PCM signal is available.
+        Canvas(Modifier.size(u.space(62),u.space(52))) { repeat(9){i->val x=size.width*(i+1)/10f;drawLine(Color.White,Offset(x,size.height*.46f),Offset(x,size.height*.54f),strokeWidth=size.width/28f,cap=StrokeCap.Round)} }
     }
     GlassButton(u,"",u.at(1512,76,56,56),icon="search",onClick=onSearch)
     Clock(u,u.at(1592,76,230,56),weather)

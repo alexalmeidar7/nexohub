@@ -1,0 +1,1 @@
+Montserrat, SIL Open Font License 1.1. Source: google/fonts commit 76fca9fd0bb4ea46583f92e978660f3984ab9442, ofl/montserrat/Montserrat[wght].ttf. The full license is included in the application assets.
