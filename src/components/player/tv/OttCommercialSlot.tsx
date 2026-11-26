@@ -1,6 +1,6 @@
 import {useEffect,useState,useRef,createContext,useContext,type ReactNode} from "react";
 import {QRCodeSVG} from "qrcode.react";
-import {load,type Campaign} from "./OttCommercialHomeBanner";
+import {load,isAdImageReady,type Campaign} from "./OttCommercialHomeBanner";
 import "./OttCommercialSlot.css";
 export const AdsProgramContext=createContext<string|null|undefined>(null);
 const FIVE=300000;
@@ -16,9 +16,9 @@ export function eligibleAds(rows:Campaign[],placement:string,programId?:string|n
 }
 export function useCommercialCampaigns(radioId:string|null|undefined){
  const [state,setState]=useState<{id:string,rows:Campaign[],at:number}|null>(null);const [settled,setSettled]=useState('');
- useEffect(()=>{if(!radioId)return;let alive=true;let deadline:ReturnType<typeof setTimeout>;
- const refresh=()=>{if(document.hidden)return;void load(radioId).then(rows=>{if(alive){setState({id:radioId,rows,at:Date.now()});setSettled(radioId)}}).catch(()=>{if(alive)setSettled(radioId)})};
- refresh();deadline=setTimeout(()=>{if(alive)setSettled(radioId)},7000);const t=window.setInterval(refresh,60000);document.addEventListener('visibilitychange',refresh);return()=>{alive=false;clearTimeout(deadline);clearInterval(t);document.removeEventListener('visibilitychange',refresh)}},[radioId]);
+ useEffect(()=>{if(!radioId)return;let alive=true;let deadline:ReturnType<typeof setTimeout>;let retry:ReturnType<typeof setTimeout>;let retried=false;
+ const refresh=()=>{if(document.hidden)return;void load(radioId).then(rows=>{if(alive){setState({id:radioId,rows,at:Date.now()});setSettled(radioId)}}) .catch(()=>{if(!alive)return;if(!retried){retried=true;retry=setTimeout(refresh,500);}else setSettled(radioId)})};
+ refresh();deadline=setTimeout(()=>{if(alive)setSettled(radioId)},11000);const t=window.setInterval(refresh,60000);document.addEventListener('visibilitychange',refresh);return()=>{alive=false;clearTimeout(deadline);clearTimeout(retry);clearInterval(t);document.removeEventListener('visibilitychange',refresh)}},[radioId]);
  return {rows:state?.id===radioId&&Date.now()-state.at<315000?state.rows:[],ready:!radioId||settled===radioId};
 }
 export function useCommercialMedia(radioId:string|null|undefined,placement:string,programId?:string|null){
@@ -30,8 +30,8 @@ export default function OttCommercialSlot({radioId,placement,programId,className
  const m=useCommercialMedia(radioId,placement,programId);const [loaded,setLoaded]=useState('');const [failed,setFailed]=useState('');const [qr,setQr]=useState(false);const trigger=useRef<HTMLButtonElement>(null);
  const key=m?.url||'';useEffect(()=>{setQr(false)},[key,m?.link,visible]);
  useEffect(()=>{if(!qr)return;const fn=(e:KeyboardEvent)=>{if(['Escape','Backspace','BrowserBack','GoBack'].includes(e.key)||e.keyCode===461||e.keyCode===10009){e.preventDefault();e.stopImmediatePropagation();setQr(false);trigger.current?.focus()}};window.addEventListener('keydown',fn,true);return()=>window.removeEventListener('keydown',fn,true)},[qr]);
- if(!visible||!m||failed===key)return <>{fallback}</>;
- const ready=loaded===key;const clickable=m.clickable&&/^https?:\/\//i.test(m.link)&&placement!=='background_ads';
+ if(!visible||!m||failed===key)return <>{placement==="background_ads"?<div aria-hidden={false} style={{display:"contents"}}>{fallback}</div>:fallback}</>;
+ const ready=loaded===key||isAdImageReady(key);const clickable=m.clickable&&/^https?:\/\//i.test(m.link)&&placement!=='background_ads';
  const art=<><img src={m.url} alt="Publicidade" onLoad={()=>setLoaded(key)} onError={()=>setFailed(key)}/><span className="nexo-ad-label">publicidade</span></>;
- return <>{!ready&&fallback}<div className={'nexo-ad-slot nexo-ad-'+placement+' '+className} data-ad-ready={ready?'true':'false'} style={!ready?{position:'absolute',visibility:'hidden',pointerEvents:'none'}:undefined}>{clickable?<button type="button" ref={trigger} aria-label="Publicidade — abrir QR Code" aria-expanded={qr} onClick={()=>setQr(v=>!v)}>{art}</button>:<div className="nexo-ad-art">{art}</div>}{qr&&clickable&&<aside className="nexo-ad-qr"><span>↗</span><div><QRCodeSVG value={m.link} size={240} level="M" includeMargin/></div></aside>}</div></>;
+ return <>{placement==="background_ads"?<div aria-hidden={ready} style={ready?{position:"absolute",inset:0,visibility:"hidden",pointerEvents:"none"}:{display:"contents"}}>{fallback}</div>:!ready&&fallback}<div className={'nexo-ad-slot nexo-ad-'+placement+' '+className} data-ad-ready={ready?'true':'false'} style={!ready?{position:'absolute',visibility:'hidden',pointerEvents:'none'}:undefined}>{clickable?<button type="button" ref={trigger} aria-label="Publicidade — abrir QR Code" aria-expanded={qr} onClick={()=>setQr(v=>!v)}>{art}</button>:<div className="nexo-ad-art">{art}</div>}{qr&&clickable&&<aside className="nexo-ad-qr"><span>↗</span><div><QRCodeSVG value={m.link} size={240} level="M" includeMargin/></div></aside>}</div></>;
 }

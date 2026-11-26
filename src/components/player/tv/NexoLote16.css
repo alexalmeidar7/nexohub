@@ -1,0 +1,19 @@
+/* Same lightweight glass variables as Home; only the On Demand header and Back. */
+.nexo-tv.ott-home.ott-content-view {
+ --nexo-glass-neutral:linear-gradient(145deg,rgba(255,255,255,.20),rgba(255,255,255,.045) 48%,rgba(0,0,0,.24)),rgba(24,24,27,.48);
+ --nexo-glass-edge:inset 0 1px 0 rgba(255,255,255,.36),inset 0 0 0 1px rgba(255,255,255,.13);
+}
+.nexo-tv.nexo-tv.ott-home.ott-content-view .ott-header .nexo-tv-climate-header{border-radius:999px!important;padding:calc(5 * var(--ott-u)) calc(12 * var(--ott-u))!important;}
+.nexo-tv.nexo-tv.ott-home.ott-content-view .ott-header :is(.ott-header-track,.ott-search,.nexo-tv-climate-header){background:var(--nexo-glass-neutral)!important;backdrop-filter:none!important;}
+.nexo-tv.nexo-tv.ott-home.ott-content-view .ott-header :is(.ott-header-track,.ott-search,.nexo-tv-climate-header):not(:focus):not(:hover):not([data-ott-focused="true"]){box-shadow:var(--nexo-glass-edge)!important;}
+.nexo-tv.nexo-tv.ott-home.ott-content-view .ott-footer-subpage .ott-subpage-bottom-back{background:var(--nexo-glass-neutral)!important;border:1px solid transparent!important;box-shadow:var(--nexo-glass-edge)!important;border-radius:999px!important;backdrop-filter:none!important;}
+.nexo-tv.nexo-tv.ott-home.ott-content-view .ott-footer-subpage .ott-subpage-bottom-back:is(:hover,:focus-visible,[data-ott-focused="true"]){outline:2px solid #fff!important;outline-offset:3px!important;}
+/* Scope only guest profile heading and Google button. Keep keyboard focus visible. */
+.nexo-tv.nexo-tv.ott-guest-profiles.ott-profiles-refined .ott-header .ott-profile-heading{max-width:none!important;white-space:nowrap!important;flex:1 1 auto;min-width:0;font-size:min(calc(30 * var(--ott-u)),2.1vw)!important;}
+.nexo-tv.nexo-tv.ott-guest-profiles.ott-profiles-refined .ott-profile-select .ott-profile-connect>.ott-avatar.ott-add{border:calc(2 * var(--ott-u)) solid transparent!important;box-sizing:border-box!important;}
+.nexo-tv.nexo-tv.ott-guest-profiles.ott-profiles-refined .ott-profile-select .ott-profile-connect:not(:hover):not(:focus-visible):not([data-ott-focused="true"])>.ott-avatar.ott-add{outline:none!important;}
+.nexo-tv.nexo-tv.ott-guest-profiles.ott-profiles-refined .ott-profile-select .ott-profile-connect:is(:hover,:focus-visible,[data-ott-focused="true"])>.ott-avatar.ott-add{border-color:#fff!important;}
+.nexo-tv .nexo-history-cover>.nexo-lote16-history-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.nexo-tv .nexo-lote16-history-loading{position:absolute;inset:0;background:linear-gradient(110deg,#ffffff08,#ffffff22,#ffffff08);background-size:200% 100%;animation:nexo-lote16-shimmer 1.4s ease infinite;}
+@keyframes nexo-lote16-shimmer{to{background-position:-200% 0}}
+@media(prefers-reduced-motion:reduce){.nexo-tv .nexo-lote16-history-loading{animation:none}}

@@ -1,0 +1,68 @@
+/* Lote 11: vidro leve; sem backdrop-filter dinâmico e sem alterar dimensões ou animações. */
+.nexo-tv.ott-audio {
+  --nexo-glass-neutral: linear-gradient(145deg,rgba(255,255,255,.20),rgba(255,255,255,.045) 48%,rgba(0,0,0,.24)),rgba(24,24,27,.48);
+  --nexo-glass-panel: linear-gradient(150deg,rgba(255,255,255,.16),rgba(255,255,255,.035) 50%,rgba(0,0,0,.18)),rgba(30,30,34,.86);
+  --nexo-glass-accent: linear-gradient(145deg,rgba(255,255,255,.34),rgba(255,255,255,.08) 38%,rgba(0,0,0,.28)),var(--ott-accent,#eb1b24);
+  --nexo-glass-edge: inset 0 1px 0 rgba(255,255,255,.36),inset 0 0 0 1px rgba(255,255,255,.13);
+}
+@supports (background:color-mix(in srgb,red 70%,transparent)) {
+  .nexo-tv.ott-audio {--nexo-glass-accent:linear-gradient(145deg,rgba(255,255,255,.30),rgba(255,255,255,.06) 40%,rgba(0,0,0,.26)),color-mix(in srgb,var(--ott-accent,#eb1b24) 70%,transparent);}
+}
+/* Grade compartilhada: somente superfícies; a rolagem, fotos, foco e dimensões permanecem. */
+.nexo-tv.nexo-tv .nexo-grade-agenda :is(.nexo-grade-moldura,.nexo-program-details) {
+  background:var(--nexo-glass-panel,linear-gradient(150deg,#45454bdd,#1e1e22e6))!important;
+  box-shadow:var(--nexo-glass-edge,inset 0 0 0 1px #ffffff22)!important;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+.nexo-tv.nexo-tv .nexo-grade-agenda :is(.nexo-grade-relogio,.nexo-grade-dia-titulo,.nexo-grade-horario,.nexo-grade-voltar,.nexo-program-details button) {
+  background:var(--nexo-glass-neutral,linear-gradient(145deg,#ffffff33,#18181b77))!important;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+.nexo-tv.nexo-tv .nexo-grade-agenda button.nexo-grade-programa {
+  background:var(--nexo-glass-neutral,linear-gradient(145deg,#ffffff33,#18181b77))!important;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+.nexo-tv.nexo-tv .nexo-grade-agenda button.nexo-grade-programa::before {background:none!important;}
+.nexo-tv.nexo-tv .nexo-grade-agenda button.nexo-grade-programa[data-ao-vivo="true"],
+.nexo-tv.nexo-tv .nexo-grade-agenda button.nexo-grade-programa:is(:hover,:focus,:focus-visible) {
+  background:var(--nexo-glass-accent,var(--ott-accent,#eb1b24))!important;
+}
+.nexo-tv.nexo-tv .nexo-grade-agenda :is(.nexo-grade-no-ar) {background:var(--nexo-glass-accent,var(--ott-accent,#eb1b24))!important;}
+.nexo-tv.nexo-tv .nexo-grade-agenda :is(.nexo-grade-relogio,.nexo-grade-dia-titulo,.nexo-grade-horario,.nexo-grade-voltar,.nexo-program-details button,.nexo-grade-programa):not(:hover):not(:focus):not([data-ott-focused="true"]) {box-shadow:var(--nexo-glass-edge,inset 0 0 0 1px #ffffff22)!important;}
+/* Áudio: mesmos tokens da Home. Não aplicar a camada de vidro ao conteúdo das capas. */
+.nexo-tv.nexo-tv.ott-audio :is(.ott-watch-header .ott-channel-type,.ott-watch-program .ott-channel-type) {
+  background:var(--nexo-glass-accent)!important;box-shadow:var(--nexo-glass-edge)!important;color:#fff!important;
+}
+.nexo-tv.nexo-tv.ott-audio :is(.nexo-tv-climate-header,.ott-watch-schedule-button,.ott-interactivity-button,.ott-interactivity-card,.ott-interactivity-back,.ott-watch-back,.ott-play,.ott-channel-up,.ott-open-schedule) {
+  background:var(--nexo-glass-neutral)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+.nexo-tv.nexo-tv.ott-audio :is(.nexo-tv-climate-header,.ott-watch-schedule-button,.ott-interactivity-button,.ott-interactivity-card,.ott-interactivity-back,.ott-watch-back,.ott-play,.ott-channel-up,.ott-open-schedule):not(:hover):not(:focus):not([data-ott-focused="true"]) {box-shadow:var(--nexo-glass-edge)!important;}
+.nexo-tv.nexo-tv.ott-audio .nexo-tv-climate-header {border-radius:999px;padding:calc(5 * var(--ott-u)) calc(12 * var(--ott-u));}
+.nexo-tv.nexo-tv.ott-audio :is(.ott-interactivity-panel-poll>.ott-interaction-content,.ott-interactivity-panel-weather .nexo-tv-weather,.ott-interactivity-panel-history .nexo-history-carousel,.ott-interactivity-panel-history .nexo-tv-history,.ott-interactivity-panel-chat .ott-tv-chat-qr,.ott-interactivity-panel-chat .ott-tv-chat-messages) {
+  background:var(--nexo-glass-panel)!important;box-shadow:var(--nexo-glass-edge)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+.nexo-tv.nexo-tv.ott-audio .ott-interactivity-panel-lyrics::before {background:var(--nexo-glass-panel)!important;box-shadow:var(--nexo-glass-edge)!important;}
+.nexo-tv.nexo-tv.ott-audio .ott-interactivity-panel :is(.ott-standard-back,.ott-poll-answer,.ott-poll-change,.nexo-tv-weather-day,.ott-battle-choice-v24,.ott-tv-chat-join,.ott-tv-chat-qr-return) {background:var(--nexo-glass-neutral)!important;}
+/* Moldura no contorno da capa, nunca uma superfície opaca sobre a fotografia. */
+.nexo-tv.nexo-tv.ott-audio .ott-audio-stage .ott-album {
+  background:transparent!important;
+  box-shadow:0 0 0 1px rgba(255,255,255,.32)!important;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+.nexo-tv.nexo-tv.ott-audio .ott-audio-stage .ott-album>.ott-artwork {width:100%;height:100%;background:transparent!important;}
+.nexo-tv.nexo-tv.ott-audio .ott-audio-stage .ott-album>.ott-album-like {background:transparent!important;}
+/* Não forçar a opacidade de pais/estágios: as animações de troca continuam intactas. */
+.nexo-tv.nexo-tv :is(.ott-header-artwork,.ott-album>.ott-artwork,.ott-video-now-cover,.ott-profiles-now>.ott-artwork)>img {
+  display:block;width:100%;height:100%;object-fit:cover;visibility:visible;opacity:1;
+}
+/* Edição de perfil: estilo nos campos e botões, sem mudar a página de seleção. */
+.nexo-tv.nexo-tv.ott-profile-edit-page .ott-profile-form :is(.ott-field,.ott-edit-actions>button),
+.nexo-tv.nexo-tv.ott-profile-edit-page .ott-edit-header>.ott-standard-back {
+  background:var(--nexo-glass-neutral)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+.nexo-tv.nexo-tv.ott-profile-edit-page .ott-profile-form .ott-field-name input {background:transparent!important;}
+.nexo-tv.nexo-tv.ott-profile-edit-page .ott-edit-actions>button.ott-primary {background:var(--nexo-glass-accent)!important;}
+.nexo-tv.nexo-tv.ott-profile-edit-page .ott-profile-form :is(.ott-field,.ott-edit-actions>button):not(:hover):not(:focus):not(:focus-within):not([data-ott-focused="true"]) {box-shadow:var(--nexo-glass-edge)!important;}
+/* Estado vazio da batalha: reutiliza a estrutura e dimensões da enquete, sem esticar o painel. */
+.nexo-tv.nexo-tv .ott-interactivity-panel-battle>.ott-interaction-content.nexo-lote11-battle-empty {flex:0 0 auto!important;min-height:0!important;gap:0!important;}
+.nexo-tv.nexo-tv .nexo-lote11-battle-empty .ott-poll-empty>p {max-width:20ch;font-size:calc(18 * var(--ott-u));line-height:1.35;}

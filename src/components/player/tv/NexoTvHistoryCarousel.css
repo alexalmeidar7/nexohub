@@ -212,3 +212,12 @@
 .nexo-tv .nexo-history-carousel .nexo-history-selected > button.nexo-history-up,
 .nexo-tv .nexo-history-carousel .nexo-history-controls > button {box-sizing:border-box;flex:0 0 auto;width:calc(46 * var(--ott-u));height:calc(46 * var(--ott-u));min-width:calc(46 * var(--ott-u));min-height:calc(46 * var(--ott-u));max-width:calc(46 * var(--ott-u));max-height:calc(46 * var(--ott-u));padding:0;border-radius:50%;aspect-ratio:1;display:grid;place-items:center;background:rgba(255,255,255,.16);}
 .nexo-tv .nexo-history-carousel .nexo-history-selected > button.nexo-history-up[aria-disabled=true]{opacity:.55;}
+
+/* Equal navigation gaps, including advertising slides. */
+.nexo-tv.nexo-tv .nexo-history-carousel .nexo-history-selected{gap:calc(9 * var(--ott-u));}
+.nexo-tv.nexo-tv .nexo-history-carousel .nexo-history-info{min-height:calc(88 * var(--ott-u));justify-content:center;}
+.nexo-tv.nexo-tv .nexo-history-carousel .nexo-history-media-space{display:grid;place-items:center;position:relative;flex:1 1 0;min-height:0;min-width:0;width:100%;container-type:size;}
+.nexo-tv.nexo-tv .nexo-history-carousel .nexo-history-media-space>.nexo-history-cover{margin:0!important;flex:none;width:min(100%,calc(390 * var(--ott-u)),43vh);max-height:100%;aspect-ratio:1;height:auto;}
+@supports (width:1cqh){.nexo-tv.nexo-tv .nexo-history-carousel .nexo-history-media-space>.nexo-history-cover{width:min(100cqw,100cqh,calc(390 * var(--ott-u)),43vh);}}
+.nexo-tv.nexo-tv .nexo-history-carousel .nexo-history-controls{margin-top:calc(9 * var(--ott-u));flex:0 0 calc(46 * var(--ott-u));}
+.nexo-tv.nexo-tv .nexo-history-carousel .nexo-history-feedback{position:absolute;bottom:0;left:0;right:0;pointer-events:none;text-align:center;background:#111b;border-radius:6px;}

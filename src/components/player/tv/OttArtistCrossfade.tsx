@@ -1,33 +1,32 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./OttArtistCrossfade.css";
 
-/** Keep the previous decoded photo visible until the next one has faded in. */
+/** One atomic change of layers, keeping the previous decoded image underneath. */
 export default function OttArtistCrossfade({ source }: { source?: string | null }) {
-  const [active, setActive] = useState<string | null>(null);
-  const [previous, setPrevious] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!source || source === active) return;
-    let cancelled = false;
-    const img = new Image();
-    const reveal = async () => {
-      try { await img.decode?.(); } catch { /* already loaded or decode unsupported */ }
-      if (!cancelled) { setPrevious(active); setActive(source); }
-    };
-    img.onload = () => { void reveal(); };
-    img.onerror = () => { /* preserve the previous image, never flash black */ };
-    img.src = source;
-    return () => { cancelled = true; img.onload = null; img.onerror = null; };
-  }, [source, active]);
-
-  useEffect(() => {
-    if (!previous) return;
-    const timeout = window.setTimeout(() => setPrevious(null), 1600);
-    return () => window.clearTimeout(timeout);
-  }, [previous, active]);
-
-  return <div className="ott-artist-crossfade" aria-hidden="true">
-    {previous && previous !== active && <img key={previous} className="ott-artist-crossfade-previous" src={previous} alt="" decoding="async" />}
-    {active && <img key={active} className="ott-artist-crossfade-current" src={active} alt="" decoding="async" />}
-  </div>;
+ const [layers,setLayers]=useState<{active:string|null;previous:string|null}>({active:null,previous:null});
+ const activeRef=useRef<string|null>(null);
+ useEffect(()=>{
+  if(!source||source===activeRef.current)return;
+  let cancelled=false;const image=new Image();image.decoding="async";
+  let started=false;
+  const reveal=async()=>{
+   if(started||!image.naturalWidth)return;started=true;
+   try{await image.decode?.();}catch{if(!image.naturalWidth)return;}
+   if(cancelled)return;
+   const previous=activeRef.current;activeRef.current=source;
+   setLayers({active:source,previous});
+  };
+  image.onload=()=>{void reveal();};image.src=source;
+  if(image.complete&&image.naturalWidth)void reveal();
+  return()=>{cancelled=true;image.onload=null;};
+ },[source]);
+ useEffect(()=>{
+  if(!layers.previous)return;
+  const timer=setTimeout(()=>setLayers(current=>current.active===layers.active?{active:current.active,previous:null}:current),1650);
+  return()=>clearTimeout(timer);
+ },[layers.active,layers.previous]);
+ return <div className="ott-artist-crossfade" aria-hidden="true">
+  {layers.previous&&layers.previous!==layers.active&&<img key={layers.previous} className="ott-artist-crossfade-previous" src={layers.previous} alt="" decoding="async"/>}
+  {layers.active&&<img key={layers.active} className="ott-artist-crossfade-current" src={layers.active} alt="" decoding="async"/>}
+ </div>;
 }

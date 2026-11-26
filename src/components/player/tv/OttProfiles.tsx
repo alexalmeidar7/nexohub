@@ -1,3 +1,6 @@
+import "./NexoLote16.css";
+import NexoLoadingImage from "./NexoLoadingImage";
+import { OTT_BUILD_VERSION } from "./nexoOttBuildVersion";
 import { ReminderList } from "./TvProgramReminders";
 import { useEffect, useRef, useState } from "react";
 import { ChevronRight, Pencil, RefreshCw, Undo2, UserRound, QrCode, ClipboardCheck, CheckCircle2, Plus, LogOut, Trash2 } from "lucide-react";
@@ -20,7 +23,7 @@ interface Props { radioUserId?: string | null;  logo?: string | null; radioName?
 function ProfileCircle({ avatar, name }: { avatar: string; name: string }) {
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [avatar]);
-  return <span className={`ott-avatar${!avatar || avatar.includes("usr-default") || failed ? " ott-avatar-default" : ""}`}>{avatar && !avatar.includes("usr-default") && !failed ? <img src={avatar} alt={name} onError={()=>setFailed(true)}/> : <UserRound aria-hidden="true"/>}</span>;
+  return <span className={`ott-avatar${!avatar || avatar.includes("usr-default") || failed ? " ott-avatar-default" : ""}`}>{avatar && !avatar.includes("usr-default") && !failed ? <NexoLoadingImage src={avatar} alt={name} onError={()=>setFailed(true)}/> : <UserRound aria-hidden="true"/>}</span>;
 }
 
 function GoogleWhiteIcon() {
@@ -31,6 +34,7 @@ function PairInProfile({ slug, onClose, onSuccess }: { slug: string; onClose: ()
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [reconnecting, setReconnecting] = useState(false);
   const [generation, setGeneration] = useState(0);
   const successRef = useRef(onSuccess); successRef.current = onSuccess;
   const [expiresAt, setExpiresAt] = useState(0);
@@ -41,7 +45,7 @@ function PairInProfile({ slug, onClose, onSuccess }: { slug: string; onClose: ()
     let timer: ReturnType<typeof setTimeout> | undefined;
     const run = async () => {
       succeeded.current = false;
-      setCode(""); setError(""); setBusy(false);
+      setCode(""); setError(""); setBusy(false); setExpiresAt(0); setReconnecting(false);
       if (!slug) { setError("Emissora não identificada."); return; }
       try {
         const { secret, proofHash } = await newDeviceProof();
@@ -53,16 +57,20 @@ function PairInProfile({ slug, onClose, onSuccess }: { slug: string; onClose: ()
         if (createError || !data?.ok || !/^\d{4}$/.test(displayCode) || !privateCode) {
           throw new Error("O servidor não retornou um código de 4 números. Gere outro código ou verifique o serviço de pareamento.");
         }
-        setCode(displayCode);
         const expiry = Date.parse(data.expiresAt || "");
-        setExpiresAt(Number.isFinite(expiry) ? expiry : Date.now() + 15*60*1000);
+        if (!Number.isFinite(expiry) || expiry <= Date.now()) throw new Error("Código inválido ou expirado. Gere outro código.");
+        setExpiresAt(expiry);
+        setCode(displayCode);
         if (data.devicePairing !== true) {setError("O servidor de pareamento ainda precisa ser atualizado para conectar a conta Google com segurança."); return;}
+        let failures = 0;
         const poll = async () => {
           if (cancelled || succeeded.current) return;
-          if (Date.now() >= (Number.isFinite(expiry) ? expiry : Date.now()+1)) { setError("Código expirado. Gere um novo código."); return; }
+          if (Date.now() >= expiry) { setReconnecting(false); setError("Código expirado. Gere um novo código."); return; }
           try {
             const { data: status, error: statusError } = await playerSupabase.functions.invoke("tv-pair-status", {body:{code:privateCode,tvSessionId}});
+            if (cancelled) return;
             if (statusError || !status?.ok) throw new Error("Não foi possível acompanhar o pareamento.");
+            failures = 0; setReconnecting(false);
             if (status.row?.status === "claimed") {
               if (!status.row.paired_user_id) { setError("O celular entrou como visitante, não com Google. Gere outro QR code."); return; }
               succeeded.current = true; setBusy(true);
@@ -73,8 +81,11 @@ function PairInProfile({ slug, onClose, onSuccess }: { slug: string; onClose: ()
               finally { if(!cancelled) setBusy(false); }
               return;
             }
-          } catch(e) { if (!cancelled) setError(e instanceof Error?e.message:"Erro de conexão."); return; }
-          if (!cancelled) timer=setTimeout(()=>void poll(),2000);
+          } catch(e) {
+            if (cancelled) return;
+            failures++; setReconnecting(true);
+          }
+          if (!cancelled) timer=setTimeout(()=>void poll(), failures ? Math.min(8000, 2000 * 2 ** Math.min(failures, 2)) : 2000);
         };
         void poll();
       } catch(e) {if(!cancelled) setError(e instanceof Error?e.message:"Não foi possível gerar o código.");}
@@ -92,10 +103,10 @@ function PairInProfile({ slug, onClose, onSuccess }: { slug: string; onClose: ()
       <p>Escaneie com seu celular e entre com Google.</p>
       <div className="ott-inline-pair-code-label">Código de pareamento</div>
       <strong className="ott-inline-pair-code">{code || "••••"}</strong>
-      {code && !error && <small role="status">Aguardando login no celular · {remaining}</small>}
+      {code && !error && !busy && <small role="status">{reconnecting ? "Reconectando automaticamente" : "Aguardando login no celular"} · {remaining}</small>}
       {busy && <small role="status">Validando sua conta na TV...</small>}
       {error && <p className="ott-inline-pair-error" role="alert">{error}</p>}
-      {(error || seconds === 0) && <button type="button" className="ott-inline-pair-retry" onClick={()=>setGeneration(n=>n+1)}><RefreshCw/> Gerar outro código</button>}
+      {!busy && (error || (code && seconds === 0)) && <button type="button" className="ott-inline-pair-retry" onClick={()=>setGeneration(n=>n+1)}><RefreshCw/> Gerar outro código</button>}
     </section>
   </div>;
 }
@@ -158,7 +169,7 @@ export default function OttProfiles(p: Props) {
   const now=p.nowPlaying;
   return <OttFrame root={root} className={`ott-profiles ott-profiles-refined ${mode==="edit"||mode==="subedit" ? "ott-profile-edit-page" : ""} ${!p.authenticated?"ott-guest-profiles":""}`} accent={p.accent}>
     <OttBackdrop image={p.background}/>
-    <header className="ott-header"><OttClientBrand logo={p.logo} name={p.radioName}/>{mode==="select" && <h1 className="ott-profile-heading">Escolha seu perfil ou crie um novo perfil</h1>}</header>
+    <header className="ott-header"><OttClientBrand logo={p.logo} name={p.radioName}/>{mode==="select" && <h1 className="ott-profile-heading">{p.authenticated ? "Escolha seu perfil ou crie um novo" : "Entre com sua conta Google para uma melhor experiência"}</h1>}</header>
     {mode==="select" ? <section className="ott-profile-select" data-entry-ready={entryReady} data-ott-scroll>
       <div className="ott-profile-row">
         <button className="ott-profile-entry ott-profile-main" data-ott-initial aria-label={`Continuar como ${displayName}`} onClick={p.onContinue}>
@@ -186,7 +197,7 @@ export default function OttProfiles(p: Props) {
       </div>}
       {!p.authenticated && <button className="ott-profile-entry ott-subprofile ott-profile-connect" onClick={()=>setPairOpen(true)}><span className="ott-avatar ott-add"><GoogleWhiteIcon/></span><span>Conectar minha conta</span></button>}
     </section> : mode==="add" ? <section className="ott-profile-create" data-ott-scroll>
-      <header><button type="button" className="ott-profile-create-back" aria-label="Voltar" onClick={close}><Undo2 aria-hidden="true"/></button><h2>Criar novo perfil</h2></header>
+      <header><button type="button" className="ott-profile-create-back ott-standard-back" aria-label="Voltar" onClick={close}><Undo2 aria-hidden="true"/></button><h2>Criar novo perfil</h2></header>
       <label>Nome do perfil<input data-ott-initial maxLength={60} placeholder="Digite o nome do perfil" value={newProfileName} onChange={e=>setNewProfileName(e.target.value)}/></label>
       <button type="button" className="ott-profile-avatar-picker" onClick={()=>setNewProfileAvatarOpen(v=>!v)} aria-expanded={newProfileAvatarOpen}><ProfileCircle avatar={newProfileAvatar} name="Avatar do novo perfil"/><span>Escolher avatar</span><ChevronRight aria-hidden="true"/></button>
       {newProfileAvatarOpen && <div className="ott-create-avatars" data-ott-scroll>{p.avatars.map((src,i)=><button type="button" key={`${src}-${i}`} aria-label={`Selecionar avatar ${i+1}`} onClick={()=>{setNewProfileAvatar(src);setNewProfileAvatarOpen(false);}}><ProfileCircle avatar={src} name={`Avatar ${i+1}`}/></button>)}</div>}
@@ -195,7 +206,7 @@ export default function OttProfiles(p: Props) {
     </section> : mode==="subavatar" ? <section className="ott-avatar-grid" data-ott-scroll>
       {p.avatars.map((avatar,i)=><button type="button" data-ott-initial={i===0?"":undefined} key={`sub-${avatar}-${i}`} aria-label={`Escolher avatar ${i+1}`} onClick={()=>{setSubDraftAvatar(avatar);setMode("subedit");}}><ProfileCircle avatar={avatar} name={`Avatar ${i+1}`}/></button>)}
     </section> : mode==="subedit" ? <>
-      <header className="ott-edit-header ott-profile-sub-edit-header"><button type="button" aria-label="Voltar" onClick={close}><Undo2/></button><div><h1>Editar perfil</h1><p>Personalize o nome e o avatar deste perfil.</p></div></header>
+      <header className="ott-edit-header ott-profile-sub-edit-header"><button type="button" aria-label="Voltar" className="ott-standard-back" onClick={close}><Undo2 strokeWidth={2.5}/></button><div><h1>Editar perfil</h1><p>Personalize o nome e o avatar deste perfil.</p></div></header>
       <main className="ott-edit-main"><section className="ott-fields ott-profile-form" data-ott-scroll>
         <label className="ott-field ott-field-name"><UserRound/><span>Nome do perfil<input data-ott-initial maxLength={60} value={subDraftName} onChange={e=>setSubDraftName(e.target.value)}/></span></label>
         <button type="button" className="ott-field" onClick={()=>setMode("subavatar")}><UserRound/><b>Trocar avatar</b><ChevronRight/></button>
@@ -203,7 +214,7 @@ export default function OttProfiles(p: Props) {
       </section><aside className="ott-avatar-preview"><ProfileCircle avatar={subDraftAvatar} name={subDraftName}/><h2>{subDraftName}</h2></aside></main>
       {error && <p className="ott-error" role="alert">{error}</p>}
     </> : mode==="avatar" ? <section className="ott-avatar-grid" data-ott-scroll>{p.avatars.map((avatar,i)=><button type="button" data-ott-initial={i===0?"":undefined} key={avatar} aria-label={`Escolher avatar ${i+1}`} onClick={()=>{setDraft(d=>({...d,avatar_url:avatar}));setMode("edit");}}><ProfileCircle avatar={avatar} name={`Avatar ${i+1}`}/></button>)}</section> : <>
-      <header className="ott-edit-header"><button onClick={close} aria-label="Voltar"><Undo2/></button><div><h1>Editar perfil</h1><p>Personalize seu perfil e mantenha seu cadastro em dia.</p></div></header>
+      <header className="ott-edit-header"><button onClick={close} aria-label="Voltar" className="ott-standard-back"><Undo2 strokeWidth={2.5}/></button><div><h1>Editar perfil</h1><p>Personalize seu perfil e mantenha seu cadastro em dia.</p></div></header>
       <main className="ott-edit-main"><section className="ott-fields ott-profile-form" data-ott-scroll>
         <label className="ott-field ott-field-name"><UserRound/><span>Nome<input data-ott-initial maxLength={60} value={draft.nome} onChange={e=>setDraft(d=>({...d,nome:e.target.value}))}/></span></label>
         <button className="ott-field" onClick={()=>setMode("avatar")}><UserRound/><b>Trocar avatar</b><ChevronRight/></button>
@@ -214,6 +225,7 @@ export default function OttProfiles(p: Props) {
       </section><aside className="ott-avatar-preview"><ProfileCircle avatar={draft.avatar_url} name={draft.nome}/><h2>{draft.nome}</h2></aside></main>
       {error && <p className="ott-error" role="alert">{error}</p>}
     </>}
+    {mode==="select" && <small className="nexo-lote13-profile-version">Nexo Brasil Soluções Visuais - OTT Player - {OTT_BUILD_VERSION}</small>}
     {saveNotice && mode==="select" && <p className="ott-profile-save-notice" role="status">{saveNotice}</p>}
     {now && (now.titulo||now.artista) && <div className="ott-profiles-now"><OttArtwork sources={[now.capa]}/><div><small>tocando agora</small><strong>{now.titulo}</strong><span>{now.artista}</span></div></div>}
     {registrationOpen && p.authenticated && <div className="ott-inline-pair-scrim" role="presentation" onClick={event=>{if(event.target===event.currentTarget){setRegistrationOpen(false);void p.onRegistrationRefresh?.();}}}>

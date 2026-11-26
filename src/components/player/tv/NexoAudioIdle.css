@@ -1,0 +1,15 @@
+/* Lote 15: only bottom transport and programme button on the audio screen. */
+.nexo-tv.ott-audio[data-nexo-lote15-audio-idle] .ott-watch-chrome :is(.ott-watch-back,.ott-transport,.ott-channel-up,.ott-open-schedule,.ott-channel-down,.ott-watch-schedule-button){
+ transition:opacity 350ms ease,visibility 0s linear!important;
+}
+.nexo-tv.nexo-tv.ott-audio[data-nexo-lote15-audio-idle="true"] .ott-watch-chrome :is(.ott-watch-back,.ott-transport,.ott-channel-up,.ott-open-schedule,.ott-channel-down,.ott-watch-schedule-button){
+ opacity:0!important;visibility:hidden!important;pointer-events:none!important;animation:none!important;
+ transition:opacity 350ms ease,visibility 0s linear 350ms!important;
+}
+.nexo-tv.nexo-tv.ott-audio[data-nexo-lote15-audio-idle] .ott-watch-footer[data-shortcuts-open="false"][data-nexo-box-open="false"] > .ott-watch-program{
+ transition:transform 350ms cubic-bezier(.2,.7,.2,1),opacity 270ms ease,visibility 0s linear!important;
+}
+.nexo-tv.nexo-tv.ott-audio[data-nexo-lote15-audio-idle="true"] .ott-watch-footer[data-shortcuts-open="false"][data-nexo-box-open="false"] > .ott-watch-program{
+ transform:translate3d(var(--nexo-audio-idle-x,0px),0,0)!important;animation:none!important;
+}
+@media(prefers-reduced-motion:reduce){.nexo-tv.ott-audio[data-nexo-lote15-audio-idle] .ott-watch-chrome :is(.ott-watch-back,.ott-transport,.ott-channel-up,.ott-open-schedule,.ott-channel-down,.ott-watch-schedule-button,.ott-watch-program){transition:none!important;}}

@@ -1,0 +1,24 @@
+/* Escopo exclusivo dos tres controles aprovados. Sem regras de fundo, banner ou streaming. */
+.nexo-tv .nexo-tv-climate-glyph.nexo-lote5-weather{width:calc(39 * var(--ott-u));height:calc(39 * var(--ott-u));flex:0 0 auto;color:#fff}
+.nexo-tv .nexo-lote5-weather .nexo-rounded-weather{display:block;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;stroke-width:3.3!important;flex-shrink:0}
+.nexo-wx5-sun{transform-origin:24px 24px;animation:nexo-wx5-rotate 18s linear infinite}
+.nexo-wx5-cloud{animation:nexo-wx5-drift 3.5s ease-in-out infinite}
+.nexo-wx5-moon{animation:nexo-wx5-pulse 3.5s ease-in-out infinite}
+.nexo-wx5-rain,.nexo-wx5-snow{animation:nexo-wx5-fall 1.7s ease-in-out infinite}
+.nexo-wx5-flash{animation:nexo-wx5-pulse 2.5s ease-in-out infinite}
+.nexo-wx5-fog{animation:nexo-wx5-drift 3s ease-in-out infinite}
+@keyframes nexo-wx5-rotate{to{transform:rotate(360deg)}}
+@keyframes nexo-wx5-drift{50%{transform:translateX(1.5px)}}
+@keyframes nexo-wx5-pulse{50%{opacity:.65}}
+@keyframes nexo-wx5-fall{0%,100%{opacity:1;transform:translateY(0)}50%{opacity:.6;transform:translateY(1.5px)}}
+.nexo-tv.ott-home .ott-header-right-group .nexo-lote5-search{position:relative;flex:0 0 auto;overflow:visible;z-index:16}
+.nexo-tv.ott-home .nexo-lote5-search>button.ott-search{display:grid!important;place-items:center;width:calc(56 * var(--ott-u))!important;height:calc(56 * var(--ott-u))!important;min-width:0!important;min-height:0!important;padding:0!important;border:0!important;border-radius:50%!important;background:#17171770!important;color:#fff!important;flex:0 0 auto}
+.nexo-tv.ott-home .nexo-lote5-search>button.ott-search svg{width:calc(27 * var(--ott-u))!important;height:calc(27 * var(--ott-u))!important}
+.nexo-tv.ott-home .nexo-lote5-search .ott-home-search-expand{position:absolute;right:calc(100% + 12 * var(--ott-u));top:50%;transform:translateY(-50%);margin-left:0!important; background:#303030!important;overflow:visible}
+.nexo-tv.ott-home .nexo-lote5-search .ott-home-search-results{left:auto;right:0;background:#303030; padding:calc(16 * var(--ott-u))}
+.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.ott-home.ott-rail-layout button.nexo-lote5-grade{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:0!important;width:calc(33 * var(--ott-u))!important;height:calc(33 * var(--ott-u))!important;min-height:0!important;min-width:0!important;padding:0!important;border:calc(2 * var(--ott-u)) solid #fff!important;border-radius:calc(22 * var(--ott-u))!important;box-shadow:none!important;overflow:visible!important;font-size:calc(15 * var(--ott-u));transition:width 220ms ease,gap 220ms ease,padding 220ms ease!important}
+.nexo-tv.ott-home .nexo-lote5-grade>svg{width:calc(19 * var(--ott-u))!important;height:calc(19 * var(--ott-u))!important;flex:0 0 auto}
+.nexo-tv.ott-home .nexo-lote5-grade-text{max-width:0;opacity:0;overflow:hidden;white-space:nowrap;transition:max-width 220ms ease,opacity 160ms ease}
+.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.ott-home.ott-rail-layout button.nexo-lote5-grade:is(:hover,:focus,:focus-visible,[data-ott-focused="true"]){width:calc(166 * var(--ott-u))!important;gap:calc(7 * var(--ott-u))!important;padding:0 calc(10 * var(--ott-u))!important;outline:var(--ott-focus-width,max(2px,calc(3 * var(--ott-u)))) solid #fff!important;outline-offset:calc(5 * var(--ott-u))!important;box-shadow:none!important;border-color:transparent!important}
+.nexo-tv.ott-home .nexo-lote5-grade:is(:hover,:focus,:focus-visible,[data-ott-focused="true"]) .nexo-lote5-grade-text{max-width:calc(135 * var(--ott-u));opacity:1}
+@media(prefers-reduced-motion:reduce){.nexo-rounded-weather *{animation:none!important}.nexo-lote5-grade,.nexo-lote5-grade-text{transition:none!important}}

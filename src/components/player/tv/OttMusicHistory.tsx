@@ -1,3 +1,5 @@
+import { OttSkeletonContent } from "./OttSkeleton";
+import NexoLoadingImage from "./NexoLoadingImage";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { playerSupabase } from "@/integrations/supabase/playerClient";
@@ -121,6 +123,7 @@ export default function OttMusicHistory({ owner, loadCover }: Props) {
     setPage(next);
   };
 
+  if (!tracks.length && status.startsWith("Carregando")) return <OttSkeletonContent variant="history"/>;
   if (!tracks.length) return (
     <div className="flex flex-col items-center justify-center h-full min-h-[400px] p-8 text-center">
       <div className="text-4xl mb-4">🎵</div>
@@ -180,7 +183,7 @@ export default function OttMusicHistory({ owner, loadCover }: Props) {
               {/* Área da capa */}
               <div className="ott-track-cover-container">
                 {cover ? (
-                  <img
+                  <NexoLoadingImage
                     src={cover}
                     alt={`Capa de ${track.musica}`}
                     className="ott-track-cover"

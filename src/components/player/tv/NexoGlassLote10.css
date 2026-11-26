@@ -1,0 +1,95 @@
+/* Nexo Lote 10 — vidro leve, sem blur de fundo, filtros, novas animações ou camadas GPU. */
+.nexo-tv.ott-home.ott-rail-layout,
+.nexo-tv.ott-profiles-refined {
+  --nexo-glass-neutral: linear-gradient(145deg,rgba(255,255,255,.20),rgba(255,255,255,.045) 48%,rgba(0,0,0,.24)),rgba(24,24,27,.48);
+  --nexo-glass-panel: linear-gradient(150deg,rgba(255,255,255,.16),rgba(255,255,255,.035) 50%,rgba(0,0,0,.18)),rgba(30,30,34,.86);
+  --nexo-glass-accent: linear-gradient(145deg,rgba(255,255,255,.34),rgba(255,255,255,.08) 38%,rgba(0,0,0,.28)),var(--ott-accent,#eb1b24);
+  --nexo-glass-edge: inset 0 1px 0 rgba(255,255,255,.36),inset 0 0 0 1px rgba(255,255,255,.13);
+}
+/* O menu continua compacto e com as dimensões existentes. */
+.nexo-tv.nexo-tv.ott-home.ott-rail-layout .ott-home-rail::before {
+  background:var(--nexo-glass-neutral)!important;
+  box-shadow:var(--nexo-glass-edge)!important;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+.nexo-tv.nexo-tv.ott-home.ott-rail-layout :is(.ott-home-rail-button,.ott-home-rail-profile)>.ott-home-rail-circle,
+.nexo-tv.nexo-tv.ott-home.ott-rail-layout :is(.ott-home-rail-button,.ott-home-rail-profile):is(:hover,:focus,:focus-visible)>.ott-home-rail-circle {
+  background:var(--nexo-glass-accent)!important;
+  box-shadow:var(--nexo-glass-edge)!important;
+}
+.nexo-tv.nexo-tv.ott-home.ott-rail-layout :is(.ott-home-rail-button,.ott-home-rail-profile):is(:hover,:focus,:focus-visible) {
+  background:var(--nexo-glass-accent)!important;
+}
+.nexo-tv.nexo-tv.ott-home.ott-rail-layout :is(.ott-header-track,.ott-search,.nexo-tv-climate-header,.ott-interactivity-button,.ott-interactivity-card,.ott-interactivity-back,.ott-home-search-close) {
+  background:var(--nexo-glass-neutral)!important;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+.nexo-tv.nexo-tv.ott-home.ott-rail-layout :is(.ott-header-track,.ott-search,.nexo-tv-climate-header,.ott-interactivity-button,.ott-interactivity-card,.ott-interactivity-back,.ott-home-search-close):not(:focus):not(:hover):not([data-ott-focused="true"]) {
+  box-shadow:var(--nexo-glass-edge)!important;
+}
+.nexo-tv.nexo-tv.ott-home.ott-rail-layout .nexo-tv-climate-header {border-radius:999px; padding:calc(5 * var(--ott-u)) calc(12 * var(--ott-u));}
+.nexo-tv.nexo-tv.ott-home.ott-rail-layout .ott-now-live-label {
+  background:var(--nexo-glass-accent)!important;box-shadow:var(--nexo-glass-edge)!important;color:#fff!important;
+}
+/* Vidro nos painéis reais, sem preencher a área transparente do botão Voltar. */
+.nexo-tv.nexo-tv.ott-home.ott-rail-layout :is(.ott-home-search-expand,.ott-home-search-results,.ott-interactivity-panel-poll>.ott-interaction-content,.ott-interactivity-panel-weather .nexo-tv-weather,.ott-interactivity-panel-history .nexo-history-carousel,.ott-interactivity-panel-history .nexo-tv-history,.ott-interactivity-panel-chat .ott-tv-chat-qr,.ott-interactivity-panel-chat .ott-tv-chat-messages) {
+  background:var(--nexo-glass-panel)!important;box-shadow:var(--nexo-glass-edge)!important;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+.nexo-tv.nexo-tv.ott-home.ott-rail-layout .ott-interactivity-panel-lyrics::before {background:var(--nexo-glass-panel)!important;box-shadow:var(--nexo-glass-edge)!important;}
+.nexo-tv.nexo-tv.ott-home.ott-rail-layout .ott-interactivity-panel :is(.ott-standard-back,.ott-poll-answer,.ott-poll-change,.nexo-tv-weather-day,.ott-battle-choice-v24,.ott-tv-chat-join,.ott-tv-chat-qr-return) {background:var(--nexo-glass-neutral)!important;}
+/* Perfis: somente os círculos; foto, posição, tamanho e foco externo permanecem. */
+.nexo-tv.nexo-tv.ott-profiles-refined .ott-profile-select :is(.ott-profile-main,.ott-profile-add-button,.ott-profile-connect)>.ott-avatar {
+  background:var(--nexo-glass-neutral)!important;
+  background-clip:padding-box!important;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+.nexo-tv.nexo-tv.ott-profiles-refined .ott-profile-select :is(.ott-profile-main,.ott-profile-add-button,.ott-profile-connect)>.ott-avatar-default {background:var(--nexo-glass-accent)!important;}
+.nexo-tv.nexo-tv.ott-profiles-refined .ott-profile-select :is(.ott-profile-main,.ott-profile-add-button,.ott-profile-connect):not(:focus):not(:hover):not([data-ott-focused="true"])>.ott-avatar {box-shadow:var(--nexo-glass-edge)!important;}
+/* Uma coluna de layout real para No Ar + publicidade, sem remontar o banner. */
+.nexo-tv.nexo-tv.ott-home.ott-rail-layout .nexo-lote10-home-column {
+  position:absolute;left:calc(265 * var(--ott-u));top:25.2%;bottom:calc(54 * var(--ott-u));
+  width:min(44%,calc(845 * var(--ott-u)));display:flex;flex-direction:column;align-items:flex-start;
+  gap:calc(24 * var(--ott-u));min-height:0;pointer-events:none;z-index:6;overflow:visible;
+}
+.nexo-tv.nexo-tv.nexo-tv.ott-home.ott-rail-layout .nexo-lote10-home-column>.ott-now {
+  order:-1;position:relative!important;inset:auto!important;transform:none!important;
+  width:min(100%,calc(505 * var(--ott-u)))!important;max-height:none!important;flex:0 0 auto;
+  margin:0!important;overflow:visible!important;pointer-events:none;
+}
+.nexo-tv.nexo-tv.ott-home.ott-rail-layout .nexo-lote10-home-column>.ott-now button {pointer-events:auto;}
+.nexo-tv.nexo-tv.nexo-tv.ott-home.ott-rail-layout .nexo-lote10-home-column>.nexo-home-commercial-banner {
+  position:relative!important;inset:auto!important;transform:none!important;width:100%!important;max-width:100%!important;
+  margin: auto 0 0!important;flex:0 1 auto;min-height:0;
+}
+/* CEP: portal compartilhado, compacto em todas as telas. Vidro somente quando aberto pela Home. */
+body .nexo-tv-cep-overlay .nexo-tv-cep-dialog {
+  --nexo-cep-u:min(.052083333vw,.092592593vh);
+  box-sizing:border-box;width:min(88vw,max(230px,calc(540 * var(--nexo-cep-u))))!important;
+  max-width:100%;max-height:88vh;padding:max(15px,calc(26 * var(--nexo-cep-u)))!important;
+  border-radius:max(12px,calc(24 * var(--nexo-cep-u)));overflow:visible!important;
+}
+body .nexo-tv-cep-dialog header {gap:10px;margin-bottom:max(8px,calc(14 * var(--nexo-cep-u)));}
+body .nexo-tv-cep-dialog h2 {font-size:max(14px,calc(27 * var(--nexo-cep-u)));}
+body .nexo-tv-cep-dialog header button.ott-standard-back {width:max(28px,calc(48 * var(--nexo-cep-u)));height:max(28px,calc(48 * var(--nexo-cep-u)));flex:none;}
+body .nexo-tv-cep-dialog header button.ott-standard-back svg {width:55%;height:55%;}
+body .nexo-tv-cep-dialog p {font-size:max(11px,calc(19 * var(--nexo-cep-u)));margin:0 0 max(8px,calc(14 * var(--nexo-cep-u)));}
+body .nexo-tv-cep-dialog form {overflow:visible!important;padding:0 max(5px,calc(6 * var(--nexo-cep-u)));}
+body .nexo-tv-cep-dialog input#nexo-tv-weather-cep {box-sizing:border-box;height:max(30px,calc(55 * var(--nexo-cep-u)));font-size:max(13px,calc(22 * var(--nexo-cep-u)));padding:0 12px;margin-bottom:max(10px,calc(18 * var(--nexo-cep-u)));}
+body .nexo-tv-cep-dialog .nexo-tv-cep-save {position:relative;box-sizing:border-box;min-height:max(30px,calc(50 * var(--nexo-cep-u)));padding:max(6px,calc(10 * var(--nexo-cep-u))) 10px;font-size:max(12px,calc(20 * var(--nexo-cep-u)));overflow:visible!important;outline:none!important;}
+body .nexo-tv-cep-dialog .nexo-tv-cep-save::after {content:"";position:absolute;inset:calc(-1 * max(3px,calc(5 * var(--nexo-cep-u))));border:max(2px,calc(3 * var(--nexo-cep-u))) solid #fff;border-radius:999px;pointer-events:none;visibility:hidden;}
+body .nexo-tv-cep-dialog .nexo-tv-cep-save:not(:disabled):is(:hover,:focus,:focus-visible,[data-ott-focused="true"])::after {visibility:visible;}
+body .nexo-tv-cep-dialog .nexo-tv-cep-save:not(:disabled):is(:hover,:focus,:focus-visible,[data-ott-focused="true"]) {outline:none!important;box-shadow:none!important;}
+body .nexo-tv-cep-dialog .nexo-lote8-cep-city {margin:max(10px,calc(18 * var(--nexo-cep-u))) 0 0;text-align:center;}
+body .nexo-tv-cep-overlay[data-nexo-lote10-home="true"] .nexo-tv-cep-dialog {
+  background:linear-gradient(145deg,rgba(255,255,255,.19),rgba(255,255,255,.025) 60%,rgba(0,0,0,.12)),rgba(26,26,30,.88)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.38),inset 0 0 0 1px rgba(255,255,255,.16)!important;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+body .nexo-tv-cep-overlay[data-nexo-lote10-home="true"] .nexo-tv-cep-dialog .nexo-tv-cep-save {background:linear-gradient(145deg,rgba(255,255,255,.19),rgba(255,255,255,.035)),rgba(0,0,0,.3)!important;}
+/* Quando o motor suporta mistura de cores, a cor da emissora também deixa o fundo atravessar. */
+@supports (background:color-mix(in srgb,red 70%,transparent)) {
+ .nexo-tv.ott-home.ott-rail-layout,.nexo-tv.ott-profiles-refined {
+  --nexo-glass-accent:linear-gradient(145deg,rgba(255,255,255,.30),rgba(255,255,255,.06) 40%,rgba(0,0,0,.26)),color-mix(in srgb,var(--ott-accent,#eb1b24) 70%,transparent);
+ }
+}

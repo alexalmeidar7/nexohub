@@ -288,15 +288,19 @@ export default function PlayerTvWelcome() {
     if (!code) return;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
+    let failures = 0;
     const poll = async () => {
       if (cancelled || claimedRef.current || (expiresAt && Date.now() >= Date.parse(expiresAt))) return;
       let delay = 2000;
       try {
         const { data, error } = await playerSupabase.functions.invoke("tv-pair-status", { body: { code, tvSessionId } });
-        if (error) delay = 5000;
-        if (!cancelled) await handleClaimedRow(data?.ok ? data.row : null);
+        if (cancelled) return;
+        if (error || !data?.ok) throw new Error("Falha temporária no status do pareamento");
+        failures = 0;
+        await handleClaimedRow(data.row);
       } catch {
-        delay = 5000;
+        failures++;
+        delay = Math.min(8000, 2000 * 2 ** Math.min(failures, 2));
       } finally {
         if (!cancelled && !claimedRef.current) timer = setTimeout(() => void poll(), delay);
       }

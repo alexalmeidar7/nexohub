@@ -1,0 +1,68 @@
+/* Lote 11: vidro leve; sem backdrop-filter dinâmico e sem alterar dimensões ou animações. */
+.nexo-tv.ott-video {
+  --nexo-glass-neutral: linear-gradient(145deg,rgba(255,255,255,.20),rgba(255,255,255,.045) 48%,rgba(0,0,0,.24)),rgba(24,24,27,.48);
+  --nexo-glass-panel: linear-gradient(150deg,rgba(255,255,255,.16),rgba(255,255,255,.035) 50%,rgba(0,0,0,.18)),rgba(30,30,34,.86);
+  --nexo-glass-accent: linear-gradient(145deg,rgba(255,255,255,.34),rgba(255,255,255,.08) 38%,rgba(0,0,0,.28)),var(--ott-accent,#eb1b24);
+  --nexo-glass-edge: inset 0 1px 0 rgba(255,255,255,.36),inset 0 0 0 1px rgba(255,255,255,.13);
+}
+@supports (background:color-mix(in srgb,red 70%,transparent)) {
+  .nexo-tv.ott-video {--nexo-glass-accent:linear-gradient(145deg,rgba(255,255,255,.30),rgba(255,255,255,.06) 40%,rgba(0,0,0,.26)),color-mix(in srgb,var(--ott-accent,#eb1b24) 70%,transparent);}
+}
+/* Áudio: mesmos tokens da Home. Não aplicar a camada de vidro ao conteúdo das capas. */
+.nexo-tv.nexo-tv.ott-video :is(.ott-watch-header .ott-channel-type,.ott-watch-program .ott-channel-type) {
+  background:var(--nexo-glass-accent)!important;box-shadow:var(--nexo-glass-edge)!important;color:#fff!important;
+}
+.nexo-tv.nexo-tv.ott-video :is(.nexo-tv-climate-header,.ott-watch-schedule-button,.ott-interactivity-button,.ott-interactivity-card,.ott-interactivity-back,.ott-watch-back,.ott-play,.ott-channel-up,.ott-open-schedule) {
+  background:var(--nexo-glass-neutral)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+.nexo-tv.nexo-tv.ott-video :is(.nexo-tv-climate-header,.ott-watch-schedule-button,.ott-interactivity-button,.ott-interactivity-card,.ott-interactivity-back,.ott-watch-back,.ott-play,.ott-channel-up,.ott-open-schedule):not(:hover):not(:focus):not([data-ott-focused="true"]) {box-shadow:var(--nexo-glass-edge)!important;}
+.nexo-tv.nexo-tv.ott-video .nexo-tv-climate-header {border-radius:999px;padding:calc(5 * var(--ott-u)) calc(12 * var(--ott-u));}
+.nexo-tv.nexo-tv.ott-video :is(.ott-interactivity-panel-poll>.ott-interaction-content,.ott-interactivity-panel-weather .nexo-tv-weather,.ott-interactivity-panel-history .nexo-history-carousel,.ott-interactivity-panel-history .nexo-tv-history,.ott-interactivity-panel-chat .ott-tv-chat-qr,.ott-interactivity-panel-chat .ott-tv-chat-messages) {
+  background:var(--nexo-glass-panel)!important;box-shadow:var(--nexo-glass-edge)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+.nexo-tv.nexo-tv.ott-video .ott-interactivity-panel-lyrics::before {background:var(--nexo-glass-panel)!important;box-shadow:var(--nexo-glass-edge)!important;}
+.nexo-tv.nexo-tv.ott-video .ott-interactivity-panel :is(.ott-standard-back,.ott-poll-answer,.ott-poll-change,.nexo-tv-weather-day,.ott-battle-choice-v24,.ott-tv-chat-join,.ott-tv-chat-qr-return) {background:var(--nexo-glass-neutral)!important;}
+/* nexo-lote12: shared glass finish; no live backdrop filters. */
+.nexo-tv.nexo-tv.ott-watch-controls .ott-watch-header .ott-account {background:var(--nexo-glass-accent)!important;box-shadow:var(--nexo-glass-edge)!important;overflow:visible!important;}
+.nexo-tv.nexo-tv.ott-watch-controls .ott-account img{border-radius:50%;background:transparent!important;}
+.nexo-tv.nexo-tv.ott-watch-controls .ott-watch-header .ott-account:is(:hover,:focus,:focus-visible,[data-ott-focused="true"]){box-shadow:none!important;}
+.nexo-tv.nexo-tv.ott-watch-controls .nexo-lote12-watch-sponsor{position:absolute;right:calc(100 * var(--ott-u));bottom:calc(210 * var(--ott-u));width:calc(155.4 * var(--ott-u));max-width:20%;z-index:6;display:flex;justify-content:center;align-items:center;pointer-events:none;}
+.nexo-tv.nexo-tv.ott-watch-controls .nexo-lote12-watch-sponsor .ott-program-sponsors{position:relative!important;inset:auto!important;margin:0!important;transform:none!important;width:100%;align-items:center;}
+.nexo-tv.nexo-tv.ott-watch-controls .nexo-lote12-watch-sponsor .ott-program-sponsors-label{display:none!important;}
+.nexo-tv.nexo-tv.ott-watch-controls .nexo-lote12-watch-sponsor .ott-program-sponsors-logo-wrap{width:100%;height:calc(155.4 * var(--ott-u));max-height:none;margin:0!important;transform:none!important;overflow:visible;}
+.nexo-tv.nexo-tv.ott-watch-controls .nexo-lote12-watch-sponsor .ott-program-sponsors-logo-wrap img{object-position:center;transform:scale(1.3)!important;transform-origin:center;}
+.nexo-tv.nexo-tv.ott-watch-controls .nexo-lote12-watch-sponsor .nexo-ad-naming_rights{width:100%;max-height:none;pointer-events:auto;}
+.nexo-tv.nexo-tv.ott-watch-controls .nexo-lote12-watch-sponsor .nexo-ad-naming_rights img{max-height:calc(155 * var(--ott-u));}
+.nexo-tv.ott-video.ott-positiva-multivideo .ott-watch-chrome[data-video-tray-open="true"] .nexo-lote12-watch-sponsor{bottom:calc(325 * var(--ott-u));}
+/* Acrylic frame only: transparent center, existing artwork not filtered or faded. */
+.nexo-tv.nexo-tv.ott-audio .ott-audio-stage .ott-album{position:relative;overflow:visible!important;border:0!important;box-shadow:none!important;background:transparent!important;}
+.nexo-tv.nexo-tv.ott-audio .ott-audio-stage .ott-album::after{content:"";position:absolute;inset:calc(-6 * var(--ott-u));border-radius:calc(45 * var(--ott-u));border:calc(2 * var(--ott-u)) solid #ffffff45;box-shadow:inset 0 calc(3 * var(--ott-u)) 0 #ffffff52,inset 0 calc(-3 * var(--ott-u)) 0 #ffffff14;pointer-events:none;z-index:1;}
+.nexo-tv.nexo-tv.ott-audio .ott-audio-stage .ott-album>.ott-artwork{border-radius:inherit;overflow:hidden;}
+.nexo-tv.nexo-tv.ott-audio .ott-spectrum-ribbon{background:var(--nexo-glass-neutral)!important;box-shadow:var(--nexo-glass-edge);border-radius:calc(14 * var(--ott-u));padding:calc(5 * var(--ott-u));}
+/* Weather: a light glass edge, clear focus without a thick double ring. */
+.nexo-tv.nexo-tv.nexo-tv.nexo-tv .nexo-tv-climate-trigger:is(:hover,:focus,:focus-visible,[data-ott-focused="true"]){outline:max(1px,calc(1.5 * var(--ott-u))) solid #ffffffb3!important;outline-offset:calc(3 * var(--ott-u))!important;box-shadow:none!important;background:#ffffff18!important;}
+.nexo-tv.nexo-tv.nexo-tv.nexo-tv .nexo-tv-climate-trigger::after{content:none!important;display:none!important;}
+/* Video channel cards: glass frame and title, untouched images and control phases. */
+.nexo-tv.nexo-tv.ott-video .ott-positiva-channel-card{background:var(--nexo-glass-neutral)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+.nexo-tv.nexo-tv.ott-video .ott-positiva-channel-card:not(:focus):not(:hover):not([data-ott-focused="true"]){box-shadow:var(--nexo-glass-edge)!important;}
+.nexo-tv.nexo-tv.ott-video .ott-positiva-channel-card .nexo-v16-live-status{background:var(--nexo-glass-neutral)!important;}
+.nexo-tv.nexo-tv.ott-video .ott-positiva-channel-card .nexo-v16-live-status[data-live="true"]{background:var(--nexo-glass-accent)!important;}
+.nexo-tv.nexo-tv.ott-video .ott-video-now-cover{box-shadow:0 0 0 1px #ffffff55!important;}
+/* Pre-roll and Smart Break: glass only on controls, never video or QR pixels. */
+.nexo-tv-commercial-playback{--nexo-ad-glass:linear-gradient(145deg,#ffffff35,#ffffff0c 45%,#0003),#2228;--nexo-ad-glass-accent:linear-gradient(145deg,#ffffff4d,#ffffff10 45%,#0004),var(--player-dominant-color,#eb1b24);--nexo-ad-edge:inset 0 1px 0 #ffffff55,inset 0 0 0 1px #ffffff22;}
+.nexo-tv-commercial-playback.nexo-tv-commercial-playback :is(.nexo-tv-commercial-label,.nexo-preroll-skip,.nexo-preroll-audio-qr,.nexo-commercial-back-circle,.nexo-tv-commercial-action button,.nexo-tv-commercial-action>div,.nexo-smart-contact-qr button){background:var(--nexo-ad-glass)!important;color:white!important;box-shadow:var(--nexo-ad-edge);border:0!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+.nexo-tv-commercial-playback.nexo-tv-commercial-playback :is(.nexo-smart-badge,.nexo-smart-contact){background:var(--nexo-ad-glass-accent)!important;color:white!important;box-shadow:var(--nexo-ad-edge);border:0!important;}
+.nexo-tv-commercial-playback .nexo-smart-info-dialog{background:linear-gradient(150deg,#48484ce8,#202024ed)!important;box-shadow:var(--nexo-ad-edge);backdrop-filter:none!important;}
+.nexo-tv-commercial-playback .nexo-smart-progress{background:var(--nexo-ad-glass);border-radius:50%;box-shadow:var(--nexo-ad-edge);}
+.nexo-tv-commercial-playback.nexo-tv-commercial-playback button:not(:disabled)::after{inset:-5px!important;box-shadow:0 0 0 var(--ott-focus-width,3px) #fff!important;border-radius:inherit;}
+.nexo-tv-commercial-playback :is(.nexo-preroll-audio-qr,.nexo-smart-contact-qr) svg{background:#fff!important;opacity:1!important;filter:none!important;}
+/* New profile: no normal-state ring; one external focus ring via existing button pseudo-element. */
+.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-add-button>.ott-avatar{border:0!important;outline:none!important;box-shadow:none!important;}
+.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-add-button:not(:hover):not(:focus):not(:focus-visible):not([data-ott-focused="true"])::after{border-color:transparent!important;box-shadow:none!important;opacity:0!important;}
+.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.nexo-tv.ott-profiles-refined .ott-profile-select .ott-profile-add-button:is(:hover,:focus,:focus-visible,[data-ott-focused="true"])::after{opacity:1!important;border-color:white!important;}
+/* 1320x140 home banner, aligned at the bottom; previous artwork still contained until replaced in campaign. */
+.nexo-tv.nexo-tv.nexo-tv.nexo-tv.ott-home.ott-rail-layout .nexo-lote10-home-column{width:min(calc(1320 * var(--ott-u)),calc(100% - 410 * var(--ott-u)))!important;}
+.nexo-tv.nexo-tv.nexo-tv.nexo-tv.ott-home.ott-rail-layout .nexo-lote10-home-column>.nexo-home-commercial-banner{width:100%!important;max-width:100%!important;flex:0 0 auto!important;}
+.nexo-tv.nexo-tv.nexo-tv.nexo-tv.ott-home .nexo-home-commercial-image{width:100%!important;height:calc(140 * var(--ott-u))!important;max-height:calc(140 * var(--ott-u))!important;object-fit:contain!important;object-position:left bottom!important;}
+.nexo-tv.nexo-tv.nexo-tv.ott-home .nexo-home-commercial-qr{left:auto!important;right:0!important;top:auto!important;bottom:calc(100% + 12 * var(--ott-u));transform:none!important;animation:none!important;}
+.nexo-tv.nexo-tv.ott-watch-controls .nexo-lote12-watch-sponsor[hidden]{display:none!important;}

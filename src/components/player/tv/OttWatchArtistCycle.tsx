@@ -21,7 +21,7 @@ export default function OttWatchArtistCycle({ artist }: { artist?: string | null
       if (upgraded) setResolved(prev=>prev?.name===name && prev.url===upgraded ? prev : {name,url:upgraded});
     };
     apply(getArtistImageSync(name));
-    void fetchArtistImageCached(name).then(url=>{if(live && !url) setResolved(null); else apply(url);}).catch(() => {});
+    void fetchArtistImageCached(name).then(url=>{if(live && url) apply(url);}).catch(() => {});
     return () => { live = false; };
   }, [name]);
 
@@ -29,7 +29,7 @@ export default function OttWatchArtistCycle({ artist }: { artist?: string | null
     if (!image) return;
     const timer = window.setTimeout(() => setVisible(v => !v), visible ? 20000 : 10000);
     return () => window.clearTimeout(timer);
-  }, [image, visible]);
+  }, [!!image, visible]);
 
   return <div className={`ott-watch-artist-cycle${image && visible ? " is-visible" : ""}`} aria-hidden="true">
     <OttArtistCrossfade source={image} />

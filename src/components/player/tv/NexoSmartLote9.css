@@ -1,0 +1,4 @@
+.nexo-tv-commercial-playback .nexo-smart-progress.nexo-lote9-break{position:absolute;top:5%;right:5%;width:clamp(30px,3vw,52px)!important;height:auto!important;display:block!important;z-index:12;pointer-events:none;overflow:visible;}
+.nexo-lote9-break[data-waiting="true"] .nexo-lote9-arc{animation:nexo-lote9-wait 1.8s linear infinite;transform-origin:20px 20px;}
+@keyframes nexo-lote9-wait{from{transform:rotate(-90deg)}to{transform:rotate(270deg)}}
+@media(prefers-reduced-motion:reduce){.nexo-lote9-break[data-waiting="true"] .nexo-lote9-arc{animation:none;}}

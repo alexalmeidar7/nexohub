@@ -1,3 +1,4 @@
+import { OttSkeletonContent } from "./OttSkeleton";
 import { useEffect, useState } from "react";
 import { Umbrella } from "lucide-react";
 import { playerSupabase } from "@/integrations/supabase/playerClient";
@@ -98,7 +99,7 @@ export default function NexoTvWeatherPanel({radioUserId}:{radioUserId?:string|nu
     return ()=>{disposed=true;window.clearInterval(repeat);};
   },[radioUserId,locationRevision]);
   if (loading && !days.length) return <div className="nexo-tv-weather nexo-tv-weather-loading" role="status">
-    <span>Carregando previsão<span className="nexo-tv-loading-dots" aria-hidden="true"><i>.</i><i>.</i><i>.</i></span></span>
+    <OttSkeletonContent variant="weather"/>
   </div>;
   if (error && !days.length) return <div className="nexo-tv-weather nexo-tv-weather-loading" role="alert">{error}</div>;
   const today=days[0];

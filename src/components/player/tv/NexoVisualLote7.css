@@ -1,0 +1,14 @@
+/* Busca no centro da área real do Player. Mesmo escurecimento do CEP, sem blur. */
+.nexo-tv.ott-home .nexo-lote7-search-overlay{position:absolute;inset:0;z-index:10000;background:rgba(0,0,0,.58);display:grid;place-items:center;padding:calc(42 * var(--ott-u));animation:nexo-lote7-search-in 180ms ease both;}
+.nexo-tv.ott-home .nexo-lote7-search-dialog{width:min(82%,calc(760 * var(--ott-u)));max-height:84%;display:flex;flex-direction:column;gap:calc(12 * var(--ott-u));padding:calc(20 * var(--ott-u));min-height:0;}
+.nexo-tv.ott-home .nexo-lote7-search-dialog .ott-home-search-expand{position:relative!important;inset:auto!important;transform:none!important;width:100%!important;min-height:calc(72 * var(--ott-u));flex:0 0 auto;opacity:1!important;overflow:visible!important;margin:0!important;padding:calc(8 * var(--ott-u));background:#303030!important;border-radius:calc(18 * var(--ott-u));transition:none!important;}
+.nexo-tv.ott-home .nexo-lote7-search-dialog .ott-home-search-input{min-height:calc(56 * var(--ott-u));}
+.nexo-tv.ott-home .nexo-lote7-search-dialog .ott-home-search-close{display:grid;place-items:center;width:calc(50 * var(--ott-u));height:calc(50 * var(--ott-u));flex:0 0 auto;margin:0;}
+.nexo-tv.ott-home .nexo-lote7-search-dialog .ott-home-search-results{position:relative!important;inset:auto!important;width:100%!important;max-height:calc(420 * var(--ott-u));min-height:0;flex:0 1 auto;overflow:auto;padding:calc(16 * var(--ott-u));background:#303030!important;animation:none!important;}
+.nexo-tv.ott-home .nexo-lote7-search-overlay[data-phase="exit"]{animation:nexo-lote7-search-out 180ms ease both;pointer-events:auto;}
+@keyframes nexo-lote7-search-in{from{opacity:0}to{opacity:1}}
+@keyframes nexo-lote7-search-out{from{opacity:1}to{opacity:0}}
+@media(prefers-reduced-motion:reduce){.nexo-tv.ott-home .nexo-lote7-search-overlay{animation:none!important}}
+/* Patrocinador acompanha o programa, sem altura artificial entre nome e logo. */
+.nexo-tv.nexo-tv.ott-home.ott-rail-layout .nexo-lote7-program .ott-program-sponsors--home{position:relative!important;inset:auto!important;margin-top:calc(18 * var(--ott-u))!important;align-self:flex-start;}
+/* As camadas de diálogo não alteram a visibilidade do banner subjacente. */

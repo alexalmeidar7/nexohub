@@ -16,7 +16,8 @@ export default function OttAudioSpectrum({ media, compact = false, variant = "ca
     let silentSink: GainNode | null = null;
     let element: HTMLMediaElement | null = null;
     let color = "";
-    const mediaEvents = ["playing", "pause", "ended", "emptied", "loadeddata"];
+    const mediaEvents = ["playing", "pause", "ended", "emptied", "loadeddata", "canplay", "seeked"];
+    let mediaSource="", lastNonzero=0, lastMediaTime=0, lastProgress=0, lastRecovery=0;
     let nextCapture = performance.now() + 450;
     let bins: Uint8Array<ArrayBuffer> | null = null;
     const wave = new Uint8Array(256);
@@ -32,8 +33,8 @@ export default function OttAudioSpectrum({ media, compact = false, variant = "ca
         source = context.createMediaStreamSource(new MediaStream([track]));
         if (!analyser) {
           analyser = context.createAnalyser();
-          analyser.fftSize = 256;
-          analyser.smoothingTimeConstant = .75;
+          analyser.fftSize = 1024;
+          analyser.smoothingTimeConstant = .38; // nexo-lote12-spectrum
           // Android WebView may stop pulling a graph with no output. A muted
           // branch keeps analysis active while the media element owns playback.
           silentSink = context.createGain();
@@ -53,18 +54,26 @@ export default function OttAudioSpectrum({ media, compact = false, variant = "ca
     // NEXO_CAPA_CORACAO_ESPECTRO_V1: auto-gain suave apenas com amostras reais.
     // Nao inventa movimento quando o audio nao fornece dados capturaveis.
     const smoothedLevels = new Float32Array(50);
+    const bandPeaks = new Float32Array(50);
 
     const draw = () => {
       clearTimeout(frame);
       const next = media();
-      if (next !== element) {
+      if (next !== element || (next && next.currentSrc !== mediaSource)) {
         for (const event of mediaEvents) element?.removeEventListener(event, draw);
-        releaseCapture(); element = next; nextCapture = performance.now() + 450; smoothedLevels.fill(0);
+        releaseCapture(); element = next; mediaSource=next?.currentSrc||""; nextCapture = performance.now() + 450; lastNonzero=0;lastMediaTime=0;lastProgress=0;smoothedLevels.fill(0);bandPeaks.fill(0);
         for (const event of mediaEvents) element?.addEventListener(event, draw);
       }
       const playing = !!element && !element.paused && !element.ended && !document.hidden;
       if (!document.hidden) frame = setTimeout(draw, playing ? 66 : 500);
       const now = performance.now();
+      if(playing && element){
+        if(Math.abs(element.currentTime-lastMediaTime)>.02){lastMediaTime=element.currentTime;lastProgress=now;}
+        if(context?.state === "suspended" && now>=nextCapture) resume();
+        if(connectedTrack && (connectedTrack.readyState==="ended" || (connectedTrack.muted && now-lastRecovery>4000) || (lastNonzero>0 && now-lastNonzero>4000 && now-lastProgress<1000 && now-lastRecovery>6000))){
+          lastRecovery=now;lastNonzero=0;releaseCapture();nextCapture=now;
+        }
+      }
       if (playing && element.readyState >= 2 && (!stream || !connectedTrack || connectedTrack.readyState === "ended") && now >= nextCapture) {
         nextCapture = now + 2000;
         if (stream && !stream.active) releaseCapture();
@@ -84,6 +93,7 @@ export default function OttAudioSpectrum({ media, compact = false, variant = "ca
       if (analyser && bins && playing && connectedTrack) analyser.getByteFrequencyData(bins);
       else bins?.fill(0);
       const peak = bins ? Math.max(...bins) : 0;
+      if(playing && peak>0) lastNonzero=now;
       if (!color) color = getComputedStyle(c).color;
       g.fillStyle = color; g.strokeStyle = color;
       const kind = style.current.variant;
@@ -104,18 +114,24 @@ export default function OttAudioSpectrum({ media, compact = false, variant = "ca
         const step = c.width / count;
         const gain = peak > 0 ? Math.min(2.7, Math.max(1.12, 172 / peak)) : 1;
         for (let i = 0; i < count; i++) {
-          const first = bins?.length ? Math.floor(Math.pow(i / count, 1.65) * bins.length) : 0;
-          const last = bins?.length ? Math.max(first + 1, Math.ceil(Math.pow((i + 1) / count, 1.65) * bins.length)) : 1;
+          // Logarithmic frequency bands emphasize the actual useful radio spectrum, not silent ultrasonic bins.
+          const sampleRate=context?.sampleRate||48000;
+          const binHz=sampleRate/(2*(bins?.length||128));
+          const lowHz=Math.max(binHz,100), highHz=Math.min(6500,sampleRate*.45);
+          const first = bins?.length ? Math.min(bins.length-1,Math.floor(lowHz*Math.pow(highHz/lowHz,i/count)/binHz)) : 0;
+          const last = bins?.length ? Math.max(first+1,Math.ceil(lowHz*Math.pow(highHz/lowHz,(i+1)/count)/binHz)) : 1;
           let energy = 0;
           let maximum = 0;
           if (bins) for (let j = first; j < Math.min(last, bins.length); j++) {
             energy += bins[j]; maximum = Math.max(maximum, bins[j]);
           }
           const average = bins ? energy / Math.max(1, Math.min(last, bins.length) - first) : 0;
-          const signal = bins && playing ? Math.min(1, Math.pow(((average * .70 + maximum * .30) / 255) * gain, .85)) : 0;
+          const energyLevel=(average*.70+maximum*.30)/255;
+          bandPeaks[i]=Math.max(energyLevel,bandPeaks[i]*.985,.12);
+          const signal = bins && playing && connectedTrack ? Math.min(.98,Math.pow(energyLevel/bandPeaks[i],1.3)*.77 + Math.min(1,energyLevel*gain)*.19) : 0;
           // Ataque rapido, queda gradual: acompanha ritmos sem barras congeladas.
           const previous = smoothedLevels[i];
-          const smoothing = signal > previous ? .62 : .23;
+          const smoothing = signal > previous ? .80 : .48;
           const level = smoothedLevels[i] = playing ? previous + (signal - previous) * smoothing : 0;
           const height = Math.max(kind === "bars" ? 2 : 3, Math.min(c.height * .94, level * c.height * .94));
           const barWidth = step * (kind === "ribbon" ? .48 : kind === "capsules" ? .58 : .70);

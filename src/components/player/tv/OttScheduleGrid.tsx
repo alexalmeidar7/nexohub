@@ -207,8 +207,8 @@ export default function OttScheduleGrid({ programs, presenters = [], studio, cur
   const superficie = { "--nexo-grade-step": "calc(56 * var(--ott-u))" } as CSSProperties;
 
   return <section className="nexo-grade-agenda" role="dialog" aria-modal="true" aria-label="Grade de programação de sete dias">
-    <button ref={closeRef} type="button" className="nexo-grade-voltar" onClick={onClose} aria-label="Fechar grade de programação">
-      <Undo2 aria-hidden="true" strokeWidth={1.7} />
+    <button ref={closeRef} type="button" className="nexo-grade-voltar ott-standard-back" onClick={onClose} aria-label="Fechar grade de programação">
+      <Undo2 aria-hidden="true" strokeWidth={2.5} />
     </button>
     <div className="nexo-grade-moldura" style={superficie}>
       <div className="nexo-grade-cabecalho">
