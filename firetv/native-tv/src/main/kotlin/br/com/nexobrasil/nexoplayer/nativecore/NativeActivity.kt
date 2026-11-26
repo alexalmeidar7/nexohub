@@ -9,6 +9,13 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
+import kotlinx.coroutines.withTimeoutOrNull
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -79,6 +86,8 @@ internal fun safeImage(url: String): String? = url.takeIf { it.startsWith("https
 @Composable
 private fun NativeTv(player: ExoPlayer, activity: Int, onHidden: (Boolean)->Unit) {
     val api = remember { HouseMixClient(BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_ANON_KEY) }
+    var startup by remember { mutableStateOf(true) }
+    var startupStage by remember { mutableStateOf("carregando dados da rádio") }
     var station by remember { mutableStateOf<StationBootstrap?>(null) }
     var payload by remember { mutableStateOf<JSONObject?>(null) }
     var track by remember { mutableStateOf<JSONObject?>(null) }
@@ -158,17 +167,31 @@ private fun NativeTv(player: ExoPlayer, activity: Int, onHidden: (Boolean)->Unit
     }
     LaunchedEffect(retry) {
         failure = null
+        startup = true
+        startupStage = "carregando dados da rádio"
         try {
             val data = api.stationPayload(BuildConfig.STATION_SLUG)
             station = StationBootstrap.fromJson(data)
             payload = data
             track = data.optJSONObject("musicData")
         } catch (e: CancellationException) { throw e }
-        catch (_: Exception) { failure = "Não foi possível carregar a emissora." }
+        catch (_: Exception) { failure = "Não foi possível carregar a emissora."; startup = false }
     }
     LaunchedEffect(station?.ownerId) {
         val owner = station?.ownerId ?: return@LaunchedEffect
-        audio.firstOrNull()?.let { if (selected == null) select(it,Screen.HOME) }
+        startupStage = "preparando áudio"
+        val startupAudio=audio.firstOrNull()
+        if(startupAudio!=null && selected==null) {
+            select(startupAudio,Screen.HOME,false)
+            // Wait for real buffered media, bounded for live streams and slow networks.
+            withTimeoutOrNull(12_000L) {
+                while(playerError==null && player.bufferedPosition-player.currentPosition<10_000L) {
+                    delay(100)
+                }
+            }
+            if(playerError==null) player.playWhenReady=audioIntent
+        }
+        startup = false
         var wait = 15_000L
         var refresh = 0
         while (true) {
@@ -275,7 +298,8 @@ private fun NativeTv(player: ExoPlayer, activity: Int, onHidden: (Boolean)->Unit
             select(list[(index+direction+list.size)%list.size],screen)
         }
     }
-    NativeLayout(
+    Box(Modifier.fillMaxSize()) {
+    if(!startup) NativeLayout(
         screen=screen, station=station, stationName=stationName, payload=data, track=track,
         program=currentProgram,presenter=currentPresenter,player=player,playing=playing,buffering=buffering,
         failure=failure,playerError=playerError,controls=controls,chrome=chrome,interaction=interaction,
@@ -290,4 +314,8 @@ private fun NativeTv(player: ExoPlayer, activity: Int, onHidden: (Boolean)->Unit
             }
         },onChannel=onChannel,onVideo={select(it,Screen.VIDEO)},onInteraction={interaction=!interaction},
         onNotice={notice=it})
+    AnimatedVisibility(visible=startup, enter=fadeIn(tween(650)), exit=fadeOut(tween(650))) {
+        StartupSplash(startupStage)
+    }
+    }
 }

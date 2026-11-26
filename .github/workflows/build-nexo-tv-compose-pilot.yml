@@ -35,6 +35,13 @@ jobs:
           sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
           test -d "$sdk/platforms/android-35"
           echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+      - name: Check migration contract is present
+        run: |
+          test -s firetv/native-tv/NEXO_TV_ESPECIFICACAO_NATIVA.md
+          test -s firetv/native-tv/AGENTS.md
+          test -s firetv/native-tv/ACCEPTANCE.md
+          echo '### APK de teste — paridade visual ainda não certificada' >> "$GITHUB_STEP_SUMMARY"
+          echo 'A compilação não substitui as capturas comparativas e a validação de TV física exigidas em firetv/native-tv/ACCEPTANCE.md.' >> "$GITHUB_STEP_SUMMARY"
       - name: Reject WebView in native app sources
         run: |
           if grep -R -nE 'android\.webkit|WebView|loadUrl\(' firetv/native-tv/src/main/kotlin; then exit 1; fi
