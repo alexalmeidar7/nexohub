@@ -24,3 +24,7 @@
 
 **Próximo registro:** adicionar data, base local, alterações efetivas, resultados e pendências aqui.
 
+
+## 27/11/2026 — Cadastro Smart Break HMO/HMD (PR independente)
+
+Base main 251727f. Componente PlayerAdsPage compartilhado: categorias por emissora em dashboard_items.smart_break_categories_v1, gravação otimista sem fallback destrutivo; nomes e modelos editáveis, arquivamento lógico, sete categorias iniciais; campos e vídeo opcionais para Smart Break, foto automática com cache e URL alternativa, preço/descrição/CTA com prévia QR, múltiplos SBS de entrada/saída. Mídias e metadados existentes preservados, sem alteração de schema. Edge public-player-ads versionada a partir da v4 de produção, metadados adicionais e SBS separado do array de reprodução legado. Não implantada em produção nesta tarefa; sem alterações no app TV ou PR #327. Sorteio SBS, box real de compra e exibição de metadados serão implementados na PR de TV. Testes unitários adicionados; CI, HMO/HMD e funcionamento offline pendentes de validação. PC local não acessível, alterações feitas apenas em branch remota a partir da main.
