@@ -1,6 +1,9 @@
 package br.com.nexobrasil.nexoplayer.nativecore
 
 import android.content.SharedPreferences
+import coil.imageLoader
+import coil.request.ImageRequest
+import coil.request.SuccessResult
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -87,7 +90,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
     history.forEach{add(SearchHit("Música tocada",it.str("musica"),it.str("artista"),it.str("capa_url"),Screen.HISTORY))}
 }.filter{it.title.isNotBlank()}.distinctBy{it.kind+"|"+it.title+"|"+it.sub}
 
-@Composable internal fun InteractionCards(u:TvUnits,onPanel:(String)->Unit,onClose:()->Unit,sparkFocus:FocusRequester) {
+@Composable internal fun InteractionCards(u:TvUnits,onPanel:(String)->Unit,onClose:()->Unit,sparkFocus:FocusRequester,home:Boolean) {
     val focus=remember{FocusRequester()}
     val labels=listOf(Triple("lyrics","letra da música","mic"),Triple("chat","chat","chat"),Triple("poll","enquete","poll"),Triple("weather","previsão do tempo","sun"),Triple("history","músicas tocadas","history"),Triple("battle","batalha musical","battle"))
     Row(u.at(285,862,1415,152),horizontalArrangement=Arrangement.spacedBy(u.space(23)),verticalAlignment=Alignment.Bottom){
@@ -100,7 +103,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
             }
         }
     }
-    GlassButton(u,"",u.at(1744,922,64,64).focusRequester(sparkFocus),icon="spark",onClick=onClose)
+    GlassButton(u,"",(if(home)u.at(1744,874,76,76)else u.at(1744,922,64,64)).focusRequester(sparkFocus),icon="spark",onClick=onClose)
     LaunchedEffect(Unit){focus.requestFocus()}
 }
 @Composable private fun InputBox(u:TvUnits,value:String,onChange:(String)->Unit,placeholder:String,modifier:Modifier=Modifier,numeric:Boolean=false) {
@@ -201,8 +204,14 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                         var adStep by remember(historyAd.str("url")){mutableStateOf(false)}
                         fun move(delta:Int){if(adStep){adStep=false;if(delta<0)return}else if(delta>0&&historyAd!=null&&(index+1)%5==0&&index<history.lastIndex){adStep=true;return};index=(index+delta).coerceIn(0,history.lastIndex.coerceAtLeast(0))}
                         val song=history.getOrNull(index)
-                        var image by remember(song){mutableStateOf(song.str("capa_url").ifBlank{song.str("capa")}.ifBlank{song.str("cover_url")})}
-                        LaunchedEffect(song){if(image.isBlank()&&song!=null){image=if(song.str("musica")==track.str("titulo")&&song.str("artista")==track.str("artista"))track.str("capa") else "";if(image.isBlank())try{image=coverFor(song.str("musica"),song.str("artista"))}catch(e:CancellationException){throw e}catch(_:Exception){}}}
+                        val context=LocalContext.current
+                        var image by remember(song){mutableStateOf("")}
+                        LaunchedEffect(song){if(song!=null){
+                            val direct=listOf(song.str("capa_url"),song.str("capa"),song.str("cover_url"),if(song.str("musica")==track.str("titulo")&&song.str("artista")==track.str("artista"))track.str("capa") else "").mapNotNull{safeImage(it)}.distinct()
+                            suspend fun usable(url:String)=try{context.imageLoader.execute(ImageRequest.Builder(context).data(url).size(350,350).build()) is SuccessResult}catch(e:CancellationException){throw e}catch(_:Exception){false}
+                            for(url in direct){if(usable(url)){image=url;break}}
+                            if(image.isBlank())try{val resolved=coverFor(song.str("musica"),song.str("artista"));if(resolved.isNotBlank()&&usable(resolved))image=resolved}catch(e:CancellationException){throw e}catch(_:Exception){}
+                        }}
                         LaunchedEffect(history,index){for(candidate in history.drop(index+1).take(3)){if(candidate.str("capa_url").isBlank())try{coverFor(candidate.str("musica"),candidate.str("artista"))}catch(e:CancellationException){throw e}catch(_:Exception){}}}
                         if(song==null){Copy(if(loading)"Carregando músicas tocadas..." else if(error)"Histórico indisponível" else "Nenhuma música registrada.",u,23,400,lines=3)}
                         else{

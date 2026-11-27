@@ -291,7 +291,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                             .onFocusChanged{bannerFocused=it.isFocused;if(!it.isFocused)onBannerQr(false)}
                             .drawBehind{if(bannerFocused){val gap=u.space(5).toPx();drawRoundRect(Color.White,Offset(-gap,-gap),Size(size.width+gap*2,size.height+gap*2),CornerRadius(u.space(16).toPx()),style=Stroke(u.space(3).toPx()))}}
                             .clickable(enabled=!modal){if(safeImage(bannerLink)!=null)onBannerQr(!bannerQr)}){
-                            Crossfade(model,modifier=Modifier.fillMaxSize().clip(u.round(12)),animationSpec=tween(350),label="homeBannerImage"){image->Artwork(image,Modifier.fillMaxSize(),scale=ContentScale.Fit)}
+                            if(model!=null)AsyncImage(model,"Banner publicitário",Modifier.fillMaxSize().clip(u.round(12)),contentScale=ContentScale.Fit,onSuccess={android.util.Log.i("NexoAds","HOME_BANNER_VISIBLE")},onError={android.util.Log.w("NexoAds","HOME_BANNER_LOAD_FAILED",it.result.throwable)})
                         }
                         AnimatedVisibility(bannerQr&&safeImage(bannerLink)!=null,modifier=u.at(184,810,198,204).zIndex(3f),enter=fadeIn(tween(220)),exit=fadeOut(tween(180))){
                             Box(Modifier.fillMaxSize().background(glass,u.round(20)).padding(u.space(10)),contentAlignment=Alignment.Center){
@@ -367,7 +367,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                 }
                 }
                 }
-                if(interaction && panel==null) InteractionCards(u, {onPanel(it)}, onInteraction,sparkFocus)
+                if(interaction && panel==null) InteractionCards(u, {onPanel(it)}, onInteraction,sparkFocus,screen==Screen.HOME)
                 if(scheduleOverlay){Box(Modifier.fillMaxSize()){Schedule(u,payload,program,accent,scheduleFocus,{onPanel(null)},account.str("id").ifBlank{guestName},scheduleGrid)}} else if(panel!=null) NativePanel(u,panel,payload,track,history,historyLoading,historyError,forecast,lyrics,cep,api,station?.ownerId,accent,{onPanel(null)},onCepSaved,onOpen,services,account,onAccount,historyAd)
 
             }

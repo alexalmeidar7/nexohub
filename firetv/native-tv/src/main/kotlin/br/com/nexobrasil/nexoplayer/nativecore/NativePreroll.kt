@@ -83,7 +83,7 @@ import org.json.JSONObject
     }
     TvViewport(Modifier.background(Color.Black)){u->
         Box(Modifier.fillMaxSize().background(Color.Black)){
-            if(audio)Artwork(safeImage(media.str("backgroundUrl")),Modifier.fillMaxSize(),scale=ContentScale.Fit)
+            if(audio){val image=safeImage(media.str("backgroundUrl"));if(image!=null)Artwork(image,Modifier.fillMaxSize(),scale=ContentScale.Fit)else if(smart)Column(Modifier.align(Alignment.Center),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(20))){Symbol("music",Modifier.size(u.space(80)));Copy("Intervalo comercial",u,36,600);Copy("A programação volta em instantes",u,24)}}
             else AndroidView(factory={ctx->PlayerView(ctx).apply{useController=false;this.player=player;isFocusable=false}},modifier=Modifier.fillMaxSize(),onRelease={it.player=null})
             if(smart){
                 Row(u.at(1440,75,390,64),horizontalArrangement=Arrangement.spacedBy(u.space(14)),verticalAlignment=Alignment.CenterVertically){
