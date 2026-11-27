@@ -77,7 +77,7 @@ jobs:
           signer=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)
           test -x "$signer"
           test -s "$NEXO_TV_SIGNING_FILE"
-          # Check the parser for both apksigner output formats before signing.
+          # Test the parser for both apksigner output formats before signing.
           parse_cert() {
             printf '%s\n' "$1" | awk '/certificate SHA-256 digest:/ && !/public key/ {print $NF}' | tr -d ':\r' | tr '[:upper:]' '[:lower:]' | sort -u
           }
@@ -101,23 +101,7 @@ jobs:
             actual=$(parse_cert "$details")
             echo "$station expected certificate: $NEXO_TV_CERT_SHA256"
             echo "$station actual certificate: $actual"
-            printf '%s\n' "$details" | grep -Eq '^Number of signers:[[:space:]]+1[[:space:]]*
-            test "$actual" = "$NEXO_TV_CERT_SHA256" || { echo "::error::$station APK certificate mismatch"; exit 1; }
-            printf '%s: %s\n' "$station" "$actual" >> "$report"
-            (cd "$out" && sha256sum "$(basename "$dst")") >> "$report"
-          done
-          rm -f "$out"/*.idsig
-      - uses: actions/upload-artifact@v4
-        with:
-          name: nexo-tv-compose-pilot-v0.1.9-verified
-          path: |
-            firetv/native-tv/build/verified-apks/*.apk
-            firetv/native-tv/build/verified-apks/SIGNATURE-SHA256.txt
-          if-no-files-found: error
-      - name: Remove temporary signing key
-        if: always()
-        run: rm -f "$RUNNER_TEMP/nexo-tv-permanente.keystore"
-
+            printf '%s\n' "$details" | grep -Eq '^Number of signers:[[:space:]]+1[[:space:]]*$'
             [[ "$actual" =~ ^[a-f0-9]{64}$ ]]
             test "$actual" = "$NEXO_TV_CERT_SHA256" || { echo "::error::$station APK certificate mismatch"; exit 1; }
             printf '%s: %s\n' "$station" "$actual" >> "$report"
