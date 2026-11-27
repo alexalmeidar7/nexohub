@@ -1,4 +1,4 @@
-import { publishDesktopRoteiro } from "@/lib/desktopRoteiroPublish";
+import { publishDesktopRoteiro, resolveDesktopRoteiroSlug } from "@/lib/desktopRoteiroPublish";
 import { useState, useEffect, Suspense, useMemo, useCallback, useRef } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { createPortal } from "react-dom";
@@ -1231,8 +1231,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
       }
 
       const publishedAt = new Date().toISOString();
-      const clientAcc = findClientAccountById(owner);
-      const localPublished = await publishDesktopRoteiro(clientAcc?.slug || owner.slice(0, 8),
+      const localPublished = await publishDesktopRoteiro(resolveDesktopRoteiroSlug(owner),
         r.estudio, xml, publishedAt, r.conteudo_html, r.horario);
       // Cloud reconciliation does not gate the vMix file in the installed HMD.
       const reconcile = async () => {
@@ -1268,7 +1267,6 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
 
       // 4. Update xml_pushed_at timestamp
       const nowIso = publishedAt;
-      r.xml_pushed_at = nowIso;
       if (xmlUrl && !r.subtitulo) {
         r.subtitulo = `express_xml::${xmlUrl}`;
       }
@@ -1279,15 +1277,14 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
         if (isUuid) {
           await supabase.from("roteiros").update(updatePayload).eq("id", cleanId).eq("user_id", owner);
         }
-        if (r.user_id && r.programa_nome) {
-          await supabase.from("roteiros").update(updatePayload).eq("user_id", owner).eq("programa_nome", r.programa_nome);
-        }
+
       } catch {}
 
       };
       if (localPublished) void reconcile().catch(error => console.warn("[RegenXML] Reconciliação online:", error));
       else await reconcile();
       const nowIso = publishedAt;
+      r.xml_pushed_at = nowIso;
 
       // O cache local pertence somente à conta do roteiro.
       const candidateUids = [owner];
