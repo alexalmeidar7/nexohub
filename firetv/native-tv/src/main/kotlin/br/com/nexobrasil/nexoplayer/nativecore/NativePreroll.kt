@@ -3,6 +3,9 @@ package br.com.nexobrasil.nexoplayer.nativecore
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
@@ -83,6 +86,8 @@ import org.json.JSONObject
     val showLink=safeImage(media.str("link"))!=null
     val qrEnabled=smart&&showLink&&smartActive&&!info
     var qrFocused by remember{mutableStateOf(false)}
+    val qrInteraction=remember{MutableInteractionSource()}
+    val qrHovered by qrInteraction.collectIsHoveredAsState()
     val active by rememberUpdatedState(smartActive)
     var buttonsEntered by remember{mutableStateOf(false)}
     LaunchedEffect(smart,smartActive){if(smart){if(smartActive){delay(100);buttonsEntered=true}else buttonsEntered=false}}
@@ -135,11 +140,11 @@ import org.json.JSONObject
             if(smart){
                 // Identity includes the playback sequence so identical links animate on every creative change.
                 val target=smartSerial to if(smartActive)smartCreativeDetails(media)else null
-                Box(Modifier.align(Alignment.BottomEnd).padding(end=u.space(105),bottom=u.space(75)).focusRequester(qrFocus).onFocusChanged{qrFocused=it.isFocused}.focusProperties{canFocus=qrEnabled;up=infoFocus;left=infoFocus}.semantics{contentDescription="Saiba mais, QR Code da publicidade"}.focusable(enabled=qrEnabled)){
+                Box(Modifier.align(Alignment.BottomEnd).padding(end=u.space(105),bottom=u.space(75)).focusRequester(qrFocus).onFocusChanged{qrFocused=it.isFocused}.focusProperties{canFocus=qrEnabled;up=infoFocus;left=infoFocus}.semantics{contentDescription="Saiba mais, QR Code da publicidade"}.hoverable(qrInteraction,enabled=qrEnabled).focusable(enabled=qrEnabled)){
                     AnimatedContent(targetState=target,contentAlignment=Alignment.BottomEnd,transitionSpec={
                         ((slideInHorizontally(tween(700,delayMillis=550,easing=FastOutSlowInEasing)){it+(120*u.pixelsPerUnit).toInt()}+fadeIn(tween(700,delayMillis=550))) togetherWith (slideOutHorizontally(tween(550,easing=FastOutSlowInEasing)){it+(120*u.pixelsPerUnit).toInt()}+fadeOut(tween(550)))).using(SizeTransform(clip=false))
                     },label="smartCreativeQr"){entry->
-                        entry.second?.let{details->if(details.music&&details.hasMusic)SmartMusicCard(u,details,qrFocused&&qrEnabled&&entry==target)else if(details.link.isNotBlank())CreativeQr(u,details.link,focused=qrFocused&&qrEnabled&&entry==target)}
+                        entry.second?.let{details->if(details.music&&details.hasMusic)SmartMusicCard(u,details,(qrFocused||qrHovered)&&qrEnabled&&entry==target)else if(details.link.isNotBlank())CreativeQr(u,details.link,focused=(qrFocused||qrHovered)&&qrEnabled&&entry==target,smart=true)}
                     }
                 }
             }else if(showLink){
@@ -182,11 +187,12 @@ internal fun smartBreakTiming(start:Long,duration:Double,now:Long):Pair<Float,Lo
 }
 internal fun formatSmartBreakTime(seconds:Long):String=String.format(java.util.Locale.ROOT,"%02d:%02d",seconds/60,seconds%60)
 
-@Composable private fun CreativeQr(u:TvUnits,url:String,focused:Boolean=false){
-    Column(Modifier.width(u.space(246)).clip(u.round(22)).background(glass).border(u.space(if(focused)3 else 1),Color.White.copy(alpha=if(focused)1f else .34f),u.round(22)).padding(u.space(18)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(10))){
-        Copy("Saiba mais +",u,19,600)
-        NativeQr(url,Modifier.size(u.space(210)).clip(u.round(8)),compact=true)
-    }
+@Composable private fun CreativeQr(u:TvUnits,url:String,focused:Boolean=false,smart:Boolean=false){
+    val ring by animateFloatAsState(if(focused)1f else 0f,tween(180),label="creativeRing")
+    Box(if(smart)Modifier.border(u.space(3),Color.White.copy(alpha=ring),u.round(31)).padding(u.space(9))else Modifier){Column(Modifier.width(u.space(if(smart)268 else 246)).clip(u.round(22)).background(glass).border(u.space(1),Color.White.copy(alpha=.34f),u.round(22)).padding(u.space(18)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(10))){
+        if(!smart)Copy("Saiba mais +",u,19,600)
+        NativeQr(url,Modifier.size(u.space(if(smart)232 else 210)).clip(u.round(8)),compact=true)
+    }}
 }
 
 internal data class SmartCreativeDetails(val music:Boolean,val song:String,val artist:String,val image:String,val link:String){
@@ -195,16 +201,15 @@ internal data class SmartCreativeDetails(val music:Boolean,val song:String,val a
 internal fun smartCreativeDetails(media:JSONObject):SmartCreativeDetails=SmartCreativeDetails(media.str("categoryKind")=="music",media.str("song"),media.str("artist"),safeImage(media.str("artistImage")).orEmpty(),safeImage(media.str("link")).orEmpty())
 @Composable private fun SmartMusicCard(u:TvUnits,details:SmartCreativeDetails,focused:Boolean){
     val shape=u.round(24)
-    Row(Modifier.width(u.space(if(details.link.isNotBlank())760 else 530)).clip(shape).background(interactionGlass).border(u.space(if(focused)3 else 1),Color.White.copy(alpha=if(focused)1f else .22f),shape).padding(u.space(22)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(20))){
+    val ring by animateFloatAsState(if(focused)1f else 0f,tween(180),label="musicRing")
+    Box(Modifier.border(u.space(3),Color.White.copy(alpha=ring),u.round(33)).padding(u.space(9))){
+    Row(Modifier.width(u.space(if(details.link.isNotBlank())760 else 530)).clip(shape).background(interactionGlass).border(u.space(1),Color.White.copy(alpha=.22f),shape).padding(u.space(22)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(20))){
         if(details.image.isNotBlank())Artwork(details.image,Modifier.size(u.space(174)).clip(u.round(18)),"Foto do artista",scale=ContentScale.Crop)
         Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(u.space(10))){
             Copy("Tocando agora",u,19,500,color=Color.White.copy(alpha=.72f))
             if(details.song.isNotBlank())Copy(details.song,u,27,700,lines=3)
             if(details.artist.isNotBlank())Copy(details.artist,u,22,500,lines=2)
         }
-        if(details.link.isNotBlank())Column(horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(8))){
-            NativeQr(details.link,Modifier.size(u.space(192)).clip(u.round(8)),compact=true)
-            Copy("Rede social",u,18,500)
-        }
-    }
+        if(details.link.isNotBlank())NativeQr(details.link,Modifier.size(u.space(218)).clip(u.round(8)),compact=true)
+    }}
 }

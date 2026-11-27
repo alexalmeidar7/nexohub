@@ -563,7 +563,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
     val panelAds=eligibleInteractionAds[panelPlacement].orEmpty()
     val panelAdIdentity=panelAds.map{it.str("url")+"|"+it.str("link")}
     var panelAdIndex by remember(panel,panelAdIdentity){mutableIntStateOf(0)}
-    LaunchedEffect(panel,panelAdIdentity){if(panelAds.size>1)while(true){delay(300000L);panelAdIndex=(panelAdIndex+1)%panelAds.size}}
+    LaunchedEffect(panel,panelAdIdentity){if(panel!="chat"&&panelAds.size>1)while(true){delay(300000L);panelAdIndex=(panelAdIndex+1)%panelAds.size}}
     val panelAd=panelAds.getOrNull(panelAdIndex)
     val interactionPreload=eligibleInteractionAds.values.flatten().mapNotNull{safeImage(it.str("url"))}.distinct().take(10)
     LaunchedEffect(interactionPreload){for(url in interactionPreload)context.imageLoader.enqueue(ImageRequest.Builder(context).data(url).size(600,240).build())}
@@ -610,7 +610,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         screen=screen, station=station, stationName=stationName, payload=data, track=track,
         program=currentProgram,presenter=currentPresenter,artistArtwork=artistArtwork,backgroundAd=visibleBackgroundAd.takeIf{screen==Screen.HOME&&it in latestBackgroundAds}.orEmpty(),bannerLink=banners.getOrNull(bannerIndex).takeIf{it?.optBoolean("clickable")==true}.str("link"),bannerQr=bannerQr,onBannerQr={bannerQr=it},player=player,playing=playing,buffering=buffering,
         failure=failure,playerError=playerError,controls=controls,chrome=chrome,interaction=interaction,
-        banner=banners.getOrNull(bannerIndex).str("url"),historyAd=historyAd,panelAd=panelAd,backgroundAdEndsAt=backgroundAdEndsAt,sponsor=sponsorUrls.getOrNull(sponsorIndex),weather=weather,history=history,historyLoading=historyLoading,historyError=historyError,
+        banner=banners.getOrNull(bannerIndex).str("url"),historyAd=historyAd,panelAd=panelAd,chatAds=eligibleInteractionAds["chat_ads"].orEmpty(),backgroundAdEndsAt=backgroundAdEndsAt,sponsor=sponsorUrls.getOrNull(sponsorIndex),weather=weather,history=history,historyLoading=historyLoading,historyError=historyError,
         notice=notice,video=video,selected=selected, onRetry={retry++},onToggle=::toggle,onBack=::animatedBack,leavingScreen=leavingScreen,onVideoTrayFocus={videoTrayFocused=it},
         entryPending=entryPending, guestName=displayProfileName, guestAvatar=guestAvatar, displayAvatar=displayAvatar, mainProfileName=mainProfileName, mainAvatar=mainAvatar, listenerProfile=listenerProfile, onListenerProfile={listenerProfile=it}, onSelectProfile={selectedProfileId=it},
         spectrum=spectrum, panel=panel,forecast=forecast,lyrics=lyrics,cep=cep,api=api,services=services,account=account,

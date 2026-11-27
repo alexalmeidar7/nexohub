@@ -173,7 +173,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
 @Composable internal fun NativeLayout(
     screen:Screen,station:StationBootstrap?,stationName:String,payload:JSONObject?,track:JSONObject?,program:JSONObject?,presenter:JSONObject?,artistArtwork:String,backgroundAd:String,bannerLink:String,bannerQr:Boolean,onBannerQr:(Boolean)->Unit,
     player:ExoPlayer,playing:Boolean,buffering:Boolean,failure:String?,playerError:String?,controls:Boolean,chrome:Float,interaction:Boolean,
-    banner:String,historyAd:JSONObject?,panelAd:JSONObject?,backgroundAdEndsAt:Long,sponsor:String?,weather:JSONObject?,history:List<JSONObject>,historyLoading:Boolean,historyError:Boolean,notice:String?,video:List<StationChannel>,selected:StationChannel?,
+    banner:String,historyAd:JSONObject?,panelAd:JSONObject?,chatAds:List<JSONObject>,backgroundAdEndsAt:Long,sponsor:String?,weather:JSONObject?,history:List<JSONObject>,historyLoading:Boolean,historyError:Boolean,notice:String?,video:List<StationChannel>,selected:StationChannel?,
     onRetry:()->Unit,onToggle:()->Unit,onBack:()->Unit,onOpen:(Screen)->Unit,onChannel:(Int)->Unit,onVideo:(StationChannel)->Unit,
     onInteraction:()->Unit,onNotice:(String?)->Unit,leavingScreen:Boolean,onVideoTrayFocus:(Boolean)->Unit,
     entryPending:Boolean,guestName:String,guestAvatar:Int,displayAvatar:Any,mainProfileName:String,mainAvatar:Any,listenerProfile:JSONObject?,onListenerProfile:(JSONObject)->Unit,onSelectProfile:(String)->Unit,onGuestSave:(String,Int)->Unit,onProfileContinue:()->Unit,
@@ -381,7 +381,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                 }
                 }
                 if(interaction && panel==null&&!homeBackgroundAd) InteractionCards(u, {onPanel(it)}, onInteraction,sparkFocus,screen==Screen.HOME)
-                if(scheduleOverlay){Box(Modifier.fillMaxSize()){Schedule(u,payload,program,accent,scheduleFocus,{onPanel(null)},account.str("id").ifBlank{guestName},scheduleGrid)}} else if(panel!=null) NativePanel(u,panel,payload,track,history,historyLoading,historyError,forecast,lyrics,cep,api,station?.ownerId,accent,{onPanel(null)},onCepSaved,onOpen,services,account,onAccount,historyAd,panelAd)
+                if(scheduleOverlay){Box(Modifier.fillMaxSize()){Schedule(u,payload,program,accent,scheduleFocus,{onPanel(null)},account.str("id").ifBlank{guestName},scheduleGrid)}} else if(panel!=null) NativePanel(u,panel,payload,track,history,historyLoading,historyError,forecast,lyrics,cep,api,station?.ownerId,accent,{onPanel(null)},onCepSaved,onOpen,services,account,onAccount,historyAd,panelAd,chatAds)
 
             }
             if(reminderText.isNotBlank()) Box(u.at(580,170,760,72).background(glass,u.round(24)).padding(u.space(15)),contentAlignment=Alignment.Center){Copy(reminderText,u,24,600)}
@@ -435,7 +435,14 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     }
     Copy("• AO VIVO",u,20,600,u.at(1350,91,135,44).alpha(alpha))
     Clock(u,u.at(1485,76,240,62).alpha(alpha).then(clockModifier),weather,onCep)
-    Box(u.at(1760,76,62,62).alpha(alpha).clip(CircleShape).background(accentGlass(accent)).clickable(enabled=enabled,onClick=onProfile)) { NativeAvatarImage(guestAvatar,Modifier.fillMaxSize()) }
+    var avatarFocused by remember{mutableStateOf(false)}
+    val avatarInteraction=remember{MutableInteractionSource()}
+    val avatarHovered by avatarInteraction.collectIsHoveredAsState()
+    val avatarEnabled=enabled&&LocalControlsEnabled.current
+    val avatarRing by animateFloatAsState(if(avatarEnabled&&(avatarFocused||avatarHovered))1f else 0f,tween(180),label="avatarRing")
+    Box(u.at(1751,67,80,80).alpha(alpha).onFocusChanged{avatarFocused=it.isFocused}.focusProperties{canFocus=avatarEnabled}.hoverable(avatarInteraction,enabled=avatarEnabled).border(u.space(2.5f),Color.White.copy(alpha=avatarRing),CircleShape).clickable(enabled=avatarEnabled,onClick=onProfile).semantics{contentDescription="Perfil"},contentAlignment=Alignment.Center){
+        Box(Modifier.size(u.space(62)).clip(CircleShape).background(accentGlass(accent))){NativeAvatarImage(guestAvatar,Modifier.fillMaxSize())}
+    }
 }
 
 internal fun nativeCurrentProgram(payload:JSONObject?,now:java.time.ZonedDateTime=java.time.ZonedDateTime.now(brasilia)):JSONObject? {

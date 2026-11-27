@@ -14,6 +14,8 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -109,7 +111,7 @@ import com.google.zxing.qrcode.QRCodeWriter
         if(msg.isNotBlank())Copy(msg,u,18,500,Modifier.align(Alignment.BottomCenter).background(Color.Black.copy(alpha=.7f),u.round(10)).padding(u.space(10)),lines=2)
     }
 }
-@Composable internal fun NativeCommunity(u:TvUnits,panel:String,owner:String,services:NativeServices,account:JSONObject?){
+@Composable internal fun NativeCommunity(u:TvUnits,panel:String,owner:String,services:NativeServices,account:JSONObject?,chatAds:List<JSONObject> = emptyList(),accent:Color=Color.White,emptyFocus:FocusRequester=remember{FocusRequester()}){
     val scope=rememberCoroutineScope()
     val focus=remember{FocusRequester()}
     var msg by remember(panel){mutableStateOf("Carregando...")}
@@ -129,8 +131,8 @@ import com.google.zxing.qrcode.QRCodeWriter
                     "poll"->{val p=services.polls(owner).firstOrNull();row=p
                         if(p!=null){if(account!=null&&!busy)voted=(services.rpc("get_player_poll_vote",JSONObject().put("p_poll_id",p.str("id")),true) as? Number)?.toInt()?:-1
                             counts=(services.rpc("get_player_poll_results",JSONObject().put("p_poll_id",p.str("id"))) as? JSONObject)?.optJSONArray("counts")}
-                        msg=if(p==null)"Nenhuma enquete disponível." else ""}
-                    "battle"->{val b=services.rpc("nexo_tv_active_battle_v24",JSONObject().put("p_radio_id",owner)) as? JSONObject;row=b?.takeIf{it.str("id").isNotBlank()};if(!busy)voted=row?.optInt("my_vote",-1)?:-1;msg=if(row==null)"Nenhuma batalha disponível." else ""}
+                        msg=if(p==null)"Opa, a gente não tem nenhuma enquete agora, volte depois." else ""}
+                    "battle"->{val b=services.rpc("nexo_tv_active_battle_v24",JSONObject().put("p_radio_id",owner)) as? JSONObject;row=b?.takeIf{it.str("id").isNotBlank()};if(!busy)voted=row?.optInt("my_vote",-1)?:-1;msg=if(row==null)"Opa, a gente não tem nenhuma batalha musical agora, volte depois." else ""}
                     "chat"->{messages=services.chat(owner);msg=if(messages.isEmpty())"Aguardando mensagens dos ouvintes." else ""}
                 }
             }catch(e:CancellationException){throw e}catch(_:Exception){msg="Não foi possível carregar. Tentando novamente."}
@@ -140,13 +142,14 @@ import com.google.zxing.qrcode.QRCodeWriter
     Column(Modifier.fillMaxSize(),horizontalAlignment=Alignment.CenterHorizontally){
     if(panel=="chat"){
         val listState=rememberLazyListState();val qrBack=remember{FocusRequester()}
-        LaunchedEffect(messages.lastOrNull()?.str("id"),messages.size){if(messages.isNotEmpty())listState.scrollToItem(messages.lastIndex)}
+        val chatRows=remember(messages,chatAds){nativeChatRows(messages,chatAds)}
+        LaunchedEffect(messages.lastOrNull()?.str("id"),chatRows.size){if(chatRows.isNotEmpty())listState.scrollToItem(chatRows.lastIndex)}
         LaunchedEffect(qr){withFrameNanos{};runCatching{(if(qr)qrBack else focus).requestFocus()}}
         BackHandler(qr){qr=false}
         Copy("Chat",u,28,600)
         Box(Modifier.fillMaxWidth().weight(1f).background(Color.Black.copy(alpha=.20f),u.round(16))){
             LazyColumn(Modifier.fillMaxSize().padding(u.space(10)),state=listState,verticalArrangement=Arrangement.spacedBy(u.space(10))){
-                items(messages){m->Column(Modifier.fillMaxWidth().background(Color.White.copy(alpha=.08f),u.round(12)).padding(u.space(8))){Copy(m.str("nome"),u,19,600);Copy(m.str("message"),u,19,400,lines=5)}}
+                itemsIndexed(chatRows,key={index,row->row.key}){_,entry->val m=entry.media;if(entry.ad)NativeInteractionBanner(u,m)else Column(Modifier.fillMaxWidth().background(Color.White.copy(alpha=.08f),u.round(12)).padding(u.space(8))){Copy(m.str("nome"),u,19,600);Copy(m.str("message"),u,19,400,lines=5)}}
             }
             if(qr)Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.58f),u.round(16)),contentAlignment=Alignment.Center){
                 Column(horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(24))){
@@ -164,7 +167,7 @@ import com.google.zxing.qrcode.QRCodeWriter
         val item=row
         if(item!=null){
             Column(Modifier.weight(1f,fill=false).fillMaxWidth().verticalScroll(rememberScrollState()),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(10))){
-            if(poll)Copy(item.str("pergunta"),u,24,600,lines=3)
+            if(poll)Copy(item.str("pergunta"),u,24,600,lines=3) else Copy("Quem merece ganhar essa batalha?",u,20,500,lines=2,align=TextAlign.Center)
             val answers=if(poll)(1..4).map{item.str("resposta"+it)}.filter{it.isNotBlank()} else (1..2).map{item.str("artista"+it+"_musica")+" — "+item.str("artista"+it+"_nome")}
             fun submit(choice:Int){
                         if(account==null){msg="Conecte sua conta Google para votar."}
@@ -174,7 +177,7 @@ import com.google.zxing.qrcode.QRCodeWriter
                                 val r=services.rpc(if(poll)"submit_player_poll_vote" else "nexo_tv_vote_battle_v24",args,true) as? JSONObject
                                 check(r?.optBoolean("ok")==true);if(poll)check(r.optInt("answer_index",-1)==choice)
                                 voted=choice;editing=false;msg="Voto registrado."
-                                if(poll)counts=(services.rpc("get_player_poll_results",JSONObject().put("p_poll_id",item.str("id"))) as? JSONObject)?.optJSONArray("counts")
+                                if(poll)counts=(services.rpc("get_player_poll_results",JSONObject().put("p_poll_id",item.str("id"))) as? JSONObject)?.optJSONArray("counts") else if(r.has("p1")&&r.has("p2"))row=JSONObject(item.toString()).put("artista1_porcentagem",r.optDouble("p1")).put("artista2_porcentagem",r.optDouble("p2"))
                             }catch(e:CancellationException){throw e}catch(_:Exception){msg="Não foi possível registrar o voto."}finally{busy=false}
                         }}
             }
@@ -192,7 +195,9 @@ import com.google.zxing.qrcode.QRCodeWriter
                                 Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(u.space(6))){
                                     Copy(item.str("artista"+choice+"_musica"),u,22,700,lines=2)
                                     Copy(item.str("artista"+choice+"_nome"),u,19,500,lines=2)
-                                    Copy((if(voted==choice)"✓ Seu voto · " else "")+item.optInt("artista"+choice+"_porcentagem")+"%",u,18,600)
+                                    val percent=item.optDouble("artista"+choice+"_porcentagem",Double.NaN)
+                                    if(percent.isFinite()){val pct=percent.coerceIn(0.0,100.0);Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(8))){Box(Modifier.weight(1f).height(u.space(6)).clip(CircleShape).background(Color.White.copy(alpha=.16f))){Box(Modifier.fillMaxWidth((pct/100).toFloat()).fillMaxHeight().background(accent))};Copy(pct.toInt().toString()+"%",u,18,600)}}
+                                    if(voted==choice)Copy("Seu voto",u,15,500)
                                 }
                             }
                         }
@@ -201,11 +206,18 @@ import com.google.zxing.qrcode.QRCodeWriter
                 if(voted>=0&&!editing)GlassButton(u,"Mudar meu voto",Modifier.height(u.space(60)).focusRequester(focus)){editing=true}
             }
             }
-        }
+        }else if(msg.startsWith("Opa,")){
+            Box(Modifier.weight(1f).fillMaxWidth(),contentAlignment=Alignment.Center){Column(Modifier.padding(horizontal=u.space(25)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(22))){Box(Modifier.size(u.space(104)).clip(CircleShape).background(Color.White.copy(alpha=.10f)),contentAlignment=Alignment.Center){Symbol(if(poll)"poll" else "battle",Modifier.size(u.space(64)))};Copy(msg,u,24,400,lines=4,align=TextAlign.Center)}}
+        }else if(msg.startsWith("Carregando")){Box(Modifier.weight(1f).fillMaxWidth(),contentAlignment=Alignment.Center){NativeSpinner(u,Modifier.size(u.space(48)))}}
     }
-    if(msg.isNotBlank())Copy(msg,u,19,400,lines=3)
+    if(msg.isNotBlank()&&!msg.startsWith("Opa,")&&!(panel!="chat"&&msg.startsWith("Carregando")))Copy(msg,u,19,400,lines=3)
     }
-    LaunchedEffect(row!=null,editing,voted>=0,panel){if(panel!="chat")runCatching{focus.requestFocus()}}
+    LaunchedEffect(row!=null,editing,voted>=0,panel){if(panel!="chat"){withFrameNanos{};runCatching{(if(row==null)emptyFocus else focus).requestFocus()}}}
 }
 
 @Composable private fun FlatHeart(liked:Boolean,modifier:Modifier){Canvas(modifier){val w=size.width;val h=size.height;val heart=Path().apply{moveTo(w*.50f,h*.86f);cubicTo(w*.41f,h*.79f,w*.10f,h*.57f,w*.10f,h*.34f);cubicTo(w*.10f,h*.10f,w*.36f,h*.06f,w*.50f,h*.27f);cubicTo(w*.64f,h*.06f,w*.90f,h*.10f,w*.90f,h*.34f);cubicTo(w*.90f,h*.57f,w*.59f,h*.79f,w*.50f,h*.86f);close()};if(liked)drawPath(heart,Color(0xFFF20D0F))else drawPath(heart,Color.White,style=Stroke(w*.065f,join=StrokeJoin.Round))}}
+
+internal data class NativeChatRow(val key:String,val media:JSONObject,val ad:Boolean)
+internal fun nativeChatRows(messages:List<JSONObject>,ads:List<JSONObject>):List<NativeChatRow> = buildList{
+    messages.forEachIndexed{index,m->val key=m.str("id").ifBlank{"message-$index"};add(NativeChatRow("message:$key",m,false));if((index+1)%8==0&&ads.isNotEmpty()&&index<messages.lastIndex){val a=ads[((index+1)/8-1)%ads.size];add(NativeChatRow("ad:$key",a,true))}}
+}
