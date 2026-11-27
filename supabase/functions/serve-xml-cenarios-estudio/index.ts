@@ -19,10 +19,9 @@ const toSeconds = (time: string) => {
   return Number(hour) * 3600 + Number(minute) * 60 + Number(second);
 };
 
-// delayMinutes atrasa o início efetivo do programa (positivo = considera "no ar"
-// somente após N minutos do horário de início). Ex.: 1 min para atualização de cenário.
-const isTimeInRange = (start: string, end: string, current: string, delayMinutes = 0) => {
-  const startSeconds = toSeconds(start) + (delayMinutes * 60);
+// Cenário segue o horário efetivo da grade, sem atraso artificial.
+const isTimeInRange = (start: string, end: string, current: string) => {
+  const startSeconds = toSeconds(start);
   const endSeconds = toSeconds(end);
   const currentSeconds = toSeconds(current);
 
@@ -122,7 +121,7 @@ serve(async (req) => {
         }
 
         return (p.dias_semana || []).includes(today) &&
-          isTimeInRange(p.horario_inicio, p.horario_fim, nowTime, 1);
+          isTimeInRange(p.horario_inicio, p.horario_fim, nowTime);
       });
 
       if (candidates.length === 0) return null;
@@ -219,16 +218,7 @@ serve(async (req) => {
     const urlConvidados = stripUrlSuffix(urlConvidadosResolved);
     const urlAncora = stripUrlSuffix(urlAncoraResolved);
 
-    // Cache-buster para capa/thumb do programa: usa created_at (não temos updated_at em programas)
-    const programaVersion = (onAir as any)?.created_at || "";
-    const capaUrl = withCacheBuster((onAir as any)?.capa || "", programaVersion);
-    const thumbUrl = withCacheBuster((onAir as any)?.thumb || "", programaVersion);
-    const [capaUrlPng, thumbUrlPng, fotoLocutorUrl] = await Promise.all([
-      ensureVmixPngUrl(supabase, capaUrl, `vmix-cenarios/${userId}`),
-      ensureVmixPngUrl(supabase, thumbUrl, `vmix-cenarios/${userId}`),
-      ensureVmixPngUrl(supabase, withCacheBuster(locutorFoto, programaVersion), `vmix-cenarios/${userId}`),
-    ]);
-
+    // Este feed só contém os dois templates; não converter capa, thumb ou locutor aqui.
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<cenarios_estudio>\n`;
     xml += `  <templates>\n`;
     xml += `    <template>\n`;
