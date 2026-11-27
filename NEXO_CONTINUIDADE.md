@@ -25,6 +25,10 @@
 **Próximo registro:** adicionar data, base local, alterações efetivas, resultados e pendências aqui.
 
 
+## 27/11/2026 — Cadastro Smart Break HMO/HMD (PR independente)
+
+Base main 251727f. Componente PlayerAdsPage compartilhado: categorias por emissora em dashboard_items.smart_break_categories_v1, gravação otimista sem fallback destrutivo; nomes e modelos editáveis, arquivamento lógico, sete categorias iniciais; campos e vídeo opcionais para Smart Break, foto automática com cache e URL alternativa, preço/descrição/CTA com prévia QR, múltiplos SBS de entrada/saída. Mídias e metadados existentes preservados, sem alteração de schema. Edge public-player-ads versionada a partir da v4 de produção, metadados adicionais e SBS separado do array de reprodução legado. Não implantada em produção nesta tarefa; sem alterações no app TV ou PR #327. Sorteio SBS, box real de compra e exibição de metadados serão implementados na PR de TV. Testes unitários adicionados; CI, HMO/HMD e funcionamento offline pendentes de validação. PC local não acessível, alterações feitas apenas em branch remota a partir da main.
+
 ## 27/11/2026 — Nexo TV nativo, 0.1.16 (PR #327)
 
 Base remota: a5aa947 (0.1.15); correções no módulo firetv/native-tv, sem alteração de HMD/HMO, WebView ou banco. Transições de perfis e áudio, capa clicável para curtidas, patrocinador 283×283u, bandeja de vídeo abaixo do Agora com elevação por foco, contorno da publicidade, pré-carga do banner e redução de recomposição do mini-player. Smart Sync rejeita timestamps anteriores e usa dados ao vivo explicitamente não sincronizados quando não há referência temporal; Smart Audio tenta efeito de plataforma alternativo se DynamicsProcessing falhar. Adicionado teste de regressão de recuperação de metadados. Build e teste físico ainda não confirmados. Conferir na TV banners reais, sincronismo audível, nivelamento e foco antes de merge; alternativa LoudnessEnhancer não comprova paridade de normalização entre fontes.

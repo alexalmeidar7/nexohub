@@ -109,7 +109,9 @@ export default function XmlLinkRow({
     const parts = new URL(externalUrl).pathname.split("/").filter(Boolean);
     const slug = decodeURIComponent(parts.at(-2) || "");
     const filename = decodeURIComponent(parts.at(-1) || "");
-    let timer: ReturnType<typeof setTimeout>;
+    // DesktopLocalMediaSync owns these permanent on-air feeds. Opening the settings
+    // page must not launch an independent download of an older edition.
+    if (["geral.xml","broadcast.xml","roteiro.xml","cenarios-estudio.xml"].includes(filename)) return;
     const sync = async () => {
       try {
         const response = await fetch(supabaseUrl, { cache: "no-store", signal: AbortSignal.timeout(12000) });
@@ -123,10 +125,10 @@ export default function XmlLinkRow({
           if (active && saved) setUrl(saved);
         }
       } catch { /* keep the last good local XML when offline */ }
-      finally { if (active) timer = setTimeout(() => void sync(), 30000); }
+
     };
     void sync();
-    return () => { active = false; clearTimeout(timer); };
+    return () => { active = false; };
   }, [externalUrl, supabaseUrl]);
 
   useEffect(() => {

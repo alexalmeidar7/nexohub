@@ -19,10 +19,9 @@ const toSeconds = (time: string) => {
   return Number(hour) * 3600 + Number(minute) * 60 + Number(second);
 };
 
-// delayMinutes atrasa o início efetivo do programa (positivo = considera "no ar"
-// somente após N minutos do horário de início). Ex.: 1 min para atualização de cenário.
-const isTimeInRange = (start: string, end: string, current: string, delayMinutes = 0) => {
-  const startSeconds = toSeconds(start) + (delayMinutes * 60);
+// Cenário segue o horário efetivo da grade, sem atraso artificial.
+const isTimeInRange = (start: string, end: string, current: string) => {
+  const startSeconds = toSeconds(start);
   const endSeconds = toSeconds(end);
   const currentSeconds = toSeconds(current);
 
@@ -103,7 +102,7 @@ serve(async (req) => {
     // Programa atualmente no ar (de acordo com a grade) — inclui capa, thumb, apresentadores
     const { data: progs, error: programsError } = await supabase
       .from("programas")
-      .select("id, nome, dias_semana, horario_inicio, horario_fim, ativo, estudio, capa, thumb, apresentador_id, apresentadores_ids, created_at")
+      .select("id, nome, dias_semana, horario_inicio, horario_fim, ativo, estudio")
       .eq("user_id", userId)
       .eq("ativo", true)
       .order("horario_inicio", { ascending: false });
@@ -122,7 +121,7 @@ serve(async (req) => {
         }
 
         return (p.dias_semana || []).includes(today) &&
-          isTimeInRange(p.horario_inicio, p.horario_fim, nowTime, 1);
+          isTimeInRange(p.horario_inicio, p.horario_fim, nowTime);
       });
 
       if (candidates.length === 0) return null;
@@ -134,32 +133,6 @@ serve(async (req) => {
     };
 
     const onAir = findOnAir(progs);
-
-    // Buscar apresentador no ar (primeiro de apresentadores_ids, fallback para apresentador_id)
-    let locutorNome = "";
-    let locutorFoto = "";
-    let locutorInstagram = "";
-    let locutorCargo = "";
-    if (onAir) {
-      const apresentadorId =
-        (onAir.apresentadores_ids && onAir.apresentadores_ids[0]) || onAir.apresentador_id;
-      if (apresentadorId) {
-        const { data: ap } = await supabase
-          .from("apresentadores")
-          .select("nome, foto, instagram, cargo")
-          .eq("id", apresentadorId)
-          .maybeSingle();
-        if (ap) {
-          locutorNome = ap.nome || "";
-          locutorFoto = ap.foto || "";
-          locutorInstagram = ap.instagram || "";
-          locutorCargo = ap.cargo || "";
-          if (locutorInstagram && !locutorInstagram.startsWith("@")) {
-            locutorInstagram = `@${locutorInstagram}`;
-          }
-        }
-      }
-    }
 
     // Carrega TODOS os templates do usuário (para encontrar 2TVs e 4TVs vinculados ao programa no ar)
     const { data: grupos, error: gruposError } = await supabase
@@ -219,16 +192,7 @@ serve(async (req) => {
     const urlConvidados = stripUrlSuffix(urlConvidadosResolved);
     const urlAncora = stripUrlSuffix(urlAncoraResolved);
 
-    // Cache-buster para capa/thumb do programa: usa created_at (não temos updated_at em programas)
-    const programaVersion = (onAir as any)?.created_at || "";
-    const capaUrl = withCacheBuster((onAir as any)?.capa || "", programaVersion);
-    const thumbUrl = withCacheBuster((onAir as any)?.thumb || "", programaVersion);
-    const [capaUrlPng, thumbUrlPng, fotoLocutorUrl] = await Promise.all([
-      ensureVmixPngUrl(supabase, capaUrl, `vmix-cenarios/${userId}`),
-      ensureVmixPngUrl(supabase, thumbUrl, `vmix-cenarios/${userId}`),
-      ensureVmixPngUrl(supabase, withCacheBuster(locutorFoto, programaVersion), `vmix-cenarios/${userId}`),
-    ]);
-
+    // Este feed só contém os dois templates; não converter capa, thumb ou locutor aqui.
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<cenarios_estudio>\n`;
     xml += `  <templates>\n`;
     xml += `    <template>\n`;

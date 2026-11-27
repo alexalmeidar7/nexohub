@@ -1,3 +1,4 @@
+import { notifyLocalOnAir } from "@/lib/desktopLocalOnAir";
 import { useEffect, useState, useCallback, useMemo, forwardRef, useImperativeHandle } from "react";
 import { Plus, Trash2, Image as ImageIcon, Upload, Save, Loader2, LayoutGrid, Radio, ArrowRight, Pencil, Search, Monitor, Link2 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -353,6 +354,7 @@ export default forwardRef<{ addGrupo: () => void }, { effectiveUserId?: string |
         if (error) throw error;
         if (!data?.id) throw new Error("O banco não confirmou a exclusão do template.");
       }
+      notifyLocalOnAir(ownerId, "cenario_estudio_grupos", { id }, true);
       setGrupos(prev => {
         const next = prev.filter(g => g.id !== id);
         try { localStorage.setItem("nexohub_cenarios_grupos_" + ownerId, JSON.stringify(next)); } catch {}
@@ -505,6 +507,10 @@ export default forwardRef<{ addGrupo: () => void }, { effectiveUserId?: string |
           return;
         }
       }
+
+      notifyLocalOnAir(ownerId, "cenario_estudio_grupos", { id: currentGroupId, rows: Number(grupo.rows) || 1, cols: Number(grupo.cols) || 1, programa_ids: validProgramaIds });
+      if (currentGroupId !== oldGroupId) notifyLocalOnAir(ownerId, "cenario_estudio_grupos", { id: oldGroupId }, true);
+      notifyLocalOnAir(ownerId, "cenario_estudio_tvs", { grupo_id: currentGroupId, posicao: 0, imagem_url: arteUrl || "" });
 
       // 4) Update state & localStorage
       setGrupos((prev) => {
