@@ -121,7 +121,7 @@ import org.json.JSONObject
                 // Identity includes the playback sequence so identical links animate on every creative change.
                 val target=smartSerial to media.str("link").takeIf{showLink&&smartActive}.orEmpty()
                 AnimatedContent(targetState=target,modifier=Modifier.align(Alignment.BottomEnd).padding(end=u.space(105),bottom=u.space(75)).size(u.space(246),u.space(284)),contentAlignment=Alignment.BottomEnd,transitionSpec={
-                    ((slideInHorizontally(tween(250,delayMillis=250)){it+u.space(120).roundToPx()}+fadeIn(tween(250,delayMillis=250))) togetherWith (slideOutHorizontally(tween(250)){it+u.space(120).roundToPx()}+fadeOut(tween(250)))).using(SizeTransform(clip=false))
+                    ((slideInHorizontally(tween(250,delayMillis=250)){it+(120*u.pixelsPerUnit).toInt()}+fadeIn(tween(250,delayMillis=250))) togetherWith (slideOutHorizontally(tween(250)){it+(120*u.pixelsPerUnit).toInt()}+fadeOut(tween(250)))).using(SizeTransform(clip=false))
                 },label="smartCreativeQr"){entry->
                     if(entry.second.isNotBlank()){
                         val isCurrent=entry==target
