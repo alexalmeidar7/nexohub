@@ -14,6 +14,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
+import androidx.compose.ui.draw.rotate
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -80,7 +84,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
 @Composable internal fun Artwork(model:Any?,modifier:Modifier,desc:String?=null,scale:ContentScale=ContentScale.Fit,filter:ColorFilter?=null) {
     if(model!=null && model!="") AsyncImage(model,desc,modifier,contentScale=scale,colorFilter=filter)
 }
-@Composable internal fun GlassButton(u:TvUnits,label:String,modifier:Modifier=Modifier,icon:String?=null,accent:Color?=null,enabled:Boolean=true,outline:Boolean=false,accentRing:Boolean=false,onClick:()->Unit) {
+@Composable internal fun GlassButton(u:TvUnits,label:String,modifier:Modifier=Modifier,icon:String?=null,accent:Color?=null,enabled:Boolean=true,outline:Boolean=false,accentRing:Boolean=false,loading:Boolean=false,onClick:()->Unit) {
     var focused by remember { mutableStateOf(false) }
     val shape=CircleShape
     val active=enabled && LocalControlsEnabled.current
@@ -90,7 +94,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
         .clickable(enabled=active,onClick=onClick).semantics { contentDescription=label.ifEmpty{when(icon){"play"->"Reproduzir";"pause"->"Pausar";"left"->"Voltar";"up"->"Canal anterior";"down"->"Próximo canal";"search"->"Buscar";"spark"->"Interatividade";else->"Controle"}} }
         .padding(horizontal=u.space(if(icon!=null && label.isEmpty()) 0 else 20)),
         verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.Center) {
-        if(icon!=null) Symbol(icon,Modifier.size(u.space(29)))
+        if(loading) NativeSpinner(u,Modifier.size(u.space(29))) else if(icon!=null) Symbol(icon,Modifier.size(u.space(29)))
         if(label.isNotEmpty()) {
             if(icon!=null) Spacer(Modifier.width(u.space(10)))
             Copy(label,u,22,500)
@@ -131,7 +135,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     }
 }
 
-@Composable private fun RailItem(u:TvUnits,icon:String,label:String,accent:Color,modifier:Modifier=Modifier,avatar:Int=R.drawable.visitor_avatar,onClick:()->Unit) {
+@Composable private fun RailItem(u:TvUnits,icon:String,label:String,accent:Color,modifier:Modifier=Modifier,avatar:Int=R.drawable.visitor_avatar,loading:Boolean=false,onClick:()->Unit) {
     var focused by remember { mutableStateOf(false) }
     val shape=CircleShape
     val active=LocalControlsEnabled.current
@@ -142,7 +146,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
         .clickable(enabled=active,onClick=onClick).semantics { contentDescription=label }
         .padding(u.space(7)),verticalAlignment=Alignment.CenterVertically) {
         Box(Modifier.size(u.space(62)).background(accentGlass(accent),shape).clip(shape),contentAlignment=Alignment.Center) {
-            if(icon=="user") Artwork(avatar,Modifier.fillMaxSize(),scale=ContentScale.Crop)
+            if(loading)NativeSpinner(u,Modifier.size(u.space(32))) else if(icon=="user") Artwork(avatar,Modifier.fillMaxSize(),scale=ContentScale.Crop)
             else Symbol(icon,Modifier.size(u.space(30)))
         }
         AnimatedVisibility(visible=focused,
@@ -160,7 +164,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     onRetry:()->Unit,onToggle:()->Unit,onBack:()->Unit,onOpen:(Screen)->Unit,onChannel:(Int)->Unit,onVideo:(StationChannel)->Unit,
     onInteraction:()->Unit,onNotice:(String?)->Unit,
     entryPending:Boolean,guestName:String,guestAvatar:Int,onGuestSave:(String,Int)->Unit,onProfileContinue:()->Unit,
-    spectrum:PcmSpectrum,panel:String?,forecast:JSONObject?,lyrics:String?,cep:String,api:HouseMixClient,services:NativeServices,account:JSONObject?,onAccount:(JSONObject)->Unit,onLogout:()->Unit,onPanel:(String?)->Unit,onCepSaved:(String,JSONObject)->Unit
+    spectrum:PcmSpectrum,panel:String?,forecast:JSONObject?,lyrics:String?,cep:String,api:HouseMixClient,services:NativeServices,account:JSONObject?,onAccount:(JSONObject)->Unit,onLogout:()->Unit,onPanel:(String?)->Unit,onCepSaved:(String,JSONObject)->Unit,scheduleOpening:Boolean,interactionReturn:Int
 ) {
     val accent = remember(payload) {
         val colors=payload?.optJSONObject("playerColors")
@@ -184,9 +188,15 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     LaunchedEffect(screen,banner,bannerLink,panel,interaction,notice){onBannerQr(false)}
     val watchScreen=screen==Screen.AUDIO||screen==Screen.VIDEO
     val ready=station!=null||failure!=null
-    LaunchedEffect(screen,ready,modal,if(watchScreen)controls else true) {
-        if(ready&&!modal&&(!watchScreen||controls)){withFrameNanos{};runCatching{focus.requestFocus()}}
+    var restoredInteraction by remember { mutableIntStateOf(interactionReturn) }
+    LaunchedEffect(screen,ready,modal,if(watchScreen)controls else true,interactionReturn) {
+        if(ready&&!modal&&(!watchScreen||controls)){withFrameNanos{};val restore=interactionReturn!=restoredInteraction;if(restore)restoredInteraction=interactionReturn;runCatching{(if(restore&&(screen==Screen.HOME||watchScreen))sparkFocus else focus).requestFocus()}}
     }
+    val homeBannerVisible=screen==Screen.HOME&&backgroundAd.isBlank()&&banner.isNotBlank()&&!interaction&&(panel==null||panel=="cep")
+    LaunchedEffect(homeBannerVisible){if(!homeBannerVisible)onBannerQr(false)}
+    val scheduleDate=LocalDate.now(brasilia)
+    val programRows=remember(payload){payload.rows("programas")}
+    val scheduleGrid by produceState<List<List<Segment>>?>(null,programRows.map{it.toString()},scheduleDate){value=withContext(Dispatchers.Default){(0..6).map{d->programRows.flatMap{segments(it,scheduleDate.plusDays(d.toLong()))}}}}
     val cover=track.str("capa")
     val title=track.str("titulo").ifBlank{"Ao vivo"}
     val artist=track.str("artista")
@@ -214,7 +224,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                     Crossfade(artistPhoto,animationSpec=tween(800),label="artistChange"){url->Artwork(safeImage(url),Modifier.fillMaxSize().alpha(fade),scale=ContentScale.Crop)}
                     Box(Modifier.fillMaxSize().alpha(fade).background(Brush.horizontalGradient(listOf(Color.Black.copy(alpha=.74f),Color.Black.copy(alpha=.45f)))))
                     if(screen==Screen.HOME) Crossfade(backgroundAd,animationSpec=tween(700),label="backgroundAd"){url->if(url.isNotBlank())Artwork(safeImage(url),Modifier.fillMaxSize(),scale=ContentScale.Crop)}
-                    if(screen==Screen.HOME||screen==Screen.SCHEDULE) AnimatedPresenter(u,activePresenter.str("foto"),u.at(1152,108,768,972))
+                    if(screen==Screen.HOME||screen==Screen.SCHEDULE) AnimatedVisibility(screen!=Screen.HOME||backgroundAd.isBlank(),modifier=u.at(1152,108,768,972),enter=fadeIn(tween(650))+slideInHorizontally(tween(650)){it/10},exit=fadeOut(tween(500))){AnimatedPresenter(u,activePresenter.str("foto"),Modifier.fillMaxSize())}
                     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent,Color.Transparent,Color.Black.copy(alpha=.78f)))))
                 }
             }
@@ -237,13 +247,13 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                     Column(Modifier.offset(u.space(108),u.space(272)).zIndex(2f),verticalArrangement=Arrangement.spacedBy(u.space(4))) {
                         fun route(i:Int)=Modifier.focusRequester(rail[i]).focusProperties{
                             up=if(i==0)focus else rail[i-1]
-                            down=if(i==4){if(banner.isNotBlank())bannerFocus else sparkFocus}else rail[i+1]
+                            down=if(i==4){if(homeBannerVisible)bannerFocus else sparkFocus}else rail[i+1]
                             right=programFocus
                         }
                         RailItem(u,"audio","Ouvir",accent,route(0)){onOpen(Screen.AUDIO)}
                         RailItem(u,"video","Assistir",accent,route(1)){onOpen(Screen.VIDEO)}
                         RailItem(u,"catalog","On Demand",accent,route(2)){onOpen(Screen.CATALOG)}
-                        RailItem(u,"calendar","Grade de programação",accent,route(3)){onOpen(Screen.SCHEDULE)}
+                        RailItem(u,"calendar","Grade de programação",accent,route(3),loading=scheduleOpening){onOpen(Screen.SCHEDULE)}
                         RailItem(u,"user","Olá, $guestName",accent,route(4),avatar=guestAvatar){onOpen(Screen.PROFILE)}
                     }
                     Column(u.at(programLeft,272,505,310),verticalArrangement=Arrangement.spacedBy(u.space(12))) {
@@ -251,14 +261,14 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                         Copy(program.str("nome").ifBlank{stationName},u,35,700,lines=3)
                         Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(10))) { Symbol("mic",Modifier.size(u.space(24)));Copy(activePresenter.str("nome"),u,24,400) }
                         Spacer(Modifier.height(u.space(6)))
-                        ExpandableProgram(u,Modifier.focusRequester(programFocus).focusProperties{left=rail[0];right=sparkFocus;down=if(banner.isNotBlank())bannerFocus else sparkFocus}){onOpen(Screen.SCHEDULE)}
+                        ExpandableProgram(u,Modifier.focusRequester(programFocus).focusProperties{left=rail[0];right=sparkFocus;down=if(homeBannerVisible)bannerFocus else sparkFocus},loading=scheduleOpening){onOpen(Screen.SCHEDULE)}
                     }
                     if(sponsor!=null && !interaction && panel==null) Artwork(sponsor,u.at(1641,746,202,202))
-                    if(banner.isNotBlank() && !interaction && panel==null) {
+                    AnimatedVisibility(homeBannerVisible,modifier=Modifier.fillMaxSize(),enter=fadeIn(tween(650)),exit=fadeOut(tween(500))) {
                         val model:Any?=if(banner.substringBefore("?")=="https://qazvgmgdidjhbvcuinpy.supabase.co/storage/v1/object/public/comercial/452ebd1e-61a0-42dd-bf80-231a3f426c83/player-ads/00198081-b99d-4548-8561-ff953209d17a.png") R.drawable.home_hotpark else safeImage(banner)
                         var bannerFocused by remember{mutableStateOf(false)}
                         Box(u.at(265,886,1320,140).focusRequester(bannerFocus)
-                            .focusProperties{up=rail[4];right=sparkFocus;canFocus=!modal}
+                            .focusProperties{up=rail[4];right=sparkFocus;canFocus=!modal&&homeBannerVisible}
                             .onFocusChanged{bannerFocused=it.isFocused;if(!it.isFocused)onBannerQr(false)}
                             .drawBehind{if(bannerFocused){val gap=u.space(5).toPx();drawRoundRect(Color.White,Offset(-gap,-gap),Size(size.width+gap*2,size.height+gap*2),CornerRadius(u.space(16).toPx()),style=Stroke(u.space(3).toPx()))}}
                             .clickable(enabled=!modal){if(safeImage(bannerLink)!=null)onBannerQr(!bannerQr)}){
@@ -271,7 +281,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                         }
                         if(bannerQr)BackHandler{onBannerQr(false)}
                     }
-                    GlassButton(u,"",u.at(1744,950,76,76).focusRequester(sparkFocus).focusProperties{left=if(banner.isNotBlank())bannerFocus else programFocus;up=clockFocus},icon="spark",accent=accent,accentRing=true){onInteraction()}
+                    GlassButton(u,"",u.at(1744,950,76,76).focusRequester(sparkFocus).focusProperties{left=if(homeBannerVisible)bannerFocus else programFocus;up=clockFocus},icon="spark",accent=accent,accentRing=true){onInteraction()}
                     Copy("Nexo TV v"+BuildConfig.VERSION_NAME,u,15,400,u.at(100,1030,800,25),color=Color.White.copy(alpha=.55f))
                 }
                 if(watch) {
@@ -310,15 +320,25 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                         GlassButton(u,"",u.at(160,912,88,88).alpha(chrome).focusRequester(focus).focusProperties{left=backFocus;up=channelUp;down=channelDown;right=sparkFocus},icon=if(playing)"pause" else "play",enabled=controls){onToggle()}
                         GlassButton(u,"",u.at(184,854,40,40).alpha(chrome).focusRequester(channelUp).focusProperties{down=focus;right=if(screen==Screen.AUDIO)likeFocus else sparkFocus;up=if(screen==Screen.AUDIO)likeFocus else sparkFocus},icon="up",enabled=controls){onChannel(-1)}
                         GlassButton(u,"",u.at(184,1018,40,40).alpha(chrome).focusRequester(channelDown).focusProperties{up=focus;right=programFocus},icon="down",enabled=controls){onChannel(1)}
-                        if(!interaction) GlassButton(u,"programação",u.at(1490,922,225,64).alpha(chrome).focusRequester(programFocus).focusProperties{left=focus;right=sparkFocus},icon="calendar",enabled=controls){onOpen(Screen.SCHEDULE)}
-                        if(screen==Screen.VIDEO && video.size>1) LazyRow(u.at(1000,720,820,160).alpha(chrome),horizontalArrangement=Arrangement.spacedBy(u.space(16))) {
-                            items(video){ ch -> GlassButton(u,ch.name,Modifier.width(u.space(350)).height(u.space(72)),enabled=controls,accent=if(ch.id==selected?.id)accent else null){onVideo(ch)} }
+                        if(!interaction) GlassButton(u,"programação",u.at(1490,922,225,64).alpha(chrome).focusRequester(programFocus).focusProperties{left=focus;right=sparkFocus},icon="calendar",enabled=controls,loading=scheduleOpening){onOpen(Screen.SCHEDULE)}
+                        if(screen==Screen.VIDEO&&(video.size>1||BuildConfig.STATION_SLUG=="positivafm")){
+                            val main=video.firstOrNull{!it.name.contains("cast",true)&&!it.name.contains("podcast",true)}?:video.firstOrNull()
+                            val cast=video.firstOrNull{it.name.contains("cast",true)||it.name.contains("podcast",true)}
+                            Row(u.at(1000,710,820,180).alpha(chrome),horizontalArrangement=Arrangement.spacedBy(u.space(22))){
+                                if(BuildConfig.STATION_SLUG=="positivafm"){
+                                    if(main!=null)VideoChannelCard(u,R.drawable.positiva_channel_one,"Canal 1",selected?.id==main.id,controls){onVideo(main)}
+                                    VideoChannelCard(u,R.drawable.positiva_channel_two,"Positiva Cast",cast!=null&&selected?.id==cast.id,controls){
+                                        if(cast!=null&&!cast.url.contains("youtu",true))onVideo(cast)
+                                        else onNotice("O Positiva Cast utiliza YouTube. A reprodução nativa deste canal ainda não está disponível.")
+                                    }
+                                }else video.forEach{ch->VideoChannelCard(u,safeImage(ch.coverUrl),ch.name,selected?.id==ch.id,controls){onVideo(ch)}}
+                            }
                         }
                     }
                     if(panel==null && (screen==Screen.AUDIO || chrome>.01f)) GlassButton(u,"",u.at(1744,922,64,64).alpha(if(screen==Screen.VIDEO)chrome else 1f).focusRequester(sparkFocus).focusProperties{left=programFocus;up=if(screen==Screen.AUDIO)likeFocus else focus},icon="spark",enabled=screen==Screen.AUDIO||controls){onInteraction()}
                     playerError?.let { Copy(it,u,25,500,u.at(100,800,900,50)) }
                 }
-                if(screen==Screen.SCHEDULE) Schedule(u,payload,program,accent,focus,onBack,account.str("id").ifBlank{guestName})
+                if(screen==Screen.SCHEDULE) Schedule(u,payload,program,accent,focus,onBack,account.str("id").ifBlank{guestName},scheduleGrid)
                 if(screen==Screen.CATALOG) {
                     Copy("On Demand",u,38,600,u.at(115,248,1200,70))
                     val entries=payload.rows("channels").filter{it.str("type")!="audio_live"&&it.str("type")!="video_live"}
@@ -400,7 +420,7 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
         if(b<a&&occurs(p,date.minusDays(1)))add(Segment(p,0,(b+1).coerceAtMost(1440)))
     }
 }
-@Composable private fun Schedule(u:TvUnits,payload:JSONObject?,current:JSONObject?,accent:Color,focus:FocusRequester,onBack:()->Unit,profile:String) {
+@Composable private fun Schedule(u:TvUnits,payload:JSONObject?,current:JSONObject?,accent:Color,focus:FocusRequester,onBack:()->Unit,profile:String,prepared:List<List<Segment>>?) {
     val today=LocalDate.now(brasilia)
     val now=LocalTime.now(brasilia).let{it.hour*60+it.minute}
     val programs=payload.rows("programas")
@@ -412,7 +432,7 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
     val scroll=rememberScrollState()
     val initial=u.space(((now/30)*56-230).coerceAtLeast(0))
     val density=androidx.compose.ui.platform.LocalDensity.current
-    LaunchedEffect(programs.isNotEmpty(),current.str("id")){scroll.scrollTo(with(density){initial.roundToPx()});withFrameNanos{};if(programs.isNotEmpty())runCatching{liveFocus.requestFocus()}}
+    LaunchedEffect(prepared,current.str("id")){if(prepared!=null){withFrameNanos{};scroll.scrollTo(with(density){initial.roundToPx()});withFrameNanos{};runCatching{liveFocus.requestFocus()}}}
     GlassButton(u,"",u.at(1768,148,52,52).focusRequester(focus),icon="left",onClick=onBack)
     Column(u.at(100,216,1720,654).background(Color(0xF5101113),u.round(30)).padding(u.space(14))) {
         Row(horizontalArrangement=Arrangement.spacedBy(u.space(12))) {
@@ -422,14 +442,14 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
             }
         }
         Spacer(Modifier.height(u.space(8)))
-        if(programs.isEmpty()) Box(Modifier.weight(1f).fillMaxWidth(),contentAlignment=Alignment.Center){Copy("Carregando programação…",u,28,500)} else Row(Modifier.weight(1f).verticalScroll(scroll),horizontalArrangement=Arrangement.spacedBy(u.space(12))) {
+        if(prepared==null||programs.isEmpty()) Box(Modifier.weight(1f).fillMaxWidth(),contentAlignment=Alignment.Center){Column(horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(18))){if(prepared==null)NativeSpinner(u,Modifier.size(u.space(52)));Copy(if(prepared==null)"Carregando programação…" else "Nenhuma programação cadastrada.",u,28,500)}} else Row(Modifier.weight(1f).verticalScroll(scroll),horizontalArrangement=Arrangement.spacedBy(u.space(12))) {
             Column(Modifier.width(u.space(120)).background(Color(0xFF212224),u.round(18))) {
                 repeat(48){n-> Box(Modifier.height(u.space(56)).fillMaxWidth(),contentAlignment=Alignment.Center){Copy(labelMinute(n*30),u,18,700,color=if(n==now/30)Color.White else Color(0xFF8B8D94))} }
             }
             repeat(7){d->
                 val date=today.plusDays(d.toLong())
                 Box(Modifier.weight(1f).height(u.space(2688)).background(Color(0xFF171819),u.round(18))) {
-                    programs.flatMap{segments(it,date)}.forEach{seg->
+                    prepared[d].forEach{seg->
                         val p=seg.p;val live=d==0&&p.str("id")==current.str("id")&&now in seg.start until seg.end
                         var focused by remember(p.str("id"),seg.start){mutableStateOf(false)}
                         val shape=u.round(20)
@@ -457,7 +477,7 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
     details?.let{p->
         Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.55f)),contentAlignment=Alignment.Center) {
             val back=remember{FocusRequester()};LaunchedEffect(p){back.requestFocus()}
-            Row(Modifier.size(u.space(1200),u.space(560)).background(glass,u.round(32)).padding(u.space(40)),horizontalArrangement=Arrangement.spacedBy(u.space(35))) {
+            Row(Modifier.size(u.space(1200),u.space(560)).background(Color(0xFF242529),u.round(32)).padding(u.space(40)),horizontalArrangement=Arrangement.spacedBy(u.space(35))) {
                 val ids=p.strings("apresentadores_ids").ifEmpty{listOf(p.str("apresentador_id"))}
                 var index by remember(p.str("id")){mutableIntStateOf(0)}
                 LaunchedEffect(ids){if(ids.size>1)while(true){delay(4000);index=(index+1)%ids.size}}
@@ -553,11 +573,11 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
         }
     }
 }
-@Composable private fun ExpandableProgram(u:TvUnits,modifier:Modifier,onClick:()->Unit){
+@Composable private fun ExpandableProgram(u:TvUnits,modifier:Modifier,loading:Boolean=false,onClick:()->Unit){
     var focused by remember{mutableStateOf(false)}
     val active=LocalControlsEnabled.current
     Row(modifier.onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=active}.height(u.space(54)).clip(CircleShape).border(u.space(2),Color.White,CircleShape).clickable(enabled=active,onClick=onClick).semantics{contentDescription="Programação"}.padding(horizontal=u.space(13)),verticalAlignment=Alignment.CenterVertically){
-        Symbol("plus",Modifier.size(u.space(27)))
+        if(loading)NativeSpinner(u,Modifier.size(u.space(27)))else Symbol("plus",Modifier.size(u.space(27)))
         AnimatedVisibility(focused,enter=expandHorizontally(tween(260))+fadeIn(tween(220)),exit=shrinkHorizontally(tween(260))+fadeOut(tween(180))){Row{Spacer(Modifier.width(u.space(10)));Copy("programação",u,22,500)}}
     }
 }
@@ -569,5 +589,19 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
         val ids=prefs.getStringSet(key,emptySet()).orEmpty().toMutableSet()
         if(enabled)ids.remove(id)else ids.add(id)
         prefs.edit().putStringSet(key,ids).apply();enabled=!enabled
+    }
+}
+
+@Composable internal fun NativeSpinner(u:TvUnits,modifier:Modifier){
+    val transition=rememberInfiniteTransition(label="loading")
+    val angle by transition.animateFloat(0f,360f,infiniteRepeatable(tween(850,easing=LinearEasing)),label="spin")
+    Canvas(modifier.rotate(angle)){val sw=size.minDimension*.11f;drawArc(Color.White,0f,270f,false,topLeft=Offset(sw,sw),size=Size(size.width-2*sw,size.height-2*sw),style=Stroke(sw,cap=StrokeCap.Round))}
+}
+@Composable private fun VideoChannelCard(u:TvUnits,image:Any?,label:String,selected:Boolean,enabled:Boolean,onClick:()->Unit){
+    var focused by remember{mutableStateOf(false)}
+    val active=enabled&&LocalControlsEnabled.current
+    val shape=u.round(18)
+    Box(Modifier.size(u.space(310),u.space(175)).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=active}.border(u.space(if(focused)4 else if(selected)2 else 0),if(focused||selected)Color.White else Color.Transparent,shape).clip(shape).background(Color(0xFF252629)).clickable(enabled=active,onClick=onClick).semantics{contentDescription=label},contentAlignment=Alignment.Center){
+        if(image!=null)Artwork(image,Modifier.fillMaxSize(),scale=ContentScale.Fit)else Copy(label,u,24,600,align=TextAlign.Center)
     }
 }

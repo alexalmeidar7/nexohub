@@ -2,6 +2,13 @@ package br.com.nexobrasil.nexoplayer.nativecore
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.graphics.Brush
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -107,24 +114,32 @@ import com.google.zxing.qrcode.QRCodeWriter
         }
     }
     if(panel=="chat"){
+        val listState=rememberLazyListState();val qrBack=remember{FocusRequester()}
+        LaunchedEffect(messages.lastOrNull()?.str("id"),messages.size){if(messages.isNotEmpty())listState.scrollToItem(messages.lastIndex)}
+        LaunchedEffect(qr){withFrameNanos{};runCatching{(if(qr)qrBack else focus).requestFocus()}}
+        BackHandler(qr){qr=false}
         Copy("Chat",u,28,600)
-        if(qr)NativeQr("https://housemix.nexobrasil.net/"+BuildConfig.STATION_SLUG+"/pair?mode=chat&radio="+owner+"&tv="+device,Modifier.size(u.space(310)))
-        else LazyColumn(Modifier.fillMaxWidth().heightIn(max=u.space(390)).background(Color.Black.copy(alpha=.20f),u.round(16)).padding(u.space(8)),verticalArrangement=Arrangement.spacedBy(u.space(10))){items(messages){m->Column(Modifier.fillMaxWidth().background(Color.White.copy(alpha=.08f),u.round(12)).padding(u.space(8))){Copy(m.str("nome"),u,19,600);Copy(m.str("message"),u,19,400,lines=5)}}}
+        Box(Modifier.fillMaxWidth().height(u.space(465)).background(Color.Black.copy(alpha=.20f),u.round(16))){
+            LazyColumn(Modifier.fillMaxSize().padding(u.space(10)),state=listState,verticalArrangement=Arrangement.spacedBy(u.space(10))){
+                items(messages){m->Column(Modifier.fillMaxWidth().background(Color.White.copy(alpha=.08f),u.round(12)).padding(u.space(8))){Copy(m.str("nome"),u,19,600);Copy(m.str("message"),u,19,400,lines=5)}}
+            }
+            if(qr)Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.58f),u.round(16)),contentAlignment=Alignment.Center){
+                Column(horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(24))){
+                    NativeQr("https://housemix.nexobrasil.net/"+BuildConfig.STATION_SLUG+"/pair?mode=chat&radio="+owner+"&tv="+device,Modifier.size(u.space(225)).clip(u.round(14)),compact=true)
+                    GlassButton(u,"",Modifier.size(u.space(54)).focusRequester(qrBack),icon="left"){qr=false}
+                }
+            }
+        }
         Spacer(Modifier.height(u.space(12)))
-        GlassButton(u,if(qr)"Ver mensagens" else "entrar na conversa",Modifier.height(u.space(60)).focusRequester(focus)){qr=!qr}
+        if(!qr)GlassButton(u,"entrar na conversa",Modifier.height(u.space(60)).focusRequester(focus)){qr=true}
     }else{
         val poll=panel=="poll"
-        Copy(if(poll)"Enquete" else "Batalha musical",u,28,600)
+        if(poll)Copy("Enquete",u,28,600)
         val item=row
         if(item!=null){
-            Copy(if(poll)item.str("pergunta") else "Quem merece ganhar essa batalha?",u,25,600,lines=3)
+            if(poll)Copy(item.str("pergunta"),u,25,600,lines=3)
             val answers=if(poll)(1..4).map{item.str("resposta"+it)}.filter{it.isNotBlank()} else (1..2).map{item.str("artista"+it+"_musica")+" — "+item.str("artista"+it+"_nome")}
-            Column(Modifier.fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(u.space(12))){
-                answers.forEachIndexed{i,answer->
-                    val choice=if(poll)i else i+1
-                    val result=if(poll)counts?.optInt(i)?.let{" · "+it+" votos"}.orEmpty() else " · "+item.optInt("artista"+choice+"_porcentagem")+"%"
-                    if(!poll) Artwork(safeImage(item.str("artista"+choice+"_imagem")),Modifier.fillMaxWidth().height(u.space(105)).clip(u.round(12)),scale=ContentScale.Crop)
-                    GlassButton(u,(if(voted==choice)"✓ " else "")+answer+result,Modifier.fillMaxWidth().height(u.space(83)).then(if(i==0&&(voted<0||editing))Modifier.focusRequester(focus)else Modifier),enabled=!busy&&(voted<0||editing)){
+            fun submit(choice:Int){
                         if(account==null){msg="Conecte sua conta Google para votar."}
                         else{busy=true;scope.launch{
                             try{
@@ -135,6 +150,24 @@ import com.google.zxing.qrcode.QRCodeWriter
                                 if(poll)counts=(services.rpc("get_player_poll_results",JSONObject().put("p_poll_id",item.str("id"))) as? JSONObject)?.optJSONArray("counts")
                             }catch(e:CancellationException){throw e}catch(_:Exception){msg="Não foi possível registrar o voto."}finally{busy=false}
                         }}
+            }
+            Column(Modifier.fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(18))){
+                if(poll)answers.forEachIndexed{i,answer->
+                    val result=counts?.optInt(i)?.let{" · "+it+" votos"}.orEmpty()
+                    GlassButton(u,(if(voted==i)"✓ " else "")+answer+result,Modifier.fillMaxWidth().height(u.space(83)).then(if(i==0&&(voted<0||editing))Modifier.focusRequester(focus)else Modifier),enabled=!busy&&(voted<0||editing)){submit(i)}
+                }else Row(horizontalArrangement=Arrangement.spacedBy(u.space(26))){
+                    (1..2).forEach{choice->
+                        var focused by remember{mutableStateOf(false)}
+                        val enabled=!busy&&(voted<0||editing);val shape=u.round(24)
+                        Box(Modifier.size(u.space(440)).then(if(choice==1&&enabled)Modifier.focusRequester(focus)else Modifier).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=enabled}.border(u.space(if(focused)4 else if(voted==choice)2 else 0),if(focused||voted==choice)Color.White else Color.Transparent,shape).clip(shape).background(Color(0xFF242529)).clickable(enabled=enabled){submit(choice)}){
+                            Artwork(safeImage(item.str("artista"+choice+"_imagem")),Modifier.fillMaxSize(),scale=ContentScale.Crop)
+                            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent,Color.Transparent,Color.Black.copy(alpha=.94f)))))
+                            Column(Modifier.align(Alignment.BottomStart).padding(u.space(24)),verticalArrangement=Arrangement.spacedBy(u.space(8))){
+                                Copy(item.str("artista"+choice+"_musica"),u,28,700,lines=2)
+                                Copy(item.str("artista"+choice+"_nome"),u,22,500,lines=2)
+                                Copy((if(voted==choice)"✓ Seu voto · " else "")+item.optInt("artista"+choice+"_porcentagem")+"%",u,20,600)
+                            }
+                        }
                     }
                 }
                 if(voted>=0&&!editing)GlassButton(u,"Mudar meu voto",Modifier.height(u.space(60)).focusRequester(focus)){editing=true}
@@ -142,5 +175,5 @@ import com.google.zxing.qrcode.QRCodeWriter
         }
     }
     if(msg.isNotBlank())Copy(msg,u,19,400,lines=3)
-    LaunchedEffect(row!=null,editing,voted>=0,panel){runCatching{focus.requestFocus()}}
+    LaunchedEffect(row!=null,editing,voted>=0,panel){if(panel!="chat")runCatching{focus.requestFocus()}}
 }

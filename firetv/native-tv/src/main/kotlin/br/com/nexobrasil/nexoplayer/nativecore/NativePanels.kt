@@ -64,14 +64,18 @@ internal fun matchCepCity(rows:List<JSONObject>,city:String,state:String,uf:Stri
     }
 }
 private val coverCache=mutableMapOf<String,String>()
+private val coverMisses=mutableSetOf<String>()
+private fun coverKey(s:String)=norm(s).replace(Regex("[^\\p{L}\\p{N}]+")," ").trim()
 private suspend fun coverFor(title:String,artist:String):String {
     if(title.isBlank()||artist.isBlank())return ""
-    val key=norm("$title|$artist")
+    val key=coverKey(title)+"|"+coverKey(artist)
     coverCache[key]?.let{return it}
+    if(key in coverMisses)return ""
     val result=getJson("https://itunes.apple.com/search?media=music&entity=song&limit=5&term="+URLEncoder.encode("$artist $title","UTF-8"))
-    val found=result.rows("results").firstOrNull{norm(it.str("artistName")).contains(norm(artist)) && norm(it.str("trackName")).contains(norm(title))}
+    fun matches(a:String,b:String):Boolean{val x=coverKey(a);val y=coverKey(b);return x.isNotBlank()&&y.isNotBlank()&&(x.contains(y)||y.contains(x))}
+    val found=result.rows("results").firstOrNull{matches(it.str("artistName"),artist)&&matches(it.str("trackName"),title)}
     val url=found.str("artworkUrl100").replace("100x100bb","600x600bb")
-    if(url.isNotBlank()){if(coverCache.size>=250)coverCache.clear();coverCache[key]=url}
+    if(url.isNotBlank()){if(coverCache.size>=250)coverCache.clear();coverCache[key]=url}else{if(coverMisses.size>=250)coverMisses.clear();coverMisses.add(key)}
     return url
 }
 private data class SearchHit(val kind:String,val title:String,val sub:String,val image:String,val destination:Screen)
@@ -107,7 +111,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
     if(panel=="pair"){NativePairPanel(u,services,onClose,onAccount);return}
     if(panel=="search"||panel=="cep") {
         Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.58f)),contentAlignment=Alignment.Center){
-            Column(Modifier.width(u.space(760)).clip(u.round(26)).background(glass).padding(u.space(20)),verticalArrangement=Arrangement.spacedBy(u.space(12))){
+            Column(Modifier.width(u.space(if(panel=="cep")820 else 760)).clip(u.round(26)).background(glass).padding(u.space(if(panel=="cep")32 else 20)),verticalArrangement=Arrangement.spacedBy(u.space(if(panel=="cep")20 else 12)),horizontalAlignment=if(panel=="cep")Alignment.CenterHorizontally else Alignment.Start){
                 if(panel=="search"){
                     val context=LocalContext.current
                     val prefs=remember{context.getSharedPreferences("native_tv_settings",0)}
@@ -142,10 +146,10 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                     var busy by remember{mutableStateOf(false)}
                     var city by remember{mutableStateOf("")}
                     LaunchedEffect(digits){city="";msg="";if(digits.length==8){delay(300);try{val a=getJson("https://viacep.com.br/ws/$digits/json/");if(!a.optBoolean("erro"))city=a.str("localidade")+" / "+a.str("uf")}catch(e:CancellationException){throw e}catch(_:Exception){}}}
-                    Row(verticalAlignment=Alignment.CenterVertically){Copy("Configurar tempo pelo CEP",u,30,600,Modifier.weight(1f));GlassButton(u,"",Modifier.size(u.space(56)),icon="left",onClick=onClose)}
-                    Copy("Informe seu CEP para buscar o tempo da sua região.",u,22,400,lines=2)
-                    Box(Modifier.fillMaxWidth().height(u.space(64)).background(Color(0xFF303030),u.round(18)),contentAlignment=Alignment.Center){
-                        Copy(if(digits.isEmpty())"00000-000" else digits.take(5)+(if(digits.length>5)"-"+digits.drop(5)else ""),u,32,500)
+                    Box(Modifier.fillMaxWidth().height(u.space(64)),contentAlignment=Alignment.Center){Copy("Configurar tempo pelo CEP",u,30,600,align=TextAlign.Center);GlassButton(u,"",Modifier.align(Alignment.CenterEnd).size(u.space(52)),icon="left",onClick=onClose)}
+                    Copy("Informe seu CEP para buscar o tempo da sua região.",u,22,400,lines=2,align=TextAlign.Center)
+                    Box(Modifier.width(u.space(610)).height(u.space(92)).background(Color(0xFF303030),u.round(18)),contentAlignment=Alignment.Center){
+                        Copy(if(digits.isEmpty())"00000-000" else digits.take(5)+(if(digits.length>5)"-"+digits.drop(5)else ""),u,42,500)
                     }
                     Column(Modifier.align(Alignment.CenterHorizontally),verticalArrangement=Arrangement.spacedBy(u.space(6))){
                         listOf(listOf("1","2","3"),listOf("4","5","6"),listOf("7","8","9"),listOf("Limpar","0","⌫")).forEachIndexed{r,keys->
@@ -158,8 +162,8 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                             }
                         }
                     }
-                    Copy(if(city.isNotBlank())"Tempo para: $city" else msg,u,20,400,lines=3)
-                    GlassButton(u,if(busy)"localizando..." else "salvar CEP",Modifier.height(u.space(62)).then(if(cep.length==8)Modifier.focusRequester(focus)else Modifier),enabled=!busy){
+                    Copy(if(city.isNotBlank())"Tempo para: $city" else msg,u,20,400,lines=3,align=TextAlign.Center)
+                    GlassButton(u,if(busy)"localizando..." else "salvar CEP",Modifier.width(u.space(330)).height(u.space(66)).then(if(cep.length==8)Modifier.focusRequester(focus)else Modifier),enabled=!busy){
                         if(digits.length!=8)msg="Digite um CEP válido com 8 números." else {busy=true;msg="";scope.launch{
                             try{
                                 val a=getJson("https://viacep.com.br/ws/$digits/json/")
@@ -175,10 +179,13 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                             }catch(e:CancellationException){throw e}catch(e:Exception){msg=e.message?:"Não foi possível salvar o CEP."}finally{busy=false}
                         }}
                     }
-                    if(msg.isNotBlank())Copy(msg,u,19,400,lines=3)
+                    if(msg.isNotBlank())Copy(msg,u,19,400,lines=3,align=TextAlign.Center)
+                    Spacer(Modifier.height(u.space(12)))
                 }
             }
         }
+    }else if(panel=="battle"){
+        Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){Column(Modifier.width(u.space(1030)).background(glass,u.round(32)).padding(u.space(32)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(20))){GlassButton(u,"",Modifier.align(Alignment.End).size(u.space(52)).focusRequester(focus),icon="left",onClick=onClose);if(owner!=null)NativeCommunity(u,panel,owner,services,account)else Copy("Emissora indisponível.",u,23)}}
     }else{
         Box(u.at(1350,165,470,735)){
             GlassButton(u,"",Modifier.align(Alignment.TopEnd).size(u.space(56)).then(if((panel=="history"&&history.isEmpty())||(panel=="weather"&&forecast?.optJSONObject("daily")?.optJSONArray("time")==null))Modifier.focusRequester(focus)else Modifier),icon="left",onClick=onClose)
@@ -187,8 +194,9 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                     "history" -> {
                         var index by remember{mutableIntStateOf(0)}
                         val song=history.getOrNull(index)
-                        var image by remember(song){mutableStateOf(song.str("capa_url"))}
+                        var image by remember(song){mutableStateOf(song.str("capa_url").ifBlank{song.str("capa")})}
                         LaunchedEffect(song){if(image.isBlank()&&song!=null){image=if(song.str("musica")==track.str("titulo")&&song.str("artista")==track.str("artista"))track.str("capa") else "";if(image.isBlank())try{image=coverFor(song.str("musica"),song.str("artista"))}catch(e:CancellationException){throw e}catch(_:Exception){}}}
+                        LaunchedEffect(history,index){for(candidate in history.drop(index+1).take(3)){if(candidate.str("capa_url").isBlank())try{coverFor(candidate.str("musica"),candidate.str("artista"))}catch(e:CancellationException){throw e}catch(_:Exception){}}}
                         if(song==null){Copy(if(loading)"Carregando músicas tocadas..." else if(error)"Histórico indisponível" else "Nenhuma música registrada.",u,23,400,lines=3)}
                         else{
                             AnimatedContent(index,label="historyInfo"){i->val item=history.getOrNull(i);Column(horizontalAlignment=Alignment.CenterHorizontally){Copy(item.str("horario").take(5),u,20,400);Copy(item.str("musica").uppercase(),u,25,700,lines=2,align=TextAlign.Center);Copy(item.str("artista").uppercase(),u,20,400,lines=2)}}
@@ -238,7 +246,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
             }
         }
     }
-    LaunchedEffect(panel,loading,history.isNotEmpty(),forecast!=null){runCatching{focus.requestFocus()}}
+    LaunchedEffect(panel,loading,history.isNotEmpty(),forecast!=null){if(panel!="chat"&&panel!="poll")runCatching{focus.requestFocus()}}
 }
 
 

@@ -2,7 +2,7 @@ package br.com.nexobrasil.nexoplayer.nativecore
 
 import org.json.JSONObject
 
-data class StationChannel(val id: String, val name: String, val type: String, val url: String)
+data class StationChannel(val id: String, val name: String, val type: String, val url: String, val coverUrl: String = "")
 
 data class StationBootstrap(
     val ownerId: String,
@@ -29,7 +29,7 @@ data class StationBootstrap(
                         val name = channel.nonBlankText("name") ?: continue
                         val type = channel.nonBlankText("type") ?: continue
                         val url = channel.nonBlankText("url") ?: continue
-                        add(StationChannel(id, name, type, url))
+                        add(StationChannel(id, name, type, url, channel.nonBlankText("cover_url").orEmpty()))
                     }
                 },
             )

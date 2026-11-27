@@ -149,6 +149,10 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
     var location by remember { mutableStateOf(readWeatherLocation(prefs)) }
     var cep by remember { mutableStateOf(prefs.getString("cep","").orEmpty()) }
     var panel by remember { mutableStateOf<String?>(null) }
+    var scheduleOpening by remember { mutableStateOf(false) }
+    var interactionReturn by remember { mutableIntStateOf(0) }
+    var fromInteraction by remember { mutableStateOf(false) }
+    fun closePanel(){if(fromInteraction){interactionReturn++;controls=true};fromInteraction=false;panel=null;interaction=false}
     var forecast by remember { mutableStateOf<JSONObject?>(null) }
     var lyrics by remember { mutableStateOf<String?>(null) }
     var history by remember { mutableStateOf<List<JSONObject>>(emptyList()) }
@@ -225,12 +229,14 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         interaction = false
         controls = true
     }
+    LaunchedEffect(scheduleOpening){if(scheduleOpening){withFrameNanos{};withFrameNanos{};if(scheduleOpening){openPage(Screen.SCHEDULE);scheduleOpening=false}}}
     fun back() {
         if (ad!=null) return
         if (notice != null) notice = null
-        else if (panel != null) { panel=null; interaction=false }
+        else if (panel != null) closePanel()
+        else if(scheduleOpening){scheduleOpening=false}
         else if (startup || entryPending) return
-        else if (interaction) interaction = false
+        else if (interaction) {interaction = false;interactionReturn++}
         else if (screen in listOf(Screen.SCHEDULE,Screen.HISTORY,Screen.PROFILE,Screen.SEARCH,Screen.CATALOG)) screen = returnScreen
         else home()
     }
@@ -330,7 +336,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         try {
             val data = api.recentMusic(owner)
             check(data.optBoolean("ok"))
-            history = data.rows("items").distinctBy { it.str("id").ifBlank { it.str("musica")+"|"+it.str("artista")+"|"+it.str("horario") } }.take(50)
+            history = deduplicateNativeHistory(data.rows("items")).take(50)
         } catch (e: CancellationException) { throw e }
         catch (_: Exception) { historyError = true }
         finally { historyLoading = false }
@@ -397,9 +403,9 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
     LaunchedEffect(smartQueue.isNotEmpty()){
         if(smartQueue.isEmpty()){if(player.isPlaying){player.volume=0f;fadeRequest++}else player.volume=1f}
     }
-    LaunchedEffect(screen,activity,interaction,notice,panel,buffering,playerError,playing) {
+    LaunchedEffect(screen,activity,interaction,notice,panel,buffering,playerError,playing,scheduleOpening,interactionReturn) {
         controls = true
-        if (watch && !interaction && notice == null && panel == null && (screen == Screen.AUDIO || (playing && !buffering && playerError == null))) {
+        if (watch && !scheduleOpening && !interaction && notice == null && panel == null && (screen == Screen.AUDIO || (playing && !buffering && playerError == null))) {
             delay(8000)
             controls = false
         }
@@ -493,7 +499,8 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         entryPending=entryPending, guestName=account?.optJSONObject("user_metadata").str("full_name").ifBlank{account?.optJSONObject("user_metadata").str("name")}.ifBlank{guestName}, guestAvatar=guestAvatar,
         spectrum=spectrum, panel=panel,forecast=forecast,lyrics=lyrics,cep=cep,api=api,services=services,account=account,
         onAccount={account=it;panel=null},onLogout={scope.launch{try{services.logout();account=null}catch(e:CancellationException){throw e}catch(_:Exception){notice="Não foi possível encerrar a sessão."}}},
-        onPanel={panel=it;interaction=false},onCepSaved={digits,loc -> prefs.edit().putString("cep",digits).putString("location",loc.toString()).apply();cep=digits;location=loc;panel=null},
+        scheduleOpening=scheduleOpening,interactionReturn=interactionReturn,
+        onPanel={next->if(next==null)closePanel()else{fromInteraction=interaction;panel=next;interaction=false}},onCepSaved={digits,loc -> prefs.edit().putString("cep",digits).putString("location",loc.toString()).apply();cep=digits;location=loc;panel=null},
         onGuestSave={name,avatar -> guestName=name;guestAvatar=avatar},
         onProfileContinue={
             if(entryPending) {
@@ -507,14 +514,15 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
                 Screen.HOME -> home()
                 Screen.AUDIO -> { if(audio.isEmpty()) notice="Canal de áudio indisponível" else select(audio.first(),Screen.AUDIO,audioIntent) }
                 Screen.VIDEO -> { if(video.isEmpty()) notice="Canal de vídeo indisponível" else { if(selected?.type=="audio_live") audioIntent=player.playWhenReady; select(video.first(),Screen.VIDEO) } }
-                Screen.SEARCH -> { panel="search";interaction=false }
+                Screen.SEARCH -> { fromInteraction=false;panel="search";interaction=false }
+                Screen.SCHEDULE -> { if(!scheduleOpening)scheduleOpening=true }
                 Screen.HISTORY -> { panel="history";interaction=false }
                 else -> openPage(destination)
             }
-        },onChannel=onChannel,onVideo={select(it,Screen.VIDEO)},onInteraction={interaction=!interaction},
+        },onChannel=onChannel,onVideo={select(it,Screen.VIDEO)},onInteraction={if(interaction){interaction=false;interactionReturn++}else interaction=true},
         onNotice={notice=it})
     ad?.let{media->NativePreroll(media,selected?.type=="audio_live",onStarted={lastAdAt=System.currentTimeMillis()},onFinish={ad=null;scope.launch { withFrameNanos { };resumeLive(resumeAfterAd) }})}
-    if(ad==null&&smartQueue.isNotEmpty())key(smartSerial){smartQueue.getOrNull(smartIndex)?.let{media->NativePreroll(media,false,onStarted={},onFinish={if(smartQueue.isNotEmpty()){smartFailures++;if(smartFailures>=smartQueue.size)smartQueue=emptyList()else{smartIndex=(smartIndex+1)%smartQueue.size;smartSerial++}}},smart=true,breakStart=trackStart,breakDuration=breakDuration,onPlayed={smartFailures=0})}}
+    if(ad==null&&smartQueue.isNotEmpty())key(smartSerial){smartQueue.getOrNull(smartIndex)?.let{media->NativePreroll(media,false,onStarted={},onFinish={if(smartQueue.isNotEmpty()){smartFailures++;if(smartFailures>=smartQueue.size)smartQueue=emptyList()else{smartIndex=(smartIndex+1)%smartQueue.size;smartSerial++}}},smart=true,breakStart=trackStart,breakDuration=breakDuration,onPlayed={smartFailures=0},onBack={home()},commercialPhone=data?.optJSONObject("empresa").str("telefone_comercial"))}}
     AnimatedVisibility(visible=startup, enter=fadeIn(tween(650)), exit=fadeOut(tween(650))) {
         StartupSplash(startupStage)
     }
@@ -522,3 +530,15 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
 }
 
 internal fun nativeEpoch(value:Any?):Long {val n=(value as? Number)?.toDouble()?:value?.toString()?.toDoubleOrNull()?:return 0L;return if(n.isFinite()&&n>0)(if(n<1e12)n*1000 else n).toLong()else 0L}
+
+internal fun deduplicateNativeHistory(rows:List<JSONObject>):List<JSONObject>{
+    fun key(row:JSONObject)=row.str("musica").trim().lowercase(java.util.Locale.ROOT)+"|"+row.str("artista").trim().lowercase(java.util.Locale.ROOT)
+    fun second(row:JSONObject):Int?{val p=row.str("horario").substringBefore(".").split(":");if(p.size<2)return null;return (p[0].toIntOrNull()?:return null)*3600+(p[1].toIntOrNull()?:return null)*60+(p.getOrNull(2)?.toIntOrNull()?:0)}
+    val seen=mutableSetOf<String>();val out=mutableListOf<JSONObject>()
+    for(row in rows){val k=key(row);if(k=="|")continue
+        if(!seen.add(k+"|"+row.str("dia")+"|"+row.str("horario").take(8)))continue
+        val prev=out.lastOrNull();val a=second(row);val b=prev?.let{second(it)}
+        if(prev!=null&&key(prev)==k&&row.str("dia")==prev.str("dia")&&a!=null&&b!=null&&kotlin.math.abs(a-b)<=120)continue
+        out.add(row)
+    };return out
+}

@@ -1,6 +1,13 @@
 package br.com.nexobrasil.nexoplayer.nativecore
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.text.style.TextAlign
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,7 +26,7 @@ import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.delay
 import org.json.JSONObject
 
-@Composable internal fun NativePreroll(media:JSONObject,audio:Boolean,onStarted:()->Unit,onFinish:()->Unit,smart:Boolean=false,breakStart:Long=0L,breakDuration:Double=0.0,onPlayed:()->Unit={}){
+@Composable internal fun NativePreroll(media:JSONObject,audio:Boolean,onStarted:()->Unit,onFinish:()->Unit,smart:Boolean=false,breakStart:Long=0L,breakDuration:Double=0.0,onPlayed:()->Unit={},onBack:()->Unit={},commercialPhone:String=""){
     val context=LocalContext.current
     val finish by rememberUpdatedState(onFinish)
     val started by rememberUpdatedState(onStarted)
@@ -31,6 +38,13 @@ import org.json.JSONObject
     var done by remember(media){mutableStateOf(false)}
     var played by remember(media){mutableStateOf(false)}
     var qr by remember(media){mutableStateOf(false)}
+    var info by remember{mutableStateOf(false)};var contact by remember{mutableStateOf(false)}
+    val infoFocus=remember{FocusRequester()};val closeFocus=remember{FocusRequester()};val contactFocus=remember{FocusRequester()};val qrFocus=remember{FocusRequester()}
+    val phone=commercialPhone.filter{it.isDigit()}.let{if(it.length in 10..11)"55"+it else it}
+    val contactUrl=if(phone.length in 12..15)"https://wa.me/"+phone else ""
+    val showLink=media.str("link").startsWith("https://")
+    BackHandler {if(contact)contact=false else if(info)info=false else if(qr)qr=false else if(smart)onBack()}
+    LaunchedEffect(info,contact){withFrameNanos{};runCatching{(if(contact)contactFocus else if(info)closeFocus else if(showLink)qrFocus else infoFocus).requestFocus()}}
     fun complete(){if(!done){done=true;player.stop();finish()}}
     DisposableEffect(player){
         val listener=object:Player.Listener{
@@ -57,13 +71,36 @@ import org.json.JSONObject
         Box(Modifier.fillMaxSize().background(Color.Black)){
             if(audio)Artwork(safeImage(media.str("backgroundUrl")),Modifier.fillMaxSize(),scale=ContentScale.Fit)
             else AndroidView(factory={ctx->PlayerView(ctx).apply{useController=false;this.player=player;isFocusable=false}},modifier=Modifier.fillMaxSize(),onRelease={it.player=null})
-            Copy((if(smart)"smart break" else "publicidade")+if(remaining>=0)" · "+remaining/60+":"+("%02d".format(remaining%60))else "",u,25,600,u.at(100,75,700,60))
-            if(media.str("link").startsWith("https://")){
-                GlassButton(u,"Saiba mais +",u.at(1450,890,330,65)){qr=!qr}
-                if(qr)NativeQr(media.str("link"),u.at(1440,510,330,330))
+            if(smart){
+                Row(u.at(1440,75,390,64),horizontalArrangement=Arrangement.spacedBy(u.space(14)),verticalAlignment=Alignment.CenterVertically){
+                    GlassButton(u,"",Modifier.size(u.space(60)),icon="left",enabled=!info,onClick=onBack)
+                    GlassButton(u,"smart break +",Modifier.height(u.space(60)).focusRequester(infoFocus),enabled=!info){info=true}
+                }
+            }else Copy("publicidade"+if(remaining>=0)" · "+remaining/60+":"+("%02d".format(remaining%60))else "",u,25,600,u.at(100,75,700,60))
+            if(showLink){
+                val side=if(qr)218 else 156
+                var focused by remember{mutableStateOf(false)}
+                Column(u.at(1815-side-28,1005-side-66,side+28,side+66).focusRequester(qrFocus).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=!info}.clip(u.round(20)).background(glass).border(u.space(if(focused)3 else 1),Color.White.copy(alpha=if(focused)1f else .18f),u.round(20)).clickable(enabled=!info){qr=!qr}.padding(u.space(12)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(10))){
+                    Copy("Saiba mais +",u,19,600)
+                    NativeQr(media.str("link"),Modifier.size(u.space(side)).clip(u.round(8)),compact=true)
+                }
             }
             if(!smart&&remaining in 1..15){LaunchedEffect(Unit){skipFocus.requestFocus()};GlassButton(u,"pular",u.at(405,75,210,65).focusRequester(skipFocus)){complete()}}
             if(smart&&breakDuration>0&&breakStart>0)Box(u.at(100,155,650,8).background(Color.White.copy(alpha=.25f))){Box(Modifier.fillMaxHeight().fillMaxWidth(progress).background(Color.White))}
+            if(smart&&info)Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.65f)),contentAlignment=Alignment.Center){
+                Column(Modifier.width(u.space(800)).background(Color(0xFF242529),u.round(28)).padding(u.space(36)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(24))){
+                    if(!contact){
+                        GlassButton(u,"",Modifier.align(Alignment.End).size(u.space(54)).focusRequester(closeFocus),icon="left"){info=false}
+                        Copy("O que é o Smart Break?",u,32,700,align=TextAlign.Center)
+                        Copy("Uma experiência de publicidade digital que conecta marcas e ouvintes durante os intervalos da programação ao vivo.",u,24,400,lines=4,align=TextAlign.Center)
+                        GlassButton(u,"Entre no Smart Break / Dep. Comercial",Modifier.height(u.space(64)),enabled=contactUrl.isNotBlank()){contact=true}
+                        if(contactUrl.isBlank())Copy("Contato comercial não cadastrado.",u,19,400)
+                    }else{
+                        NativeQr(contactUrl,Modifier.size(u.space(220)).clip(u.round(12)),compact=true)
+                        GlassButton(u,"",Modifier.size(u.space(54)).focusRequester(contactFocus),icon="left"){contact=false}
+                    }
+                }
+            }
         }
     }
 }

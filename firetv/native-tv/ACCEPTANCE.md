@@ -37,3 +37,6 @@ Fade de áudio e perfis, espectro PCM com fallback de renderer, foto de artista 
 
 ## 0.1.12 — reprodução e Home
 Media3 padrão, conexão HTTPS com timeouts explícitos, reconstrução de media item após falhas e diagnóstico LIVE_FAILURE. Espectro PCM temporariamente suspenso para isolar regressão de playback (sem animação simulada). Background ads independente: 60s após entrar, 10s de publicidade, 60s sem publicidade, rotação e fade. Avatar para banner; QR lateral sem modal, alternável por clique e encerrado por mudança de foco; margem QR padrão de quatro módulos. Ícones climáticos vetoriais brancos animados. Sem mudanças de assinatura ou launcher. Requer teste físico, especialmente streaming e QR.
+
+## 0.1.13 — ajustes de campo
+Retorno de foco à interatividade; transição de apresentador/banner na publicidade de fundo; pré-cálculo da grade e spinner; informações do programa opacas; CEP centralizado; QR de anúncios compacto e sempre visível, Smart Break com retorno à Home e explicação/contato; chat com rolagem ao fim e QR central sobre mensagens; histórico com deduplicação de registros próximos e cache de capas; batalha horizontal; capas originais dos canais Positiva. YouTube não é URL Media3: canal Cast exige implementação de reprodução compatível ou fonte direta. Assinatura e streaming da versão anterior preservados. Validar em TV física.
