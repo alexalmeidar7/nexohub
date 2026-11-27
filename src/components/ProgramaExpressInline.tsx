@@ -1,4 +1,4 @@
-import { publishDesktopRoteiro } from "@/lib/desktopRoteiroPublish";
+import { publishDesktopRoteiro, resolveDesktopRoteiroSlug } from "@/lib/desktopRoteiroPublish";
 import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { createPortal } from "react-dom";
@@ -1857,9 +1857,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
       // The local cache has just been committed. Publish this edition directly to
       // the same file vMix reads, before any optional cloud generation.
-      const clientAcc = findClientAccountById(ownerId);
       if (!schedule || isPodcast) {
-        await publishDesktopRoteiro(clientAcc?.slug || ownerId.slice(0, 8), estudio,
+        await publishDesktopRoteiro(resolveDesktopRoteiroSlug(ownerId), estudio,
           xmlContent, nowIso, html, targetHorario);
       }
 
