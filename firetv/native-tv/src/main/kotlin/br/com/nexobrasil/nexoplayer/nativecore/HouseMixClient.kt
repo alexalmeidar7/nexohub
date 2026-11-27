@@ -67,6 +67,8 @@ class HouseMixClient(supabaseOrigin: String, internal val publishableKey: String
             connection.setRequestProperty("apikey", publishableKey)
             connection.setRequestProperty("Authorization", "Bearer $publishableKey")
             connection.setRequestProperty("Accept", "application/json")
+            connection.useCaches=false
+            connection.setRequestProperty("Cache-Control","no-cache, no-store")
             if (body != null) {
                 connection.doOutput = true
                 connection.setRequestProperty("Content-Type", "application/json")

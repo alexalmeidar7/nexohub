@@ -20,6 +20,8 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.*
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.clipToBounds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import androidx.compose.foundation.Canvas
@@ -166,7 +168,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     player:ExoPlayer,playing:Boolean,buffering:Boolean,failure:String?,playerError:String?,controls:Boolean,chrome:Float,interaction:Boolean,
     banner:String,sponsor:String?,weather:JSONObject?,history:List<JSONObject>,historyLoading:Boolean,historyError:Boolean,notice:String?,video:List<StationChannel>,selected:StationChannel?,
     onRetry:()->Unit,onToggle:()->Unit,onBack:()->Unit,onOpen:(Screen)->Unit,onChannel:(Int)->Unit,onVideo:(StationChannel)->Unit,
-    onInteraction:()->Unit,onNotice:(String?)->Unit,
+    onInteraction:()->Unit,onNotice:(String?)->Unit,leavingScreen:Boolean,onVideoTrayFocus:(Boolean)->Unit,
     entryPending:Boolean,guestName:String,guestAvatar:Int,onGuestSave:(String,Int)->Unit,onProfileContinue:()->Unit,
     spectrum:PcmSpectrum,panel:String?,forecast:JSONObject?,lyrics:String?,cep:String,api:HouseMixClient,services:NativeServices,account:JSONObject?,onAccount:(JSONObject)->Unit,onLogout:()->Unit,onPanel:(String?)->Unit,onCepSaved:(String,JSONObject)->Unit,scheduleOpening:Boolean,interactionReturn:Int,channelOpening:Screen?,syncStatus:SyncStatus,manualSync:Long?,onSaveSync:(Long?)->Unit,onCalibrateSync:()->Unit,canCalibrateSync:Boolean
 ) {
@@ -178,6 +180,12 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
         }
     }
     val focus=remember(screen){FocusRequester()}
+    var entered by remember(screen){mutableStateOf(false)}
+    LaunchedEffect(screen){entered=true}
+    val screenMotion=animateFloatAsState(if(entered&&!leavingScreen)1f else 0f,tween(if(leavingScreen)220 else 420),label="screenEntry")
+    val trayFocus=remember{FocusRequester()}
+    var trayOpen by remember(screen){mutableStateOf(false)}
+    LaunchedEffect(screen,controls,panel,interaction){if(screen!=Screen.VIDEO||!controls||panel!=null||interaction){trayOpen=false;onVideoTrayFocus(false)}}
     val rail=remember{List(5){FocusRequester()}}
     val programFocus=remember{FocusRequester()}
     val searchFocus=remember{FocusRequester()}
@@ -196,7 +204,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     LaunchedEffect(screen,ready,modal,if(watchScreen)controls else true,interactionReturn) {
         if(ready&&!modal&&(!watchScreen||controls)){withFrameNanos{};val restore=interactionReturn!=restoredInteraction;if(restore)restoredInteraction=interactionReturn;runCatching{(if(restore&&(screen==Screen.HOME||watchScreen))sparkFocus else focus).requestFocus()}}
     }
-    val homeBannerVisible=screen==Screen.HOME&&backgroundAd.isBlank()&&banner.isNotBlank()&&!interaction&&(panel==null||panel=="cep")
+    val homeBannerVisible=screen==Screen.HOME&&backgroundAd.isBlank()&&safeImage(banner)!=null&&!interaction&&(panel==null||panel=="cep")
     LaunchedEffect(homeBannerVisible){if(!homeBannerVisible)onBannerQr(false)}
     val scheduleDate=LocalDate.now(brasilia)
     val programRows=remember(payload){payload.rows("programas")}
@@ -217,7 +225,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     LaunchedEffect(payload,reminderProfile){while(true){val next=java.time.ZonedDateTime.now(brasilia).plusMinutes(5);val ids=reminderPrefs.getStringSet("reminders:"+reminderProfile,emptySet()).orEmpty();payload.rows("programas").filter{it.str("id") in ids&&occurs(it,next.toLocalDate())&&it.str("horario_inicio").take(5)==next.format(DateTimeFormatter.ofPattern("HH:mm"))}.firstOrNull()?.let{p->val key="reminder-sent:"+reminderProfile+":"+p.str("id");if(reminderPrefs.getString(key,"")!=next.toLocalDate().toString()){reminderPrefs.edit().putString(key,next.toLocalDate().toString()).apply();reminderText=p.str("nome")+" começa em 5 minutos.";delay(12000);reminderText=""}};delay(10000)}}
     val logo=station?.logoUrl
     TvViewport(Modifier.background(Color.Black)) { u ->
-        Box(Modifier.fillMaxSize().background(Color.Black)) {
+        Box(Modifier.fillMaxSize().clipToBounds().background(Color.Black)) {
             val watch=screen==Screen.VIDEO||screen==Screen.AUDIO
             if(screen!=Screen.VIDEO) {
                 Box(Modifier.fillMaxSize().background(Brush.linearGradient(if(BuildConfig.STATION_SLUG=="positivafm") listOf(Color(0xFFDF1B22),Color(0xFF8D1E23),Color(0xFF111114)) else listOf(accent,Color(red=accent.red*.56f,green=accent.green*.56f,blue=accent.blue*.56f),Color(0xFF111114)))))
@@ -243,7 +251,8 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                 Copy(failure,u,35,500,u.at(100,300,1500,70))
                 GlassButton(u,"Tentar novamente",u.at(100,400,330,64).focusRequester(focus),onClick=onRetry)
             } else {
-                CompositionLocalProvider(LocalControlsEnabled provides !modal) {
+                CompositionLocalProvider(LocalControlsEnabled provides (!modal&&!leavingScreen)) {
+                Box(Modifier.fillMaxSize().graphicsLayer{alpha=screenMotion.value;translationY=(1f-screenMotion.value)*u.space(18).toPx()}){
                 if(!watch && screen!=Screen.PROFILE) Header(u,logo,title,artist,cover,playing,accent,screen,weather,if(screen==Screen.HOME) Modifier.focusRequester(focus).focusProperties{down=rail[0];right=searchFocus} else Modifier,spectrum,onToggle,{onOpen(Screen.SEARCH)},{onPanel("cep")},Modifier.focusRequester(searchFocus).focusProperties{if(screen==Screen.HOME)left=focus;right=clockFocus},Modifier.focusRequester(clockFocus).focusProperties{left=searchFocus;down=sparkFocus})
                 if(screen==Screen.HOME) {
                     val programLeft = 265f
@@ -291,15 +300,10 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                 }
                 if(watch) {
                     if(screen==Screen.AUDIO) {
-                        Box(u.at(100,296,440,440).clip(u.round(36)).background(glass).border(u.space(3),Color.White.copy(alpha=.27f),u.round(36)),contentAlignment=Alignment.Center) {
-                            if(cover.isNotBlank()) Artwork(safeImage(cover),Modifier.fillMaxSize(),scale=ContentScale.Crop)
-                            else Symbol("music",Modifier.size(u.space(100)))
-                            station?.ownerId?.let{owner->NativeLike(u,services,account,owner,title,artist,cover,Modifier.align(Alignment.BottomEnd).padding(u.space(12)),Modifier.focusRequester(likeFocus).focusProperties{down=focus;right=sparkFocus})}
-                        }
+                        NativeLike(u,services,account,station?.ownerId.orEmpty(),title,artist,cover,u.at(100,296,440,440),Modifier.focusRequester(likeFocus).focusProperties{down=focus;right=sparkFocus})
                         Column(u.at(582,376,625,330),verticalArrangement=Arrangement.spacedBy(u.space(18))) {
                             Copy("tocando",u,20,700)
-                            Copy(title.uppercase(),u,50,700,lines=2)
-                            Copy(artist.uppercase(),u,27,400,lines=2)
+                            AnimatedContent(targetState=title to artist,transitionSpec={fadeIn(tween(320)) togetherWith fadeOut(tween(220))},label="audioTrack"){song->Column(verticalArrangement=Arrangement.spacedBy(u.space(18))){Copy(song.first.uppercase(),u,50,700,lines=2);Copy(song.second.uppercase(),u,27,400,lines=2)}}
                             // Standard live audio renderer is used until PCM compatibility is confirmed on Fire TV.
                             if(buffering) Copy("Carregando…",u,22,500)
                         }
@@ -314,33 +318,36 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                             Column { Copy("tocando",u,18,700);Copy(title,u,40,700);Copy(artist,u,29) }
                         }
                     }
-                    if(screen==Screen.AUDIO && sponsor!=null && !interaction && panel==null) Artwork(sponsor,u.at(1630,730,190,130))
+                    if(screen==Screen.AUDIO && !interaction && panel==null) Crossfade(sponsor,modifier=u.at(1537,636,283,283),animationSpec=tween(350),label="audioSponsor"){url->if(url!=null)Artwork(url,Modifier.fillMaxSize(),scale=ContentScale.Fit)}
+                    val hasTray=screen==Screen.VIDEO&&(video.size>1||BuildConfig.STATION_SLUG=="positivafm")
+                    val lift by animateDpAsState(u.space(if(hasTray&&trayOpen)145 else 0),tween(340),label="trayLift")
+                    val trayY by animateDpAsState(u.space(if(trayOpen)875 else 1038),tween(340),label="trayY")
                     val programX by animateDpAsState(u.space(if(screen==Screen.AUDIO&&!controls)100 else 280),tween(350),label="programX")
-                    if(!interaction && panel==null && (screen==Screen.AUDIO || chrome>.01f)) Row(Modifier.offset(programX,u.space(928)).width(u.space(900)).height(u.space(85)).alpha(if(screen==Screen.VIDEO)chrome else 1f),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(15))) {
+                    if(!interaction && panel==null && (screen==Screen.AUDIO || chrome>.01f)) Row(Modifier.offset(programX,u.space(928)-lift).width(u.space(900)).height(u.space(85)).alpha(if(screen==Screen.VIDEO)chrome else 1f),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(15))) {
                         Badge(u,"Agora",accent)
                         Column { Copy(program.str("nome"),u,26,700);Copy(program.str("horario_inicio").take(5)+" – "+program.str("horario_fim").take(5)+"   "+presenter.str("nome"),u,18) }
                     }
                     if(chrome>.01f && panel==null) {
-                        GlassButton(u,"",u.at(100,936,40,40).alpha(chrome).focusRequester(backFocus).focusProperties{right=focus},icon="left",enabled=controls){onBack()}
-                        GlassButton(u,"",u.at(160,912,88,88).alpha(chrome).focusRequester(focus).focusProperties{left=backFocus;up=channelUp;down=channelDown;right=sparkFocus},icon=if(playing)"pause" else "play",enabled=controls){onToggle()}
-                        GlassButton(u,"",u.at(184,854,40,40).alpha(chrome).focusRequester(channelUp).focusProperties{down=focus;right=if(screen==Screen.AUDIO)likeFocus else sparkFocus;up=if(screen==Screen.AUDIO)likeFocus else sparkFocus},icon="up",enabled=controls){onChannel(-1)}
-                        GlassButton(u,"",u.at(184,1018,40,40).alpha(chrome).focusRequester(channelDown).focusProperties{up=focus;right=programFocus},icon="down",enabled=controls){onChannel(1)}
-                        if(!interaction) GlassButton(u,"programação",u.at(1490,922,225,64).alpha(chrome).focusRequester(programFocus).focusProperties{left=focus;right=sparkFocus},icon="calendar",enabled=controls,loading=scheduleOpening){onOpen(Screen.SCHEDULE)}
-                        if(screen==Screen.VIDEO&&(video.size>1||BuildConfig.STATION_SLUG=="positivafm")){
+                        GlassButton(u,"",u.at(100,936,40,40).offset(y=-lift).alpha(chrome).focusRequester(backFocus).focusProperties{right=focus},icon="left",enabled=controls){onBack()}
+                        GlassButton(u,"",u.at(160,912,88,88).offset(y=-lift).alpha(chrome).focusRequester(focus).focusProperties{left=backFocus;up=channelUp;down=channelDown;right=sparkFocus},icon=if(playing)"pause" else "play",enabled=controls){onToggle()}
+                        GlassButton(u,"",u.at(184,854,40,40).offset(y=-lift).alpha(chrome).focusRequester(channelUp).focusProperties{down=focus;right=if(screen==Screen.AUDIO)likeFocus else sparkFocus;up=if(screen==Screen.AUDIO)likeFocus else sparkFocus},icon="up",enabled=controls){onChannel(-1)}
+                        GlassButton(u,"",u.at(184,1018,40,40).offset(y=-lift).alpha(chrome).focusRequester(channelDown).focusProperties{up=focus;right=if(hasTray)trayFocus else programFocus;down=if(hasTray)trayFocus else FocusRequester.Default},icon="down",enabled=controls){onChannel(1)}
+                        if(!interaction) GlassButton(u,"programação",u.at(1490,922,225,64).offset(y=-lift).alpha(chrome).focusRequester(programFocus).focusProperties{left=focus;right=sparkFocus;down=if(hasTray)trayFocus else FocusRequester.Default},icon="calendar",enabled=controls,loading=scheduleOpening){onOpen(Screen.SCHEDULE)}
+                        if(hasTray&&!interaction){
                             val main=video.firstOrNull{!it.name.contains("cast",true)&&!it.name.contains("podcast",true)}?:video.firstOrNull()
                             val cast=video.firstOrNull{it.name.contains("cast",true)||it.name.contains("podcast",true)}
-                            Row(u.at(1000,710,820,180).alpha(chrome),horizontalArrangement=Arrangement.spacedBy(u.space(22))){
+                            Row(Modifier.offset(u.space(278),trayY).size(u.space(664),u.space(180)).alpha(chrome).onFocusChanged{trayOpen=it.hasFocus;onVideoTrayFocus(it.hasFocus)},horizontalArrangement=Arrangement.spacedBy(u.space(22))){
                                 if(BuildConfig.STATION_SLUG=="positivafm"){
-                                    if(main!=null)VideoChannelCard(u,R.drawable.positiva_channel_one,"Canal 1",selected?.id==main.id,controls){onVideo(main)}
-                                    VideoChannelCard(u,R.drawable.positiva_channel_two,"Positiva Cast",cast!=null&&selected?.id==cast.id,controls){
+                                    if(main!=null)VideoChannelCard(u,R.drawable.positiva_channel_one,"Canal 1",selected?.id==main.id,controls,Modifier.focusRequester(trayFocus).focusProperties{up=focus}){onVideo(main)}
+                                    VideoChannelCard(u,R.drawable.positiva_channel_two,"Positiva Cast",cast!=null&&selected?.id==cast.id,controls,if(main==null)Modifier.focusRequester(trayFocus).focusProperties{up=focus}else Modifier.focusProperties{up=focus}){
                                         if(cast!=null&&!cast.url.contains("youtu",true))onVideo(cast)
                                         else onNotice("O Positiva Cast utiliza YouTube. A reprodução nativa deste canal ainda não está disponível.")
                                     }
-                                }else video.forEach{ch->VideoChannelCard(u,safeImage(ch.coverUrl),ch.name,selected?.id==ch.id,controls){onVideo(ch)}}
+                                }else video.forEachIndexed{index,ch->VideoChannelCard(u,safeImage(ch.coverUrl),ch.name,selected?.id==ch.id,controls,if(index==0)Modifier.focusRequester(trayFocus).focusProperties{up=focus}else Modifier.focusProperties{up=focus}){onVideo(ch)}}
                             }
                         }
                     }
-                    if(panel==null && (screen==Screen.AUDIO || chrome>.01f)) GlassButton(u,"",u.at(1744,922,64,64).alpha(if(screen==Screen.VIDEO)chrome else 1f).focusRequester(sparkFocus).focusProperties{left=programFocus;up=if(screen==Screen.AUDIO)likeFocus else focus},icon="spark",enabled=screen==Screen.AUDIO||controls){onInteraction()}
+                    if(panel==null && (screen==Screen.AUDIO || chrome>.01f)) GlassButton(u,"",u.at(1744,922,64,64).offset(y=-lift).alpha(if(screen==Screen.VIDEO)chrome else 1f).focusRequester(sparkFocus).focusProperties{left=programFocus;up=if(screen==Screen.AUDIO)likeFocus else focus;down=if(hasTray)trayFocus else FocusRequester.Default},icon="spark",enabled=screen==Screen.AUDIO||controls){onInteraction()}
                     playerError?.let { Copy(it,u,25,500,u.at(100,800,900,50)) }
                 }
                 if(screen==Screen.SCHEDULE) Schedule(u,payload,program,accent,focus,onBack,account.str("id").ifBlank{guestName},scheduleGrid)
@@ -356,6 +363,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                 if(screen==Screen.PROFILE) {
                     NativeProfiles(u,logo,accent,focus,entryPending,guestName,guestAvatar,onProfileContinue,onGuestSave,
                         onConnect={onPanel("pair")},account=account,onLogout=onLogout)
+                }
                 }
                 }
                 if(interaction && panel==null) InteractionCards(u, {onPanel(it)}, onInteraction)
@@ -398,7 +406,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     Row(u.at(214,70,400,76).then(trackFocus).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=active}.background(glass,shape).border(u.space(if(focused)3 else 1),Color.White.copy(alpha=if(focused)1f else .15f),shape).clickable(enabled=active,onClick=onToggle).padding(u.space(8)),verticalAlignment=Alignment.CenterVertically) {
         Artwork(safeImage(cover)?:logo,Modifier.size(u.space(60)).clip(u.round(8)),scale=ContentScale.Crop)
         Spacer(Modifier.width(u.space(15)))
-        Column(Modifier.weight(1f)){Copy(title.uppercase(),u,22,700,Modifier.basicMarquee(iterations=Int.MAX_VALUE,initialDelayMillis=2000,repeatDelayMillis=3000));Copy(artist,u,18,400,Modifier.basicMarquee(iterations=Int.MAX_VALUE,initialDelayMillis=2000,repeatDelayMillis=3000))}
+        Column(Modifier.weight(1f).clipToBounds()){key(title){Copy(title.uppercase(),u,22,700,Modifier.basicMarquee(iterations=Int.MAX_VALUE,initialDelayMillis=2000,repeatDelayMillis=3000,velocity=24.dp))};key(artist){Copy(artist,u,18,400,Modifier.basicMarquee(iterations=Int.MAX_VALUE,initialDelayMillis=2000,repeatDelayMillis=3000,velocity=24.dp))}}
         Symbol(if(playing)"pause" else "play",Modifier.size(u.space(38)))
     }
     GlassButton(u,"",u.at(1512,76,56,56).then(searchModifier),icon="search",onClick=onSearch)
@@ -509,6 +517,10 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
     var name by remember { mutableStateOf(guestName) }
     var avatar by remember { mutableIntStateOf(guestAvatar) }
     val editFocus=remember { FocusRequester() }
+    var first by remember{mutableStateOf(false)};var second by remember{mutableStateOf(false)}
+    LaunchedEffect(editing){if(!editing){first=true;delay(100);second=true}else{first=false;second=false}}
+    val firstMotion=animateFloatAsState(if(first)1f else 0f,tween(380),label="profileFirst")
+    val secondMotion=animateFloatAsState(if(second)1f else 0f,tween(380),label="profileSecond")
     val avatarList=listOf(R.drawable.visitor_avatar,R.drawable.visitor_avatar_1,R.drawable.visitor_avatar_2,R.drawable.visitor_avatar_3,R.drawable.visitor_avatar_4,R.drawable.visitor_avatar_5,R.drawable.visitor_avatar_6,R.drawable.visitor_avatar_7,R.drawable.visitor_avatar_8)
     BackHandler(editing) { editing=false }
     LaunchedEffect(editing) { if(editing) editFocus.requestFocus() else runCatching { focus.requestFocus() } }
@@ -518,7 +530,7 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
         Artwork(logo?:if(BuildConfig.STATION_SLUG=="positivafm")R.drawable.splash_positiva else R.drawable.splash_interativa,u.at(100,64,100,90))
         if(!editing) {
             Copy(if(account==null)"Entre com sua conta Google para uma melhor experiência" else "Escolha seu perfil",u,30,500,u.at(265,80,1540,60))
-            Row(u.at(180,280,1100,160),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))) {
+            Row(u.at(180,280,1100,160).graphicsLayer{alpha=firstMotion.value;translationX=(1f-firstMotion.value)*-u.space(36).toPx()},verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))) {
                 ProfileCircle(u,Modifier.focusRequester(focus),safeImage(account?.optJSONObject("user_metadata").str("avatar_url"))?:guestAvatar,"Continuar como $guestName",onContinue)
                 Column(verticalArrangement=Arrangement.spacedBy(u.space(8))) {
                     Copy(guestName,u,29,600)
@@ -529,7 +541,7 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
                     if(entryPending&&account==null) Copy("Entrar como visitante",u,20,400)
                 }
             }
-            Row(u.at(180,465,1200,160),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))) {
+            Row(u.at(180,465,1200,160).graphicsLayer{alpha=secondMotion.value;translationX=(1f-secondMotion.value)*-u.space(36).toPx()},verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))) {
                 if(account==null){ProfileCircle(u,Modifier,null,"Conectar minha conta Google",onConnect);Copy("Conectar minha conta",u,25,500)} else GlassButton(u,"Sair da conta Google",Modifier.height(u.space(62)),onClick=onLogout)
             }
             if(!entryPending) GlassButton(u,"",u.at(1768,148,56,56),icon="left",onClick=onContinue)
@@ -602,11 +614,11 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
     val angle by transition.animateFloat(0f,360f,infiniteRepeatable(tween(850,easing=LinearEasing)),label="spin")
     Canvas(modifier.rotate(angle)){val sw=size.minDimension*.11f;drawArc(Color.White,0f,270f,false,topLeft=Offset(sw,sw),size=Size(size.width-2*sw,size.height-2*sw),style=Stroke(sw,cap=StrokeCap.Round))}
 }
-@Composable private fun VideoChannelCard(u:TvUnits,image:Any?,label:String,selected:Boolean,enabled:Boolean,onClick:()->Unit){
+@Composable private fun VideoChannelCard(u:TvUnits,image:Any?,label:String,selected:Boolean,enabled:Boolean,modifier:Modifier=Modifier,onClick:()->Unit){
     var focused by remember{mutableStateOf(false)}
     val active=enabled&&LocalControlsEnabled.current
     val shape=u.round(18)
-    Box(Modifier.size(u.space(310),u.space(175)).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=active}.border(u.space(if(focused)4 else if(selected)2 else 0),if(focused||selected)Color.White else Color.Transparent,shape).clip(shape).background(Color(0xFF252629)).clickable(enabled=active,onClick=onClick).semantics{contentDescription=label},contentAlignment=Alignment.Center){
+    Box(modifier.size(u.space(310),u.space(175)).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=active}.border(u.space(if(focused)4 else if(selected)2 else 0),if(focused||selected)Color.White else Color.Transparent,shape).clip(shape).background(glass).clickable(enabled=active,onClick=onClick).semantics{contentDescription=label},contentAlignment=Alignment.Center){
         if(image!=null)Artwork(image,Modifier.fillMaxSize(),scale=ContentScale.Fit)else Copy(label,u,24,600,align=TextAlign.Center)
     }
 }

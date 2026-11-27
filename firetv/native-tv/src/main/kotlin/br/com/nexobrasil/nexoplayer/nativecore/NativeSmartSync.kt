@@ -17,14 +17,16 @@ internal class NativeSmartSync<T>{
     private var manualValue:Long?=null
     private var lastPosition:Long?=null
     private var lastPdtAt:Long?=null
+    private var missingSince:Long?=null
     private fun norm(s:String)=Normalizer.normalize(s,Normalizer.Form.NFD).replace(Regex("\\p{M}+"),"").lowercase(Locale.ROOT).replace(Regex("[^\\p{L}\\p{N}]+")," ").trim()
     private fun same(a:SyncTrack<T>,b:SyncTrack<T>)=norm(a.title)==norm(b.title)&&norm(a.artist)==norm(b.artist)
     private fun sameEvent(a:SyncTrack<T>,b:SyncTrack<T>)=same(a,b)&&(a.start==b.start||a.start==0L||b.start==0L)
-    fun resetPlayback(){signal=null;anchor=null;manualAnchor=null;manualValue=null;lastPosition=null;lastPdtAt=null}
+    fun resetPlayback(){signal=null;anchor=null;manualAnchor=null;manualValue=null;lastPosition=null;lastPdtAt=null;missingSince=null}
     fun clear(){tracks.clear();shown=null;resetPlayback()}
     fun accept(item:SyncTrack<T>){
         if(item.title.isBlank())return
         val last=tracks.lastOrNull()
+        if(last!=null&&item.start>0&&last.start>0&&item.start<last.start)return
         if(last!=null&&sameEvent(last,item)){
             tracks[tracks.lastIndex]=item.copy(start=item.start.takeIf{it>0}?:last.start,received=last.received,artwork=item.artwork.ifBlank{last.artwork})
         }else{
@@ -72,7 +74,7 @@ internal class NativeSmartSync<T>{
         if(manualValue!=manual){manualValue=manual;manualAnchor=null}
         if(manual!=null&&manualAnchor==null)manualAnchor=(serverNow-manual) to position
         val manualEpoch=manualAnchor?.let{(start,pos)->start+position-pos}
-        val hold=lastPdtAt?.let{now-it<12000L}==true
+        val hold=lastPdtAt?.let{now-it<2000L}==true
         val mode=when{
             validPdt!=null->"Automático · HLS"
             hold->"Aguardando relógio HLS"
@@ -87,18 +89,20 @@ internal class NativeSmartSync<T>{
             else->null
         }
         if(epoch!=null){
+            missingSince=null
             // Keep the most recent eligible song, including after a channel switch or reconnect.
             val ready=tracks.lastOrNull{
                 val start=it.start.takeIf{s->s>0&&s<=serverNow+1000L&&serverNow-s<86400000L}
                 if(start!=null)start<=epoch else if(manual!=null&&mode=="Calibração local")it.received+(serverNow-now)<=epoch else false
             }
             if(ready!=null)shown=ready
-        }else if(shown==null&&!hold){
-            // Cold-start snapshot only. Never publish the next song early when no clock exists.
-            shown=tracks.firstOrNull()
+        }else if(!hold){
+            // An unclocked stream cannot guarantee sync. Keep the UI live rather than freezing forever.
+            val since=missingSince?:now.also{missingSince=it}
+            if(shown==null||now-since>=3000L)shown=tracks.lastOrNull()?:shown
         }
         shown?.let{old->tracks.lastOrNull{sameEvent(old,it)}?.let{shown=it}}
         val seconds=epoch?.let{((serverNow-it).coerceAtLeast(0)/1000).toInt()}
-        return SyncResult(shown,epoch,SyncStatus(mode,seconds))
+        return SyncResult(shown,epoch,SyncStatus(if(mode=="Sem referência temporal")"Dados ao vivo · sem sincronização confirmada" else mode,seconds))
     }
 }

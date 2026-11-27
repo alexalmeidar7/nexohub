@@ -19,11 +19,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.draw.clip
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.CancellationException
@@ -76,13 +80,20 @@ import com.google.zxing.qrcode.QRCodeWriter
     var msg by remember(user,title,artist){mutableStateOf("")}
     val scope=rememberCoroutineScope()
     LaunchedEffect(user,title,artist){if(user.isNotBlank())try{liked=services.liked(owner,user,title,artist)}catch(e:CancellationException){throw e}catch(_:Exception){}}
-    Column(modifier,horizontalAlignment=Alignment.End){
-        if(msg.isNotBlank())Copy(msg,u,15,400,lines=2)
-        GlassButton(u,if(liked)"♥" else "♡",buttonModifier.size(u.space(58)),enabled=!busy){
+    var focused by remember{mutableStateOf(false)}
+    val active=LocalControlsEnabled.current&&!busy&&owner.isNotBlank()&&title!="Ao vivo"&&title.isNotBlank()
+    Box(modifier.then(buttonModifier).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=LocalControlsEnabled.current}
+        .clip(u.round(36)).background(glass).border(u.space(if(focused)4 else 3),Color.White.copy(alpha=if(focused)1f else .27f),u.round(36))
+        .clickable(enabled=active){
             if(user.isBlank())msg="Conecte sua conta Google." else {busy=true;scope.launch{
                 try{liked=services.toggleLike(owner,user,title,artist,cover);msg=""}catch(e:CancellationException){throw e}catch(_:Exception){msg="Não foi possível salvar."}finally{busy=false}
             }}
+        }.semantics{contentDescription=if(liked)"Remover curtida" else "Curtir música"},contentAlignment=Alignment.Center){
+        Crossfade(cover,modifier=Modifier.fillMaxSize(),animationSpec=tween(350),label="audioCover"){url->
+            Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){if(url.isNotBlank())Artwork(safeImage(url),Modifier.fillMaxSize(),scale=ContentScale.Crop)else Symbol("music",Modifier.size(u.space(100)))}
         }
+        Box(Modifier.size(u.space(70)).background(Color.Black.copy(alpha=.48f),CircleShape),contentAlignment=Alignment.Center){Copy(if(liked)"♥" else "♡",u,46,600,color=if(liked)Color(0xFFF20D0F)else Color.White)}
+        if(msg.isNotBlank())Copy(msg,u,18,500,Modifier.align(Alignment.BottomCenter).background(Color.Black.copy(alpha=.7f),u.round(10)).padding(u.space(10)),lines=2)
     }
 }
 @Composable internal fun NativeCommunity(u:TvUnits,panel:String,owner:String,services:NativeServices,account:JSONObject?){

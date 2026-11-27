@@ -90,7 +90,7 @@ import org.json.JSONObject
                     GlassButton(u,"",Modifier.size(u.space(60)),icon="left",enabled=!info,onClick=onBack)
                     GlassButton(u,"smart break +",Modifier.height(u.space(60)).focusRequester(infoFocus),enabled=!info){info=true}
                 }
-            }else Copy("publicidade"+if(remaining>=0)" · "+remaining/60+":"+("%02d".format(remaining%60))else "",u,25,600,u.at(100,75,700,60))
+            }else Box(Modifier.offset(u.space(100),u.space(75)).height(u.space(60)).border(u.space(2),Color.White,u.round(30)).padding(horizontal=u.space(22)),contentAlignment=Alignment.Center){Copy("publicidade"+if(remaining>=0)" · "+remaining/60+":"+("%02d".format(remaining%60))else "",u,25,600)}
             if(showLink){
                 val side=if(qr)218 else 156
                 var focused by remember{mutableStateOf(false)}
@@ -99,7 +99,7 @@ import org.json.JSONObject
                     NativeQr(media.str("link"),Modifier.size(u.space(side)).clip(u.round(8)),compact=true)
                 }
             }
-            if(!smart&&remaining in 1..15){LaunchedEffect(Unit){skipFocus.requestFocus()};GlassButton(u,"pular",u.at(405,75,210,65).focusRequester(skipFocus)){complete()}}
+            if(!smart&&remaining in 1..15){LaunchedEffect(Unit){skipFocus.requestFocus()};GlassButton(u,"pular",u.at(500,75,210,65).focusRequester(skipFocus)){complete()}}
             if(smart&&breakDuration>0&&breakStart>0)Box(u.at(100,155,650,8).background(Color.White.copy(alpha=.25f))){Box(Modifier.fillMaxHeight().fillMaxWidth(progress).background(Color.White))}
             if(smart&&info)Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.65f)),contentAlignment=Alignment.Center){
                 Column(Modifier.width(u.space(800)).background(Color(0xFF242529),u.round(28)).padding(u.space(36)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(24))){

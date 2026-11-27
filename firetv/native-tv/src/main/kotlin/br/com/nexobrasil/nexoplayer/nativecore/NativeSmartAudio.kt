@@ -2,6 +2,7 @@ package br.com.nexobrasil.nexoplayer.nativecore
 
 import android.media.audiofx.AudioEffect
 import android.media.audiofx.DynamicsProcessing
+import android.media.audiofx.LoudnessEnhancer
 import android.os.Build
 import android.util.Log
 import androidx.compose.runtime.Composable
@@ -33,22 +34,27 @@ internal object SmartAudioProfile {
             if(session<=0||session==attachedSession)return
             detach()
             attachedSession=session
-            if(Build.VERSION.SDK_INT<28){Log.i("NexoSmartAudio","BYPASS $source unsupported API");return}
-            try{
-                effect=PlatformSmartAudio.attach(session)
-                Log.i("NexoSmartAudio","ACTIVE $source session=$session")
-            }catch(e:Exception){
-                detach();Log.w("NexoSmartAudio","BYPASS $source "+e.javaClass.simpleName)
-            }catch(e:LinkageError){
-                detach();Log.w("NexoSmartAudio","BYPASS $source platform effect unavailable")
+            if(Build.VERSION.SDK_INT>=28){
+                try{effect=PlatformSmartAudio.attach(session);Log.i("NexoSmartAudio","ACTIVE $source session=$session");return}
+                catch(e:Exception){detach();Log.w("NexoSmartAudio","Dynamics unavailable "+e.javaClass.simpleName)}
+                catch(e:LinkageError){detach()}
             }
+            try{
+                val fallback=LoudnessEnhancer(session)
+                effect=fallback
+                fallback.setTargetGain(200)
+                check(fallback.setEnabled(true)==AudioEffect.SUCCESS)
+                Log.i("NexoSmartAudio","ACTIVE_FALLBACK $source session=$session")
+            }catch(e:Exception){detach();attachedSession=0;Log.w("NexoSmartAudio","BYPASS $source "+e.javaClass.simpleName)}
+            catch(e:LinkageError){detach();attachedSession=0}
         }
         val listener=object:Player.Listener{
             override fun onAudioSessionIdChanged(audioSessionId:Int){
                 if(audioSessionId<=0){detach();attachedSession=0}else attach(audioSessionId)
             }
+            override fun onIsPlayingChanged(isPlaying:Boolean){if(isPlaying&&effect==null)attach(player.audioSessionId)}
             override fun onPlayerError(error:androidx.media3.common.PlaybackException){
-                detach()
+                detach();attachedSession=0
                 Log.w("NexoSmartAudio","BYPASS $source playback error")
             }
         }

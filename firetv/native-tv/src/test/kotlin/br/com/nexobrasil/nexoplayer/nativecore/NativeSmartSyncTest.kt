@@ -29,6 +29,16 @@ class NativeSmartSyncTest{
         assertEquals("Nova",s.resolve(now+40000,now+40000,40000,true,null,null).track?.title)
         assertEquals("Seguinte",s.resolve(now+41000,now+41000,41000,true,null,null).track?.title)
     }
+    @Test fun unclockedStreamRecoversInsteadOfFreezing(){
+        val s=NativeSmartSync<String>()
+        s.accept(item("Anterior",now-60000))
+        assertEquals("Anterior",s.resolve(now,now,0,true,null,null).track?.title)
+        s.accept(item("Nova",now))
+        val next=s.resolve(now+3000,now+3000,3000,true,null,null)
+        assertEquals("Nova",next.track?.title);assertNull(next.epoch)
+        s.accept(item("Antiga",now-10000))
+        assertEquals("Nova",s.resolve(now+4000,now+4000,4000,true,null,null).track?.title)
+    }
     @Test fun manualIsLocalAndPlaybackResetDropsLearnedClock(){
         val s=NativeSmartSync<String>()
         s.accept(item("Anterior",now-60000));s.accept(item("Nova",now))
