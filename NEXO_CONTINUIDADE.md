@@ -40,3 +40,7 @@ Base a25b5a5, build 0.1.17 aprovado. Home: ocultar programa, patrocinador, inter
 ## 27/11/2026 — Nexo TV 0.1.19 (PR #327)
 
 A função public-player-data em produção omitia music_current_duration do objeto musicData apesar do valor existir no banco. Corrigida em produção (v6) preservando JWT, consultas e demais contratos; mantido o mesmo campo no GitHub com fallback legado. No Smart Break: controles no canto superior esquerdo, contador no direito com indicação --:-- se dados ausentes, botão Voltar menor e recuado, CTA no rodapé, QR sem botão adicional e foco mantido no CTA ao alternar. Build e teste físico pendentes.
+
+### Complemento 0.1.19 — mesma PR
+
+Removido FocusRequester.Cancel experimental que bloqueava a compilação Kotlin. Smart Break mantém o container entre criativos, fade de entrada/saída de 500 ms (TextureView para vídeo), animação dos controles e QR de campanha com saída à direita e entrada sequencial a cada troca, inclusive URL repetida. Ao sair, publicidade pausa e áudio é silenciado imediatamente; CTA comercial permanece focável, sem QR adicional focável. Build e TV pendentes.

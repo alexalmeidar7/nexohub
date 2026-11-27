@@ -605,7 +605,12 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         },onChannel=onChannel,onVideo={select(it,Screen.VIDEO)},onInteraction={if(interaction){interaction=false;interactionReturn++}else interaction=true},
         onNotice={notice=it})
     ad?.let{media->NativePreroll(media,selected?.type=="audio_live",onStarted={prerollFrequency.played(activeAdPlacement,System.currentTimeMillis())},onFinish={ad=null;activeAdPlacement="";scope.launch { withFrameNanos { };resumeLive(resumeAfterAd) }})}
-    if(ad==null&&smartQueue.isNotEmpty())key(smartSerial){smartQueue.getOrNull(smartIndex)?.let{media->NativePreroll(media,media.str("placement")=="smart_break_audio",onStarted={},onFinish={if(smartQueue.isNotEmpty()){smartFailures++;if(smartFailures>=smartQueue.size)smartQueue=emptyList()else{smartIndex=(smartIndex+1)%smartQueue.size;smartSerial++}}},smart=true,breakStart=trackStart,breakDuration=breakDuration,serverClockOffset=api.serverClockOffsetMs,onPlayed={smartFailures=0},onBack={home()},commercialPhone=data?.optJSONObject("empresa").str("telefone_comercial"))}}
+    val activeSmartMedia=if(ad==null)smartQueue.getOrNull(smartIndex)?.let{smartSerial to it}else null
+    var retainedSmartMedia by remember{mutableStateOf<Pair<Int,JSONObject>?>(null)}
+    SideEffect{if(activeSmartMedia!=null)retainedSmartMedia=activeSmartMedia}
+    AnimatedVisibility(visible=activeSmartMedia!=null,enter=fadeIn(tween(500)),exit=fadeOut(tween(500))){
+        (activeSmartMedia?:retainedSmartMedia)?.let{(serial,media)->NativePreroll(media,media.str("placement")=="smart_break_audio",onStarted={},onFinish={if(smartQueue.isNotEmpty()&&smartSerial==serial){smartFailures++;if(smartFailures>=smartQueue.size)smartQueue=emptyList()else{smartIndex=(smartIndex+1)%smartQueue.size;smartSerial++}}},smart=true,breakStart=trackStart,breakDuration=breakDuration,serverClockOffset=api.serverClockOffsetMs,onPlayed={if(smartSerial==serial)smartFailures=0},onBack={home()},commercialPhone=data?.optJSONObject("empresa").str("telefone_comercial"),smartSerial=serial,smartActive=activeSmartMedia!=null)}
+    }
     AnimatedVisibility(visible=startup, enter=fadeIn(tween(650)), exit=fadeOut(tween(650))) {
         StartupSplash(startupStage)
     }
