@@ -145,3 +145,6 @@ verify_jwt = false # verified by requireUser in the handler
 [functions.whatsapp-connect]
 verify_jwt = false # requireUser enforces JWT inside the handler
 
+
+[functions.nexo-tv-device]
+verify_jwt = false # handler validates device proof or user JWT

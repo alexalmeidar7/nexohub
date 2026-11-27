@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
     const paired_name = guest ? "Visitante" : String(meta.full_name || meta.name || meta.given_name || user?.email?.split("@")[0] || "").trim() || null;
     const paired_avatar = guest ? "/avatars/usr-default.png" : String(meta.avatar_url || meta.picture || "").trim() || null;
 
-    const { error: updErr } = await admin
+    const { data: updated, error: updErr } = await admin
       .from("tv_pairing_codes")
       .update({
         status: "claimed",
@@ -76,9 +76,9 @@ Deno.serve(async (req) => {
         paired_avatar,
         claimed_at: new Date().toISOString(),
       })
-      .eq("code", code);
+      .eq("code", code).eq("status", "pending").gt("expires_at",new Date().toISOString()).select("code").maybeSingle();
 
-    if (updErr) {
+    if (updErr || !updated) {
       console.error("[tv-pair-claim] update error:", updErr);
       await logEvent({ event_type: "error", reason: "update_failed", code, user_slug: row.user_slug, slug_user_id: row.slug_user_id, tv_session_id: row.tv_session_id, paired_user_id: user?.id, paired_email: user?.email, meta: { error: String(updErr.message || updErr), guest } });
       return new Response(JSON.stringify({ ok: false, reason: "update_failed" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });

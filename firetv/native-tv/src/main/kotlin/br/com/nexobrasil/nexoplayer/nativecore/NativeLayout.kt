@@ -142,7 +142,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     onRetry:()->Unit,onToggle:()->Unit,onBack:()->Unit,onOpen:(Screen)->Unit,onChannel:(Int)->Unit,onVideo:(StationChannel)->Unit,
     onInteraction:()->Unit,onNotice:(String?)->Unit,
     entryPending:Boolean,guestName:String,guestAvatar:Int,onGuestSave:(String,Int)->Unit,onProfileContinue:()->Unit,
-    spectrum:PcmSpectrum,panel:String?,forecast:JSONObject?,lyrics:String?,cep:String,api:HouseMixClient,onPanel:(String?)->Unit,onCepSaved:(String,JSONObject)->Unit
+    spectrum:PcmSpectrum,panel:String?,forecast:JSONObject?,lyrics:String?,cep:String,api:HouseMixClient,services:NativeServices,account:JSONObject?,onAccount:(JSONObject)->Unit,onLogout:()->Unit,onPanel:(String?)->Unit,onCepSaved:(String,JSONObject)->Unit
 ) {
     val accent = remember(payload) {
         val colors=payload?.optJSONObject("playerColors")
@@ -267,10 +267,10 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                 }
                 if(screen==Screen.PROFILE) {
                     NativeProfiles(u,logo,accent,focus,entryPending,guestName,guestAvatar,onProfileContinue,onGuestSave,
-                        onConnect={onNotice("O pareamento seguro Google ainda não está disponível nesta versão de teste. Continue como visitante.")})
+                        onConnect={onPanel("pair")},account=account,onLogout=onLogout)
                 }
                 if(interaction && panel==null) InteractionCards(u, {onPanel(it)}, onInteraction)
-                if(panel!=null) NativePanel(u,panel,payload,track,history,historyLoading,historyError,forecast,lyrics,cep,api,station?.ownerId,accent,{onPanel(null)},onCepSaved,onOpen)
+                if(panel!=null) NativePanel(u,panel,payload,track,history,historyLoading,historyError,forecast,lyrics,cep,api,station?.ownerId,accent,{onPanel(null)},onCepSaved,onOpen,services,account,onAccount)
 
             }
             if(notice!=null) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.60f)),contentAlignment=Alignment.Center) {
@@ -405,7 +405,7 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
 /** Guest selection uses the Lote 16 two-row profile geometry. Identity remains session-local. */
 @Composable private fun NativeProfiles(
     u:TvUnits,logo:String?,accent:Color,focus:FocusRequester,entryPending:Boolean,
-    guestName:String,guestAvatar:Int,onContinue:()->Unit,onSave:(String,Int)->Unit,onConnect:()->Unit
+    guestName:String,guestAvatar:Int,onContinue:()->Unit,onSave:(String,Int)->Unit,onConnect:()->Unit,account:JSONObject?,onLogout:()->Unit
 ) {
     var editing by remember { mutableStateOf(false) }
     var name by remember { mutableStateOf(guestName) }
@@ -419,21 +419,20 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
         listOf(accent,androidx.compose.ui.graphics.lerp(accent,Color.Black,.43f),Color(0xFF111114))))) {
         Artwork(logo?:if(BuildConfig.STATION_SLUG=="positivafm")R.drawable.splash_positiva else R.drawable.splash_interativa,u.at(100,64,100,90))
         if(!editing) {
-            Copy("Entre com sua conta Google para uma melhor experiência",u,30,500,u.at(265,80,1540,60))
+            Copy(if(account==null)"Entre com sua conta Google para uma melhor experiência" else "Escolha seu perfil",u,30,500,u.at(265,80,1540,60))
             Row(u.at(180,280,1100,160),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))) {
-                ProfileCircle(u,Modifier.focusRequester(focus),guestAvatar,"Continuar como $guestName",onContinue)
+                ProfileCircle(u,Modifier.focusRequester(focus),safeImage(account?.optJSONObject("user_metadata").str("avatar_url"))?:guestAvatar,"Continuar como $guestName",onContinue)
                 Column(verticalArrangement=Arrangement.spacedBy(u.space(8))) {
                     Copy(guestName,u,29,600)
                     Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(15))) {
-                        Box(Modifier.background(Color.White.copy(alpha=.15f),CircleShape).padding(horizontal=u.space(14),vertical=u.space(5))) { Copy("Visitante",u,18,400) }
-                        GlassButton(u,"Editar",Modifier.height(u.space(47))) {name=guestName;avatar=guestAvatar;editing=true}
+                        Box(Modifier.background(Color.White.copy(alpha=.15f),CircleShape).padding(horizontal=u.space(14),vertical=u.space(5))) { Copy(if(account==null)"Visitante" else "Conta Google",u,18,400) }
+                        if(account==null)GlassButton(u,"Editar",Modifier.height(u.space(47))) {name=guestName;avatar=guestAvatar;editing=true}
                     }
-                    if(entryPending) Copy("Entrar como visitante",u,20,400)
+                    if(entryPending&&account==null) Copy("Entrar como visitante",u,20,400)
                 }
             }
             Row(u.at(180,465,1200,160),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))) {
-                ProfileCircle(u,Modifier,null,"Conectar minha conta Google",onConnect)
-                Copy("Conectar minha conta",u,25,500)
+                if(account==null){ProfileCircle(u,Modifier,null,"Conectar minha conta Google",onConnect);Copy("Conectar minha conta",u,25,500)} else GlassButton(u,"Sair da conta Google",Modifier.height(u.space(62)),onClick=onLogout)
             }
             if(!entryPending) GlassButton(u,"Voltar",u.at(100,950,150,56),icon="left",onClick=onContinue)
         } else {
@@ -459,7 +458,7 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
     }
 }
 
-@Composable private fun ProfileCircle(u:TvUnits,modifier:Modifier,avatar:Int?,label:String,onClick:()->Unit) {
+@Composable private fun ProfileCircle(u:TvUnits,modifier:Modifier,avatar:Any?,label:String,onClick:()->Unit) {
     var focused by remember { mutableStateOf(false) }
     Box(modifier.size(u.space(164)).clip(CircleShape).onFocusChanged { focused=it.isFocused }
         .border(u.space(3),if(focused)Color.White else Color.Transparent,CircleShape)

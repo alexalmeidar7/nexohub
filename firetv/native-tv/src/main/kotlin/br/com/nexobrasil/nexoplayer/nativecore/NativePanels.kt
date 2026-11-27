@@ -84,9 +84,10 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
 @Composable private fun InputBox(u:TvUnits,value:String,onChange:(String)->Unit,placeholder:String,modifier:Modifier=Modifier,numeric:Boolean=false) {
     BasicTextField(value,onChange,modifier.clip(u.round(18)).background(Color(0xFF303030)).padding(u.space(16)),singleLine=true,textStyle=u.referenceText(23).copy(color=Color.White),cursorBrush=SolidColor(Color.White),keyboardOptions=KeyboardOptions(keyboardType=if(numeric)KeyboardType.Number else KeyboardType.Text),decorationBox={inner->Box{if(value.isEmpty())Copy(placeholder,u,23,400,color=Color.White.copy(alpha=.55f));inner()}})
 }
-@Composable internal fun NativePanel(u:TvUnits,panel:String,payload:JSONObject?,track:JSONObject?,history:List<JSONObject>,loading:Boolean,error:Boolean,forecast:JSONObject?,lyrics:String?,cep:String,api:HouseMixClient,owner:String?,accent:Color,onClose:()->Unit,onCepSaved:(String,JSONObject)->Unit,onOpen:(Screen)->Unit) {
+@Composable internal fun NativePanel(u:TvUnits,panel:String,payload:JSONObject?,track:JSONObject?,history:List<JSONObject>,loading:Boolean,error:Boolean,forecast:JSONObject?,lyrics:String?,cep:String,api:HouseMixClient,owner:String?,accent:Color,onClose:()->Unit,onCepSaved:(String,JSONObject)->Unit,onOpen:(Screen)->Unit,services:NativeServices,account:JSONObject?,onAccount:(JSONObject)->Unit) {
     val focus=remember(panel){FocusRequester()}
     val scope=rememberCoroutineScope()
+    if(panel=="pair"){NativePairPanel(u,services,onClose,onAccount);return}
     if(panel=="search"||panel=="cep") {
         Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.58f)),contentAlignment=Alignment.Center){
             Column(Modifier.width(u.space(760)).clip(u.round(26)).background(glass).padding(u.space(20)),verticalArrangement=Arrangement.spacedBy(u.space(12))){
@@ -161,6 +162,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                             Box(Modifier.weight(1f).fillMaxWidth().padding(vertical=u.space(7)).clip(u.round(18)).background(Color.White.copy(alpha=.06f)),contentAlignment=Alignment.Center){
                                 Symbol("music",Modifier.size(u.space(100)))
                                 Artwork(safeImage(image),Modifier.fillMaxSize(),scale=ContentScale.Fit)
+                                if(owner!=null)NativeLike(u,services,account,owner,song.str("musica"),song.str("artista"),image,Modifier.align(Alignment.BottomEnd))
                             }
                             Box(Modifier.fillMaxWidth(),contentAlignment=Alignment.Center){
                                 GlassButton(u,"",Modifier.size(u.space(46)).focusRequester(focus),icon="down"){index=(index+1).coerceAtMost(history.lastIndex)}
@@ -191,9 +193,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                         GlassButton(u,"Voltar",Modifier.focusRequester(focus).height(u.space(50)),onClick=onClose)
                     }
                     else -> {
-                        Copy(when(panel){"chat"->"Chat";"poll"->"Enquete";else->"Batalha musical"},u,28,600)
-                        Copy("Conexão com o serviço ainda não disponível neste APK de teste.",u,23,400,lines=4)
-                        GlassButton(u,"Voltar",Modifier.focusRequester(focus).height(u.space(52)),onClick=onClose)
+                        if(owner!=null)NativeCommunity(u,panel,owner,services,account) else Copy("Emissora indisponível.",u,23)
                     }
                 }
             }

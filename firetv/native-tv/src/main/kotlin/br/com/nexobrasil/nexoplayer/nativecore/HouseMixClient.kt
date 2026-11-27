@@ -7,8 +7,8 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
-class HouseMixClient(supabaseOrigin: String, private val publishableKey: String) {
-    private val origin = Uri.parse(supabaseOrigin).also {
+class HouseMixClient(supabaseOrigin: String, internal val publishableKey: String) {
+    internal val origin = Uri.parse(supabaseOrigin).also {
         require(it.scheme == "https" && it.host != null && it.encodedUserInfo == null)
     }
 
@@ -46,7 +46,7 @@ class HouseMixClient(supabaseOrigin: String, private val publishableKey: String)
     suspend fun geocode(city:String):JSONObject=function("fetch-weather",body=JSONObject().put("action","geocode").put("query",city).put("count",20))
 
 
-    private suspend fun function(
+    internal suspend fun function(
         name: String,
         query: Map<String, String> = emptyMap(),
         body: JSONObject? = null,

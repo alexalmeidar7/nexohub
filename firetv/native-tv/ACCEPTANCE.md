@@ -22,3 +22,6 @@ Fluxo frio Splash → escolha de visitante → Home; pré-buffer silencioso e re
 
 ## Lote 0.1.4 — ajustes de TV física
 Alterações de código: recorte circular/cápsula, menu em overlay, busca modal de canais/programas/apresentadores/histórico (catálogo de vídeos e destinos específicos ainda parciais), clima/CEP, espectro PCM, cards de interatividade, histórico vertical e fallback iTunes, letra, setas entre canais ao vivo, retratos 56u, ícones/banners por flavor, logo Nexo no splash e leitura dominantColor/homeAccent. Não validados em TV física. Enquete, votação/curtidas, chat, batalha, sessão Google segura, pré-roll e assinatura permanente continuam pendentes. Não considerar os 16 ajustes concluídos.
+
+## 0.1.5 — integrações nativas
+Implementação inicial de pré-roll, resgate seguro de pareamento via nexo-tv-device, sessão Keystore, RPC de enquete/batalha, curtidas e chat por QR. A publicação das Edge Functions/migrações existentes e validação de RLS, RPCs e campanhas reais no ambiente oficial são necessárias. Perfis secundários, relatório de impressões e fidelidade visual dos novos painéis ainda não certificados. Assinatura permanente exige secret NEXO_TV_KEYSTORE_B64 (keystore de piloto com alias androiddebugkey e senha android); cache não garante estabilidade. Não marcar como pronto apenas pelo build.

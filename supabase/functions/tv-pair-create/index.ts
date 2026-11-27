@@ -34,6 +34,8 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ ok: false, reason: "missing_params" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    const proofHash = typeof body?.proofHash === "string" ? body.proofHash : null;
+    if (proofHash !== null && !/^[a-f0-9]{64}$/.test(proofHash)) return new Response(JSON.stringify({ok:false,reason:"invalid_proof"}),{headers:{...corsHeaders,"Content-Type":"application/json"}});
     const slugUserId = await resolveSlug(supabase, userSlug);
     if (!slugUserId) {
       await logEvent({ event_type: "error", reason: "slug_not_found", user_slug: userSlug, tv_session_id: tvSessionId });
@@ -78,6 +80,13 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ ok: false, reason: "insert_failed" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    if (proofHash) {
+      const { error: deviceError } = await supabase.from("nexo_tv_devices").insert({code,proof_hash:proofHash,radio_user_id:slugUserId});
+      if (deviceError) {
+        await supabase.from("tv_pairing_codes").update({status:"expired"}).eq("code",code).eq("tv_session_id",tvSessionId);
+        return new Response(JSON.stringify({ok:false,reason:"device_registration_failed"}),{headers:{...corsHeaders,"Content-Type":"application/json"}});
+      }
+    }
     await logEvent({ event_type: "created", slug_user_id: slugUserId, user_slug: userSlug.toLowerCase(), tv_session_id: tvSessionId, code, meta: { expires_at: expiresAt } });
 
     return new Response(JSON.stringify({ ok: true, code, expiresAt, userSlug: userSlug.toLowerCase() }), {
