@@ -145,3 +145,7 @@ verify_jwt = false # verified by requireUser in the handler
 [functions.whatsapp-connect]
 verify_jwt = false # requireUser enforces JWT inside the handler
 
+
+# Public station campaign feed: validates radio id and tenant-owned public media paths.
+[functions.public-player-ads]
+verify_jwt = false
