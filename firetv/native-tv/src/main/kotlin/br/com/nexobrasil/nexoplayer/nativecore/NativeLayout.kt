@@ -7,6 +7,10 @@ import androidx.compose.foundation.focusable
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.fadeIn
@@ -164,7 +168,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     onRetry:()->Unit,onToggle:()->Unit,onBack:()->Unit,onOpen:(Screen)->Unit,onChannel:(Int)->Unit,onVideo:(StationChannel)->Unit,
     onInteraction:()->Unit,onNotice:(String?)->Unit,
     entryPending:Boolean,guestName:String,guestAvatar:Int,onGuestSave:(String,Int)->Unit,onProfileContinue:()->Unit,
-    spectrum:PcmSpectrum,panel:String?,forecast:JSONObject?,lyrics:String?,cep:String,api:HouseMixClient,services:NativeServices,account:JSONObject?,onAccount:(JSONObject)->Unit,onLogout:()->Unit,onPanel:(String?)->Unit,onCepSaved:(String,JSONObject)->Unit,scheduleOpening:Boolean,interactionReturn:Int,syncStatus:SyncStatus,manualSync:Long?,onSaveSync:(Long?)->Unit,onCalibrateSync:()->Unit,canCalibrateSync:Boolean
+    spectrum:PcmSpectrum,panel:String?,forecast:JSONObject?,lyrics:String?,cep:String,api:HouseMixClient,services:NativeServices,account:JSONObject?,onAccount:(JSONObject)->Unit,onLogout:()->Unit,onPanel:(String?)->Unit,onCepSaved:(String,JSONObject)->Unit,scheduleOpening:Boolean,interactionReturn:Int,channelOpening:Screen?,syncStatus:SyncStatus,manualSync:Long?,onSaveSync:(Long?)->Unit,onCalibrateSync:()->Unit,canCalibrateSync:Boolean
 ) {
     val accent = remember(payload) {
         val colors=payload?.optJSONObject("playerColors")
@@ -250,39 +254,40 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                             down=if(i==4){if(homeBannerVisible)bannerFocus else sparkFocus}else rail[i+1]
                             right=programFocus
                         }
-                        RailItem(u,"audio","Ouvir",accent,route(0)){onOpen(Screen.AUDIO)}
-                        RailItem(u,"video","Assistir",accent,route(1)){onOpen(Screen.VIDEO)}
+                        RailItem(u,"audio","Ouvir",accent,route(0),loading=channelOpening==Screen.AUDIO){onOpen(Screen.AUDIO)}
+                        RailItem(u,"video","Assistir",accent,route(1),loading=channelOpening==Screen.VIDEO){onOpen(Screen.VIDEO)}
                         RailItem(u,"catalog","On Demand",accent,route(2)){onOpen(Screen.CATALOG)}
                         RailItem(u,"calendar","Grade de programação",accent,route(3),loading=scheduleOpening){onOpen(Screen.SCHEDULE)}
                         RailItem(u,"user","Olá, $guestName",accent,route(4),avatar=guestAvatar){onOpen(Screen.PROFILE)}
                     }
-                    Column(u.at(programLeft,272,505,310),verticalArrangement=Arrangement.spacedBy(u.space(12))) {
-                        Badge(u,"NO AR",accent,compact=true)
-                        Copy(program.str("nome").ifBlank{stationName},u,35,700,lines=3)
-                        Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(10))) { Symbol("mic",Modifier.size(u.space(24)));Copy(activePresenter.str("nome"),u,24,400) }
+                    Column(u.at(programLeft,272,505,340),verticalArrangement=Arrangement.spacedBy(u.space(12))) {
+                        HomeProgramInfo(u,program,activePresenter,stationName,accent)
                         Spacer(Modifier.height(u.space(6)))
                         ExpandableProgram(u,Modifier.focusRequester(programFocus).focusProperties{left=rail[0];right=sparkFocus;down=if(homeBannerVisible)bannerFocus else sparkFocus},loading=scheduleOpening){onOpen(Screen.SCHEDULE)}
                     }
-                    if(sponsor!=null && !interaction && panel==null) Artwork(sponsor,u.at(1641,746,202,202))
+                    // Footer shares one vertical center (912): sponsor, centered banner, interactivity.
+                    AnimatedVisibility(sponsor!=null&&!interaction&&(panel==null||panel=="cep")&&!bannerQr,modifier=u.at(55,770,283,283),enter=fadeIn(tween(450)),exit=fadeOut(tween(350))){
+                        Crossfade(sponsor,animationSpec=tween(500),label="footerSponsor"){url->if(url!=null)Artwork(url,Modifier.fillMaxSize(),scale=ContentScale.Fit)}
+                    }
                     AnimatedVisibility(homeBannerVisible,modifier=Modifier.fillMaxSize(),enter=fadeIn(tween(650)),exit=fadeOut(tween(500))) {
                         val model:Any?=if(banner.substringBefore("?")=="https://qazvgmgdidjhbvcuinpy.supabase.co/storage/v1/object/public/comercial/452ebd1e-61a0-42dd-bf80-231a3f426c83/player-ads/00198081-b99d-4548-8561-ff953209d17a.png") R.drawable.home_hotpark else safeImage(banner)
                         var bannerFocused by remember{mutableStateOf(false)}
-                        Box(u.at(265,886,1320,140).focusRequester(bannerFocus)
+                        Box(u.at(400,842,1120,140).focusRequester(bannerFocus)
                             .focusProperties{up=rail[4];right=sparkFocus;canFocus=!modal&&homeBannerVisible}
                             .onFocusChanged{bannerFocused=it.isFocused;if(!it.isFocused)onBannerQr(false)}
                             .drawBehind{if(bannerFocused){val gap=u.space(5).toPx();drawRoundRect(Color.White,Offset(-gap,-gap),Size(size.width+gap*2,size.height+gap*2),CornerRadius(u.space(16).toPx()),style=Stroke(u.space(3).toPx()))}}
                             .clickable(enabled=!modal){if(safeImage(bannerLink)!=null)onBannerQr(!bannerQr)}){
                             Artwork(model,Modifier.fillMaxSize().clip(u.round(12)),scale=ContentScale.Fit)
                         }
-                        AnimatedVisibility(bannerQr&&safeImage(bannerLink)!=null,modifier=u.at(48,822,198,204).zIndex(3f),enter=fadeIn(tween(220)),exit=fadeOut(tween(180))){
+                        AnimatedVisibility(bannerQr&&safeImage(bannerLink)!=null,modifier=u.at(184,810,198,204).zIndex(3f),enter=fadeIn(tween(220)),exit=fadeOut(tween(180))){
                             Box(Modifier.fillMaxSize().background(glass,u.round(20)).padding(u.space(10)),contentAlignment=Alignment.Center){
                                 if(bannerLink.isNotBlank())NativeQr(bannerLink,Modifier.size(u.space(178)).clip(u.round(5)),compact=true)
                             }
                         }
                         if(bannerQr)BackHandler{onBannerQr(false)}
                     }
-                    GlassButton(u,"",u.at(1744,950,76,76).focusRequester(sparkFocus).focusProperties{left=if(homeBannerVisible)bannerFocus else programFocus;up=clockFocus},icon="spark",accent=accent,accentRing=true){onInteraction()}
-                    Copy("Nexo TV v"+BuildConfig.VERSION_NAME,u,15,400,u.at(100,1030,800,25),color=Color.White.copy(alpha=.55f))
+                    GlassButton(u,"",u.at(1744,874,76,76).focusRequester(sparkFocus).focusProperties{left=if(homeBannerVisible)bannerFocus else programFocus;up=clockFocus},icon="spark",accent=accent,accentRing=true){onInteraction()}
+                    Copy("Nexo TV v"+BuildConfig.VERSION_NAME,u,15,400,u.at(100,1050,800,24),color=Color.White.copy(alpha=.55f))
                 }
                 if(watch) {
                     if(screen==Screen.AUDIO) {
@@ -603,5 +608,27 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
     val shape=u.round(18)
     Box(Modifier.size(u.space(310),u.space(175)).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=active}.border(u.space(if(focused)4 else if(selected)2 else 0),if(focused||selected)Color.White else Color.Transparent,shape).clip(shape).background(Color(0xFF252629)).clickable(enabled=active,onClick=onClick).semantics{contentDescription=label},contentAlignment=Alignment.Center){
         if(image!=null)Artwork(image,Modifier.fillMaxSize(),scale=ContentScale.Fit)else Copy(label,u,24,600,align=TextAlign.Center)
+    }
+}
+
+private data class HomeProgramSnapshot(val id:String,val name:String,val time:String,val presenter:String)
+@Composable private fun HomeProgramInfo(u:TvUnits,program:JSONObject?,presenter:JSONObject?,stationName:String,accent:Color){
+    val start=program.str("horario_inicio").take(5)
+    val end=program.str("horario_fim").take(5)
+    val snapshot=HomeProgramSnapshot(program.str("id"),program.str("nome").ifBlank{stationName},if(start.isNotBlank()&&end.isNotBlank())"$start – $end" else "",presenter.str("nome"))
+    var entered by remember{mutableStateOf(false)}
+    LaunchedEffect(Unit){entered=true}
+    AnimatedVisibility(entered,enter=fadeIn(tween(550))+slideInVertically(tween(550)){it/10},exit=fadeOut(tween(300))){
+        AnimatedContent(targetState=snapshot,transitionSpec={
+            (fadeIn(tween(450,delayMillis=150))+slideInVertically(tween(450,delayMillis=150)){it/12}) togetherWith
+            (fadeOut(tween(220))+slideOutVertically(tween(220)){-it/12})
+        },label="homeProgramChange"){item->
+            Column(verticalArrangement=Arrangement.spacedBy(u.space(9))){
+                Badge(u,"NO AR",accent,compact=true)
+                Copy(item.name,u,35,700,lines=2)
+                if(item.time.isNotBlank())Copy(item.time,u,22,500)
+                if(item.presenter.isNotBlank())Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(10))){Symbol("mic",Modifier.size(u.space(24)));Copy(item.presenter,u,24,400,lines=2)}
+            }
+        }
     }
 }

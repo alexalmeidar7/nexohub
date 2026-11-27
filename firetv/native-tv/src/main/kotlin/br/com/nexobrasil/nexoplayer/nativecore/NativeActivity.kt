@@ -139,6 +139,8 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
     var interaction by remember { mutableStateOf(false) }
     var notice by remember { mutableStateOf<String?>(null) }
     var campaigns by remember { mutableStateOf<List<JSONObject>>(emptyList()) }
+    var campaignsReady by remember { mutableStateOf(false) }
+    var pendingWatch by remember { mutableStateOf<Triple<StationChannel,Screen,Boolean>?>(null) }
     var sponsorUrls by remember { mutableStateOf<List<String>>(emptyList()) }
     var weather by remember { mutableStateOf<JSONObject?>(null) }
     val context=LocalContext.current
@@ -157,12 +159,12 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
     }
     val services=remember { NativeServices(api,context) }
     val scope=rememberCoroutineScope()
+    NativeSmartAudio(player,"live")
     var account by remember { mutableStateOf<JSONObject?>(null) }
     var ad by remember { mutableStateOf<JSONObject?>(null) }
     var resumeAfterAd by remember { mutableStateOf(true) }
-    var lastAdAt by remember { mutableLongStateOf(0L) }
-    var lastChannel by remember { mutableStateOf("") }
-    var fromHome by remember { mutableStateOf(true) }
+    val prerollFrequency=remember{NativePrerollFrequency()}
+    var activeAdPlacement by remember{mutableStateOf("")}
     LaunchedEffect(Unit){try{account=services.restore()}catch(e:CancellationException){throw e}catch(_:Exception){services.clear()}}
     var location by remember { mutableStateOf(readWeatherLocation(prefs)) }
     var cep by remember { mutableStateOf(prefs.getString("cep","").orEmpty()) }
@@ -199,13 +201,15 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         player.playWhenReady=autoplay
         if(autoplay) playbackAttempt++
     }
-    fun select(channel: StationChannel, destination: Screen, autoplay: Boolean = true) {
+    fun select(channel: StationChannel, destination: Screen, autoplay: Boolean = true, allowCampaignWait:Boolean=true) {
         val watch=destination==Screen.AUDIO||destination==Screen.VIDEO
         val now=System.currentTimeMillis()
         val date=LocalDate.now(brasilia).toString()
         val program=payload?.optJSONObject("currentProgram").str("id")
         val placement=if(channel.type=="audio_live")"preroll_audio" else "preroll_video"
-        val eligible=watch&&autoplay&&(lastAdAt==0L||(!fromHome&&lastChannel.isNotBlank()&&lastChannel!=channel.id&&now-lastAdAt>=900000L))
+        val eligible=watch&&autoplay&&prerollFrequency.eligible(placement,channel.id,now)
+        if(eligible&&!campaignsReady&&allowCampaignWait){pendingWatch=Triple(channel,destination,autoplay);return}
+        pendingWatch=null
         val candidates=if(eligible) campaigns.filter{it.str("start_date")<=date&&it.str("end_date")>=date&&(it.strings("program_ids").isEmpty()||program in it.strings("program_ids"))}.sortedBy{it.str("id")}.flatMap{it.rows("media")}.filter{it.str("placement")==placement&&it.str("url").startsWith("https://")} else emptyList()
         val nextAd=candidates.getOrNull(if(candidates.isEmpty())0 else ((now/300000)%candidates.size).toInt())
         // Live must not wait on the commercial API.
@@ -218,11 +222,17 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
             player.prepare()
         }
         playerError=null;resumeAfterAd=autoplay;ad=nextAd
-        if(watch){lastChannel=channel.id;fromHome=false}
-        if(nextAd!=null)lastAdAt=now
+        if(watch)prerollFrequency.enter(placement,channel.id)
+        activeAdPlacement=if(nextAd!=null)placement else ""
+        if(watch)android.util.Log.i("NexoPlayback","PREROLL placement="+placement+" eligible="+eligible+" campaignsReady="+campaignsReady+" candidates="+candidates.size)
         screen=destination;controls=true
         resumeLive(autoplay&&nextAd==null)
         if(destination==Screen.AUDIO&&autoplay&&nextAd==null){player.volume=0f;fadeRequest++}
+    }
+    LaunchedEffect(pendingWatch){
+        val request=pendingWatch?:return@LaunchedEffect
+        withTimeoutOrNull(3500L){while(!campaignsReady)delay(50)}
+        if(pendingWatch==request)select(request.first,request.second,request.third,false)
     }
     fun toggle() {
         if (selected == null) { audio.firstOrNull()?.let { select(it,screen) }; return }
@@ -235,7 +245,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         if (selected?.type == "audio_live") audioIntent = player.playWhenReady
     }
     fun home() {
-        ad=null;smartQueue=emptyList();fromHome=true
+        pendingWatch=null;ad=null;smartQueue=emptyList();prerollFrequency.home()
         if (selected?.type == "video_live") {
             sync.resetPlayback();syncEpoch=0L
             player.stop(); player.clearMediaItems(); selected = null
@@ -245,6 +255,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         interaction = false
     }
     fun openPage(destination: Screen) {
+        pendingWatch=null
         returnScreen = screen
         screen = destination
         interaction = false
@@ -253,6 +264,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
     LaunchedEffect(scheduleOpening){if(scheduleOpening){withFrameNanos{};withFrameNanos{};if(scheduleOpening){openPage(Screen.SCHEDULE);scheduleOpening=false}}}
     fun back() {
         if (ad!=null) return
+        if(pendingWatch!=null){pendingWatch=null;return}
         if (notice != null) notice = null
         else if (panel != null) closePanel()
         else if(scheduleOpening){scheduleOpening=false}
@@ -261,7 +273,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         else if (screen in listOf(Screen.SCHEDULE,Screen.HISTORY,Screen.PROFILE,Screen.SEARCH,Screen.CATALOG)) screen = returnScreen
         else home()
     }
-    BackHandler(ad!=null || screen != Screen.HOME || interaction || notice != null || panel != null) { back() }
+    BackHandler(ad!=null || pendingWatch!=null || screen != Screen.HOME || interaction || notice != null || panel != null) { back() }
     DisposableEffect(player) {
         val listener = object : Player.Listener {
             override fun onMetadata(metadata:Metadata){
@@ -363,11 +375,12 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
     }
     LaunchedEffect(station?.ownerId) {
         val owner = station?.ownerId ?: return@LaunchedEffect
+        campaignsReady=false
         while (true) {
-            try { campaigns = api.campaigns(owner).rows("campaigns") }
+            try { campaigns = api.campaigns(owner).rows("campaigns");campaignsReady=true }
             catch (e: CancellationException) { throw e }
             catch (_: Exception) { /* retain last successful list */ }
-            delay(300_000L)
+            delay(if(campaignsReady)60_000L else 5_000L)
         }
     }
     LaunchedEffect(panel,station?.ownerId) {
@@ -548,7 +561,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         entryPending=entryPending, guestName=account?.optJSONObject("user_metadata").str("full_name").ifBlank{account?.optJSONObject("user_metadata").str("name")}.ifBlank{guestName}, guestAvatar=guestAvatar,
         spectrum=spectrum, panel=panel,forecast=forecast,lyrics=lyrics,cep=cep,api=api,services=services,account=account,
         onAccount={account=it;panel=null},onLogout={scope.launch{try{services.logout();account=null}catch(e:CancellationException){throw e}catch(_:Exception){notice="Não foi possível encerrar a sessão."}}},
-        scheduleOpening=scheduleOpening,interactionReturn=interactionReturn,syncStatus=syncStatus,manualSync=manualSync,onSaveSync=::saveSync,onCalibrateSync=::calibrateNow,canCalibrateSync=playing&&sync.latestStart()?.let{System.currentTimeMillis()+api.serverClockOffsetMs-it in 0L..120000L}==true,
+        scheduleOpening=scheduleOpening,interactionReturn=interactionReturn,channelOpening=pendingWatch?.second,syncStatus=syncStatus,manualSync=manualSync,onSaveSync=::saveSync,onCalibrateSync=::calibrateNow,canCalibrateSync=playing&&sync.latestStart()?.let{System.currentTimeMillis()+api.serverClockOffsetMs-it in 0L..120000L}==true,
         onPanel={next->if(next==null)closePanel()else{fromInteraction=interaction;panel=next;interaction=false}},onCepSaved={digits,loc -> prefs.edit().putString("cep",digits).putString("location",loc.toString()).apply();cep=digits;location=loc;panel=null},
         onGuestSave={name,avatar -> guestName=name;guestAvatar=avatar},
         onProfileContinue={
@@ -570,7 +583,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
             }
         },onChannel=onChannel,onVideo={select(it,Screen.VIDEO)},onInteraction={if(interaction){interaction=false;interactionReturn++}else interaction=true},
         onNotice={notice=it})
-    ad?.let{media->NativePreroll(media,selected?.type=="audio_live",onStarted={lastAdAt=System.currentTimeMillis()},onFinish={ad=null;scope.launch { withFrameNanos { };resumeLive(resumeAfterAd) }})}
+    ad?.let{media->NativePreroll(media,selected?.type=="audio_live",onStarted={prerollFrequency.played(activeAdPlacement,System.currentTimeMillis())},onFinish={ad=null;activeAdPlacement="";scope.launch { withFrameNanos { };resumeLive(resumeAfterAd) }})}
     if(ad==null&&smartQueue.isNotEmpty())key(smartSerial){smartQueue.getOrNull(smartIndex)?.let{media->NativePreroll(media,false,onStarted={},onFinish={if(smartQueue.isNotEmpty()){smartFailures++;if(smartFailures>=smartQueue.size)smartQueue=emptyList()else{smartIndex=(smartIndex+1)%smartQueue.size;smartSerial++}}},smart=true,breakStart=trackLocalStart,breakDuration=breakDuration,onPlayed={smartFailures=0},onBack={home()},commercialPhone=data?.optJSONObject("empresa").str("telefone_comercial"))}}
     AnimatedVisibility(visible=startup, enter=fadeIn(tween(650)), exit=fadeOut(tween(650))) {
         StartupSplash(startupStage)

@@ -19,6 +19,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.MimeTypes
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.common.Player
 import androidx.media3.common.PlaybackException
 import androidx.media3.exoplayer.ExoPlayer
@@ -33,7 +38,11 @@ import org.json.JSONObject
     val playedCallback by rememberUpdatedState(onPlayed)
     val skipFocus=remember{FocusRequester()}
     var progress by remember{mutableFloatStateOf(0f)}
-    val player=remember(media){ExoPlayer.Builder(context).build()}
+    val player=remember(media){
+        val http=DefaultHttpDataSource.Factory().setUserAgent("NexoTV/"+BuildConfig.VERSION_NAME).setConnectTimeoutMs(15000).setReadTimeoutMs(20000)
+        ExoPlayer.Builder(context).setMediaSourceFactory(DefaultMediaSourceFactory(context).setDataSourceFactory(DefaultDataSource.Factory(context,http))).build().apply{setAudioAttributes(AudioAttributes.DEFAULT,false);volume=0f}
+    }
+    NativeSmartAudio(player,if(smart)"smart_break" else if(audio)"preroll_audio" else "preroll_video")
     var remaining by remember(media){mutableIntStateOf(-1)}
     var done by remember(media){mutableStateOf(false)}
     var played by remember(media){mutableStateOf(false)}
@@ -50,11 +59,16 @@ import org.json.JSONObject
         val listener=object:Player.Listener{
             override fun onIsPlayingChanged(isPlaying:Boolean){if(isPlaying&&!played){played=true;started();playedCallback()}}
             override fun onPlaybackStateChanged(playbackState:Int){if(playbackState==Player.STATE_ENDED)complete()}
-            override fun onPlayerError(error:PlaybackException){android.util.Log.w("NexoPlayback","PREROLL_"+error.errorCodeName);complete()}
+            override fun onPlayerError(error:PlaybackException){android.util.Log.w("NexoPlayback",(if(smart)"SMART_BREAK_" else if(audio)"PREROLL_AUDIO_" else "PREROLL_VIDEO_")+error.errorCodeName,error);complete()}
         }
-        player.addListener(listener);try{player.setMediaItem(MediaItem.fromUri(media.str("url")));player.prepare();player.play()}catch(_:Exception){complete()}
+        player.addListener(listener);try{
+            val url=media.str("url").trim();val item=MediaItem.Builder().setUri(url)
+            if(url.contains(".m3u8",true))item.setMimeType(MimeTypes.APPLICATION_M3U8)
+            player.setMediaItem(item.build());player.prepare();player.play()
+        }catch(_:Exception){complete()}
         onDispose{player.removeListener(listener);player.release()}
     }
+    LaunchedEffect(player,played){if(played){for(i in 1..12){player.volume=i/12f;delay(50)}}}
     LaunchedEffect(player){
         var stall=0;var position=-1L;val deadline=android.os.SystemClock.elapsedRealtime()+180000L
         while(!done){
@@ -62,7 +76,7 @@ import org.json.JSONObject
             remaining=if(d>0)((d-player.currentPosition+999)/1000).toInt().coerceAtLeast(0)else -1
             if(position==player.currentPosition)stall++ else stall=0
             position=player.currentPosition
-            if(stall>=32||android.os.SystemClock.elapsedRealtime()>=deadline){complete();break}
+            if(stall>=48||android.os.SystemClock.elapsedRealtime()>=deadline){complete();break}
             if(smart&&breakDuration>0&&breakStart>0)progress=((System.currentTimeMillis()-breakStart)/(breakDuration*1000)).toFloat().coerceIn(0f,1f)
             delay(250)
         }
