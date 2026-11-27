@@ -102,7 +102,7 @@ serve(async (req) => {
     // Programa atualmente no ar (de acordo com a grade) — inclui capa, thumb, apresentadores
     const { data: progs, error: programsError } = await supabase
       .from("programas")
-      .select("id, nome, dias_semana, horario_inicio, horario_fim, ativo, estudio, capa, thumb, apresentador_id, apresentadores_ids, created_at")
+      .select("id, nome, dias_semana, horario_inicio, horario_fim, ativo, estudio")
       .eq("user_id", userId)
       .eq("ativo", true)
       .order("horario_inicio", { ascending: false });
@@ -133,32 +133,6 @@ serve(async (req) => {
     };
 
     const onAir = findOnAir(progs);
-
-    // Buscar apresentador no ar (primeiro de apresentadores_ids, fallback para apresentador_id)
-    let locutorNome = "";
-    let locutorFoto = "";
-    let locutorInstagram = "";
-    let locutorCargo = "";
-    if (onAir) {
-      const apresentadorId =
-        (onAir.apresentadores_ids && onAir.apresentadores_ids[0]) || onAir.apresentador_id;
-      if (apresentadorId) {
-        const { data: ap } = await supabase
-          .from("apresentadores")
-          .select("nome, foto, instagram, cargo")
-          .eq("id", apresentadorId)
-          .maybeSingle();
-        if (ap) {
-          locutorNome = ap.nome || "";
-          locutorFoto = ap.foto || "";
-          locutorInstagram = ap.instagram || "";
-          locutorCargo = ap.cargo || "";
-          if (locutorInstagram && !locutorInstagram.startsWith("@")) {
-            locutorInstagram = `@${locutorInstagram}`;
-          }
-        }
-      }
-    }
 
     // Carrega TODOS os templates do usuário (para encontrar 2TVs e 4TVs vinculados ao programa no ar)
     const { data: grupos, error: gruposError } = await supabase
