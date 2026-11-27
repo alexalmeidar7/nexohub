@@ -40,9 +40,9 @@ import org.json.JSONObject
     var progress by remember{mutableFloatStateOf(0f)}
     val player=remember(media){
         val http=DefaultHttpDataSource.Factory().setUserAgent("NexoTV/"+BuildConfig.VERSION_NAME).setConnectTimeoutMs(15000).setReadTimeoutMs(20000)
-        ExoPlayer.Builder(context).setMediaSourceFactory(DefaultMediaSourceFactory(context).setDataSourceFactory(DefaultDataSource.Factory(context,http))).build().apply{setAudioAttributes(AudioAttributes.DEFAULT,false);volume=0f}
+        ExoPlayer.Builder(context,LevelingRenderers(context)).setMediaSourceFactory(DefaultMediaSourceFactory(context).setDataSourceFactory(DefaultDataSource.Factory(context,http))).build().apply{setAudioAttributes(AudioAttributes.DEFAULT,false);volume=0f}
     }
-    NativeSmartAudio(player,if(smart)"smart_break" else if(audio)"preroll_audio" else "preroll_video")
+
     var remaining by remember(media){mutableIntStateOf(-1)}
     var done by remember(media){mutableStateOf(false)}
     var played by remember(media){mutableStateOf(false)}

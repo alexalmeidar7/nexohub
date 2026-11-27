@@ -71,10 +71,11 @@ private suspend fun coverFor(title:String,artist:String):String {
     val key=coverKey(title)+"|"+coverKey(artist)
     coverCache[key]?.let{return it}
     if(key in coverMisses)return ""
-    val result=getJson("https://itunes.apple.com/search?media=music&entity=song&limit=5&term="+URLEncoder.encode("$artist $title","UTF-8"))
+    val result=try{getJson("https://itunes.apple.com/search?country=BR&media=music&entity=song&limit=25&term="+URLEncoder.encode("$artist $title","UTF-8"))}catch(e:CancellationException){throw e}catch(_:Exception){JSONObject()}
     fun matches(a:String,b:String):Boolean{val x=coverKey(a);val y=coverKey(b);return x.isNotBlank()&&y.isNotBlank()&&(x.contains(y)||y.contains(x))}
     val found=result.rows("results").firstOrNull{matches(it.str("artistName"),artist)&&matches(it.str("trackName"),title)}
-    val url=found.str("artworkUrl100").replace("100x100bb","600x600bb")
+    var url=found.str("artworkUrl100").replace("100x100bb","600x600bb")
+    if(url.isBlank())try{val dz=getJson("https://api.deezer.com/search?q="+URLEncoder.encode("$artist $title","UTF-8"));url=dz.rows("data").firstOrNull{matches(it.optJSONObject("artist").str("name"),artist)&&matches(it.str("title"),title)}?.optJSONObject("album").str("cover_big")}catch(e:CancellationException){throw e}catch(_:Exception){}
     if(url.isNotBlank()){if(coverCache.size>=250)coverCache.clear();coverCache[key]=url}else{if(coverMisses.size>=250)coverMisses.clear();coverMisses.add(key)}
     return url
 }
@@ -86,10 +87,10 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
     history.forEach{add(SearchHit("Música tocada",it.str("musica"),it.str("artista"),it.str("capa_url"),Screen.HISTORY))}
 }.filter{it.title.isNotBlank()}.distinctBy{it.kind+"|"+it.title+"|"+it.sub}
 
-@Composable internal fun InteractionCards(u:TvUnits,onPanel:(String)->Unit,onClose:()->Unit) {
+@Composable internal fun InteractionCards(u:TvUnits,onPanel:(String)->Unit,onClose:()->Unit,sparkFocus:FocusRequester) {
     val focus=remember{FocusRequester()}
-    val labels=listOf(Triple("lyrics","letra da música","mic"),Triple("chat","chat","chat"),Triple("poll","enquete","poll"),Triple("weather","previsão do tempo","sun"),Triple("history","músicas tocadas","history"),Triple("battle","batalha musical","battle"),Triple("sync","Smart Sync","history"))
-    Row(u.at(285,862,1535,152),horizontalArrangement=Arrangement.spacedBy(u.space(23)),verticalAlignment=Alignment.Bottom){
+    val labels=listOf(Triple("lyrics","letra da música","mic"),Triple("chat","chat","chat"),Triple("poll","enquete","poll"),Triple("weather","previsão do tempo","sun"),Triple("history","músicas tocadas","history"),Triple("battle","batalha musical","battle"))
+    Row(u.at(285,862,1415,152),horizontalArrangement=Arrangement.spacedBy(u.space(23)),verticalAlignment=Alignment.Bottom){
         labels.forEachIndexed{i,item->
             var focused by remember{mutableStateOf(false)}
             val shape=u.round(28)
@@ -98,14 +99,14 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                 Symbol(item.third,Modifier.size(u.space(46)).align(Alignment.End))
             }
         }
-        GlassButton(u,"",Modifier.size(u.space(56)),icon="left",onClick=onClose)
     }
+    GlassButton(u,"",u.at(1744,922,64,64).focusRequester(sparkFocus),icon="spark",onClick=onClose)
     LaunchedEffect(Unit){focus.requestFocus()}
 }
 @Composable private fun InputBox(u:TvUnits,value:String,onChange:(String)->Unit,placeholder:String,modifier:Modifier=Modifier,numeric:Boolean=false) {
     BasicTextField(value,onChange,modifier.clip(u.round(18)).background(Color(0xFF303030)).padding(u.space(16)),singleLine=true,textStyle=u.referenceText(23).copy(color=Color.White),cursorBrush=SolidColor(Color.White),keyboardOptions=KeyboardOptions(keyboardType=if(numeric)KeyboardType.Number else KeyboardType.Text),decorationBox={inner->Box{if(value.isEmpty())Copy(placeholder,u,23,400,color=Color.White.copy(alpha=.55f));inner()}})
 }
-@Composable internal fun NativePanel(u:TvUnits,panel:String,payload:JSONObject?,track:JSONObject?,history:List<JSONObject>,loading:Boolean,error:Boolean,forecast:JSONObject?,lyrics:String?,cep:String,api:HouseMixClient,owner:String?,accent:Color,onClose:()->Unit,onCepSaved:(String,JSONObject)->Unit,onOpen:(Screen)->Unit,services:NativeServices,account:JSONObject?,onAccount:(JSONObject)->Unit) {
+@Composable internal fun NativePanel(u:TvUnits,panel:String,payload:JSONObject?,track:JSONObject?,history:List<JSONObject>,loading:Boolean,error:Boolean,forecast:JSONObject?,lyrics:String?,cep:String,api:HouseMixClient,owner:String?,accent:Color,onClose:()->Unit,onCepSaved:(String,JSONObject)->Unit,onOpen:(Screen)->Unit,services:NativeServices,account:JSONObject?,onAccount:(JSONObject)->Unit,historyAd:JSONObject?=null) {
     val focus=remember(panel){FocusRequester()}
     val scope=rememberCoroutineScope()
     if(panel=="pair"){NativePairPanel(u,services,onClose,onAccount);return}
@@ -119,10 +120,14 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                     var recent by remember{mutableStateOf(runCatching{JSONArray(prefs.getString("recent_searches","[]")).let{a->(0 until a.length()).map{a.getString(it)}}}.getOrDefault(emptyList()))}
                     val hits=remember(query,payload,history){if(query.isBlank())emptyList() else searchHits(payload,history).filter{norm(it.title+" "+it.sub).contains(norm(query.trim()))}.take(24)}
                     Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(12))){
-                        InputBox(u,query,{query=it.take(120)},"Buscar em tudo...",Modifier.weight(1f).focusRequester(focus))
+                        Box(Modifier.weight(1f).height(u.space(60)).background(Color(0xFF303030),u.round(18)).padding(u.space(12)),contentAlignment=Alignment.CenterStart){Copy(query.ifBlank{"Buscar em tudo..."},u,23)}
                         GlassButton(u,"",Modifier.size(u.space(50)),icon="left",onClick=onClose)
                     }
-                    LazyColumn(Modifier.heightIn(max=u.space(420)).clip(u.round(18)).background(Color(0xFF303030)).padding(u.space(16)),verticalArrangement=Arrangement.spacedBy(u.space(8))){
+                    Column(verticalArrangement=Arrangement.spacedBy(u.space(5))){
+                        listOf("QWERTYUIOP","ASDFGHJKL","ZXCVBNM","1234567890").forEachIndexed{r,line->Row(horizontalArrangement=Arrangement.spacedBy(u.space(4))){line.forEachIndexed{c,ch->GlassButton(u,ch.toString(),Modifier.size(u.space(62),u.space(46)).then(if(r==0&&c==0)Modifier.focusRequester(focus)else Modifier)){query=(query+ch).take(120)}}}}
+                        Row(horizontalArrangement=Arrangement.spacedBy(u.space(8))){GlassButton(u,"Espaço",Modifier.height(u.space(48))){query=(query+" ").take(120)};GlassButton(u,"⌫",Modifier.height(u.space(48))){query=query.dropLast(1)};GlassButton(u,"Limpar",Modifier.height(u.space(48))){query=""}}
+                    }
+                    LazyColumn(Modifier.heightIn(max=u.space(300)).clip(u.round(18)).background(Color(0xFF303030)).padding(u.space(16)),verticalArrangement=Arrangement.spacedBy(u.space(8))){
                         if(query.isBlank()){
                             item{Copy("Últimas pesquisas",u,18)}
                             items(recent){term->GlassButton(u,term,Modifier.fillMaxWidth().height(u.space(60))){query=term}}
@@ -193,21 +198,21 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                 when(panel){
                     "history" -> {
                         var index by remember{mutableIntStateOf(0)}
+                        var adStep by remember(historyAd.str("url")){mutableStateOf(false)}
+                        fun move(delta:Int){if(adStep){adStep=false;if(delta<0)return}else if(delta>0&&historyAd!=null&&(index+1)%5==0&&index<history.lastIndex){adStep=true;return};index=(index+delta).coerceIn(0,history.lastIndex.coerceAtLeast(0))}
                         val song=history.getOrNull(index)
-                        var image by remember(song){mutableStateOf(song.str("capa_url").ifBlank{song.str("capa")})}
+                        var image by remember(song){mutableStateOf(song.str("capa_url").ifBlank{song.str("capa")}.ifBlank{song.str("cover_url")})}
                         LaunchedEffect(song){if(image.isBlank()&&song!=null){image=if(song.str("musica")==track.str("titulo")&&song.str("artista")==track.str("artista"))track.str("capa") else "";if(image.isBlank())try{image=coverFor(song.str("musica"),song.str("artista"))}catch(e:CancellationException){throw e}catch(_:Exception){}}}
                         LaunchedEffect(history,index){for(candidate in history.drop(index+1).take(3)){if(candidate.str("capa_url").isBlank())try{coverFor(candidate.str("musica"),candidate.str("artista"))}catch(e:CancellationException){throw e}catch(_:Exception){}}}
                         if(song==null){Copy(if(loading)"Carregando músicas tocadas..." else if(error)"Histórico indisponível" else "Nenhuma música registrada.",u,23,400,lines=3)}
                         else{
-                            AnimatedContent(index,label="historyInfo"){i->val item=history.getOrNull(i);Column(horizontalAlignment=Alignment.CenterHorizontally){Copy(item.str("horario").take(5),u,20,400);Copy(item.str("musica").uppercase(),u,25,700,lines=2,align=TextAlign.Center);Copy(item.str("artista").uppercase(),u,20,400,lines=2)}}
-                            GlassButton(u,"",Modifier.size(u.space(46)),icon="up"){index=(index-1).coerceAtLeast(0)}
-                            Box(Modifier.weight(1f).fillMaxWidth().padding(vertical=u.space(7)).clip(u.round(18)).background(Color.White.copy(alpha=.06f)),contentAlignment=Alignment.Center){
-                                Symbol("music",Modifier.size(u.space(100)))
-                                Artwork(safeImage(image),Modifier.fillMaxSize(),scale=ContentScale.Fit)
-                                if(owner!=null)NativeLike(u,services,account,owner,song.str("musica"),song.str("artista"),image,Modifier.align(Alignment.BottomEnd))
+                            Box(Modifier.fillMaxWidth().height(u.space(128)),contentAlignment=Alignment.Center){AnimatedContent(index to adStep,label="historyInfo"){state->val item=history.getOrNull(state.first);Column(horizontalAlignment=Alignment.CenterHorizontally){Copy(if(state.second)"publicidade" else item.str("horario").take(5),u,20,400);if(!state.second){Copy(item.str("musica").uppercase(),u,25,700,lines=2,align=TextAlign.Center);Copy(item.str("artista").uppercase(),u,20,400,lines=2)}}}}
+                            GlassButton(u,"",Modifier.size(u.space(46)),icon="up"){move(-1)}
+                            Box(Modifier.size(u.space(350)).clip(u.round(18)).background(Color.White.copy(alpha=.06f)),contentAlignment=Alignment.Center){
+                                if(adStep){Artwork(safeImage(historyAd.str("url")),Modifier.fillMaxSize(),scale=ContentScale.Fit)}else NativeLike(u,services,account,owner.orEmpty(),song.str("musica"),song.str("artista"),image,Modifier.fillMaxSize())
                             }
                             Box(Modifier.fillMaxWidth(),contentAlignment=Alignment.Center){
-                                GlassButton(u,"",Modifier.size(u.space(46)).focusRequester(focus),icon="down"){index=(index+1).coerceAtMost(history.lastIndex)}
+                                GlassButton(u,"",Modifier.size(u.space(46)).focusRequester(focus),icon="down"){move(1)}
                                 Copy((index+1).toString()+"/"+history.size,u,19,500,Modifier.align(Alignment.CenterEnd))
                             }
                         }

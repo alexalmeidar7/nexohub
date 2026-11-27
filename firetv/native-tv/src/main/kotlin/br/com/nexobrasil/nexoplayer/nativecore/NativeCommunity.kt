@@ -73,7 +73,7 @@ import com.google.zxing.qrcode.QRCodeWriter
     }
     LaunchedEffect(Unit){focus.requestFocus()}
 }
-@Composable internal fun NativeLike(u:TvUnits,services:NativeServices,account:JSONObject?,owner:String,title:String,artist:String,cover:String,modifier:Modifier,buttonModifier:Modifier=Modifier){
+@Composable internal fun NativeLike(u:TvUnits,services:NativeServices,account:JSONObject?,owner:String,title:String,artist:String,cover:String,modifier:Modifier,buttonModifier:Modifier=Modifier,videoStyle:Boolean=false,enabled:Boolean=true){
     val user=account.str("id")
     var liked by remember(user,title,artist){mutableStateOf(false)}
     var busy by remember(user,title,artist){mutableStateOf(false)}
@@ -82,8 +82,14 @@ import com.google.zxing.qrcode.QRCodeWriter
     LaunchedEffect(user,title,artist){if(user.isNotBlank())try{liked=services.liked(owner,user,title,artist)}catch(e:CancellationException){throw e}catch(_:Exception){}}
     var focused by remember{mutableStateOf(false)}
     val controlsEnabled=LocalControlsEnabled.current
-    val active=controlsEnabled&&!busy&&owner.isNotBlank()&&title!="Ao vivo"&&title.isNotBlank()
-    Box(modifier.then(buttonModifier).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=controlsEnabled}
+    val active=controlsEnabled&&enabled&&!busy&&owner.isNotBlank()&&title!="Ao vivo"&&title.isNotBlank()
+    if(videoStyle){
+        Row(modifier.then(buttonModifier).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=controlsEnabled&&enabled}.clip(u.round(20)).background(glass).border(u.space(if(focused)3 else 0),if(focused)Color.White else Color.Transparent,u.round(20)).clickable(enabled=active){if(user.isBlank())msg="Conecte sua conta Google." else{busy=true;scope.launch{try{liked=services.toggleLike(owner,user,title,artist,cover);msg=""}catch(e:CancellationException){throw e}catch(_:Exception){msg="Não foi possível salvar."}finally{busy=false}}}}.padding(u.space(12)),verticalAlignment=Alignment.CenterVertically){
+            Artwork(safeImage(cover),Modifier.size(u.space(144)).clip(u.round(22)),scale=ContentScale.Crop)
+            Spacer(Modifier.width(u.space(18)));Column(Modifier.weight(1f)){Copy("tocando",u,18,700);Copy(title,u,40,700);Copy(artist,u,29);if(msg.isNotBlank())Copy(msg,u,17)};Copy(if(liked)"♥" else "♡",u,36,600,color=if(liked)Color(0xFFF20D0F)else Color.White)
+        };return
+    }
+    Box(modifier.then(buttonModifier).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=controlsEnabled&&enabled}
         .clip(u.round(36)).background(glass).border(u.space(if(focused)4 else 3),Color.White.copy(alpha=if(focused)1f else .27f),u.round(36))
         .clickable(enabled=active){
             if(user.isBlank())msg="Conecte sua conta Google." else {busy=true;scope.launch{
