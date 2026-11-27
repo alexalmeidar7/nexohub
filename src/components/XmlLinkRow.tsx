@@ -104,12 +104,13 @@ export default function XmlLinkRow({
   }, [externalUrl]);
 
   useEffect(() => {
+    // DesktopLocalMediaSync owns feed refresh. This row only exposes the native path.
     if (!externalUrl || !supabaseUrl || !window.houseMixDesktop) return;
     let active = true;
     const parts = new URL(externalUrl).pathname.split("/").filter(Boolean);
     const slug = decodeURIComponent(parts.at(-2) || "");
     const filename = decodeURIComponent(parts.at(-1) || "");
-    let timer: ReturnType<typeof setTimeout>;
+    // Avoid a second independent 30-second download loop overwriting local edits.
     const sync = async () => {
       try {
         const response = await fetch(supabaseUrl, { cache: "no-store", signal: AbortSignal.timeout(12000) });
@@ -123,10 +124,10 @@ export default function XmlLinkRow({
           if (active && saved) setUrl(saved);
         }
       } catch { /* keep the last good local XML when offline */ }
-      finally { if (active) timer = setTimeout(() => void sync(), 30000); }
+
     };
     void sync();
-    return () => { active = false; clearTimeout(timer); };
+    return () => { active = false; };
   }, [externalUrl, supabaseUrl]);
 
   useEffect(() => {
