@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Brush
@@ -135,13 +137,14 @@ import com.google.zxing.qrcode.QRCodeWriter
             delay(if(panel=="chat")5000 else 15000)
         }
     }
+    Column(Modifier.fillMaxSize(),horizontalAlignment=Alignment.CenterHorizontally){
     if(panel=="chat"){
         val listState=rememberLazyListState();val qrBack=remember{FocusRequester()}
         LaunchedEffect(messages.lastOrNull()?.str("id"),messages.size){if(messages.isNotEmpty())listState.scrollToItem(messages.lastIndex)}
         LaunchedEffect(qr){withFrameNanos{};runCatching{(if(qr)qrBack else focus).requestFocus()}}
         BackHandler(qr){qr=false}
         Copy("Chat",u,28,600)
-        Box(Modifier.fillMaxWidth().height(u.space(465)).background(Color.Black.copy(alpha=.20f),u.round(16))){
+        Box(Modifier.fillMaxWidth().weight(1f).background(Color.Black.copy(alpha=.20f),u.round(16))){
             LazyColumn(Modifier.fillMaxSize().padding(u.space(10)),state=listState,verticalArrangement=Arrangement.spacedBy(u.space(10))){
                 items(messages){m->Column(Modifier.fillMaxWidth().background(Color.White.copy(alpha=.08f),u.round(12)).padding(u.space(8))){Copy(m.str("nome"),u,19,600);Copy(m.str("message"),u,19,400,lines=5)}}
             }
@@ -156,10 +159,12 @@ import com.google.zxing.qrcode.QRCodeWriter
         if(!qr)GlassButton(u,"entrar na conversa",Modifier.height(u.space(60)).focusRequester(focus)){qr=true}
     }else{
         val poll=panel=="poll"
-        if(poll)Copy("Enquete",u,28,600)
+        Copy(if(poll)"Enquete" else "Batalha musical",u,28,600)
+        Spacer(Modifier.height(u.space(12)))
         val item=row
         if(item!=null){
-            if(poll)Copy(item.str("pergunta"),u,25,600,lines=3)
+            Column(Modifier.weight(1f,fill=false).fillMaxWidth().verticalScroll(rememberScrollState()),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(10))){
+            if(poll)Copy(item.str("pergunta"),u,24,600,lines=3)
             val answers=if(poll)(1..4).map{item.str("resposta"+it)}.filter{it.isNotBlank()} else (1..2).map{item.str("artista"+it+"_musica")+" — "+item.str("artista"+it+"_nome")}
             fun submit(choice:Int){
                         if(account==null){msg="Conecte sua conta Google para votar."}
@@ -173,30 +178,33 @@ import com.google.zxing.qrcode.QRCodeWriter
                             }catch(e:CancellationException){throw e}catch(_:Exception){msg="Não foi possível registrar o voto."}finally{busy=false}
                         }}
             }
-            Column(Modifier.fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(18))){
+            Column(Modifier.fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(10))){
                 if(poll)answers.forEachIndexed{i,answer->
                     val result=counts?.optInt(i)?.let{" · "+it+" votos"}.orEmpty()
-                    GlassButton(u,(if(voted==i)"✓ " else "")+answer+result,Modifier.fillMaxWidth().height(u.space(83)).then(if(i==0&&(voted<0||editing))Modifier.focusRequester(focus)else Modifier),enabled=!busy&&(voted<0||editing)){submit(i)}
-                }else Row(horizontalArrangement=Arrangement.spacedBy(u.space(26))){
+                    GlassButton(u,(if(voted==i)"✓ " else "")+answer+result,Modifier.fillMaxWidth().height(u.space(66)).then(if(i==0&&(voted<0||editing))Modifier.focusRequester(focus)else Modifier),enabled=!busy&&(voted<0||editing)){submit(i)}
+                }else Column(Modifier.fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(u.space(12))){
                     (1..2).forEach{choice->
                         var focused by remember{mutableStateOf(false)}
                         val enabled=!busy&&(voted<0||editing);val shape=u.round(24)
-                        Box(Modifier.size(u.space(440)).then(if(choice==1&&enabled)Modifier.focusRequester(focus)else Modifier).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=enabled}.border(u.space(if(focused)4 else if(voted==choice)2 else 0),if(focused||voted==choice)Color.White else Color.Transparent,shape).clip(shape).background(Color(0xFF242529)).clickable(enabled=enabled){submit(choice)}){
-                            Artwork(safeImage(item.str("artista"+choice+"_imagem")),Modifier.fillMaxSize(),scale=ContentScale.Crop)
-                            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent,Color.Transparent,Color.Black.copy(alpha=.94f)))))
-                            Column(Modifier.align(Alignment.BottomStart).padding(u.space(24)),verticalArrangement=Arrangement.spacedBy(u.space(8))){
-                                Copy(item.str("artista"+choice+"_musica"),u,28,700,lines=2)
-                                Copy(item.str("artista"+choice+"_nome"),u,22,500,lines=2)
-                                Copy((if(voted==choice)"✓ Seu voto · " else "")+item.optInt("artista"+choice+"_porcentagem")+"%",u,20,600)
+                        Box(Modifier.fillMaxWidth().height(u.space(155)).then(if(choice==1&&enabled)Modifier.focusRequester(focus)else Modifier).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=enabled}.border(u.space(if(focused)4 else if(voted==choice)2 else 0),if(focused||voted==choice)Color.White else Color.Transparent,shape).clip(shape).background(Color(0xFF242529)).clickable(enabled=enabled){submit(choice)}){
+                            Row(Modifier.fillMaxSize().padding(u.space(10)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(14))){
+                                Artwork(safeImage(item.str("artista"+choice+"_imagem")),Modifier.size(u.space(132)).clip(u.round(15)),scale=ContentScale.Crop)
+                                Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(u.space(6))){
+                                    Copy(item.str("artista"+choice+"_musica"),u,22,700,lines=2)
+                                    Copy(item.str("artista"+choice+"_nome"),u,19,500,lines=2)
+                                    Copy((if(voted==choice)"✓ Seu voto · " else "")+item.optInt("artista"+choice+"_porcentagem")+"%",u,18,600)
+                                }
                             }
                         }
                     }
                 }
                 if(voted>=0&&!editing)GlassButton(u,"Mudar meu voto",Modifier.height(u.space(60)).focusRequester(focus)){editing=true}
             }
+            }
         }
     }
     if(msg.isNotBlank())Copy(msg,u,19,400,lines=3)
+    }
     LaunchedEffect(row!=null,editing,voted>=0,panel){if(panel!="chat")runCatching{focus.requestFocus()}}
 }
 

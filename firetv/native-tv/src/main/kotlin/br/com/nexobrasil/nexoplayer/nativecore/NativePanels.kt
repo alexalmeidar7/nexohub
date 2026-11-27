@@ -26,6 +26,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.focusProperties
+import androidx.activity.compose.BackHandler
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
@@ -112,7 +114,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
 @Composable private fun InputBox(u:TvUnits,value:String,onChange:(String)->Unit,placeholder:String,modifier:Modifier=Modifier,numeric:Boolean=false) {
     BasicTextField(value,onChange,modifier.clip(u.round(18)).background(Color(0xFF303030)).padding(u.space(16)),singleLine=true,textStyle=u.referenceText(23).copy(color=Color.White),cursorBrush=SolidColor(Color.White),keyboardOptions=KeyboardOptions(keyboardType=if(numeric)KeyboardType.Number else KeyboardType.Text),decorationBox={inner->Box{if(value.isEmpty())Copy(placeholder,u,23,400,color=Color.White.copy(alpha=.55f));inner()}})
 }
-@Composable internal fun NativePanel(u:TvUnits,panel:String,payload:JSONObject?,track:JSONObject?,history:List<JSONObject>,loading:Boolean,error:Boolean,forecast:JSONObject?,lyrics:String?,cep:String,api:HouseMixClient,owner:String?,accent:Color,onClose:()->Unit,onCepSaved:(String,JSONObject)->Unit,onOpen:(Screen)->Unit,services:NativeServices,account:JSONObject?,onAccount:(JSONObject)->Unit,historyAd:JSONObject?=null) {
+@Composable internal fun NativePanel(u:TvUnits,panel:String,payload:JSONObject?,track:JSONObject?,history:List<JSONObject>,loading:Boolean,error:Boolean,forecast:JSONObject?,lyrics:String?,cep:String,api:HouseMixClient,owner:String?,accent:Color,onClose:()->Unit,onCepSaved:(String,JSONObject)->Unit,onOpen:(Screen)->Unit,services:NativeServices,account:JSONObject?,onAccount:(JSONObject)->Unit,historyAd:JSONObject?=null,panelAd:JSONObject?=null) {
     val focus=remember(panel){FocusRequester()}
     val scope=rememberCoroutineScope()
     if(panel=="pair"){NativePairPanel(u,services,onClose,onAccount);return}
@@ -195,13 +197,11 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                 }
             }
         }
-    }else if(panel=="battle"){
-        Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){Column(Modifier.width(u.space(1030)).background(interactionGlass,u.round(32)).padding(u.space(32)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(20))){GlassButton(u,"",Modifier.align(Alignment.End).size(u.space(52)).focusRequester(focus),icon="left",onClick=onClose);if(owner!=null)NativeCommunity(u,panel,owner,services,account)else Copy("Emissora indisponível.",u,23)}}
     }else{
         Box(u.at(1350,165,470,735)){
             GlassButton(u,"",Modifier.align(Alignment.TopEnd).size(u.space(56)).then(if((panel=="history"&&history.isEmpty())||(panel=="weather"&&forecast?.optJSONObject("daily")?.optJSONArray("time")==null))Modifier.focusRequester(focus)else Modifier),icon="left",onClick=onClose)
             Column(Modifier.offset(y=u.space(75)).fillMaxWidth().height(u.space(650)).clip(u.round(28)).background(interactionGlass).padding(u.space(20)),horizontalAlignment=Alignment.CenterHorizontally){
-                when(panel){
+                Column(Modifier.weight(1f).fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally){when(panel){
                     "history" -> {
                         var index by remember{mutableIntStateOf(0)}
                         var adStep by remember(historyAd.str("url")){mutableStateOf(false)}
@@ -225,12 +225,17 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                     }
                     "weather" -> {
                         val d=forecast?.optJSONObject("daily");val dates=d?.optJSONArray("time")
-                        Copy("tempo agora",u,22,500)
                         val temp=forecast?.optJSONObject("current")?.optDouble("temperature_2m")
                         val current=forecast?.optJSONObject("current")
-                        Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(12))){NativeWeatherIcon(current?.optInt("weather_code",-1)?:-1,Modifier.size(u.space(70)),isDay=current?.optInt("is_day",1)!=0);Copy(temp?.takeIf{it.isFinite()}?.let{it.toInt().toString()+"°"}?:"--°",u,56,600)}
                         val humid=current?.optDouble("relative_humidity_2m");val rain=d?.optJSONArray("precipitation_probability_max")?.optDouble(0)
-                        Copy("Chuva "+(rain?.takeIf{it.isFinite()}?.toInt()?.toString()?.plus("%")?:"—")+"  ·  Umidade "+(humid?.takeIf{it.isFinite()}?.toInt()?.toString()?.plus("%")?:"—"),u,19,500)
+                        Column(Modifier.fillMaxWidth().padding(top=u.space(8),bottom=u.space(20)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(12))){
+                            Copy("Tempo agora",u,24,600)
+                            Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))){NativeWeatherIcon(current?.optInt("weather_code",-1)?:-1,Modifier.size(u.space(78)),isDay=current?.optInt("is_day",1)!=0);Copy(temp?.takeIf{it.isFinite()}?.let{it.toInt().toString()+"°"}?:"--°",u,60,600)}
+                            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(u.space(16))){
+                                Column(Modifier.weight(1f).background(Color.White.copy(alpha=.07f),u.round(12)).padding(vertical=u.space(10)),horizontalAlignment=Alignment.CenterHorizontally){Copy("Chuva",u,18,400);Copy(rain?.takeIf{it.isFinite()}?.toInt()?.toString()?.plus("%")?:"—",u,24,600)}
+                                Column(Modifier.weight(1f).background(Color.White.copy(alpha=.07f),u.round(12)).padding(vertical=u.space(10)),horizontalAlignment=Alignment.CenterHorizontally){Copy("Umidade",u,18,400);Copy(humid?.takeIf{it.isFinite()}?.toInt()?.toString()?.plus("%")?:"—",u,24,600)}
+                            }
+                        }
                         if(dates==null){Copy("Previsão indisponível.",u,22)}
                         else LazyColumn(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(u.space(8))){
                             items(minOf(7,dates.length())){i->
@@ -245,6 +250,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                     }
                     "lyrics" -> {
                         Copy(track.str("titulo"),u,25,600,lines=2);Copy(track.str("artista"),u,20)
+                        Spacer(Modifier.height(u.space(14)))
                         val scroll=rememberScrollState();val scope=rememberCoroutineScope();val distance=with(androidx.compose.ui.platform.LocalDensity.current){u.space(140).roundToPx()}
                         LaunchedEffect(lyrics){scroll.scrollTo(0)}
                         Column(Modifier.weight(1f).fillMaxWidth().focusRequester(focus).onPreviewKeyEvent{event->if(event.type==KeyEventType.KeyDown&&(event.key==Key.DirectionDown||event.key==Key.DirectionUp)){val delta=if(event.key==Key.DirectionDown)distance else -distance;scope.launch{scroll.animateScrollTo((scroll.value+delta).coerceIn(0,scroll.maxValue),tween(300))};true}else false}.focusable().verticalScroll(scroll)){Text(lyrics?:"Carregando letra...",style=u.referenceText(22),color=Color.White)}
@@ -253,11 +259,12 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                     else -> {
                         if(owner!=null)NativeCommunity(u,panel,owner,services,account) else Copy("Emissora indisponível.",u,23)
                     }
-                }
+                }}
+                if(panel!="history"&&safeImage(panelAd.str("url"))!=null){Spacer(Modifier.height(u.space(14)));NativeInteractionBanner(u,panelAd)}
             }
         }
     }
-    LaunchedEffect(panel,loading,history.isNotEmpty(),forecast!=null){if(panel!="chat"&&panel!="poll")runCatching{focus.requestFocus()}}
+    LaunchedEffect(panel,loading,history.isNotEmpty(),forecast!=null){if(panel!="chat"&&panel!="poll"&&panel!="battle")runCatching{focus.requestFocus()}}
 }
 
 
@@ -296,4 +303,18 @@ internal suspend fun resolveHistoryCover(context:android.content.Context,song:JS
     }
     if(result.isNotBlank()){if(verifiedHistoryCovers.size>=250)verifiedHistoryCovers.clear();verifiedHistoryCovers[key]=result}
     return result
+}
+
+@Composable private fun NativeInteractionBanner(u:TvUnits,media:JSONObject?){
+    val url=safeImage(media.str("url"))?:return
+    val link=safeImage(media.str("link")).takeIf{media?.optBoolean("clickable")==true}
+    var focused by remember(url){mutableStateOf(false)}
+    var qr by remember(url,link){mutableStateOf(false)}
+    val shape=u.round(12)
+    val controls=if(link!=null)Modifier.onFocusChanged{focused=it.isFocused;if(!focused)qr=false}.border(u.space(if(focused)3 else 0),Color.White,shape).clickable{qr=!qr}else Modifier
+    BackHandler(qr){qr=false}
+    Box(Modifier.fillMaxWidth().height(u.space(172)).then(controls).clip(shape),contentAlignment=Alignment.Center){
+        Artwork(url,Modifier.fillMaxSize(),"Banner publicitário",scale=ContentScale.Fit)
+        if(qr&&link!=null)Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.82f)),contentAlignment=Alignment.Center){NativeQr(link,Modifier.size(u.space(152)).clip(u.round(4)),compact=true)}
+    }
 }

@@ -173,7 +173,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
 @Composable internal fun NativeLayout(
     screen:Screen,station:StationBootstrap?,stationName:String,payload:JSONObject?,track:JSONObject?,program:JSONObject?,presenter:JSONObject?,artistArtwork:String,backgroundAd:String,bannerLink:String,bannerQr:Boolean,onBannerQr:(Boolean)->Unit,
     player:ExoPlayer,playing:Boolean,buffering:Boolean,failure:String?,playerError:String?,controls:Boolean,chrome:Float,interaction:Boolean,
-    banner:String,historyAd:JSONObject?,sponsor:String?,weather:JSONObject?,history:List<JSONObject>,historyLoading:Boolean,historyError:Boolean,notice:String?,video:List<StationChannel>,selected:StationChannel?,
+    banner:String,historyAd:JSONObject?,panelAd:JSONObject?,backgroundAdEndsAt:Long,sponsor:String?,weather:JSONObject?,history:List<JSONObject>,historyLoading:Boolean,historyError:Boolean,notice:String?,video:List<StationChannel>,selected:StationChannel?,
     onRetry:()->Unit,onToggle:()->Unit,onBack:()->Unit,onOpen:(Screen)->Unit,onChannel:(Int)->Unit,onVideo:(StationChannel)->Unit,
     onInteraction:()->Unit,onNotice:(String?)->Unit,leavingScreen:Boolean,onVideoTrayFocus:(Boolean)->Unit,
     entryPending:Boolean,guestName:String,guestAvatar:Int,onGuestSave:(String,Int)->Unit,onProfileContinue:()->Unit,
@@ -312,6 +312,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                         if(bannerQr)BackHandler{onBannerQr(false)}
                     }
                     if(!homeBackgroundAd||homeChrome.value>.01f) GlassButton(u,"",u.at(1744,874,76,76).graphicsLayer{alpha=homeChrome.value}.focusRequester(sparkFocus).focusProperties{left=if(homeBannerVisible)bannerFocus else programFocus;up=clockFocus},icon="spark",accent=accent,accentRing=true,enabled=!homeBackgroundAd){onInteraction()}
+                    if(homeBackgroundAd&&backgroundAdEndsAt>0L)HomeBackgroundCountdown(u,backgroundAdEndsAt,u.at(100,940,64,64))
                     Copy("Nexo TV v"+BuildConfig.VERSION_NAME,u,15,400,u.at(100,1050,800,24),color=Color.White.copy(alpha=.55f))
                 }
                 if(watch) {
@@ -379,7 +380,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                 }
                 }
                 if(interaction && panel==null&&!homeBackgroundAd) InteractionCards(u, {onPanel(it)}, onInteraction,sparkFocus,screen==Screen.HOME)
-                if(scheduleOverlay){Box(Modifier.fillMaxSize()){Schedule(u,payload,program,accent,scheduleFocus,{onPanel(null)},account.str("id").ifBlank{guestName},scheduleGrid)}} else if(panel!=null) NativePanel(u,panel,payload,track,history,historyLoading,historyError,forecast,lyrics,cep,api,station?.ownerId,accent,{onPanel(null)},onCepSaved,onOpen,services,account,onAccount,historyAd)
+                if(scheduleOverlay){Box(Modifier.fillMaxSize()){Schedule(u,payload,program,accent,scheduleFocus,{onPanel(null)},account.str("id").ifBlank{guestName},scheduleGrid)}} else if(panel!=null) NativePanel(u,panel,payload,track,history,historyLoading,historyError,forecast,lyrics,cep,api,station?.ownerId,accent,{onPanel(null)},onCepSaved,onOpen,services,account,onAccount,historyAd,panelAd)
 
             }
             if(reminderText.isNotBlank()) Box(u.at(580,170,760,72).background(glass,u.round(24)).padding(u.space(15)),contentAlignment=Alignment.Center){Copy(reminderText,u,24,600)}
@@ -664,5 +665,13 @@ private data class HomeProgramSnapshot(val id:String,val name:String,val time:St
                 if(item.presenter.isNotBlank())Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(10))){Symbol("mic",Modifier.size(u.space(24)));Copy(item.presenter,u,24,400,lines=2)}
             }
         }
+    }
+}
+
+@Composable private fun HomeBackgroundCountdown(u:TvUnits,endsAt:Long,modifier:Modifier){
+    val fraction=remember(endsAt){Animatable(homeBackgroundAdProgress(endsAt,android.os.SystemClock.elapsedRealtime()))}
+    LaunchedEffect(endsAt){val remaining=(endsAt-android.os.SystemClock.elapsedRealtime()).coerceAtLeast(0L);fraction.snapTo(homeBackgroundAdProgress(endsAt,android.os.SystemClock.elapsedRealtime()));fraction.animateTo(1f,tween(remaining.toInt(),easing=LinearEasing))}
+    Box(modifier.clip(CircleShape).background(Color.Black.copy(alpha=.48f)).semantics{contentDescription="Tempo de exibição da publicidade"},contentAlignment=Alignment.Center){
+        Canvas(Modifier.size(u.space(48))){val sw=u.space(4).toPx();val top=Offset(sw,sw);val arc=Size(size.width-2*sw,size.height-2*sw);drawArc(Color.White.copy(alpha=.28f),-90f,360f,false,top,arc,style=Stroke(sw));drawArc(Color.White,-90f,360f*fraction.value,false,top,arc,style=Stroke(sw,cap=StrokeCap.Round))}
     }
 }

@@ -549,7 +549,16 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
             (it.strings("program_ids").isEmpty() || currentProgram?.str("id") in it.strings("program_ids")) }
             .sortedBy{it.str("id")}.flatMap { it.rows("media") }.filter { it.str("placement") == "home_banner" && safeImage(it.str("url"))!=null }
     }
-    val historyAd=campaigns.filter{it.str("start_date")<=stationDate&&it.str("end_date")>=stationDate&&(it.strings("program_ids").isEmpty()||currentProgram.str("id") in it.strings("program_ids"))}.sortedBy{it.str("id")}.flatMap{it.rows("media")}.firstOrNull{it.str("placement")=="history_ads"&&safeImage(it.str("url"))!=null}
+    val eligibleInteractionAds=remember(campaigns,stationDate,currentProgram.str("id")){nativeInteractionAds(campaigns,stationDate,currentProgram.str("id"))}
+    val historyAd=eligibleInteractionAds["history_ads"]?.firstOrNull()
+    val panelPlacement=nativeInteractionPlacement(panel)
+    val panelAds=eligibleInteractionAds[panelPlacement].orEmpty()
+    val panelAdIdentity=panelAds.map{it.str("url")+"|"+it.str("link")}
+    var panelAdIndex by remember(panel,panelAdIdentity){mutableIntStateOf(0)}
+    LaunchedEffect(panel,panelAdIdentity){if(panelAds.size>1)while(true){delay(300000L);panelAdIndex=(panelAdIndex+1)%panelAds.size}}
+    val panelAd=panelAds.getOrNull(panelAdIndex)
+    val interactionPreload=eligibleInteractionAds.values.flatten().mapNotNull{safeImage(it.str("url"))}.distinct().take(10)
+    LaunchedEffect(interactionPreload){for(url in interactionPreload)context.imageLoader.enqueue(ImageRequest.Builder(context).data(url).size(600,240).build())}
     val backgroundAds=campaigns.filter{it.str("start_date")<=stationDate&&it.str("end_date")>=stationDate&&(it.strings("program_ids").isEmpty()||currentProgram.str("id") in it.strings("program_ids"))}.flatMap{it.rows("media")}.filter{it.str("placement")=="background_ads"}
     val bannerIdentity=banners.map{it.str("url")+"|"+it.str("link")}
     LaunchedEffect(bannerIdentity,campaignsReady){if(campaignsReady)android.util.Log.i("NexoAds","eligible home banners="+banners.size+" history="+(historyAd!=null))}
@@ -560,18 +569,20 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
     val homeAdBlocked by rememberUpdatedState(interaction||panel!=null||notice!=null)
     val latestBackgroundAds by rememberUpdatedState(backgroundAds.map{it.str("url")}.filter{safeImage(it)!=null}.distinct())
     var visibleBackgroundAd by remember { mutableStateOf("") }
+    var backgroundAdEndsAt by remember { mutableLongStateOf(0L) }
     LaunchedEffect(screen,entryPending,station?.ownerId) {
-        visibleBackgroundAd=""
+        visibleBackgroundAd="";backgroundAdEndsAt=0L
         if(screen!=Screen.HOME||entryPending)return@LaunchedEffect
         var index=0
         while(true){
             delay(60_000L)
             while(latestBackgroundAds.isEmpty()||homeAdBlocked)delay(1000)
             val pool=latestBackgroundAds
+            backgroundAdEndsAt=android.os.SystemClock.elapsedRealtime()+HOME_BACKGROUND_AD_MS
             visibleBackgroundAd=pool[index%pool.size]
             index++
-            delay(10_000L)
-            visibleBackgroundAd=""
+            delay(HOME_BACKGROUND_AD_MS)
+            visibleBackgroundAd="";backgroundAdEndsAt=0L
         }
     }
     LaunchedEffect(panel,track.str("titulo"),track.str("artista")) {
@@ -591,7 +602,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         screen=screen, station=station, stationName=stationName, payload=data, track=track,
         program=currentProgram,presenter=currentPresenter,artistArtwork=artistArtwork,backgroundAd=visibleBackgroundAd.takeIf{screen==Screen.HOME&&it in latestBackgroundAds}.orEmpty(),bannerLink=banners.getOrNull(bannerIndex).takeIf{it?.optBoolean("clickable")==true}.str("link"),bannerQr=bannerQr,onBannerQr={bannerQr=it},player=player,playing=playing,buffering=buffering,
         failure=failure,playerError=playerError,controls=controls,chrome=chrome,interaction=interaction,
-        banner=banners.getOrNull(bannerIndex).str("url"),historyAd=historyAd,sponsor=sponsorUrls.getOrNull(sponsorIndex),weather=weather,history=history,historyLoading=historyLoading,historyError=historyError,
+        banner=banners.getOrNull(bannerIndex).str("url"),historyAd=historyAd,panelAd=panelAd,backgroundAdEndsAt=backgroundAdEndsAt,sponsor=sponsorUrls.getOrNull(sponsorIndex),weather=weather,history=history,historyLoading=historyLoading,historyError=historyError,
         notice=notice,video=video,selected=selected, onRetry={retry++},onToggle=::toggle,onBack=::animatedBack,leavingScreen=leavingScreen,onVideoTrayFocus={videoTrayFocused=it},
         entryPending=entryPending, guestName=account?.optJSONObject("user_metadata").str("full_name").ifBlank{account?.optJSONObject("user_metadata").str("name")}.ifBlank{guestName}, guestAvatar=guestAvatar,
         spectrum=spectrum, panel=panel,forecast=forecast,lyrics=lyrics,cep=cep,api=api,services=services,account=account,
@@ -650,3 +661,11 @@ internal fun isNativeBreak(track:JSONObject?):Boolean=listOf(track.str("titulo")
 
 /** Both live channels show the dedicated video creative during a Smart Break. */
 internal fun smartBreakVideoMedia(media:List<JSONObject>):List<JSONObject> = media.filter{it.str("placement")=="smart_break_video"&&it.str("url").startsWith("https://")}.sortedBy{it.optInt("order")}
+
+internal const val HOME_BACKGROUND_AD_MS=10_000L
+internal fun nativeInteractionPlacement(panel:String?):String=when(panel){"lyrics"->"lyrics_ads";"chat"->"chat_ads";"poll","battle"->"poll_ads";"weather"->"weather_ads";"history"->"history_ads";else->""}
+internal fun nativeInteractionAds(campaigns:List<JSONObject>,date:String,program:String):Map<String,List<JSONObject>>{
+    val placements=setOf("lyrics_ads","chat_ads","poll_ads","weather_ads","history_ads")
+    return campaigns.filter{it.str("start_date")<=date&&it.str("end_date")>=date&&(it.strings("program_ids").isEmpty()||program in it.strings("program_ids"))}.sortedBy{it.str("id")}.flatMap{it.rows("media")}.filter{it.str("placement") in placements&&safeImage(it.str("url"))!=null}.groupBy{it.str("placement")}
+}
+internal fun homeBackgroundAdProgress(endsAt:Long,now:Long):Float=(1f-(endsAt-now).toFloat()/HOME_BACKGROUND_AD_MS).coerceIn(0f,1f)
