@@ -46,6 +46,19 @@ private suspend fun getJson(url:String):JSONObject=withContext(Dispatchers.IO){
     try {c.connectTimeout=5000;c.readTimeout=7000;check(c.responseCode in 200..299);JSONObject(c.inputStream.bufferedReader().use{it.readText()})}finally{c.disconnect()}
 }
 private val states=mapOf("AC" to "Acre","AL" to "Alagoas","AP" to "Amapá","AM" to "Amazonas","BA" to "Bahia","CE" to "Ceará","DF" to "Distrito Federal","ES" to "Espírito Santo","GO" to "Goiás","MA" to "Maranhão","MT" to "Mato Grosso","MS" to "Mato Grosso do Sul","MG" to "Minas Gerais","PA" to "Pará","PB" to "Paraíba","PR" to "Paraná","PE" to "Pernambuco","PI" to "Piauí","RJ" to "Rio de Janeiro","RN" to "Rio Grande do Norte","RS" to "Rio Grande do Sul","RO" to "Rondônia","RR" to "Roraima","SC" to "Santa Catarina","SP" to "São Paulo","SE" to "Sergipe","TO" to "Tocantins")
+internal fun matchCepCity(rows:List<JSONObject>,city:String,state:String,uf:String):JSONObject? {
+    if(city.isBlank()||state.isBlank()||uf.isBlank())return null
+    return rows.firstOrNull { row ->
+        val country=norm(row.str("country"))
+        val code=row.str("country_code").uppercase(Locale.ROOT)
+        val actualState=norm(row.str("admin1"))
+        val name=norm(row.str("name"))
+        val lat=row.optDouble("latitude");val lon=row.optDouble("longitude")
+        (if(code.isNotBlank())code=="BR" else country in setOf("brasil","brazil","br")) &&
+            actualState in setOf(norm(state),norm(uf)) && name==norm(city) &&
+            lat.isFinite()&&lon.isFinite()&&lat in -90.0..90.0&&lon in -180.0..180.0
+    }
+}
 private val coverCache=mutableMapOf<String,String>()
 private suspend fun coverFor(title:String,artist:String):String {
     if(title.isBlank()||artist.isBlank())return ""
@@ -124,7 +137,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                     var msg by remember{mutableStateOf("")}
                     var busy by remember{mutableStateOf(false)}
                     var city by remember{mutableStateOf("")}
-                    LaunchedEffect(digits){city="";if(digits.length==8){delay(300);try{val a=getJson("https://viacep.com.br/ws/$digits/json/");if(!a.optBoolean("erro"))city=a.str("localidade")+" / "+a.str("uf")}catch(e:CancellationException){throw e}catch(_:Exception){}}}
+                    LaunchedEffect(digits){city="";msg="";if(digits.length==8){delay(300);try{val a=getJson("https://viacep.com.br/ws/$digits/json/");if(!a.optBoolean("erro"))city=a.str("localidade")+" / "+a.str("uf")}catch(e:CancellationException){throw e}catch(_:Exception){}}}
                     Row(verticalAlignment=Alignment.CenterVertically){Copy("Configurar tempo pelo CEP",u,30,600,Modifier.weight(1f));GlassButton(u,"",Modifier.size(u.space(56)),icon="left",onClick=onClose)}
                     Copy("Informe seu CEP para buscar o tempo da sua região.",u,22,400,lines=2)
                     Box(Modifier.fillMaxWidth().height(u.space(64)).background(Color(0xFF303030),u.round(18)),contentAlignment=Alignment.Center){
@@ -148,7 +161,11 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                                 val a=getJson("https://viacep.com.br/ws/$digits/json/")
                                 check(!a.optBoolean("erro")&&a.str("localidade").isNotBlank()){"CEP não encontrado."}
                                 val state=a.str("estado").ifBlank{states[a.str("uf")].orEmpty()}
-                                val match=api.geocode(a.str("localidade")).rows("results").firstOrNull{it.str("country_code")=="BR"&&norm(it.str("admin1"))==norm(state)&&it.optDouble("latitude").isFinite()&&it.optDouble("longitude").isFinite()}
+                                val municipality=a.str("localidade")
+                                val candidates=api.geocode(municipality+", "+state+", Brasil").rows("results")
+                                val match=matchCepCity(candidates,municipality,state,a.str("uf"))
+                                    ?:matchCepCity(api.geocode(municipality).rows("results"),municipality,state,a.str("uf"))
+                                    ?:matchCepCity(getJson("https://geocoding-api.open-meteo.com/v1/search?name="+URLEncoder.encode(municipality,"UTF-8")+"&count=20&language=pt&format=json&countryCode=BR").rows("results"),municipality,state,a.str("uf"))
                                 check(match!=null){"Não foi possível confirmar a cidade e o estado."}
                                 onCepSaved(digits,JSONObject().put("lat",match.optDouble("latitude")).put("lon",match.optDouble("longitude")))
                             }catch(e:CancellationException){throw e}catch(e:Exception){msg=e.message?:"Não foi possível salvar o CEP."}finally{busy=false}

@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import kotlinx.coroutines.withTimeoutOrNull
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
 import androidx.media3.common.PlaybackException
 import androidx.media3.exoplayer.ExoPlayer
@@ -33,8 +34,8 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 class NativeActivity : ComponentActivity() {
-    private var player by mutableStateOf<ExoPlayer?>(null)
-    private var rendererFallback = false
+    private lateinit var player:ExoPlayer
+    private var resumeOnForeground=false
     private val spectrum = PcmSpectrum()
     private var activity by mutableIntStateOf(0)
     private var hidden by mutableStateOf(false)
@@ -44,23 +45,12 @@ class NativeActivity : ComponentActivity() {
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         @Suppress("DEPRECATION")
         window.decorView.systemUiVisibility = 5894
-        player = makePlayer(false)
-        setContent { player?.let { active -> NativeTv(active, spectrum, activity, { failed -> fallback(failed) }) { hidden = it } } }
-    }
-    private fun makePlayer(fallback:Boolean):ExoPlayer =
-        (if(fallback) ExoPlayer.Builder(this) else ExoPlayer.Builder(this,SpectrumRenderers(this,spectrum))).build().apply {
+        player = ExoPlayer.Builder(this).build().apply {
             setAudioAttributes(AudioAttributes.DEFAULT,true)
         }
-    private fun fallback(failed:ExoPlayer):Boolean {
-        if(rendererFallback || player!==failed) return false
-        val item=failed.currentMediaItem ?: return false
-        rendererFallback=true
-        val play=failed.playWhenReady
-        val next=makePlayer(true)
-        failed.release()
-        player=next
-        next.setMediaItem(item);next.prepare();next.playWhenReady=play
-        return true
+        val info=applicationInfo
+        runCatching { android.util.Log.i("NexoLauncher","package="+packageName+" icon="+resources.getResourceName(info.icon)+" banner="+resources.getResourceName(info.banner)+" model="+android.os.Build.MODEL+" sdk="+android.os.Build.VERSION.SDK_INT) }
+        setContent { NativeTv(player, spectrum, activity) { hidden = it } }
     }
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_UP && consumedKey == event.keyCode) {
@@ -85,8 +75,9 @@ class NativeActivity : ComponentActivity() {
         activity++
         return super.dispatchTouchEvent(event)
     }
-    override fun onStop() { player?.pause(); super.onStop() }
-    override fun onDestroy() { player?.release(); super.onDestroy() }
+    override fun onStart() { super.onStart();if(resumeOnForeground&&::player.isInitialized){resumeOnForeground=false;player.play()} }
+    override fun onStop() { if(::player.isInitialized){resumeOnForeground=player.playWhenReady;player.pause()};super.onStop() }
+    override fun onDestroy() { if(::player.isInitialized)player.release();super.onDestroy() }
 }
 
 internal enum class Screen { HOME, AUDIO, VIDEO, SCHEDULE, CATALOG, PROFILE, SEARCH, HISTORY }
@@ -103,7 +94,7 @@ internal val brasilia = ZoneId.of("America/Sao_Paulo")
 internal fun safeImage(url: String): String? = url.takeIf { it.startsWith("https://") || it.startsWith("http://") }
 
 @Composable
-private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onFallback:(ExoPlayer)->Boolean, onHidden: (Boolean)->Unit) {
+private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onHidden: (Boolean)->Unit) {
     val api = remember { HouseMixClient(BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_ANON_KEY) }
     var startup by remember { mutableStateOf(true) }
     var entryPending by remember { mutableStateOf(true) }
@@ -151,13 +142,17 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onF
     val video = station?.channels.orEmpty().filter { it.type == "video_live" }
     val stationName = station?.name ?: BuildConfig.STATION_NAME
 
+    var playbackAttempt by remember { mutableIntStateOf(0) }
+    var recoveryCount by remember { mutableIntStateOf(0) }
     fun resumeLive(autoplay:Boolean) {
         if(player.mediaItemCount==0)return
         if(player.playbackState==Player.STATE_IDLE || player.playbackState==Player.STATE_ENDED) {
             player.seekToDefaultPosition();player.prepare()
         }
         playerError=null
+        player.volume=1f
         player.playWhenReady=autoplay
+        if(autoplay) playbackAttempt++
     }
     fun select(channel: StationChannel, destination: Screen, autoplay: Boolean = true) {
         val watch=destination==Screen.AUDIO||destination==Screen.VIDEO
@@ -171,10 +166,14 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onF
         // Live must not wait on the commercial API.
         if(nextAd!=null)player.pause()
         if(selected?.id!=channel.id||player.mediaItemCount==0){
-            player.setMediaItem(MediaItem.fromUri(channel.url));selected=channel
+            val item=MediaItem.Builder().setUri(channel.url)
+            if(channel.url.contains(".m3u8",ignoreCase=true))item.setMimeType(MimeTypes.APPLICATION_M3U8)
+            player.setMediaItem(item.build());selected=channel;recoveryCount=0
+            player.prepare()
         }
         playerError=null;resumeAfterAd=autoplay;ad=nextAd
         if(watch){lastChannel=channel.id;fromHome=false}
+        if(nextAd!=null)lastAdAt=now
         screen=destination;controls=true
         resumeLive(autoplay&&nextAd==null)
     }
@@ -183,9 +182,8 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onF
         if (player.playWhenReady && player.playbackState != Player.STATE_ENDED && playerError == null) {
             player.pause()
         } else {
-            if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) player.prepare()
-            playerError = null
-            player.play()
+            recoveryCount=0
+            resumeLive(true)
         }
         if (selected?.type == "audio_live") audioIntent = player.playWhenReady
     }
@@ -216,12 +214,12 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onF
     BackHandler(ad!=null || screen != Screen.HOME || interaction || notice != null || panel != null) { back() }
     DisposableEffect(player) {
         val listener = object : Player.Listener {
-            override fun onIsPlayingChanged(isPlaying: Boolean) { playing = isPlaying }
-            override fun onPlaybackStateChanged(playbackState: Int) { buffering = playbackState == Player.STATE_BUFFERING }
+            override fun onIsPlayingChanged(isPlaying: Boolean) { playing = isPlaying; if(isPlaying){playerError=null;android.util.Log.i("NexoPlayback","LIVE_PLAYING")} }
+            override fun onPlaybackStateChanged(playbackState: Int) { buffering = playbackState == Player.STATE_BUFFERING;android.util.Log.i("NexoPlayback","STATE="+playbackState+" requested="+player.playWhenReady) }
+            override fun onPlaybackSuppressionReasonChanged(playbackSuppressionReason:Int){android.util.Log.w("NexoPlayback","SUPPRESSION="+playbackSuppressionReason)}
             override fun onPlayerError(error: PlaybackException) {
                 android.util.Log.w("NexoPlayback",error.errorCodeName,error)
-                if(ad==null && error.errorCode in 4000..5999 && onFallback(player))return
-                playerError = "Sinal indisponível. Tente novamente."
+                playerError = "Sinal indisponível ("+error.errorCodeName+"). Pressione Play para tentar novamente."
             }
         }
         player.addListener(listener)
@@ -297,20 +295,29 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onF
         catch (_: Exception) { historyError = true }
         finally { historyLoading = false }
     }
-    LaunchedEffect(player,selected?.id,entryPending,ad,playerError){
-        if(!entryPending&&ad==null&&playerError!=null&&player.playWhenReady){
-            delay(2500);player.seekToDefaultPosition();player.prepare();player.play()
+    LaunchedEffect(player,selected?.id,entryPending,ad,playbackAttempt){
+        if(entryPending||ad!=null||!player.playWhenReady)return@LaunchedEffect
+        while(player.playWhenReady&&recoveryCount<2){
+            delay(12000)
+            if(player.isPlaying||!player.playWhenReady||ad!=null)break
+            recoveryCount++
+            android.util.Log.w("NexoPlayback","LIVE_RETRY="+recoveryCount)
+            player.seekToDefaultPosition();player.prepare();player.play()
+        }
+        if(player.playWhenReady&&!player.isPlaying&&recoveryCount>=2){
+            delay(12000)
+            if(player.playWhenReady&&!player.isPlaying)playerError="Sinal indisponível. Pressione Play para tentar novamente."
         }
     }
     val watch = screen == Screen.AUDIO || screen == Screen.VIDEO
     LaunchedEffect(screen,activity,interaction,notice,panel,buffering,playerError,playing) {
         controls = true
         if (watch && !interaction && notice == null && panel == null && (screen == Screen.AUDIO || (playing && !buffering && playerError == null))) {
-            delay(5000)
+            delay(8000)
             controls = false
         }
     }
-    SideEffect { onHidden(watch && !controls && !interaction && notice == null && panel == null) }
+    SideEffect { onHidden(watch && ad==null && !controls && !interaction && notice == null && panel == null) }
     val chrome by animateFloatAsState(if(controls) 1f else 0f, tween(350),label="watchChrome")
     val data = payload
     val currentProgram = data?.optJSONObject("currentProgram")
@@ -401,7 +408,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onF
             }
         },onChannel=onChannel,onVideo={select(it,Screen.VIDEO)},onInteraction={interaction=!interaction},
         onNotice={notice=it})
-    ad?.let{media->NativePreroll(media,selected?.type=="audio_live",onStarted={lastAdAt=System.currentTimeMillis()},onFinish={ad=null;resumeLive(resumeAfterAd)})}
+    ad?.let{media->NativePreroll(media,selected?.type=="audio_live",onStarted={lastAdAt=System.currentTimeMillis()},onFinish={ad=null;scope.launch { withFrameNanos { };resumeLive(resumeAfterAd) }})}
     AnimatedVisibility(visible=startup, enter=fadeIn(tween(650)), exit=fadeOut(tween(650))) {
         StartupSplash(startupStage)
     }

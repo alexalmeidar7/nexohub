@@ -60,10 +60,12 @@ jobs:
             apk=$(find "firetv/native-tv/build/outputs/apk/$station/debug" -name '*.apk' | head -1)
             test -s "$apk"
             "$aapt" dump badging "$apk" > /tmp/nexo-$station-badging.txt
-            grep -q "versionCode='8'" /tmp/nexo-$station-badging.txt
+            grep -q "versionCode='9'" /tmp/nexo-$station-badging.txt
             grep -E "application-icon-[0-9]+:.*${station}_launcher" /tmp/nexo-$station-badging.txt
             unzip -Z1 "$apk" | grep 'native_tv_banner.png'
             unzip -Z1 "$apk" | grep 'native_tv_launcher.png'
+            "$aapt" dump xmltree "$apk" AndroidManifest.xml > /tmp/nexo-$station-manifest.txt
+            grep -E 'android:(icon|banner|roundIcon)' /tmp/nexo-$station-manifest.txt
           done
       - uses: actions/upload-artifact@v4
         with:

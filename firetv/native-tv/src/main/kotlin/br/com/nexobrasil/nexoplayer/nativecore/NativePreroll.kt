@@ -31,7 +31,7 @@ import org.json.JSONObject
         val listener=object:Player.Listener{
             override fun onIsPlayingChanged(isPlaying:Boolean){if(isPlaying&&!played){played=true;started()}}
             override fun onPlaybackStateChanged(playbackState:Int){if(playbackState==Player.STATE_ENDED)complete()}
-            override fun onPlayerError(error:PlaybackException){complete()}
+            override fun onPlayerError(error:PlaybackException){android.util.Log.w("NexoPlayback","PREROLL_"+error.errorCodeName);complete()}
         }
         player.addListener(listener);try{player.setMediaItem(MediaItem.fromUri(media.str("url")));player.prepare();player.play()}catch(_:Exception){complete()}
         onDispose{player.removeListener(listener);player.release()}
