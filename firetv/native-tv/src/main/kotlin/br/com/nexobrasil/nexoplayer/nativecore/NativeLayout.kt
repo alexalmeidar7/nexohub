@@ -148,7 +148,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     }
 }
 
-@Composable private fun RailItem(u:TvUnits,icon:String,label:String,accent:Color,modifier:Modifier=Modifier,avatar:Int=R.drawable.visitor_avatar,loading:Boolean=false,onClick:()->Unit) {
+@Composable private fun RailItem(u:TvUnits,icon:String,label:String,accent:Color,modifier:Modifier=Modifier,avatar:Any=R.drawable.visitor_avatar,loading:Boolean=false,onClick:()->Unit) {
     var focused by remember { mutableStateOf(false) }
     val shape=CircleShape
     val active=LocalControlsEnabled.current
@@ -159,7 +159,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
         .clickable(enabled=active,onClick=onClick).semantics { contentDescription=label }
         .padding(u.space(7)),verticalAlignment=Alignment.CenterVertically) {
         Box(Modifier.size(u.space(62)).background(accentGlass(accent),shape).clip(shape),contentAlignment=Alignment.Center) {
-            if(loading)NativeSpinner(u,Modifier.size(u.space(32))) else if(icon=="user") Artwork(avatar,Modifier.fillMaxSize(),scale=ContentScale.Crop)
+            if(loading)NativeSpinner(u,Modifier.size(u.space(32))) else if(icon=="user") NativeAvatarImage(avatar,Modifier.fillMaxSize())
             else Symbol(icon,Modifier.size(u.space(30)))
         }
         AnimatedVisibility(visible=focused,
@@ -176,7 +176,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     banner:String,historyAd:JSONObject?,panelAd:JSONObject?,backgroundAdEndsAt:Long,sponsor:String?,weather:JSONObject?,history:List<JSONObject>,historyLoading:Boolean,historyError:Boolean,notice:String?,video:List<StationChannel>,selected:StationChannel?,
     onRetry:()->Unit,onToggle:()->Unit,onBack:()->Unit,onOpen:(Screen)->Unit,onChannel:(Int)->Unit,onVideo:(StationChannel)->Unit,
     onInteraction:()->Unit,onNotice:(String?)->Unit,leavingScreen:Boolean,onVideoTrayFocus:(Boolean)->Unit,
-    entryPending:Boolean,guestName:String,guestAvatar:Int,onGuestSave:(String,Int)->Unit,onProfileContinue:()->Unit,
+    entryPending:Boolean,guestName:String,guestAvatar:Int,displayAvatar:Any,mainProfileName:String,mainAvatar:Any,listenerProfile:JSONObject?,onListenerProfile:(JSONObject)->Unit,onSelectProfile:(String)->Unit,onGuestSave:(String,Int)->Unit,onProfileContinue:()->Unit,
     spectrum:PcmSpectrum,panel:String?,forecast:JSONObject?,lyrics:String?,cep:String,api:HouseMixClient,services:NativeServices,account:JSONObject?,onAccount:(JSONObject)->Unit,onLogout:()->Unit,onPanel:(String?)->Unit,onCepSaved:(String,JSONObject)->Unit,scheduleOpening:Boolean,interactionReturn:Int,channelOpening:Screen?,syncStatus:SyncStatus,manualSync:Long?,onSaveSync:(Long?)->Unit,onCalibrateSync:()->Unit,canCalibrateSync:Boolean
 ) {
     val accent = remember(payload) {
@@ -281,7 +281,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                         RailItem(u,"video","Assistir",accent,route(1),loading=channelOpening==Screen.VIDEO){onOpen(Screen.VIDEO)}
                         RailItem(u,"catalog","On Demand",accent,route(2)){onOpen(Screen.CATALOG)}
                         RailItem(u,"calendar","Grade de programação",accent,route(3),loading=scheduleOpening&&scheduleFromRail){scheduleFromRail=true;onOpen(Screen.SCHEDULE)}
-                        RailItem(u,"user","Olá, $guestName",accent,route(4),avatar=guestAvatar){onOpen(Screen.PROFILE)}
+                        RailItem(u,"user","Olá, $guestName",accent,route(4),avatar=displayAvatar){onOpen(Screen.PROFILE)}
                     }
                     if(!homeBackgroundAd||homeChrome.value>.01f) CompositionLocalProvider(LocalControlsEnabled provides (!modal&&!leavingScreen&&!homeBackgroundAd)){
                     Column(u.at(programLeft,272,505,340).graphicsLayer{alpha=homeChrome.value},verticalArrangement=Arrangement.spacedBy(u.space(12))) {
@@ -326,7 +326,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                         }
                     }
                     if(screen==Screen.AUDIO||controls||chrome>.01f) {
-                        WatchHeader(u,logo,stationName,screen,accent,weather,if(screen==Screen.VIDEO) chrome else 1f,controls||screen==Screen.AUDIO,guestAvatar,{onOpen(Screen.PROFILE)},{onPanel("cep")},Modifier.focusRequester(clockFocus).focusProperties{down=likeFocus;left=likeFocus})
+                        WatchHeader(u,logo,stationName,screen,accent,weather,if(screen==Screen.VIDEO) chrome else 1f,controls||screen==Screen.AUDIO,displayAvatar,{onOpen(Screen.PROFILE)},{onPanel("cep")},Modifier.focusRequester(clockFocus).focusProperties{down=likeFocus;left=likeFocus})
                     }
                     if(screen==Screen.VIDEO && chrome>.01f && title!="Ao vivo") {
                         NativeLike(u,services,account,station?.ownerId.orEmpty(),title,artist,cover,u.at(134,455,850,165).alpha(chrome),Modifier.focusRequester(likeFocus).focusProperties{down=focus;right=clockFocus},videoStyle=true,enabled=controls)
@@ -374,8 +374,9 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                     GlassButton(u,"Voltar",u.at(100,950,155,56).focusRequester(focus),icon="left",onClick=onBack)
                 }
                 if(screen==Screen.PROFILE) {
-                    NativeProfiles(u,logo,accent,focus,entryPending,guestName,guestAvatar,onProfileContinue,onGuestSave,
-                        onConnect={onPanel("pair")},account=account,onLogout=onLogout)
+                    if(account!=null) NativeAuthenticatedProfiles(u,logo,accent,focus,mainProfileName,mainAvatar,listenerProfile,station?.ownerId,account,services,onListenerProfile,onSelectProfile,onProfileContinue,onLogout)
+                    else NativeProfiles(u,logo,accent,focus,entryPending,guestName,guestAvatar,onProfileContinue,onGuestSave,
+                        onConnect={onPanel("pair")},account=null,onLogout=onLogout)
                 }
                 }
                 }
@@ -428,13 +429,13 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     GlassButton(u,"",u.at(1512,76,56,56).then(searchModifier),icon="search",onClick=onSearch)
     Clock(u,u.at(1592,76,230,56).then(clockModifier),weather,onCep)
 }
-@Composable private fun WatchHeader(u:TvUnits,logo:String?,name:String,screen:Screen,accent:Color,weather:JSONObject?,alpha:Float,enabled:Boolean,guestAvatar:Int,onProfile:()->Unit,onCep:()->Unit,clockModifier:Modifier=Modifier) {
+@Composable private fun WatchHeader(u:TvUnits,logo:String?,name:String,screen:Screen,accent:Color,weather:JSONObject?,alpha:Float,enabled:Boolean,guestAvatar:Any,onProfile:()->Unit,onCep:()->Unit,clockModifier:Modifier=Modifier) {
     Row(u.at(100,76,1000,64).alpha(alpha),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(25))) {
         Artwork(logo,Modifier.size(u.space(70),u.space(60)));Copy(name,u,22,500);Badge(u,if(screen==Screen.VIDEO)"Vídeo" else "Áudio",accent)
     }
     Copy("• AO VIVO",u,20,600,u.at(1350,91,135,44).alpha(alpha))
     Clock(u,u.at(1485,76,240,62).alpha(alpha).then(clockModifier),weather,onCep)
-    Box(u.at(1760,76,62,62).alpha(alpha).clip(CircleShape).background(accentGlass(accent)).clickable(enabled=enabled,onClick=onProfile)) { Artwork(guestAvatar,Modifier.fillMaxSize(),scale=ContentScale.Crop) }
+    Box(u.at(1760,76,62,62).alpha(alpha).clip(CircleShape).background(accentGlass(accent)).clickable(enabled=enabled,onClick=onProfile)) { NativeAvatarImage(guestAvatar,Modifier.fillMaxSize()) }
 }
 
 internal fun nativeCurrentProgram(payload:JSONObject?,now:java.time.ZonedDateTime=java.time.ZonedDateTime.now(brasilia)):JSONObject? {

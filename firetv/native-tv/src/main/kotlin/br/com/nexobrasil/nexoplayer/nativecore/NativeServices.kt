@@ -42,12 +42,13 @@ internal class NativeServices(private val api:HouseMixClient,context:Context) {
         val c=Cipher.getInstance("AES/GCM/NoPadding");c.init(Cipher.DECRYPT_MODE,key(),GCMParameterSpec(128,bytes.copyOfRange(0,12)))
         JSONObject(String(c.doFinal(bytes.copyOfRange(12,bytes.size))))
     }.getOrNull()
-    private suspend fun request(path:List<String>,query:Map<String,String> = emptyMap(),body:JSONObject?=null,method:String=if(body==null)"GET" else "POST",token:String?=null):Any?=withContext(Dispatchers.IO){
+    private suspend fun request(path:List<String>,query:Map<String,String> = emptyMap(),body:JSONObject?=null,method:String=if(body==null)"GET" else "POST",token:String?=null,prefer:String?=null):Any?=withContext(Dispatchers.IO){
         val b=api.origin.buildUpon();path.forEach{b.appendPath(it)};query.forEach{(k,v)->b.appendQueryParameter(k,v)}
         val c=URL(b.build().toString()).openConnection() as HttpURLConnection
         try{
             c.requestMethod=method;c.connectTimeout=8000;c.readTimeout=12000;c.instanceFollowRedirects=false
             c.setRequestProperty("apikey",api.publishableKey);c.setRequestProperty("Authorization","Bearer "+(token?:api.publishableKey));c.setRequestProperty("Accept","application/json")
+            if(prefer!=null)c.setRequestProperty("Prefer",prefer)
             if(body!=null){c.doOutput=true;c.setRequestProperty("Content-Type","application/json");c.outputStream.use{it.write(body.toString().toByteArray())}}
             check(c.responseCode in 200..299){"Servidor indisponível (HTTP "+c.responseCode+")."}
             val s=c.inputStream.bufferedReader().use{it.readText()};if(s.isBlank())null else org.json.JSONTokener(s).nextValue()
@@ -101,6 +102,24 @@ internal class NativeServices(private val api:HouseMixClient,context:Context) {
     suspend fun rpc(name:String,body:JSONObject,auth:Boolean=false):Any?{
         val token=access();if(auth&&token==null)error("Conecte sua conta Google para participar.")
         return request(listOf("rest","v1","rpc",name),body=body,token=token)
+    }
+    private fun listenerFilter(owner:String,user:String)=mapOf("auth_user_id" to "eq."+user,"radio_user_id" to "eq."+owner)
+    suspend fun listenerProfile(owner:String,user:String):JSONObject?{
+        val token=access()?:error("Conecte sua conta Google.")
+        val rows=request(listOf("rest","v1","player_listener_profiles"),listenerFilter(owner,user)+mapOf("select" to "nome,avatar_url,sub_profiles,updated_at","limit" to "1"),token=token) as? JSONArray
+        return rows?.optJSONObject(0)
+    }
+    suspend fun updateListenerProfile(owner:String,user:String,change:(JSONObject?)->JSONObject):JSONObject{
+        val token=access()?:error("Conecte sua conta Google.")
+        val before=listenerProfile(owner,user)
+        val patch=change(before).put("updated_at",java.time.Instant.now().toString())
+        val path=listOf("rest","v1","player_listener_profiles")
+        val result=if(before==null){
+            request(path,body=patch.put("auth_user_id",user).put("radio_user_id",owner),token=token,prefer="return=representation")
+        }else{
+            request(path,listenerFilter(owner,user)+mapOf("updated_at" to "eq."+before.str("updated_at")),patch,method="PATCH",token=token,prefer="return=representation")
+        } as? JSONArray
+        return result?.optJSONObject(0)?:error("Perfil alterado em outro dispositivo. Tente novamente.")
     }
     suspend fun polls(owner:String):List<JSONObject>{
         val now=java.time.ZonedDateTime.now(brasilia)

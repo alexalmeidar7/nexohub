@@ -80,7 +80,7 @@ import org.json.JSONObject
     val infoFocus=remember{FocusRequester()};val closeFocus=remember{FocusRequester()};val announceFocus=remember{FocusRequester()};val qrFocus=remember{FocusRequester()}
     val phone=commercialPhone.filter{it.isDigit()}.let{if(it.length in 10..11)"55"+it else it}
     val contactUrl=if(phone.length in 12..15)"https://wa.me/"+phone else ""
-    val showLink=media.str("link").startsWith("https://")
+    val showLink=safeImage(media.str("link"))!=null
     val qrEnabled=smart&&showLink&&smartActive&&!info
     var qrFocused by remember{mutableStateOf(false)}
     val active by rememberUpdatedState(smartActive)
@@ -134,12 +134,12 @@ import org.json.JSONObject
             }
             if(smart){
                 // Identity includes the playback sequence so identical links animate on every creative change.
-                val target=smartSerial to media.str("link").takeIf{showLink&&smartActive}.orEmpty()
-                Box(Modifier.align(Alignment.BottomEnd).padding(end=u.space(105),bottom=u.space(75)).size(u.space(246),u.space(266)).focusRequester(qrFocus).onFocusChanged{qrFocused=it.isFocused}.focusProperties{canFocus=qrEnabled;up=infoFocus;left=infoFocus}.semantics{contentDescription="Saiba mais, QR Code da publicidade"}.focusable(enabled=qrEnabled)){
-                    AnimatedContent(targetState=target,modifier=Modifier.fillMaxSize(),contentAlignment=Alignment.BottomEnd,transitionSpec={
+                val target=smartSerial to if(smartActive)smartCreativeDetails(media)else null
+                Box(Modifier.align(Alignment.BottomEnd).padding(end=u.space(105),bottom=u.space(75)).focusRequester(qrFocus).onFocusChanged{qrFocused=it.isFocused}.focusProperties{canFocus=qrEnabled;up=infoFocus;left=infoFocus}.semantics{contentDescription="Saiba mais, QR Code da publicidade"}.focusable(enabled=qrEnabled)){
+                    AnimatedContent(targetState=target,contentAlignment=Alignment.BottomEnd,transitionSpec={
                         ((slideInHorizontally(tween(700,delayMillis=550,easing=FastOutSlowInEasing)){it+(120*u.pixelsPerUnit).toInt()}+fadeIn(tween(700,delayMillis=550))) togetherWith (slideOutHorizontally(tween(550,easing=FastOutSlowInEasing)){it+(120*u.pixelsPerUnit).toInt()}+fadeOut(tween(550)))).using(SizeTransform(clip=false))
                     },label="smartCreativeQr"){entry->
-                        if(entry.second.isNotBlank())CreativeQr(u,entry.second,focused=qrFocused&&qrEnabled&&entry==target)
+                        entry.second?.let{details->if(details.music&&details.hasMusic)SmartMusicCard(u,details,qrFocused&&qrEnabled&&entry==target)else if(details.link.isNotBlank())CreativeQr(u,details.link,focused=qrFocused&&qrEnabled&&entry==target)}
                     }
                 }
             }else if(showLink){
@@ -186,5 +186,25 @@ internal fun formatSmartBreakTime(seconds:Long):String=String.format(java.util.L
     Column(Modifier.width(u.space(246)).clip(u.round(22)).background(glass).border(u.space(if(focused)3 else 1),Color.White.copy(alpha=if(focused)1f else .34f),u.round(22)).padding(u.space(18)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(10))){
         Copy("Saiba mais +",u,19,600)
         NativeQr(url,Modifier.size(u.space(210)).clip(u.round(8)),compact=true)
+    }
+}
+
+internal data class SmartCreativeDetails(val music:Boolean,val song:String,val artist:String,val image:String,val link:String){
+    val hasMusic:Boolean get()=song.isNotBlank()||artist.isNotBlank()||image.isNotBlank()
+}
+internal fun smartCreativeDetails(media:JSONObject):SmartCreativeDetails=SmartCreativeDetails(media.str("categoryKind")=="music",media.str("song"),media.str("artist"),safeImage(media.str("artistImage")).orEmpty(),safeImage(media.str("link")).orEmpty())
+@Composable private fun SmartMusicCard(u:TvUnits,details:SmartCreativeDetails,focused:Boolean){
+    val shape=u.round(24)
+    Row(Modifier.width(u.space(if(details.link.isNotBlank())760 else 530)).clip(shape).background(interactionGlass).border(u.space(if(focused)3 else 1),Color.White.copy(alpha=if(focused)1f else .22f),shape).padding(u.space(22)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(20))){
+        if(details.image.isNotBlank())Artwork(details.image,Modifier.size(u.space(174)).clip(u.round(18)),"Foto do artista",scale=ContentScale.Crop)
+        Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(u.space(10))){
+            Copy("Tocando agora",u,19,500,color=Color.White.copy(alpha=.72f))
+            if(details.song.isNotBlank())Copy(details.song,u,27,700,lines=3)
+            if(details.artist.isNotBlank())Copy(details.artist,u,22,500,lines=2)
+        }
+        if(details.link.isNotBlank())Column(horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(8))){
+            NativeQr(details.link,Modifier.size(u.space(192)).clip(u.round(8)),compact=true)
+            Copy("Rede social",u,18,500)
+        }
     }
 }

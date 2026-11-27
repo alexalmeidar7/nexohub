@@ -172,6 +172,14 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         if(screen==Screen.PROFILE||screen==Screen.AUDIO){leavingScreen=true;scope.launch{delay(240);action();leavingScreen=false}}else action()
     }
     var account by remember { mutableStateOf<JSONObject?>(null) }
+    var listenerProfile by remember(account.str("id"),station?.ownerId){mutableStateOf<JSONObject?>(null)}
+    var selectedProfileId by remember(account.str("id"),station?.ownerId){mutableStateOf("")}
+    LaunchedEffect(account.str("id"),station?.ownerId){val user=account.str("id");val owner=station?.ownerId?:return@LaunchedEffect;if(user.isNotBlank())try{listenerProfile=services.listenerProfile(owner,user)}catch(e:CancellationException){throw e}catch(_:Exception){}}
+    val mainProfileName=listenerProfile.str("nome").ifBlank{nativeGoogleName(account)}.ifBlank{guestName}
+    val mainAvatar=if(account!=null)nativeProfileAvatar(nativeGooglePhoto(account).ifBlank{listenerProfile.str("avatar_url")})else guestAvatar
+    val selectedProfile=listenerProfile.rows("sub_profiles").firstOrNull{it.str("id")==selectedProfileId}
+    val displayProfileName=selectedProfile.str("name").ifBlank{mainProfileName}
+    val displayAvatar=if(selectedProfile!=null)nativeProfileAvatar(selectedProfile.str("avatar_url"))else mainAvatar
     var ad by remember { mutableStateOf<JSONObject?>(null) }
     var resumeAfterAd by remember { mutableStateOf(true) }
     val prerollFrequency=remember{NativePrerollFrequency()}
@@ -604,7 +612,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         failure=failure,playerError=playerError,controls=controls,chrome=chrome,interaction=interaction,
         banner=banners.getOrNull(bannerIndex).str("url"),historyAd=historyAd,panelAd=panelAd,backgroundAdEndsAt=backgroundAdEndsAt,sponsor=sponsorUrls.getOrNull(sponsorIndex),weather=weather,history=history,historyLoading=historyLoading,historyError=historyError,
         notice=notice,video=video,selected=selected, onRetry={retry++},onToggle=::toggle,onBack=::animatedBack,leavingScreen=leavingScreen,onVideoTrayFocus={videoTrayFocused=it},
-        entryPending=entryPending, guestName=account?.optJSONObject("user_metadata").str("full_name").ifBlank{account?.optJSONObject("user_metadata").str("name")}.ifBlank{guestName}, guestAvatar=guestAvatar,
+        entryPending=entryPending, guestName=displayProfileName, guestAvatar=guestAvatar, displayAvatar=displayAvatar, mainProfileName=mainProfileName, mainAvatar=mainAvatar, listenerProfile=listenerProfile, onListenerProfile={listenerProfile=it}, onSelectProfile={selectedProfileId=it},
         spectrum=spectrum, panel=panel,forecast=forecast,lyrics=lyrics,cep=cep,api=api,services=services,account=account,
         onAccount={account=it;panel=null},onLogout={scope.launch{try{services.logout();account=null}catch(e:CancellationException){throw e}catch(_:Exception){notice="Não foi possível encerrar a sessão."}}},
         scheduleOpening=scheduleOpening,interactionReturn=interactionReturn,channelOpening=pendingWatch?.second,syncStatus=syncStatus,manualSync=manualSync,onSaveSync=::saveSync,onCalibrateSync=::calibrateNow,canCalibrateSync=playing&&sync.latestStart()?.let{System.currentTimeMillis()+api.serverClockOffsetMs-it in 0L..120000L}==true,
