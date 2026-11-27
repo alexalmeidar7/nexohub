@@ -28,10 +28,14 @@ jobs:
             echo "::error::Configure repository Actions secret NEXO_TV_KEYSTORE_B64 before building pilot APKs. Random signing and signing-key cache are disabled."
             exit 1
           fi
-          mkdir -p "$HOME/.android"
           umask 077
-          printf %s "$NEXO_TV_KEYSTORE_B64" | base64 -d > "$HOME/.android/debug.keystore"
-          keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey >/dev/null
+          key="$RUNNER_TEMP/nexo-tv-permanente.keystore"
+          printf %s "$NEXO_TV_KEYSTORE_B64" | base64 -d > "$key"
+          expected=$(keytool -exportcert -keystore "$key" -storepass android -alias androiddebugkey | sha256sum | cut -d' ' -f1)
+          [[ "$expected" =~ ^[a-f0-9]{64}$ ]]
+          echo "NEXO_TV_SIGNING_FILE=$key" >> "$GITHUB_ENV"
+          echo "NEXO_TV_CERT_SHA256=$expected" >> "$GITHUB_ENV"
+          echo "Expected signing certificate SHA-256: $expected"
       - name: Verify preinstalled Android SDK
         run: |
           sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
@@ -60,18 +64,36 @@ jobs:
             apk=$(find "firetv/native-tv/build/outputs/apk/$station/debug" -name '*.apk' | head -1)
             test -s "$apk"
             "$aapt" dump badging "$apk" > /tmp/nexo-$station-badging.txt
-            grep -q "versionCode='9'" /tmp/nexo-$station-badging.txt
+            grep -q "versionCode='10'" /tmp/nexo-$station-badging.txt
             grep -E "application-icon-[0-9]+:.*${station}_launcher" /tmp/nexo-$station-badging.txt
             unzip -Z1 "$apk" | grep 'native_tv_banner.png'
             unzip -Z1 "$apk" | grep 'native_tv_launcher.png'
             "$aapt" dump xmltree "$apk" AndroidManifest.xml > /tmp/nexo-$station-manifest.txt
             grep -E 'android:(icon|banner|roundIcon)' /tmp/nexo-$station-manifest.txt
           done
+      - name: Verify APK signer against permanent key
+        run: |
+          set -euo pipefail
+          signer=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)
+          test -x "$signer"
+          mkdir -p firetv/native-tv/build/outputs/apk
+          report=firetv/native-tv/build/outputs/apk/SIGNATURE-SHA256.txt
+          printf 'Certificate SHA-256: %s\nVersion: 0.1.9-native-preview\nCommit: %s\n' "$NEXO_TV_CERT_SHA256" "$GITHUB_SHA" > "$report"
+          for station in positiva interativa; do
+            apk=$(find "firetv/native-tv/build/outputs/apk/$station/debug" -name '*.apk' | head -1)
+            details=$("$signer" verify --print-certs "$apk")
+            actual=$(printf '%s\n' "$details" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | tr '[:upper:]' '[:lower:]')
+            test "$actual" = "$NEXO_TV_CERT_SHA256" || { echo "::error::$station APK certificate mismatch"; exit 1; }
+            printf '%s: %s\n' "$station" "$actual" >> "$report"
+            echo "$station signing certificate verified: $actual"
+          done
       - uses: actions/upload-artifact@v4
         with:
-          name: nexo-tv-compose-pilot
-          path: firetv/native-tv/build/outputs/apk/*/debug/*.apk
+          name: nexo-tv-compose-pilot-v0.1.9
+          path: |
+            firetv/native-tv/build/outputs/apk/*/debug/*.apk
+            firetv/native-tv/build/outputs/apk/SIGNATURE-SHA256.txt
           if-no-files-found: error
       - name: Remove temporary signing key
         if: always()
-        run: rm -f "$HOME/.android/debug.keystore"
+        run: rm -f "$RUNNER_TEMP/nexo-tv-permanente.keystore"

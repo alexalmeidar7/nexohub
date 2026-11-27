@@ -22,15 +22,39 @@ val stageReferenceResources by tasks.registering(Sync::class) {
 }
 tasks.matching { it.name == "preBuild" }.configureEach { dependsOn(stageReferenceResources) }
 
+val permanentSigningPath = providers.environmentVariable("NEXO_TV_SIGNING_FILE").orNull
+if (System.getenv("CI") == "true") {
+    require(!permanentSigningPath.isNullOrBlank() && file(permanentSigningPath).isFile) {
+        "Permanent Nexo TV signing keystore is required in CI."
+    }
+}
+
 android {
+    signingConfigs {
+        if (!permanentSigningPath.isNullOrBlank()) {
+            create("nexoPermanent") {
+                storeFile = file(permanentSigningPath)
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
+        }
+    }
+    buildTypes {
+        getByName("debug") {
+            if (!permanentSigningPath.isNullOrBlank()) {
+                signingConfig = signingConfigs.getByName("nexoPermanent")
+            }
+        }
+    }
     namespace = "br.com.nexobrasil.nexoplayer.nativecore"
     compileSdk = 35
     defaultConfig {
         applicationId = "br.com.nexobrasil.nexoplayer.nativepilot"
         minSdk = 26
         targetSdk = 35
-        versionCode = 9
-        versionName = "0.1.8-native-preview"
+        versionCode = 10
+        versionName = "0.1.9-native-preview"
         buildConfigField("String", "SUPABASE_URL", "\"https://qazvgmgdidjhbvcuinpy.supabase.co\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"sb_publishable_BzjxF3H_PSgFYVA3OQIaoA_Pytdg2V3\"")
     }
