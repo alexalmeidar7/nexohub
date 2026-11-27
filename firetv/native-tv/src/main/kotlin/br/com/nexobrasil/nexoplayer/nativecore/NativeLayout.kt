@@ -4,6 +4,7 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.focusGroup
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.animation.AnimatedVisibility
@@ -180,9 +181,8 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
         }
     }
     val focus=remember(screen){FocusRequester()}
-    var entered by remember(screen){mutableStateOf(false)}
-    LaunchedEffect(screen){entered=true}
-    val screenMotion=animateFloatAsState(if(entered&&!leavingScreen)1f else 0f,tween(if(leavingScreen)220 else 420),label="screenEntry")
+    val screenMotion=remember(screen){Animatable(0f)}
+    LaunchedEffect(screen,leavingScreen){screenMotion.animateTo(if(leavingScreen)0f else 1f,tween(if(leavingScreen)220 else 420))}
     val trayFocus=remember{FocusRequester()}
     var trayOpen by remember(screen){mutableStateOf(false)}
     LaunchedEffect(screen,controls,panel,interaction){if(screen!=Screen.VIDEO||!controls||panel!=null||interaction){trayOpen=false;onVideoTrayFocus(false)}}
@@ -286,7 +286,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                             .onFocusChanged{bannerFocused=it.isFocused;if(!it.isFocused)onBannerQr(false)}
                             .drawBehind{if(bannerFocused){val gap=u.space(5).toPx();drawRoundRect(Color.White,Offset(-gap,-gap),Size(size.width+gap*2,size.height+gap*2),CornerRadius(u.space(16).toPx()),style=Stroke(u.space(3).toPx()))}}
                             .clickable(enabled=!modal){if(safeImage(bannerLink)!=null)onBannerQr(!bannerQr)}){
-                            Artwork(model,Modifier.fillMaxSize().clip(u.round(12)),scale=ContentScale.Fit)
+                            Crossfade(model,modifier=Modifier.fillMaxSize().clip(u.round(12)),animationSpec=tween(350),label="homeBannerImage"){image->Artwork(image,Modifier.fillMaxSize(),scale=ContentScale.Fit)}
                         }
                         AnimatedVisibility(bannerQr&&safeImage(bannerLink)!=null,modifier=u.at(184,810,198,204).zIndex(3f),enter=fadeIn(tween(220)),exit=fadeOut(tween(180))){
                             Box(Modifier.fillMaxSize().background(glass,u.round(20)).padding(u.space(10)),contentAlignment=Alignment.Center){
@@ -336,7 +336,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                         if(hasTray&&!interaction){
                             val main=video.firstOrNull{!it.name.contains("cast",true)&&!it.name.contains("podcast",true)}?:video.firstOrNull()
                             val cast=video.firstOrNull{it.name.contains("cast",true)||it.name.contains("podcast",true)}
-                            Row(Modifier.offset(u.space(278),trayY).size(u.space(664),u.space(180)).alpha(chrome).onFocusChanged{trayOpen=it.hasFocus;onVideoTrayFocus(it.hasFocus)},horizontalArrangement=Arrangement.spacedBy(u.space(22))){
+                            Row(Modifier.offset(u.space(278),trayY).size(u.space(664),u.space(180)).alpha(chrome).onFocusChanged{trayOpen=it.hasFocus;onVideoTrayFocus(it.hasFocus)}.focusGroup(),horizontalArrangement=Arrangement.spacedBy(u.space(22))){
                                 if(BuildConfig.STATION_SLUG=="positivafm"){
                                     if(main!=null)VideoChannelCard(u,R.drawable.positiva_channel_one,"Canal 1",selected?.id==main.id,controls,Modifier.focusRequester(trayFocus).focusProperties{up=focus}){onVideo(main)}
                                     VideoChannelCard(u,R.drawable.positiva_channel_two,"Positiva Cast",cast!=null&&selected?.id==cast.id,controls,if(main==null)Modifier.focusRequester(trayFocus).focusProperties{up=focus}else Modifier.focusProperties{up=focus}){
@@ -570,9 +570,10 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
 
 @Composable private fun ProfileCircle(u:TvUnits,modifier:Modifier,avatar:Any?,label:String,onClick:()->Unit) {
     var focused by remember { mutableStateOf(false) }
-    Box(modifier.size(u.space(164)).clip(CircleShape).onFocusChanged { focused=it.isFocused }
+    val active=LocalControlsEnabled.current
+    Box(modifier.size(u.space(164)).clip(CircleShape).onFocusChanged { focused=it.isFocused }.focusProperties{canFocus=active}
         .border(u.space(3),if(focused)Color.White else Color.Transparent,CircleShape)
-        .clickable(onClick=onClick).semantics { contentDescription=label }.padding(u.space(7)),
+        .clickable(enabled=active,onClick=onClick).semantics { contentDescription=label }.padding(u.space(7)),
         contentAlignment=Alignment.Center) {
         Box(Modifier.fillMaxSize().clip(CircleShape).background(glass),contentAlignment=Alignment.Center) {
             if(avatar!=null) Artwork(avatar,Modifier.fillMaxSize(),scale=ContentScale.Crop)

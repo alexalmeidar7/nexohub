@@ -1,6 +1,8 @@
 package br.com.nexobrasil.nexoplayer.nativecore
 
 import android.os.Bundle
+import coil.imageLoader
+import coil.request.ImageRequest
 import androidx.compose.ui.platform.LocalContext
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -435,7 +437,8 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
             syncEpoch=result.epoch?:0L
             result.track?.let{item->
                 val changed=trackStart!=item.start||track.str("titulo")!=item.title||track.str("artista")!=item.artist
-                track=item.content;artistArtwork=item.artwork;trackStart=item.start
+                if(track?.toString()!=item.content.toString())track=item.content
+                artistArtwork=item.artwork;trackStart=item.start
                 if(changed||trackLocalStart==0L)trackLocalStart=if(item.start>0&&result.epoch!=null)now-(result.epoch-item.start).coerceAtLeast(0L)else now
             }
             delay(250)
@@ -451,7 +454,8 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
     val breakActive=listOf(track.str("titulo"),track.str("artista")).any{it.trim().equals("BREAK",true)}
     val breakDuration=track?.optDouble("duracao",0.0)?:0.0
     val breakId=selected?.id.orEmpty()+":"+trackStart
-    LaunchedEffect(watch,breakActive,breakId,ad,campaigns,playing,syncEpoch>0){
+    val hasSyncEpoch by remember{derivedStateOf{syncEpoch>0}}
+    LaunchedEffect(watch,breakActive,breakId,ad,campaigns,playing,hasSyncEpoch){
         if(!watch||!breakActive){smartAttempt="";smartQueue=emptyList();return@LaunchedEffect}
         if(ad!=null||!playing||syncEpoch<=0||smartQueue.isNotEmpty()||smartAttempt==breakId)return@LaunchedEffect
         val date=LocalDate.now(brasilia).toString()
@@ -530,6 +534,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
     }
     val backgroundAds=campaigns.filter{it.str("start_date")<=stationDate&&it.str("end_date")>=stationDate&&(it.strings("program_ids").isEmpty()||currentProgram.str("id") in it.strings("program_ids"))}.flatMap{it.rows("media")}.filter{it.str("placement")=="background_ads"}
     val bannerIdentity=banners.map{it.str("url")+"|"+it.str("link")}
+    LaunchedEffect(bannerIdentity){for(media in banners.take(4)){val url=safeImage(media.str("url"))?:continue;context.imageLoader.enqueue(ImageRequest.Builder(context).data(url).size(1120,280).build())}}
     var bannerIndex by remember(bannerIdentity) { mutableIntStateOf(0) }
     var bannerQr by remember { mutableStateOf(false) }
     LaunchedEffect(bannerIdentity,bannerQr) { if (!bannerQr&&banners.size>1) while(true) { delay(300000); bannerIndex=(bannerIndex+1)%banners.size } }
@@ -557,7 +562,8 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         if (list.isNotEmpty()) {
             val index=list.indexOfFirst { it.id==selected?.id }.coerceAtLeast(0)
             val ch=list[(index+direction+list.size)%list.size]
-            select(ch,if(ch.type=="video_live") Screen.VIDEO else Screen.AUDIO)
+            val destination=if(ch.type=="video_live") Screen.VIDEO else Screen.AUDIO
+            if(screen!=destination)transition{select(ch,destination)}else select(ch,destination)
         }
     }
     Box(Modifier.fillMaxSize()) {

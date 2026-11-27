@@ -24,3 +24,7 @@
 
 **Próximo registro:** adicionar data, base local, alterações efetivas, resultados e pendências aqui.
 
+
+## 27/11/2026 — Nexo TV nativo, 0.1.16 (PR #327)
+
+Base remota: a5aa947 (0.1.15); correções no módulo firetv/native-tv, sem alteração de HMD/HMO, WebView ou banco. Transições de perfis e áudio, capa clicável para curtidas, patrocinador 283×283u, bandeja de vídeo abaixo do Agora com elevação por foco, contorno da publicidade, pré-carga do banner e redução de recomposição do mini-player. Smart Sync rejeita timestamps anteriores e usa dados ao vivo explicitamente não sincronizados quando não há referência temporal; Smart Audio tenta efeito de plataforma alternativo se DynamicsProcessing falhar. Adicionado teste de regressão de recuperação de metadados. Build e teste físico ainda não confirmados. Conferir na TV banners reais, sincronismo audível, nivelamento e foco antes de merge; alternativa LoudnessEnhancer não comprova paridade de normalização entre fontes.
