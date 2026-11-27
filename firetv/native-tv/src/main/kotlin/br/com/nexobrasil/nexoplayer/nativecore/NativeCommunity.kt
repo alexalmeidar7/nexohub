@@ -81,8 +81,9 @@ import com.google.zxing.qrcode.QRCodeWriter
     val scope=rememberCoroutineScope()
     LaunchedEffect(user,title,artist){if(user.isNotBlank())try{liked=services.liked(owner,user,title,artist)}catch(e:CancellationException){throw e}catch(_:Exception){}}
     var focused by remember{mutableStateOf(false)}
-    val active=LocalControlsEnabled.current&&!busy&&owner.isNotBlank()&&title!="Ao vivo"&&title.isNotBlank()
-    Box(modifier.then(buttonModifier).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=LocalControlsEnabled.current}
+    val controlsEnabled=LocalControlsEnabled.current
+    val active=controlsEnabled&&!busy&&owner.isNotBlank()&&title!="Ao vivo"&&title.isNotBlank()
+    Box(modifier.then(buttonModifier).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=controlsEnabled}
         .clip(u.round(36)).background(glass).border(u.space(if(focused)4 else 3),Color.White.copy(alpha=if(focused)1f else .27f),u.round(36))
         .clickable(enabled=active){
             if(user.isBlank())msg="Conecte sua conta Google." else {busy=true;scope.launch{
