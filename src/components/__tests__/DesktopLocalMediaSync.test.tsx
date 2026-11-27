@@ -12,7 +12,7 @@ vi.mock("@/lib/desktopLocalXml", () => ({ localizeXmlImageUrls: mocks.localize }
 vi.mock("@/lib/desktopPromotionBanners", () => ({
   cachePromotionBanners: vi.fn().mockResolvedValue({ failed: [] }), rotateDesktopBanner: vi.fn().mockResolvedValue(undefined),
   hasRotatingPromotionBanners: vi.fn().mockReturnValue(false),
-  saveDesktopXml: (...args: unknown[]) => mocks.save(...args), BANNER_DURATION_MS: 5000,
+  saveDesktopXml: (...args: unknown[]) => mocks.save(...args), refreshLocalOnAirFile: vi.fn().mockResolvedValue(undefined), BANNER_DURATION_MS: 5000,
 }));
 vi.mock("@/lib/ownedRealtimeChannel", () => ({ createOwnedRealtimeChannel: () => mocks.channel }));
 vi.mock("@/integrations/supabase/client", () => {
