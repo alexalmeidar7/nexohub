@@ -1,5 +1,3 @@
-import { supabase } from "@/integrations/supabase/client";
-
 type Program = {
   id: string; user_id: string; nome: string; ativo: boolean; estudo?: string;
   estudio?: string; dias_semana?: string[]; horario_inicio: string; horario_fim: string;
@@ -12,6 +10,7 @@ type Snapshot = { programs: Program[]; groups: Group[]; tvs: Tv[] };
 type Desktop = NonNullable<Window["houseMixDesktop"]>;
 type Overlay = { program: Program | null; logo: string; thumb: string; guest: string; anchor: string; scenesReady: boolean };
 const overlays = new Map<string, Overlay>();
+export function localXmlSlug(ownerId: string) { try { return localStorage.getItem("housemix:local-xml-slug:" + ownerId) || ""; } catch { return ""; } }
 const days = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 const norm = (s: string) => (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 const seconds = (s: string) => { const [h, m, sec = 0] = (s || "").split(":").map(Number); return h * 3600 + m * 60 + sec; };
@@ -76,6 +75,7 @@ export function notifyLocalOnAir(ownerId: string, table: "programas" | "cenario_
 }
 export function startLocalOnAir(desktop: Desktop, ownerId: string, slug: string, write: (file: string) => Promise<unknown>) {
   const key = "housemix:local-on-air:v1:" + ownerId;
+  try { localStorage.setItem("housemix:local-xml-slug:" + ownerId, slug); } catch {}
   let snapshot: Snapshot | null = null;
   try {
     const saved = JSON.parse(localStorage.getItem(key) || "null");
@@ -88,6 +88,14 @@ export function startLocalOnAir(desktop: Desktop, ownerId: string, slug: string,
   const persist = () => { try { localStorage.setItem(key, JSON.stringify(snapshot)); } catch {} };
   const cache = async (source: string, hint: string) => {
     if (!source) return "";
+    const data = /^data:(image\/(?:png|jpeg|webp|gif));base64,([\s\S]+)$/.exec(source);
+    if (data) {
+      try {
+        const bytes = Uint8Array.from(atob(data[2]), c => c.charCodeAt(0));
+        const url = await desktop.saveLocalImage(slug, bytes.buffer, data[1], hint);
+        return await desktop.getCachedImageFileUrl(url, hint, slug) || "";
+      } catch { return ""; }
+    }
     const cached = await desktop.getCachedImageFileUrl(source,hint,slug).catch(() => null);
     if (cached) return cached;
     if (navigator.onLine && /^https?:\/\//i.test(source) && !downloads.has(source)) {
@@ -130,6 +138,7 @@ export function startLocalOnAir(desktop: Desktop, ownerId: string, slug: string,
     if (running) { pending = true; return; }
     running = true; const at = revision;
     try {
+      const { supabase } = await import("@/integrations/supabase/client");
       const [p,g,t] = await Promise.all([
         supabase.from("programas").select("id,user_id,nome,ativo,estudio,dias_semana,horario_inicio,horario_fim,selo,thumb,capa,variavel,data_variavel,classificacao_etaria").eq("user_id",ownerId),
         supabase.from("cenario_estudio_grupos" as any).select("id,user_id,rows,cols,programa_ids").eq("user_id",ownerId),
@@ -142,6 +151,24 @@ export function startLocalOnAir(desktop: Desktop, ownerId: string, slug: string,
       const tvs = ((t.data || []) as unknown as Tv[]).filter(row => row.user_id === ownerId && ids.has(row.grupo_id));
       snapshot = { programs, groups, tvs }; persist();
       downloads.clear(); lastSignature = ""; await render();
+      // Warm the next programs and scenarios at snapshot refresh, not at the on-air switch.
+      const sources = new Map<string,string>();
+      for (const program of programs) if (program.ativo) {
+        for (const [url,hint] of [[program.selo,"selos"],[program.thumb,"capas"],[program.capa,"capas"]]) if (url) sources.set(url,hint!);
+      }
+      for (const tv of tvs) if (tv.imagem_url) sources.set(tv.imagem_url,"fundos");
+      const entries = [...sources]; let index = 0;
+      void Promise.all(Array.from({length: Math.min(4,entries.length)}, async () => {
+        while (!stopped && navigator.onLine && index < entries.length) {
+          const [url,hint] = entries[index++];
+          if (!/^https?:\/\//i.test(url) || downloads.has(url)) continue;
+          const cached = await desktop.getCachedImageFileUrl(url,hint,slug).catch(() => null);
+          if (cached || stopped || downloads.has(url)) continue;
+          const job = desktop.cacheImageFileUrl(url,hint,slug).catch(() => null);
+          downloads.set(url,job); const result = await job;
+          if (result && !stopped) { lastSignature = ""; void render().catch(console.warn); }
+        }
+      })).catch(console.warn);
     } catch (error) { console.warn("Snapshot local de programação:", error); }
     finally { running = false; if (pending && !stopped) { pending = false; void refresh(); } }
   };
@@ -170,6 +197,7 @@ export function startLocalOnAir(desktop: Desktop, ownerId: string, slug: string,
   window.addEventListener("online",refresh);
   // Only local CPU clock check. No disk write if the program has not changed.
   const timer = setInterval(() => void render().catch(console.warn),1000);
+  const repair = setInterval(() => void refresh(),15*60_000);
   void render().catch(console.warn); void refresh();
-  return { refresh, stop() { stopped = true; clearInterval(timer); window.removeEventListener(LOCAL_ON_AIR_EVENT,change); window.removeEventListener("online",refresh); overlays.delete(slug); } };
+  return { refresh, stop() { stopped = true; clearInterval(timer); clearInterval(repair); window.removeEventListener(LOCAL_ON_AIR_EVENT,change); window.removeEventListener("online",refresh); overlays.delete(slug); } };
 }
