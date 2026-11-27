@@ -204,6 +204,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     val likeFocus=remember{FocusRequester()}
     val modal=panel!=null||notice!=null||interaction
     val scheduleOverlay=panel=="schedule"
+    var scheduleFromRail by remember{mutableStateOf(false)}
     val scheduleFocus=remember{FocusRequester()}
     LaunchedEffect(screen,banner,bannerLink,panel,interaction,notice){onBannerQr(false)}
     val watchScreen=screen==Screen.AUDIO||screen==Screen.VIDEO
@@ -220,11 +221,12 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     LaunchedEffect(homeBannerVisible){if(!homeBannerVisible)onBannerQr(false)}
     val scheduleDate=LocalDate.now(brasilia)
     val programRows=remember(payload){payload.rows("programas")}
-    val scheduleGrid by produceState<List<List<Segment>>?>(null,programRows.map{it.toString()},scheduleDate){value=withContext(Dispatchers.Default){(0..6).map{d->programRows.flatMap{segments(it,scheduleDate.plusDays(d.toLong()))}}}}
+    val scheduleKey=remember(programRows){programRows.map{it.toString()}}
+    val scheduleGrid by produceState<List<List<Segment>>?>(null,scheduleKey,scheduleDate){value=withContext(Dispatchers.Default){(0..6).map{d->programRows.flatMap{segments(it,scheduleDate.plusDays(d.toLong()))}}}}
     val cover=track.str("capa")
     val title=track.str("titulo").ifBlank{"Ao vivo"}
     val artist=track.str("artista")
-    val people=payload.rows("apresentadores").associateBy{it.str("id")}
+    val people=remember(payload){payload.rows("apresentadores").associateBy{it.str("id")}}
     val presenters=program.strings("apresentadores_ids").ifEmpty{listOf(program.str("apresentador_id"))}.mapNotNull{people[it]}.ifEmpty{listOfNotNull(presenter)}
     val artistPhoto=artistArtwork.takeUnless{url->presenters.any{it.str("foto")==url}}.orEmpty()
     var presenterIndex by remember(program.str("id"),presenters.map{it.str("id")}){mutableIntStateOf(0)}
@@ -278,14 +280,14 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                         RailItem(u,"audio","Ouvir",accent,route(0),loading=channelOpening==Screen.AUDIO){onOpen(Screen.AUDIO)}
                         RailItem(u,"video","Assistir",accent,route(1),loading=channelOpening==Screen.VIDEO){onOpen(Screen.VIDEO)}
                         RailItem(u,"catalog","On Demand",accent,route(2)){onOpen(Screen.CATALOG)}
-                        RailItem(u,"calendar","Grade de programação",accent,route(3),loading=scheduleOpening){onOpen(Screen.SCHEDULE)}
+                        RailItem(u,"calendar","Grade de programação",accent,route(3),loading=scheduleOpening&&scheduleFromRail){scheduleFromRail=true;onOpen(Screen.SCHEDULE)}
                         RailItem(u,"user","Olá, $guestName",accent,route(4),avatar=guestAvatar){onOpen(Screen.PROFILE)}
                     }
                     if(!homeBackgroundAd||homeChrome.value>.01f) CompositionLocalProvider(LocalControlsEnabled provides (!modal&&!leavingScreen&&!homeBackgroundAd)){
                     Column(u.at(programLeft,272,505,340).graphicsLayer{alpha=homeChrome.value},verticalArrangement=Arrangement.spacedBy(u.space(12))) {
                         HomeProgramInfo(u,program,activePresenter,stationName,accent)
                         Spacer(Modifier.height(u.space(6)))
-                        ExpandableProgram(u,Modifier.focusRequester(programFocus).focusProperties{left=rail[0];right=sparkFocus;down=if(homeBannerVisible)bannerFocus else sparkFocus},loading=scheduleOpening){onOpen(Screen.SCHEDULE)}
+                        ExpandableProgram(u,Modifier.focusRequester(programFocus).focusProperties{left=rail[0];right=sparkFocus;down=if(homeBannerVisible)bannerFocus else sparkFocus},loading=scheduleOpening&&!scheduleFromRail){scheduleFromRail=false;onOpen(Screen.SCHEDULE)}
                     }
                     }
                     // Footer shares one vertical center (912): sponsor, centered banner, interactivity.
@@ -417,7 +419,10 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
         Artwork(safeImage(cover)?:logo,Modifier.size(u.space(60)).clip(u.round(8)),scale=ContentScale.Crop)
         Spacer(Modifier.width(u.space(15)))
         Column(Modifier.weight(1f).clipToBounds()){key(title){Copy(title.uppercase(),u,22,700,Modifier.basicMarquee(iterations=Int.MAX_VALUE,initialDelayMillis=2000,repeatDelayMillis=3000,velocity=24.dp))};key(artist){Copy(artist,u,18,400,Modifier.basicMarquee(iterations=Int.MAX_VALUE,initialDelayMillis=2000,repeatDelayMillis=3000,velocity=24.dp))}}
-        Symbol(if(playing)"pause" else "play",Modifier.size(u.space(38)))
+        Spacer(Modifier.width(u.space(10)))
+        Box(Modifier.size(u.space(50)).clip(CircleShape).background(Color.Black.copy(alpha=.22f)),contentAlignment=Alignment.Center){
+            Canvas(Modifier.size(u.space(30))){val w=size.width;val h=size.height;if(playing){drawRoundRect(Color.White,Offset(w*.20f,h*.15f),Size(w*.22f,h*.70f),CornerRadius(w*.07f));drawRoundRect(Color.White,Offset(w*.58f,h*.15f),Size(w*.22f,h*.70f),CornerRadius(w*.07f))}else{val triangle=Path().apply{moveTo(w*.30f,h*.12f);lineTo(w*.87f,h*.50f);lineTo(w*.30f,h*.88f);close()};drawPath(triangle,Color.White)}}
+        }
     }
     GlassButton(u,"",u.at(1512,76,56,56).then(searchModifier),icon="search",onClick=onSearch)
     Clock(u,u.at(1592,76,230,56).then(clockModifier),weather,onCep)
@@ -504,12 +509,12 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
     details?.let{p->
         Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.55f)),contentAlignment=Alignment.Center) {
             val back=remember{FocusRequester()};LaunchedEffect(p){back.requestFocus()}
-            Row(Modifier.size(u.space(1200),u.space(560)).background(Color(0xFF242529),u.round(32)).padding(u.space(40)),horizontalArrangement=Arrangement.spacedBy(u.space(35))) {
+            Row(Modifier.size(u.space(1200),u.space(560)).clip(u.round(32)).background(Color(0xFF242529)).padding(start=u.space(40),end=u.space(40)),horizontalArrangement=Arrangement.spacedBy(u.space(35))) {
                 val ids=p.strings("apresentadores_ids").ifEmpty{listOf(p.str("apresentador_id"))}
                 var index by remember(p.str("id")){mutableIntStateOf(0)}
                 LaunchedEffect(ids){if(ids.size>1)while(true){delay(4000);index=(index+1)%ids.size}}
-                AnimatedPresenter(u,people[ids.getOrNull(index)].str("foto"),Modifier.width(u.space(400)).fillMaxHeight())
-                Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(u.space(18))) {
+                AnimatedPresenter(u,people[ids.getOrNull(index)].str("foto"),Modifier.width(u.space(400)).fillMaxHeight().padding(top=u.space(40)),bottomAligned=true)
+                Column(Modifier.weight(1f).padding(vertical=u.space(40)),verticalArrangement=Arrangement.spacedBy(u.space(18))) {
                     Copy(p.str("nome"),u,40,700,lines=2)
                     Copy(p.str("horario_inicio").take(5)+" – "+p.str("horario_fim").take(5),u,25)
                     Copy(p.str("descricao").ifBlank{"Descrição não cadastrada."},u,23,400,lines=6)
@@ -596,12 +601,12 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
     }
 }
 
-@Composable private fun AnimatedPresenter(u:TvUnits,url:String,modifier:Modifier){
+@Composable private fun AnimatedPresenter(u:TvUnits,url:String,modifier:Modifier,bottomAligned:Boolean=false){
     var visible by remember{mutableStateOf(false)}
     LaunchedEffect(Unit){visible=true}
     Box(modifier){
         AnimatedVisibility(visible,enter=fadeIn(tween(650))+slideInHorizontally(tween(650)){it/12},exit=fadeOut(tween(450))){
-            Crossfade(url,animationSpec=tween(650),label="presenterRotation"){image->Artwork(safeImage(image),Modifier.fillMaxSize(),scale=ContentScale.Fit)}
+            Crossfade(url,animationSpec=tween(500),label="presenterRotation"){image->if(bottomAligned)AsyncImage(safeImage(image),null,Modifier.fillMaxSize(),contentScale=ContentScale.Fit,alignment=Alignment.BottomCenter)else Artwork(safeImage(image),Modifier.fillMaxSize(),scale=ContentScale.Fit)}
         }
     }
 }
@@ -626,8 +631,8 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
 
 @Composable internal fun NativeSpinner(u:TvUnits,modifier:Modifier){
     val transition=rememberInfiniteTransition(label="loading")
-    val angle by transition.animateFloat(0f,360f,infiniteRepeatable(tween(850,easing=LinearEasing)),label="spin")
-    Canvas(modifier.rotate(angle)){val sw=size.minDimension*.11f;drawArc(Color.White,0f,270f,false,topLeft=Offset(sw,sw),size=Size(size.width-2*sw,size.height-2*sw),style=Stroke(sw,cap=StrokeCap.Round))}
+    val angle=transition.animateFloat(0f,360f,infiniteRepeatable(tween(850,easing=LinearEasing),repeatMode=RepeatMode.Restart),label="spin")
+    Canvas(modifier){val sw=size.minDimension*.11f;drawArc(Color.White,angle.value,270f,false,topLeft=Offset(sw,sw),size=Size(size.width-2*sw,size.height-2*sw),style=Stroke(sw,cap=StrokeCap.Round))}
 }
 @Composable private fun VideoChannelCard(u:TvUnits,image:Any?,label:String,selected:Boolean,enabled:Boolean,modifier:Modifier=Modifier,onClick:()->Unit){
     var focused by remember{mutableStateOf(false)}

@@ -1,6 +1,14 @@
 package br.com.nexobrasil.nexoplayer.nativecore
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.togetherWith
@@ -63,7 +71,7 @@ import org.json.JSONObject
     var remaining by remember(media,smartSerial){mutableIntStateOf(-1)}
     var done by remember(media,smartSerial){mutableStateOf(false)}
     var played by remember(media,smartSerial){mutableStateOf(false)}
-    var qr by remember(media,smartSerial){mutableStateOf(false)}
+
     var info by remember{mutableStateOf(false)};var contact by remember{mutableStateOf(false)}
     val infoFocus=remember{FocusRequester()};val closeFocus=remember{FocusRequester()};val announceFocus=remember{FocusRequester()};val qrFocus=remember{FocusRequester()}
     val phone=commercialPhone.filter{it.isDigit()}.let{if(it.length in 10..11)"55"+it else it}
@@ -72,7 +80,7 @@ import org.json.JSONObject
     val active by rememberUpdatedState(smartActive)
     var buttonsEntered by remember{mutableStateOf(false)}
     LaunchedEffect(smart,smartActive){if(smart){if(smartActive){delay(100);buttonsEntered=true}else buttonsEntered=false}}
-    BackHandler(enabled=!smart||smartActive) {if(contact)contact=false else if(info)info=false else if(qr)qr=false else if(smart)onBack()}
+    BackHandler(enabled=!smart||smartActive) {if(contact)contact=false else if(info)info=false else if(smart)onBack()}
     LaunchedEffect(info,buttonsEntered,smartActive){if(smart&&smartActive&&buttonsEntered){withFrameNanos{};runCatching{(if(info&&contactUrl.isNotBlank())announceFocus else if(info)closeFocus else infoFocus).requestFocus()}}}
     fun complete(){if(!done){done=true;player.stop();if(!smart||active)finish()}}
     DisposableEffect(player){
@@ -120,30 +128,22 @@ import org.json.JSONObject
             if(smart){
                 // Identity includes the playback sequence so identical links animate on every creative change.
                 val target=smartSerial to media.str("link").takeIf{showLink&&smartActive}.orEmpty()
-                AnimatedContent(targetState=target,modifier=Modifier.align(Alignment.BottomEnd).padding(end=u.space(105),bottom=u.space(75)).size(u.space(246),u.space(284)),contentAlignment=Alignment.BottomEnd,transitionSpec={
+                AnimatedContent(targetState=target,modifier=Modifier.align(Alignment.BottomEnd).padding(end=u.space(105),bottom=u.space(75)).size(u.space(246),u.space(266)),contentAlignment=Alignment.BottomEnd,transitionSpec={
                     ((slideInHorizontally(tween(250,delayMillis=250)){it+(120*u.pixelsPerUnit).toInt()}+fadeIn(tween(250,delayMillis=250))) togetherWith (slideOutHorizontally(tween(250)){it+(120*u.pixelsPerUnit).toInt()}+fadeOut(tween(250)))).using(SizeTransform(clip=false))
                 },label="smartCreativeQr"){entry->
                     if(entry.second.isNotBlank()){
-                        val isCurrent=entry==target
-                        var focused by remember{mutableStateOf(false)}
-                        val side=if(isCurrent&&qr)218 else 156
-                        Column(Modifier.width(u.space(side+28)).clip(u.round(20)).then(if(isCurrent)Modifier.focusRequester(qrFocus)else Modifier).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=isCurrent&&!info&&smartActive}.background(glass).border(u.space(if(focused)3 else 1),Color.White.copy(alpha=if(focused)1f else .18f),u.round(20)).clickable(enabled=isCurrent&&!info&&smartActive){qr=!qr}.padding(u.space(12)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(10))){
-                            Copy("Saiba mais +",u,19,600)
-                            NativeQr(entry.second,Modifier.size(u.space(side)).clip(u.round(8)),compact=true)
-                        }
+                        CreativeQr(u,entry.second)
                     }
                 }
             }else if(showLink){
-                val side=if(qr)218 else 156
-                var focused by remember{mutableStateOf(false)}
-                Column(u.at(1815-side-28,1005-side-66,side+28,side+66).focusRequester(qrFocus).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=!info}.clip(u.round(20)).background(glass).border(u.space(if(focused)3 else 1),Color.White.copy(alpha=if(focused)1f else .18f),u.round(20)).clickable(enabled=!info){qr=!qr}.padding(u.space(12)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(10))){
-                    Copy("Saiba mais +",u,19,600)
-                    NativeQr(media.str("link"),Modifier.size(u.space(side)).clip(u.round(8)),compact=true)
-                }
+                Box(Modifier.align(Alignment.BottomEnd).padding(end=u.space(105),bottom=u.space(75))){CreativeQr(u,media.str("link"))}
             }
-            if(smart)Column(Modifier.align(Alignment.TopEnd).padding(top=u.space(75),end=u.space(100)).width(u.space(330)),horizontalAlignment=Alignment.End,verticalArrangement=Arrangement.spacedBy(u.space(10))){
-                Copy(if(breakRemaining>=0)"intervalo · "+formatSmartBreakTime(breakRemaining) else "intervalo · --:--",u,32,600)
-                if(breakRemaining>=0)Box(Modifier.fillMaxWidth().height(u.space(8)).clip(u.round(5)).background(Color.White.copy(alpha=.25f))){Box(Modifier.fillMaxHeight().fillMaxWidth(progress).background(Color.White))}
+            if(smart){
+                val ring=animateFloatAsState(progress,tween(250,easing=LinearEasing),label="breakProgress")
+                Row(Modifier.align(Alignment.TopEnd).padding(top=u.space(75),end=u.space(100)).height(u.space(60)).clip(CircleShape).background(glass,CircleShape).border(u.space(1),Color.White.copy(alpha=.16f),CircleShape).padding(horizontal=u.space(20)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(12))){
+                    Copy("voltamos em "+if(breakRemaining>=0)formatSmartBreakTime(breakRemaining)else "--:--",u,22,600)
+                    if(breakRemaining>=0)Canvas(Modifier.size(u.space(30))){val sw=size.minDimension*.11f;val top=Offset(sw,sw);val arc=Size(size.width-2*sw,size.height-2*sw);drawArc(Color.White.copy(alpha=.25f),-90f,360f,false,top,arc,style=Stroke(sw));drawArc(Color.White,-90f,360f*ring.value.coerceIn(0f,1f),false,top,arc,style=Stroke(sw,cap=StrokeCap.Round))}else NativeSpinner(u,Modifier.size(u.space(30)))
+                }
             }
             if(smart&&info)Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.65f))){
                 val panelX by animateDpAsState(u.space(if(contact)300 else 435),tween(350),label="smartPanelX")
@@ -173,3 +173,10 @@ internal fun smartBreakTiming(start:Long,duration:Double,now:Long):Pair<Float,Lo
     return (elapsed/duration).toFloat() to ceil(duration-elapsed).toLong()
 }
 internal fun formatSmartBreakTime(seconds:Long):String=String.format(java.util.Locale.ROOT,"%02d:%02d",seconds/60,seconds%60)
+
+@Composable private fun CreativeQr(u:TvUnits,url:String){
+    Column(Modifier.width(u.space(246)).clip(u.round(22)).background(glass).border(u.space(1),Color.White.copy(alpha=.34f),u.round(22)).padding(u.space(18)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(10))){
+        Copy("Saiba mais +",u,19,600)
+        NativeQr(url,Modifier.size(u.space(210)).clip(u.round(8)),compact=true)
+    }
+}

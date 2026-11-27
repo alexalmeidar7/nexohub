@@ -44,3 +44,7 @@ A função public-player-data em produção omitia music_current_duration do obj
 ### Complemento 0.1.19 — mesma PR
 
 Removido FocusRequester.Cancel experimental que bloqueava a compilação Kotlin. Smart Break mantém o container entre criativos, fade de entrada/saída de 500 ms (TextureView para vídeo), animação dos controles e QR de campanha com saída à direita e entrada sequencial a cada troca, inclusive URL repetida. Ao sair, publicidade pausa e áudio é silenciado imediatamente; CTA comercial permanece focável, sem QR adicional focável. Build e TV pendentes.
+
+## 27/11/2026 — Nexo TV 0.1.20 (PR #327)
+
+Base f1f4550, 0.1.19 instalada e contador real observado na TV. Ajustes: launcher dedicado 1280×720 sem fallback quadrado no ícone principal, mantendo artes 320×180 empacotadas como banners alternativos; selo voltamos em com progresso circular; QR publicitário fixo maior, sem foco/ampliação; retrato ancorado à base no detalhe de programa; loading apenas no botão acionado e rotação no draw; mini-player com ícones flat proporcionais e área reservada; CEP e Google compactos; coração vetorial; pré-carga de dez capas em lotes de dois, Splash limitado a oito segundos adicionais e cache de histórico; Smart Break elegível tem prioridade sobre pre-roll ao entrar nos canais. Não alterados IDs/assinatura, HMD/HMO, Supabase ou WebView. Build e teste físico pendentes; launcher do Fire OS pode usar cache próprio, e capas externas dependem da disponibilidade dos catálogos. Não há benchmark físico nesta sessão.

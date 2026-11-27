@@ -67,19 +67,22 @@ internal fun matchCepCity(rows:List<JSONObject>,city:String,state:String,uf:Stri
     }
 }
 private val coverCache=mutableMapOf<String,String>()
-private val coverMisses=mutableSetOf<String>()
+private val coverMisses=mutableMapOf<String,Long>()
+private val verifiedHistoryCovers=mutableMapOf<String,String>()
+private fun historyCoverKey(song:JSONObject)=coverKey(song.str("musica"))+"|"+coverKey(song.str("artista"))
+internal fun cachedHistoryCover(song:JSONObject?):String=if(song==null)"" else verifiedHistoryCovers[historyCoverKey(song)].orEmpty()
 private fun coverKey(s:String)=norm(s).replace(Regex("[^\\p{L}\\p{N}]+")," ").trim()
 private suspend fun coverFor(title:String,artist:String):String {
     if(title.isBlank()||artist.isBlank())return ""
     val key=coverKey(title)+"|"+coverKey(artist)
     coverCache[key]?.let{return it}
-    if(key in coverMisses)return ""
+    if((coverMisses[key]?:0L)>System.currentTimeMillis())return ""
     val result=try{getJson("https://itunes.apple.com/search?country=BR&media=music&entity=song&limit=25&term="+URLEncoder.encode("$artist $title","UTF-8"))}catch(e:CancellationException){throw e}catch(_:Exception){JSONObject()}
     fun matches(a:String,b:String):Boolean{val x=coverKey(a);val y=coverKey(b);return x.isNotBlank()&&y.isNotBlank()&&(x.contains(y)||y.contains(x))}
     val found=result.rows("results").firstOrNull{matches(it.str("artistName"),artist)&&matches(it.str("trackName"),title)}
     var url=found.str("artworkUrl100").replace("100x100bb","600x600bb")
     if(url.isBlank())try{val dz=getJson("https://api.deezer.com/search?q="+URLEncoder.encode("$artist $title","UTF-8"));url=dz.rows("data").firstOrNull{matches(it.optJSONObject("artist").str("name"),artist)&&matches(it.str("title"),title)}?.optJSONObject("album").str("cover_big")}catch(e:CancellationException){throw e}catch(_:Exception){}
-    if(url.isNotBlank()){if(coverCache.size>=250)coverCache.clear();coverCache[key]=url}else{if(coverMisses.size>=250)coverMisses.clear();coverMisses.add(key)}
+    if(url.isNotBlank()){if(coverCache.size>=250)coverCache.clear();coverCache[key]=url}else{if(coverMisses.size>=250)coverMisses.clear();coverMisses[key]=System.currentTimeMillis()+300_000L}
     return url
 }
 private data class SearchHit(val kind:String,val title:String,val sub:String,val image:String,val destination:Screen)
@@ -115,7 +118,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
     if(panel=="pair"){NativePairPanel(u,services,onClose,onAccount);return}
     if(panel=="search"||panel=="cep") {
         Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.58f)),contentAlignment=Alignment.Center){
-            Column(Modifier.width(u.space(if(panel=="cep")820 else 760)).clip(u.round(26)).background(glass).padding(u.space(if(panel=="cep")32 else 20)),verticalArrangement=Arrangement.spacedBy(u.space(if(panel=="cep")20 else 12)),horizontalAlignment=if(panel=="cep")Alignment.CenterHorizontally else Alignment.Start){
+            Column(Modifier.width(u.space(if(panel=="cep")580 else 760)).clip(u.round(26)).background(glass).padding(u.space(if(panel=="cep")32 else 20)),verticalArrangement=Arrangement.spacedBy(u.space(if(panel=="cep")20 else 12)),horizontalAlignment=if(panel=="cep")Alignment.CenterHorizontally else Alignment.Start){
                 if(panel=="search"){
                     val context=LocalContext.current
                     val prefs=remember{context.getSharedPreferences("native_tv_settings",0)}
@@ -154,9 +157,9 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                     var busy by remember{mutableStateOf(false)}
                     var city by remember{mutableStateOf("")}
                     LaunchedEffect(digits){city="";msg="";if(digits.length==8){delay(300);try{val a=getJson("https://viacep.com.br/ws/$digits/json/");if(!a.optBoolean("erro"))city=a.str("localidade")+" / "+a.str("uf")}catch(e:CancellationException){throw e}catch(_:Exception){}}}
-                    Box(Modifier.fillMaxWidth().height(u.space(64)),contentAlignment=Alignment.Center){Copy("Configurar tempo pelo CEP",u,30,600,align=TextAlign.Center);GlassButton(u,"",Modifier.align(Alignment.CenterEnd).size(u.space(52)),icon="left",onClick=onClose)}
+                    Box(Modifier.fillMaxWidth().height(u.space(64)),contentAlignment=Alignment.Center){Copy("Configurar tempo pelo CEP",u,27,600,Modifier.fillMaxWidth().padding(horizontal=u.space(50)),lines=2,align=TextAlign.Center);GlassButton(u,"",Modifier.align(Alignment.CenterEnd).size(u.space(44)),icon="left",onClick=onClose)}
                     Copy("Informe seu CEP para buscar o tempo da sua região.",u,22,400,lines=2,align=TextAlign.Center)
-                    Box(Modifier.width(u.space(610)).height(u.space(92)).background(Color(0xFF303030),u.round(18)),contentAlignment=Alignment.Center){
+                    Box(Modifier.fillMaxWidth().height(u.space(92)).background(Color(0xFF303030),u.round(18)),contentAlignment=Alignment.Center){
                         Copy(if(digits.isEmpty())"00000-000" else digits.take(5)+(if(digits.length>5)"-"+digits.drop(5)else ""),u,42,500)
                     }
                     Column(Modifier.align(Alignment.CenterHorizontally),verticalArrangement=Arrangement.spacedBy(u.space(6))){
@@ -205,14 +208,8 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                         fun move(delta:Int){if(adStep){adStep=false;if(delta<0)return}else if(delta>0&&historyAd!=null&&(index+1)%5==0&&index<history.lastIndex){adStep=true;return};index=(index+delta).coerceIn(0,history.lastIndex.coerceAtLeast(0))}
                         val song=history.getOrNull(index)
                         val context=LocalContext.current
-                        var image by remember(song){mutableStateOf("")}
-                        LaunchedEffect(song){if(song!=null){
-                            val direct=listOf(song.str("capa_url"),song.str("capa"),song.str("cover_url"),if(song.str("musica")==track.str("titulo")&&song.str("artista")==track.str("artista"))track.str("capa") else "").mapNotNull{safeImage(it)}.distinct()
-                            suspend fun usable(url:String)=try{context.imageLoader.execute(ImageRequest.Builder(context).data(url).size(350,350).build()) is SuccessResult}catch(e:CancellationException){throw e}catch(_:Exception){false}
-                            for(url in direct){if(usable(url)){image=url;break}}
-                            if(image.isBlank())try{val resolved=coverFor(song.str("musica"),song.str("artista"));if(resolved.isNotBlank()&&usable(resolved))image=resolved}catch(e:CancellationException){throw e}catch(_:Exception){}
-                        }}
-                        LaunchedEffect(history,index){for(candidate in history.drop(index+1).take(3)){if(candidate.str("capa_url").isBlank())try{coverFor(candidate.str("musica"),candidate.str("artista"))}catch(e:CancellationException){throw e}catch(_:Exception){}}}
+                        var image by remember(song){mutableStateOf(cachedHistoryCover(song))}
+                        LaunchedEffect(song){if(song!=null&&image.isBlank())image=resolveHistoryCover(context,song,track)}
                         if(song==null){Copy(if(loading)"Carregando músicas tocadas..." else if(error)"Histórico indisponível" else "Nenhuma música registrada.",u,23,400,lines=3)}
                         else{
                             Box(Modifier.fillMaxWidth().height(u.space(128)),contentAlignment=Alignment.Center){AnimatedContent(index to adStep,label="historyInfo"){state->val item=history.getOrNull(state.first);Column(horizontalAlignment=Alignment.CenterHorizontally){Copy(if(state.second)"publicidade" else item.str("horario").take(5),u,20,400);if(!state.second){Copy(item.str("musica").uppercase(),u,25,700,lines=2,align=TextAlign.Center);Copy(item.str("artista").uppercase(),u,20,400,lines=2)}}}}
@@ -284,4 +281,19 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
         }
     }
     LaunchedEffect(Unit){focus.requestFocus()}
+}
+
+internal suspend fun resolveHistoryCover(context:android.content.Context,song:JSONObject,track:JSONObject?=null):String{
+    val key=historyCoverKey(song);verifiedHistoryCovers[key]?.let{return it}
+    suspend fun usable(url:String)=try{context.imageLoader.execute(ImageRequest.Builder(context).data(url).size(350,350).build()) is SuccessResult}catch(e:CancellationException){throw e}catch(_:Exception){false}
+    val direct=listOf(song.str("capa_url"),song.str("capa"),song.str("cover_url"),if(song.str("musica")==track.str("titulo")&&song.str("artista")==track.str("artista"))track.str("capa")else "").mapNotNull{safeImage(it)}.distinct()
+    var result=""
+    for(url in direct){if(usable(url)){result=url;break}}
+    if(result.isBlank()){
+        val artist=song.str("artista");val title=song.str("musica")
+        val artists=(listOf(artist)+artist.split(Regex("(?i)\\\\s*(?:/|;| feat\\\\.? | ft\\\\.? | & )\\\\s*")).filter{it.isNotBlank()}).distinct().take(3)
+        for(name in artists){val url=coverFor(title,name);if(url.isNotBlank()&&usable(url)){result=url;break}}
+    }
+    if(result.isNotBlank()){if(verifiedHistoryCovers.size>=250)verifiedHistoryCovers.clear();verifiedHistoryCovers[key]=result}
+    return result
 }
