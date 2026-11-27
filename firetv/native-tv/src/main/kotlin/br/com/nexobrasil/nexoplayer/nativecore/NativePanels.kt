@@ -127,7 +127,20 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                     LaunchedEffect(digits){city="";if(digits.length==8){delay(300);try{val a=getJson("https://viacep.com.br/ws/$digits/json/");if(!a.optBoolean("erro"))city=a.str("localidade")+" / "+a.str("uf")}catch(e:CancellationException){throw e}catch(_:Exception){}}}
                     Row(verticalAlignment=Alignment.CenterVertically){Copy("Configurar tempo pelo CEP",u,30,600,Modifier.weight(1f));GlassButton(u,"",Modifier.size(u.space(56)),icon="left",onClick=onClose)}
                     Copy("Informe seu CEP para buscar o tempo da sua região.",u,22,400,lines=2)
-                    InputBox(u,digits,{digits=it.filter(Char::isDigit).take(8)},"00000-000",Modifier.fillMaxWidth().then(if(cep.length!=8)Modifier.focusRequester(focus)else Modifier),true)
+                    Box(Modifier.fillMaxWidth().height(u.space(64)).background(Color(0xFF303030),u.round(18)),contentAlignment=Alignment.Center){
+                        Copy(if(digits.isEmpty())"00000-000" else digits.take(5)+(if(digits.length>5)"-"+digits.drop(5)else ""),u,32,500)
+                    }
+                    Column(Modifier.align(Alignment.CenterHorizontally),verticalArrangement=Arrangement.spacedBy(u.space(6))){
+                        listOf(listOf("1","2","3"),listOf("4","5","6"),listOf("7","8","9"),listOf("Limpar","0","⌫")).forEachIndexed{r,keys->
+                            Row(horizontalArrangement=Arrangement.spacedBy(u.space(8))){
+                                keys.forEachIndexed{c,k->
+                                    GlassButton(u,k,Modifier.size(u.space(128),u.space(52)).then(if(cep.length!=8&&r==0&&c==0)Modifier.focusRequester(focus)else Modifier),enabled=!busy){
+                                        digits=when(k){"Limpar"->"";"⌫"->digits.dropLast(1);else->(digits+k).take(8)}
+                                    }
+                                }
+                            }
+                        }
+                    }
                     Copy(if(city.isNotBlank())"Tempo para: $city" else msg,u,20,400,lines=3)
                     GlassButton(u,if(busy)"localizando..." else "salvar CEP",Modifier.height(u.space(62)).then(if(cep.length==8)Modifier.focusRequester(focus)else Modifier),enabled=!busy){
                         if(digits.length!=8)msg="Digite um CEP válido com 8 números." else {busy=true;msg="";scope.launch{
@@ -147,7 +160,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
         }
     }else{
         Box(u.at(1350,165,470,735)){
-            GlassButton(u,"",Modifier.align(Alignment.TopEnd).size(u.space(56)),icon="left",onClick=onClose)
+            GlassButton(u,"",Modifier.align(Alignment.TopEnd).size(u.space(56)).then(if(panel=="lyrics"||(panel=="history"&&history.isEmpty())||(panel=="weather"&&forecast?.optJSONObject("daily")?.optJSONArray("time")==null))Modifier.focusRequester(focus)else Modifier),icon="left",onClick=onClose)
             Column(Modifier.offset(y=u.space(75)).fillMaxWidth().height(u.space(650)).clip(u.round(28)).background(glass).padding(u.space(20)),horizontalAlignment=Alignment.CenterHorizontally){
                 when(panel){
                     "history" -> {
@@ -155,7 +168,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                         val song=history.getOrNull(index)
                         var image by remember(song){mutableStateOf(song.str("capa_url"))}
                         LaunchedEffect(song){if(image.isBlank()&&song!=null){image=if(song.str("musica")==track.str("titulo")&&song.str("artista")==track.str("artista"))track.str("capa") else "";if(image.isBlank())try{image=coverFor(song.str("musica"),song.str("artista"))}catch(e:CancellationException){throw e}catch(_:Exception){}}}
-                        if(song==null){Copy(if(loading)"Carregando músicas tocadas..." else if(error)"Histórico indisponível" else "Nenhuma música registrada.",u,23,400,lines=3);GlassButton(u,"Voltar",Modifier.focusRequester(focus).height(u.space(52)),onClick=onClose)}
+                        if(song==null){Copy(if(loading)"Carregando músicas tocadas..." else if(error)"Histórico indisponível" else "Nenhuma música registrada.",u,23,400,lines=3)}
                         else{
                             AnimatedContent(index,label="historyInfo"){i->val item=history.getOrNull(i);Column(horizontalAlignment=Alignment.CenterHorizontally){Copy(item.str("horario").take(5),u,20,400);Copy(item.str("musica").uppercase(),u,25,700,lines=2,align=TextAlign.Center);Copy(item.str("artista").uppercase(),u,20,400,lines=2)}}
                             GlassButton(u,"",Modifier.size(u.space(46)),icon="up"){index=(index-1).coerceAtLeast(0)}
@@ -175,7 +188,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                         Copy("tempo agora",u,22,500)
                         val temp=forecast?.optJSONObject("current")?.optDouble("temperature_2m")
                         Copy(temp?.takeIf{it.isFinite()}?.let{it.toInt().toString()+"°"}?:"--°",u,56,600)
-                        if(dates==null){Copy("Previsão indisponível.",u,22);GlassButton(u,"Voltar",Modifier.focusRequester(focus).height(u.space(52)),onClick=onClose)}
+                        if(dates==null){Copy("Previsão indisponível.",u,22)}
                         else LazyColumn(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(u.space(8))){
                             items(minOf(7,dates.length())){i->
                                 val code=d?.optJSONArray("weather_code")?.optInt(i)?:0
@@ -190,7 +203,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                     "lyrics" -> {
                         Copy(track.str("titulo"),u,25,600,lines=2);Copy(track.str("artista"),u,20)
                         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())){Text(lyrics?:"Carregando letra...",style=u.referenceText(22),color=Color.White)}
-                        GlassButton(u,"Voltar",Modifier.focusRequester(focus).height(u.space(50)),onClick=onClose)
+
                     }
                     else -> {
                         if(owner!=null)NativeCommunity(u,panel,owner,services,account) else Copy("Emissora indisponível.",u,23)

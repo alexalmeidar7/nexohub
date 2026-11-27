@@ -64,24 +64,25 @@ internal class NativeServices(private val api:HouseMixClient,context:Context) {
     private suspend fun account():JSONObject{
         val token=access()?:error("Conecte sua conta Google.")
         val user=request(listOf("auth","v1","user"),token=token) as JSONObject
-        val status=request(listOf("functions","v1","nexo-tv-device"),body=JSONObject().put("action","status").put("deviceId",session.str("deviceId")),token=token) as JSONObject
-        check(status.optBoolean("ok")&&status.optBoolean("active")){"Sessão encerrada."}
+        check(user.str("id").isNotBlank()){"Sessão encerrada."}
         return user
     }
     fun clear(){session=null;prefs.edit().remove("session").apply()}
     suspend fun logout(){
         val token=access()
-        if(token!=null){val r=request(listOf("functions","v1","nexo-tv-device"),body=JSONObject().put("action","revoke").put("deviceId",session.str("deviceId")),token=token) as JSONObject;check(r.optBoolean("ok"))}
+        if(token!=null)request(listOf("auth","v1","logout"),query=mapOf("scope" to "local"),body=JSONObject(),token=token)
         clear()
     }
-    data class Pair(val code:String,val id:String,val secret:String,val expires:String)
+    data class Pair(val code:String,val displayCode:String,val id:String,val secret:String,val expires:String)
     suspend fun newPair():Pair{
         val secret=ByteArray(32).also{SecureRandom().nextBytes(it)}.joinToString(""){"%02x".format(it.toInt() and 255)}
         val hash=MessageDigest.getInstance("SHA-256").digest(secret.toByteArray()).joinToString(""){"%02x".format(it.toInt() and 255)}
         val id=UUID.randomUUID().toString()
         val r=api.function("tv-pair-create",body=JSONObject().put("userSlug",BuildConfig.STATION_SLUG).put("tvSessionId",id).put("proofHash",hash))
-        check(r.optBoolean("ok")&&r.str("code").matches(Regex("[0-9]{4}"))){"Não foi possível gerar o código."}
-        return Pair(r.str("code"),id,secret,r.str("expiresAt"))
+        check(r.optBoolean("ok")){"Pareamento: "+r.str("reason").ifBlank{"create_failed"}}
+        val code=r.str("code");val display=r.str("displayCode").ifBlank{code}
+        check(display.matches(Regex("[0-9]{4}"))&&code.isNotBlank()&&r.optBoolean("devicePairing")){"Resposta de pareamento incompatível."}
+        return Pair(code,display,id,secret,r.str("expiresAt"))
     }
     suspend fun pollPair(p:Pair):JSONObject?{
         val r=api.function("tv-pair-status",body=JSONObject().put("code",p.code).put("tvSessionId",p.id))
@@ -89,8 +90,11 @@ internal class NativeServices(private val api:HouseMixClient,context:Context) {
         if(row.str("status")=="expired")error("Código expirado.")
         if(row.str("status")!="claimed")return null
         check(row.str("paired_user_id").isNotBlank()){"Entre com Google no celular."}
-        val s=api.function("nexo-tv-device",body=JSONObject().put("action","redeem").put("code",p.code).put("proof",p.secret))
-        check(s.optBoolean("ok")&&s.str("access_token").isNotBlank()&&s.str("refresh_token").isNotBlank()){"Sessão não autorizada. Gere outro código."}
+        val redeemed=api.function("tv-pair-redeem",body=JSONObject().put("code",p.code).put("tvSessionId",p.id).put("proof",p.secret))
+        check(redeemed.optBoolean("ok")&&redeemed.str("token_hash").isNotBlank()){"Resgate não autorizado."}
+        val s=request(listOf("auth","v1","verify"),body=JSONObject().put("token_hash",redeemed.str("token_hash")).put("type","magiclink")) as JSONObject
+        check(s.str("access_token").isNotBlank()&&s.str("refresh_token").isNotBlank()){"Sessão não autorizada."}
+        check(s.optJSONObject("user").str("id")==row.str("paired_user_id")){"Conta diferente da autorizada."}
         withContext(Dispatchers.IO){save(s)}
         return try{account().also{check(it.str("id")==row.str("paired_user_id"))}}catch(e:Exception){clear();throw e}
     }

@@ -26,24 +26,24 @@ import org.json.JSONObject
     var done by remember(media){mutableStateOf(false)}
     var played by remember(media){mutableStateOf(false)}
     var qr by remember(media){mutableStateOf(false)}
-    fun complete(){if(!done){done=true;player.pause();finish()}}
+    fun complete(){if(!done){done=true;player.stop();finish()}}
     DisposableEffect(player){
         val listener=object:Player.Listener{
             override fun onIsPlayingChanged(isPlaying:Boolean){if(isPlaying&&!played){played=true;started()}}
             override fun onPlaybackStateChanged(playbackState:Int){if(playbackState==Player.STATE_ENDED)complete()}
             override fun onPlayerError(error:PlaybackException){complete()}
         }
-        player.addListener(listener);player.setMediaItem(MediaItem.fromUri(media.str("url")));player.prepare();player.play()
+        player.addListener(listener);try{player.setMediaItem(MediaItem.fromUri(media.str("url")));player.prepare();player.play()}catch(_:Exception){complete()}
         onDispose{player.removeListener(listener);player.release()}
     }
     LaunchedEffect(player){
-        var stall=0;var position=-1L
+        var stall=0;var position=-1L;val deadline=android.os.SystemClock.elapsedRealtime()+180000L
         while(!done){
             val d=player.duration
             remaining=if(d>0)((d-player.currentPosition+999)/1000).toInt().coerceAtLeast(0)else -1
             if(position==player.currentPosition)stall++ else stall=0
             position=player.currentPosition
-            if(stall>=60){complete();break}
+            if(stall>=32||android.os.SystemClock.elapsedRealtime()>=deadline){complete();break}
             delay(250)
         }
     }

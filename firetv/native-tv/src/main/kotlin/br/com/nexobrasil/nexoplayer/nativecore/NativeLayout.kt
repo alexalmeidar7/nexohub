@@ -1,6 +1,12 @@
 package br.com.nexobrasil.nexoplayer.nativecore
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -122,7 +128,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     var focused by remember { mutableStateOf(false) }
     val shape=CircleShape
     Row(modifier.onFocusChanged { focused=it.isFocused }
-        .animateContentSize(tween(260)).height(u.space(76)).clip(shape)
+        .height(u.space(76)).clip(shape)
         .background(if(focused) accentGlass(accent) else Brush.linearGradient(listOf(Color.Transparent,Color.Transparent)),shape)
         .border(u.space(if(focused) 3 else 0),if(focused) Color.White else Color.Transparent,shape)
         .clickable(onClick=onClick).semantics { contentDescription=label }
@@ -131,7 +137,11 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
             if(icon=="user") Artwork(avatar,Modifier.fillMaxSize(),scale=ContentScale.Crop)
             else Symbol(icon,Modifier.size(u.space(30)))
         }
-        if(focused) { Spacer(Modifier.width(u.space(12)));Copy(label,u,24,500);Spacer(Modifier.width(u.space(22))) }
+        AnimatedVisibility(visible=focused,
+            enter=expandHorizontally(tween(260,easing=CubicBezierEasing(.2f,.82f,.2f,1f)),expandFrom=Alignment.Start)+fadeIn(tween(220,delayMillis=60)),
+            exit=shrinkHorizontally(tween(260,easing=CubicBezierEasing(.2f,.82f,.2f,1f)),shrinkTowards=Alignment.Start)+fadeOut(tween(220))) {
+            Row(verticalAlignment=Alignment.CenterVertically){Spacer(Modifier.width(u.space(12)));Copy(label,u,24,600);Spacer(Modifier.width(u.space(22)))}
+        }
     }
 }
 
@@ -236,7 +246,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                             Column { Copy("tocando",u,18,700);Copy(title,u,40,700);Copy(artist,u,29) }
                         }
                     }
-                    if(sponsor!=null && !interaction && (screen==Screen.AUDIO || chrome>.01f)) Artwork(sponsor,u.at(1630,730,190,130).alpha(if(screen==Screen.VIDEO)chrome else 1f))
+                    if(screen==Screen.AUDIO && sponsor!=null && !interaction && panel==null) Artwork(sponsor,u.at(1630,730,190,130))
                     val programX by animateDpAsState(u.space(if(screen==Screen.AUDIO&&!controls)100 else 280),tween(350),label="programX")
                     if(!interaction && panel==null && (screen==Screen.AUDIO || chrome>.01f)) Row(Modifier.offset(programX,u.space(928)).width(u.space(900)).height(u.space(85)).alpha(if(screen==Screen.VIDEO)chrome else 1f),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(15))) {
                         Badge(u,"Agora",accent)
@@ -247,7 +257,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                         GlassButton(u,"",u.at(160,912,88,88).alpha(chrome).focusRequester(focus),icon=if(playing)"pause" else "play",enabled=controls){onToggle()}
                         GlassButton(u,"",u.at(184,854,40,40).alpha(chrome),icon="up",enabled=controls){onChannel(-1)}
                         GlassButton(u,"",u.at(184,1018,40,40).alpha(chrome),icon="down",enabled=controls){onChannel(1)}
-                        GlassButton(u,"programação",u.at(1490,922,225,64).alpha(chrome),icon="calendar",enabled=controls){onOpen(Screen.SCHEDULE)}
+                        if(!interaction) GlassButton(u,"programação",u.at(1490,922,225,64).alpha(chrome),icon="calendar",enabled=controls){onOpen(Screen.SCHEDULE)}
                         if(screen==Screen.VIDEO && video.size>1) LazyRow(u.at(1000,720,820,160).alpha(chrome),horizontalArrangement=Arrangement.spacedBy(u.space(16))) {
                             items(video){ ch -> GlassButton(u,ch.name,Modifier.width(u.space(350)).height(u.space(72)),enabled=controls,accent=if(ch.id==selected?.id)accent else null){onVideo(ch)} }
                         }
@@ -263,7 +273,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                     else Column(u.at(115,320,1600,550).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(u.space(20))) {
                         entries.forEach{ch-> GlassButton(u,ch.str("catalog_name").ifBlank{ch.str("name")},Modifier.height(u.space(70))){onNotice("A reprodução do catálogo ainda está em migração.")} }
                     }
-                    GlassButton(u,"Voltar",u.at(100,950,150,56).focusRequester(focus),icon="left",onClick=onBack)
+                    GlassButton(u,"",u.at(1768,148,56,56).focusRequester(focus),icon="left",onClick=onBack)
                 }
                 if(screen==Screen.PROFILE) {
                     NativeProfiles(u,logo,accent,focus,entryPending,guestName,guestAvatar,onProfileContinue,onGuestSave,
@@ -276,8 +286,8 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
             if(notice!=null) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.60f)),contentAlignment=Alignment.Center) {
                 val close=remember{FocusRequester()};LaunchedEffect(notice){close.requestFocus()}
                 Column(Modifier.width(u.space(620)).background(glass,u.round(28)).padding(u.space(38)),verticalArrangement=Arrangement.spacedBy(u.space(28))) {
+                    GlassButton(u,"",Modifier.align(Alignment.End).size(u.space(56)).focusRequester(close),icon="left"){onNotice(null)}
                     Copy(notice,u,28,500,lines=4)
-                    GlassButton(u,"Voltar",Modifier.height(u.space(60)).focusRequester(close),icon="left"){onNotice(null)}
                 }
             }
         }
@@ -394,7 +404,7 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
                     Copy(p.str("nome"),u,40,700,lines=2)
                     Copy(p.str("horario_inicio").take(5)+" – "+p.str("horario_fim").take(5),u,25)
                     Copy(p.str("descricao").ifBlank{"Descrição não cadastrada."},u,23,400,lines=6)
-                    GlassButton(u,"Voltar",Modifier.height(u.space(62)).focusRequester(back),icon="left"){details=null}
+                    GlassButton(u,"",Modifier.size(u.space(56)).focusRequester(back),icon="left"){details=null}
                 }
             }
         }
@@ -434,7 +444,7 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
             Row(u.at(180,465,1200,160),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))) {
                 if(account==null){ProfileCircle(u,Modifier,null,"Conectar minha conta Google",onConnect);Copy("Conectar minha conta",u,25,500)} else GlassButton(u,"Sair da conta Google",Modifier.height(u.space(62)),onClick=onLogout)
             }
-            if(!entryPending) GlassButton(u,"Voltar",u.at(100,950,150,56),icon="left",onClick=onContinue)
+            if(!entryPending) GlassButton(u,"",u.at(1768,148,56,56),icon="left",onClick=onContinue)
         } else {
             Copy("Editar perfil",u,38,600,u.at(265,80,1100,64))
             Column(u.at(180,235,1000,700),verticalArrangement=Arrangement.spacedBy(u.space(24))) {

@@ -60,6 +60,20 @@ jobs:
         run: gradle -p firetv/native-tv --no-daemon --max-workers=2 -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8" -Pkotlin.compiler.execution.strategy=in-process testPositivaDebugUnitTest assemblePositivaDebug
       - name: Compile and test Interativa
         run: gradle -p firetv/native-tv --no-daemon --max-workers=2 -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8" -Pkotlin.compiler.execution.strategy=in-process testInterativaDebugUnitTest assembleInterativaDebug
+      - name: Verify packaged launcher icons and TV artwork
+        run: |
+          set -euo pipefail
+          aapt=$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -1)
+          test -x "$aapt"
+          for station in positiva interativa; do
+            apk=$(find "firetv/native-tv/build/outputs/apk/$station/debug" -name '*.apk' | head -1)
+            test -s "$apk"
+            "$aapt" dump badging "$apk" > /tmp/nexo-$station-badging.txt
+            grep -q "versionCode='8'" /tmp/nexo-$station-badging.txt
+            grep -E "application-icon-[0-9]+:.*${station}_launcher" /tmp/nexo-$station-badging.txt
+            unzip -Z1 "$apk" | grep 'native_tv_banner.png'
+            unzip -Z1 "$apk" | grep 'native_tv_launcher.png'
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: nexo-tv-compose-pilot

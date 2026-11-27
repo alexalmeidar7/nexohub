@@ -6,7 +6,7 @@ const isUUID = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-
 async function resolveSlug(supabase: ReturnType<typeof createClient>, slug: string): Promise<string | null> {
   if (isUUID(slug)) return slug;
   const s = slug.toLowerCase().trim();
-  // Igual à ordem determinística de public-player-data.
+  // Igual Ã  ordem determinÃ­stica de public-player-data.
   let { data } = await supabase.from("profiles").select("user_id").ilike("email", `${s}@%`).order("email").limit(1).maybeSingle();
   if (data?.user_id) return data.user_id;
   const { data: sub } = await supabase.from("sub_users").select("auth_user_id, parent_user_id, ativo").ilike("email", `${s}@%`).order("email").limit(1).maybeSingle();
@@ -29,67 +29,53 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const userSlug = typeof body?.userSlug === "string" ? body.userSlug.trim() : "";
     const tvSessionId = typeof body?.tvSessionId === "string" ? body.tvSessionId.trim().slice(0, 128) : "";
+    const proofHash = typeof body?.proofHash === "string" && /^[a-f0-9]{64}$/i.test(body.proofHash) ? body.proofHash.toLowerCase() : null;
     if (!userSlug || !tvSessionId) {
       await logEvent({ event_type: "error", reason: "missing_params", user_slug: userSlug || null, tv_session_id: tvSessionId || null });
       return new Response(JSON.stringify({ ok: false, reason: "missing_params" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const proofHash = typeof body?.proofHash === "string" ? body.proofHash : null;
-    if (proofHash !== null && !/^[a-f0-9]{64}$/.test(proofHash)) return new Response(JSON.stringify({ok:false,reason:"invalid_proof"}),{headers:{...corsHeaders,"Content-Type":"application/json"}});
     const slugUserId = await resolveSlug(supabase, userSlug);
     if (!slugUserId) {
       await logEvent({ event_type: "error", reason: "slug_not_found", user_slug: userSlug, tv_session_id: tvSessionId });
       return new Response(JSON.stringify({ ok: false, reason: "slug_not_found" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Marca códigos expirados desta TV para evitar múltiplos pendings no mesmo dispositivo.
+    // Marca cÃ³digos expirados desta TV para evitar mÃºltiplos pendings no mesmo dispositivo.
     await supabase.from("tv_pairing_codes")
       .update({ status: "expired" })
       .eq("tv_session_id", tvSessionId)
       .eq("status", "pending");
 
-    // Gera código 4 dígitos único entre os pendings ativos.
+    // Gera cÃ³digo 4 dÃ­gitos Ãºnico entre os pendings ativos.
+    await supabase.from("tv_pairing_codes").update({ status: "expired" }).in("status", ["pending", "claimed"]).lte("expires_at", new Date().toISOString());
+
+    let displayCode = "";
     let code = "";
-    for (let i = 0; i < 25; i++) {
-      const candidate = String(Math.floor(1000 + Math.random() * 9000));
-      const { data: existing } = await supabase
-        .from("tv_pairing_codes")
-        .select("code")
-        .eq("code", candidate)
-        .in("status", ["pending", "claimed"])
-        .maybeSingle();
-      if (!existing) { code = candidate; break; }
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+    for (let i = 0; i < 40; i++) {
+      const random = new Uint32Array(1);
+      crypto.getRandomValues(random);
+      const candidate = String(1000 + (random[0] % 9000));
+      const { data: existing } = await supabase.from("tv_pairing_codes").select("code").eq("display_code", candidate).in("status", ["pending", "claimed"]).limit(1).maybeSingle();
+      if (existing) continue;
+      const candidateToken = crypto.randomUUID();
+      const { error: insertError } = await supabase.from("tv_pairing_codes").insert({ code: candidateToken, display_code: candidate, slug_user_id: slugUserId, user_slug: userSlug.toLowerCase(), tv_session_id: tvSessionId, proof_hash: proofHash, status: "pending", expires_at: expiresAt });
+      if (!insertError) { displayCode = candidate; code = candidateToken; break; }
+      if (insertError.code !== "23505") {
+        console.error("[tv-pair-create] insert error:", insertError);
+        await logEvent({ event_type: "error", reason: "insert_failed", slug_user_id: slugUserId, user_slug: userSlug, tv_session_id: tvSessionId, code: candidate, meta: { error: String(insertError.message || insertError) } });
+        return new Response(JSON.stringify({ ok: false, reason: "insert_failed" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
     }
-    if (!code) {
+    if (!displayCode) {
       await logEvent({ event_type: "error", reason: "no_code_available", slug_user_id: slugUserId, user_slug: userSlug, tv_session_id: tvSessionId });
       return new Response(JSON.stringify({ ok: false, reason: "no_code_available" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-    const { error } = await supabase.from("tv_pairing_codes").insert({
-      code,
-      slug_user_id: slugUserId,
-      user_slug: userSlug.toLowerCase(),
-      tv_session_id: tvSessionId,
-      status: "pending",
-      expires_at: expiresAt,
-    });
-    if (error) {
-      console.error("[tv-pair-create] insert error:", error);
-      await logEvent({ event_type: "error", reason: "insert_failed", slug_user_id: slugUserId, user_slug: userSlug, tv_session_id: tvSessionId, code, meta: { error: String(error.message || error) } });
-      return new Response(JSON.stringify({ ok: false, reason: "insert_failed" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
+    await logEvent({ event_type: "created", slug_user_id: slugUserId, user_slug: userSlug.toLowerCase(), tv_session_id: tvSessionId, code: displayCode, meta: { expires_at: expiresAt } });
 
-    if (proofHash) {
-      const { error: deviceError } = await supabase.from("nexo_tv_devices").insert({code,proof_hash:proofHash,radio_user_id:slugUserId});
-      if (deviceError) {
-        await supabase.from("tv_pairing_codes").update({status:"expired"}).eq("code",code).eq("tv_session_id",tvSessionId);
-        return new Response(JSON.stringify({ok:false,reason:"device_registration_failed"}),{headers:{...corsHeaders,"Content-Type":"application/json"}});
-      }
-    }
-    await logEvent({ event_type: "created", slug_user_id: slugUserId, user_slug: userSlug.toLowerCase(), tv_session_id: tvSessionId, code, meta: { expires_at: expiresAt } });
-
-    return new Response(JSON.stringify({ ok: true, code, expiresAt, userSlug: userSlug.toLowerCase() }), {
+    return new Response(JSON.stringify({ ok: true, code, displayCode, expiresAt, userSlug: userSlug.toLowerCase(), devicePairing: !!proofHash }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -99,3 +85,4 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ ok: false, reason: "server_error" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
+

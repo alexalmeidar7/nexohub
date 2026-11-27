@@ -49,14 +49,14 @@ import com.google.zxing.qrcode.QRCodeWriter
                 delay(2000)
             }
             message="Código expirado. Gere outro."
-        }catch(e:CancellationException){throw e}catch(_:Exception){message="Não foi possível conectar. Gere outro código."}
+        }catch(e:CancellationException){throw e}catch(e:Exception){android.util.Log.w("NexoPair",e.javaClass.simpleName);message="Não foi possível conectar. "+(e.message?.takeIf{it.startsWith("Pareamento: ")||it.startsWith("House Mix request failed")}?: "Gere outro código.")}
     }
     Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.64f)),contentAlignment=Alignment.Center){
         Column(Modifier.width(u.space(760)).background(glass,u.round(28)).padding(u.space(28)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(15))){
-            Copy("Conectar minha conta Google",u,30,600)
-            pair?.let{NativeQr("https://housemix.nexobrasil.net/"+BuildConfig.STATION_SLUG+"/pair?code="+it.code,Modifier.size(u.space(310)));Copy(it.code,u,48,700);Copy("Validade: "+remaining/60+":"+("%02d".format(remaining%60)),u,20)}
+            Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){Copy("Conectar minha conta Google",u,30,600,Modifier.weight(1f));GlassButton(u,"",Modifier.size(u.space(56)).focusRequester(focus),icon="left",onClick=onClose)}
+            pair?.let{NativeQr("https://housemix.nexobrasil.net/"+BuildConfig.STATION_SLUG+"/pair?code="+it.code,Modifier.size(u.space(310)));Copy(it.displayCode,u,48,700);Copy("Validade: "+remaining/60+":"+("%02d".format(remaining%60)),u,20)}
             Copy(message,u,22,400,lines=3)
-            Row(horizontalArrangement=Arrangement.spacedBy(u.space(14))){GlassButton(u,"Voltar",Modifier.height(u.space(60)).focusRequester(focus),onClick=onClose);GlassButton(u,"Novo código",Modifier.height(u.space(60))){attempt++}}
+            GlassButton(u,"Novo código",Modifier.height(u.space(60))){attempt++}
         }
     }
     LaunchedEffect(Unit){focus.requestFocus()}
