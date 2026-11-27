@@ -25,6 +25,8 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -55,21 +57,21 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private fun TvUnits.at(x:Number,y:Number,w:Number,h:Number) = Modifier.offset(space(x),space(y)).size(space(w),space(h))
-private val glass = Brush.linearGradient(listOf(Color(0x705C5C60),Color(0x80232327),Color(0xA018181B)))
+internal fun TvUnits.at(x:Number,y:Number,w:Number,h:Number) = Modifier.offset(space(x),space(y)).size(space(w),space(h))
+internal val glass = Brush.linearGradient(listOf(Color(0x705C5C60),Color(0x80232327),Color(0xA018181B)))
 private fun accentGlass(c:Color)=Brush.linearGradient(listOf(androidx.compose.ui.graphics.lerp(c,Color.White,.24f),c,Color(0xFF292124)))
-private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
+internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
 
-@Composable private fun Copy(text:String,u:TvUnits,size:Int,weight:Int=400,modifier:Modifier=Modifier,lines:Int=1,color:Color=Color.White,align:TextAlign=TextAlign.Start) {
+@Composable internal fun Copy(text:String,u:TvUnits,size:Int,weight:Int=400,modifier:Modifier=Modifier,lines:Int=1,color:Color=Color.White,align:TextAlign=TextAlign.Start) {
     Text(text,modifier=modifier,color=color,style=u.referenceText(size,weight).copy(lineHeight=u.text(size*1.16f)),maxLines=lines,overflow=TextOverflow.Ellipsis,textAlign=align)
 }
-@Composable private fun Artwork(model:Any?,modifier:Modifier,desc:String?=null,scale:ContentScale=ContentScale.Fit) {
-    if(model!=null && model!="") AsyncImage(model,desc,modifier,contentScale=scale)
+@Composable internal fun Artwork(model:Any?,modifier:Modifier,desc:String?=null,scale:ContentScale=ContentScale.Fit,filter:ColorFilter?=null) {
+    if(model!=null && model!="") AsyncImage(model,desc,modifier,contentScale=scale,colorFilter=filter)
 }
-@Composable private fun GlassButton(u:TvUnits,label:String,modifier:Modifier=Modifier,icon:String?=null,accent:Color?=null,enabled:Boolean=true,outline:Boolean=false,accentRing:Boolean=false,onClick:()->Unit) {
+@Composable internal fun GlassButton(u:TvUnits,label:String,modifier:Modifier=Modifier,icon:String?=null,accent:Color?=null,enabled:Boolean=true,outline:Boolean=false,accentRing:Boolean=false,onClick:()->Unit) {
     var focused by remember { mutableStateOf(false) }
-    val shape=u.round(40)
-    Row(modifier.onFocusChanged { focused=it.isFocused }.focusProperties { canFocus=enabled }
+    val shape=CircleShape
+    Row(modifier.clip(shape).onFocusChanged { focused=it.isFocused }.focusProperties { canFocus=enabled }
         .background(if(outline) Brush.linearGradient(listOf(Color.Transparent,Color.Transparent)) else if(accent!=null && !accentRing) accentGlass(accent) else glass,shape)
         .border(u.space(if(focused || accentRing) 3 else if(outline) 2 else 1),if(focused || outline) Color.White else if(accentRing) accent ?: Color.White else Color.White.copy(alpha=.16f),shape)
         .clickable(enabled=enabled,onClick=onClick).semantics { contentDescription=label.ifEmpty{when(icon){"play"->"Reproduzir";"pause"->"Pausar";"left"->"Voltar";"up"->"Canal anterior";"down"->"Próximo canal";"search"->"Buscar";"spark"->"Interatividade";else->"Controle"}} }
@@ -83,7 +85,7 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     }
 }
 
-@Composable private fun Symbol(kind:String,modifier:Modifier) {
+@Composable internal fun Symbol(kind:String,modifier:Modifier) {
     Canvas(modifier) {
         val w=size.width;val h=size.height;val sw=w*.075f
         fun p(x:Float,y:Float)=Offset(w*x,h*y)
@@ -105,6 +107,11 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
             "sun" -> {drawCircle(Color.White,w*.23f,p(.50f,.50f),style=Stroke(sw));repeat(8){i->val a=i*Math.PI/4;val x=kotlin.math.cos(a).toFloat();val y=kotlin.math.sin(a).toFloat();line(p(.5f+x*.34f,.5f+y*.34f),p(.5f+x*.46f,.5f+y*.46f))}}
             "cloud" -> {drawRoundRect(Color.White,p(.10f,.45f),Size(w*.80f,h*.34f),androidx.compose.ui.geometry.CornerRadius(w*.16f),style=Stroke(sw));drawArc(Color.White,190f,160f,false,p(.23f,.18f),Size(w*.47f,h*.48f),style=Stroke(sw))}
             "mic" -> {drawRoundRect(Color.White,p(.36f,.07f),Size(w*.28f,h*.54f),androidx.compose.ui.geometry.CornerRadius(w*.14f),style=Stroke(sw));drawArc(Color.White,0f,180f,false,p(.20f,.25f),Size(w*.60f,h*.52f),style=Stroke(sw));line(p(.50f,.77f),p(.50f,.92f));line(p(.33f,.92f),p(.67f,.92f))}
+            "rain" -> {drawRoundRect(Color.White,p(.10f,.28f),Size(w*.80f,h*.35f),androidx.compose.ui.geometry.CornerRadius(w*.16f),style=Stroke(sw));repeat(3){i->val x=.28f+i*.22f;line(p(x,.72f),p(x-.06f,.90f))}}
+            "chat" -> {drawRoundRect(Color.White,p(.12f,.12f),Size(w*.76f,h*.58f),androidx.compose.ui.geometry.CornerRadius(w*.13f),style=Stroke(sw));path(.30f to .70f,.30f to .88f,.52f to .70f)}
+            "history" -> {drawArc(Color.White,-100f,290f,false,p(.12f,.12f),Size(w*.76f,h*.76f),style=Stroke(sw));path(.12f to .18f,.12f to .44f,.37f to .44f);line(p(.50f,.50f),p(.50f,.26f));line(p(.50f,.50f),p(.68f,.62f))}
+            "poll" -> {repeat(3){i->val y=.23f+i*.25f;path(.10f to y,.19f to (y+.08f),.32f to (y-.07f));line(p(.45f,y),p(.9f,y))}}
+            "battle" -> {line(p(.16f,.16f),p(.83f,.83f));line(p(.83f,.16f),p(.16f,.83f));line(p(.11f,.70f),p(.30f,.89f));line(p(.70f,.89f),p(.89f,.70f))}
             "music" -> { line(p(.53f,.12f),p(.53f,.70f));line(p(.53f,.12f),p(.82f,.28f));drawOval(Color.White,p(.20f,.65f),Size(w*.33f,h*.22f),style=Stroke(sw)) }
             "user" -> { drawCircle(Color.White,w*.18f,p(.50f,.30f),style=Stroke(sw));drawArc(Color.White,180f,180f,false,p(.15f,.54f),Size(w*.70f,h*.60f),style=Stroke(sw)) }
         }
@@ -115,7 +122,7 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     var focused by remember { mutableStateOf(false) }
     val shape=CircleShape
     Row(modifier.onFocusChanged { focused=it.isFocused }
-        .animateContentSize(tween(260)).height(u.space(76))
+        .animateContentSize(tween(260)).height(u.space(76)).clip(shape)
         .background(if(focused) accentGlass(accent) else Brush.linearGradient(listOf(Color.Transparent,Color.Transparent)),shape)
         .border(u.space(if(focused) 3 else 0),if(focused) Color.White else Color.Transparent,shape)
         .clickable(onClick=onClick).semantics { contentDescription=label }
@@ -134,13 +141,14 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     banner:String,sponsor:String?,weather:JSONObject?,history:List<JSONObject>,historyLoading:Boolean,historyError:Boolean,notice:String?,video:List<StationChannel>,selected:StationChannel?,
     onRetry:()->Unit,onToggle:()->Unit,onBack:()->Unit,onOpen:(Screen)->Unit,onChannel:(Int)->Unit,onVideo:(StationChannel)->Unit,
     onInteraction:()->Unit,onNotice:(String?)->Unit,
-    entryPending:Boolean,guestName:String,guestAvatar:Int,onGuestSave:(String,Int)->Unit,onProfileContinue:()->Unit
+    entryPending:Boolean,guestName:String,guestAvatar:Int,onGuestSave:(String,Int)->Unit,onProfileContinue:()->Unit,
+    spectrum:PcmSpectrum,panel:String?,forecast:JSONObject?,lyrics:String?,cep:String,api:HouseMixClient,onPanel:(String?)->Unit,onCepSaved:(String,JSONObject)->Unit
 ) {
     val accent = remember(payload) {
         val colors=payload?.optJSONObject("playerColors")
-        val raw=colors.str("primary").ifBlank{colors.str("accent")}
+        val raw=colors.str("dominantColor").ifBlank{colors.str("homeAccent")}.ifBlank{colors.str("primary")}.ifBlank{colors.str("accent")}
         runCatching{Color(android.graphics.Color.parseColor(raw))}.getOrElse{
-            if(BuildConfig.STATION_SLUG=="positivafm") Color(0xFFF20D0F) else Color(0xFF304D70)
+            if(BuildConfig.STATION_SLUG=="positivafm") Color(0xFFF20D0F) else Color(0xFF343434)
         }
     }
     val focus=remember(screen,station!=null,failure,controls){FocusRequester()}
@@ -178,13 +186,11 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                 Copy(failure,u,35,500,u.at(100,300,1500,70))
                 GlassButton(u,"Tentar novamente",u.at(100,400,330,64).focusRequester(focus),onClick=onRetry)
             } else {
-                if(!watch && screen!=Screen.PROFILE) Header(u,logo,title,artist,cover,playing,accent,screen,weather,if(screen==Screen.HOME) Modifier.focusRequester(focus) else Modifier,onToggle,{onOpen(Screen.SEARCH)})
+                if(!watch && screen!=Screen.PROFILE) Header(u,logo,title,artist,cover,playing,accent,screen,weather,if(screen==Screen.HOME) Modifier.focusRequester(focus) else Modifier,spectrum,onToggle,{onOpen(Screen.SEARCH)},{onPanel("cep")})
                 if(screen==Screen.HOME) {
-                    var railWidthPx by remember { mutableIntStateOf(0) }
-                    val railWidth = (railWidthPx / u.pixelsPerUnit).coerceAtLeast(76f)
-                    val programLeft = maxOf(265f,108f+railWidth+24f)
+                    val programLeft = 265f
                     Box(u.at(96,254,102,432).background(glass,CircleShape).border(u.space(1),Color.White.copy(alpha=.16f),CircleShape))
-                    Column(Modifier.offset(u.space(108),u.space(272)).zIndex(2f).onSizeChanged { railWidthPx=it.width },verticalArrangement=Arrangement.spacedBy(u.space(4))) {
+                    Column(Modifier.offset(u.space(108),u.space(272)).zIndex(2f),verticalArrangement=Arrangement.spacedBy(u.space(4))) {
                         RailItem(u,"audio","Ouvir",accent){onOpen(Screen.AUDIO)}
                         RailItem(u,"video","Assistir",accent){onOpen(Screen.VIDEO)}
                         RailItem(u,"catalog","On Demand",accent){onOpen(Screen.CATALOG)}
@@ -198,8 +204,8 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                         Spacer(Modifier.height(u.space(6)))
                         GlassButton(u,"programação",Modifier.height(u.space(54)),icon="plus",outline=true){onOpen(Screen.SCHEDULE)}
                     }
-                    if(sponsor!=null) Artwork(sponsor,u.at(1641,746,202,202))
-                    if(banner.isNotBlank()) {
+                    if(sponsor!=null && !interaction && panel==null) Artwork(sponsor,u.at(1641,746,202,202))
+                    if(banner.isNotBlank() && !interaction && panel==null) {
                         val model:Any?=if(banner.substringBefore("?")=="https://qazvgmgdidjhbvcuinpy.supabase.co/storage/v1/object/public/comercial/452ebd1e-61a0-42dd-bf80-231a3f426c83/player-ads/00198081-b99d-4548-8561-ff953209d17a.png") R.drawable.home_hotpark else safeImage(banner)
                         Artwork(model,u.at(265,886,1320,140).clip(u.round(12)),scale=ContentScale.Fit)
                     }
@@ -216,12 +222,12 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                             Copy("tocando",u,20,700)
                             Copy(title.uppercase(),u,50,700,lines=2)
                             Copy(artist.uppercase(),u,27,400,lines=2)
-                            // A real amplitude-driven spectrum still requires native audio analysis.
+                            SpectrumBars(spectrum,playing,accent,Modifier.size(u.space(415),u.space(76)),42)
                             if(buffering) Copy("Carregando…",u,22,500)
                         }
                     }
                     if(screen==Screen.AUDIO||controls||chrome>.01f) {
-                        WatchHeader(u,logo,stationName,screen,accent,weather,if(screen==Screen.VIDEO) chrome else 1f,controls||screen==Screen.AUDIO,guestAvatar,{onOpen(Screen.PROFILE)})
+                        WatchHeader(u,logo,stationName,screen,accent,weather,if(screen==Screen.VIDEO) chrome else 1f,controls||screen==Screen.AUDIO,guestAvatar,{onOpen(Screen.PROFILE)},{onPanel("cep")})
                     }
                     if(screen==Screen.VIDEO && chrome>.01f && title!="Ao vivo") {
                         Row(u.at(134,455,850,165).alpha(chrome).background(glass,u.round(20)).padding(u.space(12)),verticalAlignment=Alignment.CenterVertically) {
@@ -232,11 +238,11 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                     }
                     if(sponsor!=null && !interaction && (screen==Screen.AUDIO || chrome>.01f)) Artwork(sponsor,u.at(1630,730,190,130).alpha(if(screen==Screen.VIDEO)chrome else 1f))
                     val programX by animateDpAsState(u.space(if(screen==Screen.AUDIO&&!controls)100 else 280),tween(350),label="programX")
-                    if(!interaction && (screen==Screen.AUDIO || chrome>.01f)) Row(Modifier.offset(programX,u.space(928)).width(u.space(900)).height(u.space(85)).alpha(if(screen==Screen.VIDEO)chrome else 1f),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(15))) {
+                    if(!interaction && panel==null && (screen==Screen.AUDIO || chrome>.01f)) Row(Modifier.offset(programX,u.space(928)).width(u.space(900)).height(u.space(85)).alpha(if(screen==Screen.VIDEO)chrome else 1f),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(15))) {
                         Badge(u,"Agora",accent)
                         Column { Copy(program.str("nome"),u,26,700);Copy(program.str("horario_inicio").take(5)+" – "+program.str("horario_fim").take(5)+"   "+presenter.str("nome"),u,18) }
                     }
-                    if(chrome>.01f) {
+                    if(chrome>.01f && panel==null) {
                         GlassButton(u,"",u.at(100,936,40,40).alpha(chrome),icon="left",enabled=controls){onBack()}
                         GlassButton(u,"",u.at(160,912,88,88).alpha(chrome).focusRequester(focus),icon=if(playing)"pause" else "play",enabled=controls){onToggle()}
                         GlassButton(u,"",u.at(184,854,40,40).alpha(chrome),icon="up",enabled=controls){onChannel(-1)}
@@ -246,7 +252,7 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                             items(video){ ch -> GlassButton(u,ch.name,Modifier.width(u.space(350)).height(u.space(72)),enabled=controls,accent=if(ch.id==selected?.id)accent else null){onVideo(ch)} }
                         }
                     }
-                    if(screen==Screen.AUDIO || chrome>.01f) GlassButton(u,"",u.at(1744,922,64,64).alpha(if(screen==Screen.VIDEO)chrome else 1f),icon="spark",enabled=screen==Screen.AUDIO||controls){onInteraction()}
+                    if(panel==null && (screen==Screen.AUDIO || chrome>.01f)) GlassButton(u,"",u.at(1744,922,64,64).alpha(if(screen==Screen.VIDEO)chrome else 1f),icon="spark",enabled=screen==Screen.AUDIO||controls){onInteraction()}
                     playerError?.let { Copy(it,u,25,500,u.at(100,800,900,50)) }
                 }
                 if(screen==Screen.SCHEDULE) Schedule(u,payload,program,accent,focus,onBack)
@@ -263,32 +269,9 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                     NativeProfiles(u,logo,accent,focus,entryPending,guestName,guestAvatar,onProfileContinue,onGuestSave,
                         onConnect={onNotice("O pareamento seguro Google ainda não está disponível nesta versão de teste. Continue como visitante.")})
                 }
-                if(screen==Screen.HISTORY) {
-                    Copy("Últimas tocadas",u,38,600,u.at(115,245,1200,65))
-                    if(historyLoading||historyError||history.isEmpty()) Copy(if(historyLoading)"Carregando…" else if(historyError)"Histórico indisponível" else "Nenhuma música registrada.",u,25,400,u.at(115,330,1300,55))
-                    else LazyRow(u.at(115,345,1690,510),horizontalArrangement=Arrangement.spacedBy(u.space(25))) {
-                        items(history) { song ->
-                            Column(Modifier.width(u.space(270)).background(glass,u.round(24)).padding(u.space(14))) {
-                                Box(Modifier.size(u.space(242)).clip(u.round(15)).background(Color.White.copy(alpha=.06f)),contentAlignment=Alignment.Center) {
-                                    val url=song.str("capa_url").ifBlank{if(song.str("musica")==track.str("titulo")&&song.str("artista")==artist)cover else ""}
-                                    if(url.isNotBlank())Artwork(safeImage(url),Modifier.fillMaxSize(),scale=ContentScale.Crop) else Symbol("music",Modifier.size(u.space(80)))
-                                }
-                                Copy(song.str("musica"),u,23,700,lines=2);Copy(song.str("artista"),u,19);Copy(song.str("horario"),u,17)
-                            }
-                        }
-                    }
-                    GlassButton(u,"Voltar",u.at(100,950,150,56).focusRequester(focus),icon="left",onClick=onBack)
-                }
-                if(screen==Screen.SEARCH) {
-                    Copy("Busca",u,38,600,u.at(115,240,1200,60))
-                    Copy("A pesquisa de conteúdos ainda está em migração.",u,25,400,u.at(115,335,1400,60))
-                    GlassButton(u,"Voltar",u.at(100,950,150,56).focusRequester(focus),icon="left",onClick=onBack)
-                }
-                if(interaction) Row(u.at(625,790,1180,105).background(glass,u.round(28)).padding(u.space(12)),horizontalArrangement=Arrangement.spacedBy(u.space(10)),verticalAlignment=Alignment.CenterVertically) {
-                    listOf("Letra","Enquete","Chat","Tempo","Últimas tocadas").forEach{ label->
-                        GlassButton(u,label,Modifier.weight(1f).height(u.space(65))){ if(label=="Últimas tocadas") onOpen(Screen.HISTORY) else onNotice("$label ainda em migração.") }
-                    }
-                }
+                if(interaction && panel==null) InteractionCards(u, {onPanel(it)}, onInteraction)
+                if(panel!=null) NativePanel(u,panel,payload,track,history,historyLoading,historyError,forecast,lyrics,cep,api,station?.ownerId,accent,{onPanel(null)},onCepSaved,onOpen)
+
             }
             if(notice!=null) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.60f)),contentAlignment=Alignment.Center) {
                 val close=remember{FocusRequester()};LaunchedEffect(notice){close.requestFocus()}
@@ -304,18 +287,19 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
 @Composable private fun Badge(u:TvUnits,label:String,accent:Color,compact:Boolean=false) {
     Box(Modifier.background(accentGlass(accent),u.round(if(compact)10 else 13)).border(u.space(1),Color.White.copy(alpha=.25f),u.round(if(compact)10 else 13)).padding(horizontal=u.space(if(compact)13 else 15),vertical=u.space(if(compact)5 else 6))) { Copy(label,u,if(compact)15 else 21,650) }
 }
-@Composable private fun Clock(u:TvUnits,modifier:Modifier,weather:JSONObject?) {
+@Composable private fun Clock(u:TvUnits,modifier:Modifier,weather:JSONObject?,onClick:()->Unit) {
     var clock by remember { mutableStateOf(LocalTime.now(brasilia)) }
     LaunchedEffect(Unit){while(true){clock=LocalTime.now(brasilia);delay(15000)}}
     val temp=weather?.opt("temperature_2m") as? Number
     val weatherCode=(weather?.opt("weather_code") as? Number)?.toInt()
-    Row(modifier.background(glass,CircleShape).border(u.space(1),Color.White.copy(alpha=.17f),CircleShape),horizontalArrangement=Arrangement.Center,verticalAlignment=Alignment.CenterVertically){
+    var focused by remember { mutableStateOf(false) }
+    Row(modifier.clip(CircleShape).onFocusChanged{focused=it.isFocused}.background(glass,CircleShape).border(u.space(if(focused)3 else 1),Color.White.copy(alpha=if(focused)1f else .17f),CircleShape).clickable(onClick=onClick).semantics{contentDescription="Configurar previsão do tempo pelo CEP"},horizontalArrangement=Arrangement.Center,verticalAlignment=Alignment.CenterVertically){
         Copy(clock.format(DateTimeFormatter.ofPattern("HH:mm")),u,29,400)
-        if(temp!=null){Spacer(Modifier.width(u.space(12)));Copy("|",u,22,400,color=Color.White.copy(alpha=.55f));Spacer(Modifier.width(u.space(12)));Symbol(if(weatherCode==0)"sun" else "cloud",Modifier.size(u.space(30)));Spacer(Modifier.width(u.space(8)));Copy(kotlin.math.round(temp.toDouble()).toInt().toString()+"°",u,28,400)}
+        run {Spacer(Modifier.width(u.space(12)));Copy("|",u,22,400,color=Color.White.copy(alpha=.55f));Spacer(Modifier.width(u.space(12)));Symbol(when(weatherCode ?: -1){0,1->"sun";in 51..99->"rain";else->"cloud"},Modifier.size(u.space(30)));Spacer(Modifier.width(u.space(8)));Copy(temp?.let{kotlin.math.round(it.toDouble()).toInt().toString()+"°"}?:"--°",u,28,400)}
     }
 }
 @OptIn(ExperimentalFoundationApi::class)
-@Composable private fun Header(u:TvUnits,logo:String?,title:String,artist:String,cover:String,playing:Boolean,accent:Color,screen:Screen,weather:JSONObject?,trackFocus:Modifier,onToggle:()->Unit,onSearch:()->Unit) {
+@Composable private fun Header(u:TvUnits,logo:String?,title:String,artist:String,cover:String,playing:Boolean,accent:Color,screen:Screen,weather:JSONObject?,trackFocus:Modifier,spectrum:PcmSpectrum,onToggle:()->Unit,onSearch:()->Unit,onCep:()->Unit) {
     Artwork(logo,u.at(100,63,90,90))
     var focused by remember { mutableStateOf(false) }
     val shape=u.round(16)
@@ -323,18 +307,17 @@ private fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
         Artwork(safeImage(cover)?:logo,Modifier.size(u.space(60)).clip(u.round(8)),scale=ContentScale.Crop)
         Spacer(Modifier.width(u.space(15)))
         Column(Modifier.weight(1f)){Copy(title.uppercase(),u,22,700,Modifier.basicMarquee(iterations=Int.MAX_VALUE,initialDelayMillis=2000,repeatDelayMillis=3000));Copy(artist,u,18,400,Modifier.basicMarquee(iterations=Int.MAX_VALUE,initialDelayMillis=2000,repeatDelayMillis=3000))}
-        // The reference uses a neutral nine-line spectrum when no PCM signal is available.
-        Canvas(Modifier.size(u.space(62),u.space(52))) { repeat(9){i->val x=size.width*(i+1)/10f;drawLine(Color.White,Offset(x,size.height*.46f),Offset(x,size.height*.54f),strokeWidth=size.width/28f,cap=StrokeCap.Round)} }
+        SpectrumBars(spectrum,playing,Color.White,Modifier.size(u.space(62),u.space(52)),9)
     }
     GlassButton(u,"",u.at(1512,76,56,56),icon="search",onClick=onSearch)
-    Clock(u,u.at(1592,76,230,56),weather)
+    Clock(u,u.at(1592,76,230,56),weather,onCep)
 }
-@Composable private fun WatchHeader(u:TvUnits,logo:String?,name:String,screen:Screen,accent:Color,weather:JSONObject?,alpha:Float,enabled:Boolean,guestAvatar:Int,onProfile:()->Unit) {
+@Composable private fun WatchHeader(u:TvUnits,logo:String?,name:String,screen:Screen,accent:Color,weather:JSONObject?,alpha:Float,enabled:Boolean,guestAvatar:Int,onProfile:()->Unit,onCep:()->Unit) {
     Row(u.at(100,76,1000,64).alpha(alpha),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(25))) {
         Artwork(logo,Modifier.size(u.space(70),u.space(60)));Copy(name,u,22,500);Badge(u,if(screen==Screen.VIDEO)"Vídeo" else "Áudio",accent)
     }
     Copy("• AO VIVO",u,20,600,u.at(1350,91,135,44).alpha(alpha))
-    Clock(u,u.at(1485,76,240,62).alpha(alpha),weather)
+    Clock(u,u.at(1485,76,240,62).alpha(alpha),weather,onCep)
     Box(u.at(1760,76,62,62).alpha(alpha).clip(CircleShape).background(accentGlass(accent)).clickable(enabled=enabled,onClick=onProfile)) { Artwork(guestAvatar,Modifier.fillMaxSize(),scale=ContentScale.Crop) }
 }
 
@@ -385,14 +368,15 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
                             .onFocusChanged{focused=it.isFocused}
                             .background(if(live||focused)accentGlass(accent) else Brush.linearGradient(listOf(Color(0xFF303136),Color(0xFF202123))),shape)
                             .border(u.space(if(focused)3 else 0),if(focused)Color.White else Color.Transparent,shape)
-                            .clip(shape).clickable{details=p}.padding(u.space(9)),verticalArrangement=Arrangement.SpaceBetween) {
+                            .clip(shape).clickable{details=p}.padding(u.space(9)),verticalArrangement=Arrangement.spacedBy(u.space(5))) {
                             Copy(p.str("nome"),u,19,700,lines=if(height>100)3 else 1)
-                            if(height>125) {
+                            if(seg.end-seg.start>90) {
                                 val ids=p.strings("apresentadores_ids").ifEmpty{listOf(p.str("apresentador_id"))}
-                                Row(Modifier.fillMaxWidth().weight(1f),horizontalArrangement=Arrangement.Center) {
-                                    ids.take(2).forEach{id-> Artwork(safeImage(people[id].str("foto")),Modifier.weight(1f).fillMaxHeight(),scale=ContentScale.Fit)}
+                                Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(u.space(5))) {
+                                    ids.take(2).forEach{id-> Artwork(safeImage(people[id].str("foto")),Modifier.size(u.space(56)).clip(CircleShape).background(accentGlass(accent)).alpha(if(live||focused)1f else .4f),scale=ContentScale.Crop,filter=if(live||focused)null else ColorFilter.colorMatrix(ColorMatrix().apply{setToSaturation(0f)}))}
                                 }
                             }
+                            Spacer(Modifier.weight(1f))
                             if(height>64)Copy((if(live)"no ar • " else "")+labelMinute(seg.start)+"–"+labelMinute(seg.end),u,16,500)
                         }
                     }
@@ -477,7 +461,7 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
 
 @Composable private fun ProfileCircle(u:TvUnits,modifier:Modifier,avatar:Int?,label:String,onClick:()->Unit) {
     var focused by remember { mutableStateOf(false) }
-    Box(modifier.size(u.space(164)).onFocusChanged { focused=it.isFocused }
+    Box(modifier.size(u.space(164)).clip(CircleShape).onFocusChanged { focused=it.isFocused }
         .border(u.space(3),if(focused)Color.White else Color.Transparent,CircleShape)
         .clickable(onClick=onClick).semantics { contentDescription=label }.padding(u.space(7)),
         contentAlignment=Alignment.Center) {

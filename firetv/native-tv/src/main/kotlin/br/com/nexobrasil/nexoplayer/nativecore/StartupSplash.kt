@@ -41,6 +41,7 @@ import kotlinx.coroutines.delay
             }
             Text(stage,modifier=Modifier.offset(y=u.space(815)).fillMaxWidth().semantics { liveRegion=LiveRegionMode.Polite },
                 color=Color.White.copy(alpha=.60f),style=u.referenceText(18,400),textAlign=TextAlign.Center)
+            Image(painterResource(R.drawable.splash_company),contentDescription="Nexo Brasil",modifier=Modifier.align(Alignment.BottomCenter).padding(bottom=u.space(80)).size(u.space(132),u.space(42)),contentScale=ContentScale.Fit)
             Text("desenvolvido por Nexo Brasil - Copyrighted 2026/2027",
                 modifier=Modifier.align(Alignment.BottomCenter).padding(bottom=u.space(51.84)),
                 color=Color.White.copy(alpha=.5f),style=u.referenceText(18.24,400),textAlign=TextAlign.Center)

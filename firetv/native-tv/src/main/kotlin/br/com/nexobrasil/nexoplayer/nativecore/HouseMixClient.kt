@@ -34,8 +34,17 @@ class HouseMixClient(supabaseOrigin: String, private val publishableKey: String)
     suspend fun sponsors(ownerId: String, date: String, day: String, time: String): JSONObject =
         function("public-cenario-data", query = mapOf("uid" to ownerId, "date" to date, "day" to day, "time" to time))
 
-    suspend fun weather(ownerId: String): JSONObject =
-        function("fetch-weather", body = JSONObject().put("action", "forecast").put("user_id", ownerId).put("forecast_days", 1))
+    suspend fun weather(ownerId: String,location:JSONObject?=null): JSONObject {
+        val body=JSONObject().put("action","forecast").put("forecast_days",8)
+        if(location!=null) body.put("lat",location.optDouble("lat")).put("lon",location.optDouble("lon")) else body.put("user_id",ownerId)
+        return function("fetch-weather",body=body)
+    }
+    suspend fun lyrics(title:String,artist:String):String {
+        val r=function("fetch-lyrics",body=JSONObject().put("title",title).put("artist",artist))
+        return r.str("plainLyrics").ifBlank{r.str("syncedLyrics").replace(Regex("\\[\\d{2}:\\d{2}[.:]\\d{2,3}\\]"),"")}.ifBlank{"Letra indisponível para esta música."}
+    }
+    suspend fun geocode(city:String):JSONObject=function("fetch-weather",body=JSONObject().put("action","geocode").put("query",city).put("count",20))
+
 
     private suspend fun function(
         name: String,

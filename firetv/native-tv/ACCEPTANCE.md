@@ -19,3 +19,6 @@ Nenhum item possui evidência integral neste commit. O APK gerado pelo CI perman
 
 ## Correção de entrada v0.1.3
 Fluxo frio Splash → escolha de visitante → Home; pré-buffer silencioso e reprodução somente após a escolha. Edição local de visitante. Build, captura física e paridade visual pendentes. Conta Google e perfis autenticados ainda não concluídos: a função tv-pair-redeem não consta na referência Git, não confiar em dados de claim como sessão autenticada. Nenhuma mudança de banco neste commit.
+
+## Lote 0.1.4 — ajustes de TV física
+Alterações de código: recorte circular/cápsula, menu em overlay, busca modal de canais/programas/apresentadores/histórico (catálogo de vídeos e destinos específicos ainda parciais), clima/CEP, espectro PCM, cards de interatividade, histórico vertical e fallback iTunes, letra, setas entre canais ao vivo, retratos 56u, ícones/banners por flavor, logo Nexo no splash e leitura dominantColor/homeAccent. Não validados em TV física. Enquete, votação/curtidas, chat, batalha, sessão Google segura, pré-roll e assinatura permanente continuam pendentes. Não considerar os 16 ajustes concluídos.

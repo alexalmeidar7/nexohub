@@ -1,6 +1,7 @@
 package br.com.nexobrasil.nexoplayer.nativecore
 
 import android.os.Bundle
+import androidx.compose.ui.platform.LocalContext
 import android.view.KeyEvent
 import android.view.MotionEvent
 import androidx.activity.ComponentActivity
@@ -32,6 +33,7 @@ import java.util.Locale
 
 class NativeActivity : ComponentActivity() {
     private lateinit var player: ExoPlayer
+    private val spectrum = PcmSpectrum()
     private var activity by mutableIntStateOf(0)
     private var hidden by mutableStateOf(false)
     private var consumedKey: Int? = null
@@ -40,8 +42,8 @@ class NativeActivity : ComponentActivity() {
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         @Suppress("DEPRECATION")
         window.decorView.systemUiVisibility = 5894
-        player = ExoPlayer.Builder(this).build().apply { setAudioAttributes(AudioAttributes.DEFAULT, true) }
-        setContent { NativeTv(player, activity) { hidden = it } }
+        player = ExoPlayer.Builder(this, SpectrumRenderers(this,spectrum)).build().apply { setAudioAttributes(AudioAttributes.DEFAULT, true) }
+        setContent { NativeTv(player, spectrum, activity) { hidden = it } }
     }
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_UP && consumedKey == event.keyCode) {
@@ -84,7 +86,7 @@ internal val brasilia = ZoneId.of("America/Sao_Paulo")
 internal fun safeImage(url: String): String? = url.takeIf { it.startsWith("https://") || it.startsWith("http://") }
 
 @Composable
-private fun NativeTv(player: ExoPlayer, activity: Int, onHidden: (Boolean)->Unit) {
+private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onHidden: (Boolean)->Unit) {
     val api = remember { HouseMixClient(BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_ANON_KEY) }
     var startup by remember { mutableStateOf(true) }
     var entryPending by remember { mutableStateOf(true) }
@@ -109,6 +111,13 @@ private fun NativeTv(player: ExoPlayer, activity: Int, onHidden: (Boolean)->Unit
     var campaigns by remember { mutableStateOf<List<JSONObject>>(emptyList()) }
     var sponsorUrls by remember { mutableStateOf<List<String>>(emptyList()) }
     var weather by remember { mutableStateOf<JSONObject?>(null) }
+    val context=LocalContext.current
+    val prefs=remember { context.getSharedPreferences("native_tv_settings",0) }
+    var location by remember { mutableStateOf(readWeatherLocation(prefs)) }
+    var cep by remember { mutableStateOf(prefs.getString("cep","").orEmpty()) }
+    var panel by remember { mutableStateOf<String?>(null) }
+    var forecast by remember { mutableStateOf<JSONObject?>(null) }
+    var lyrics by remember { mutableStateOf<String?>(null) }
     var history by remember { mutableStateOf<List<JSONObject>>(emptyList()) }
     var historyLoading by remember { mutableStateOf(false) }
     var historyError by remember { mutableStateOf(false) }
@@ -154,12 +163,13 @@ private fun NativeTv(player: ExoPlayer, activity: Int, onHidden: (Boolean)->Unit
     }
     fun back() {
         if (notice != null) notice = null
+        else if (panel != null) { panel=null; interaction=false }
         else if (startup || entryPending) return
         else if (interaction) interaction = false
         else if (screen in listOf(Screen.SCHEDULE,Screen.HISTORY,Screen.PROFILE,Screen.SEARCH,Screen.CATALOG)) screen = returnScreen
         else home()
     }
-    BackHandler(screen != Screen.HOME || interaction || notice != null) { back() }
+    BackHandler(screen != Screen.HOME || interaction || notice != null || panel != null) { back() }
     DisposableEffect(player) {
         val listener = object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) { playing = isPlaying }
@@ -226,28 +236,28 @@ private fun NativeTv(player: ExoPlayer, activity: Int, onHidden: (Boolean)->Unit
             delay(300_000L)
         }
     }
-    LaunchedEffect(screen,station?.ownerId) {
-        if (screen != Screen.HISTORY) return@LaunchedEffect
+    LaunchedEffect(panel,station?.ownerId) {
+        if (panel !in listOf("history","search")) return@LaunchedEffect
         val owner = station?.ownerId ?: return@LaunchedEffect
         historyLoading = true
         historyError = false
         try {
             val data = api.recentMusic(owner)
             check(data.optBoolean("ok"))
-            history = data.rows("items").take(50)
+            history = data.rows("items").distinctBy { it.str("id").ifBlank { it.str("musica")+"|"+it.str("artista")+"|"+it.str("horario") } }.take(50)
         } catch (e: CancellationException) { throw e }
         catch (_: Exception) { historyError = true }
         finally { historyLoading = false }
     }
     val watch = screen == Screen.AUDIO || screen == Screen.VIDEO
-    LaunchedEffect(screen,activity,interaction,notice,buffering,playerError,playing) {
+    LaunchedEffect(screen,activity,interaction,notice,panel,buffering,playerError,playing) {
         controls = true
-        if (watch && !interaction && notice == null && (screen == Screen.AUDIO || (playing && !buffering && playerError == null))) {
+        if (watch && !interaction && notice == null && panel == null && (screen == Screen.AUDIO || (playing && !buffering && playerError == null))) {
             delay(5000)
             controls = false
         }
     }
-    SideEffect { onHidden(watch && !controls && !interaction && notice == null) }
+    SideEffect { onHidden(watch && !controls && !interaction && notice == null && panel == null) }
     val chrome by animateFloatAsState(if(controls) 1f else 0f, tween(350),label="watchChrome")
     val data = payload
     val currentProgram = data?.optJSONObject("currentProgram")
@@ -275,13 +285,13 @@ private fun NativeTv(player: ExoPlayer, activity: Int, onHidden: (Boolean)->Unit
             delay(60_000)
         }
     }
-    LaunchedEffect(station?.ownerId) {
+    LaunchedEffect(station?.ownerId,location) {
         weather=null
         val owner=station?.ownerId ?: return@LaunchedEffect
         while(true){
             try {
-                val data=api.weather(owner)
-                if(data.optBoolean("ok")) weather=data.optJSONObject("data")?.optJSONObject("current")
+                val data=api.weather(owner,location)
+                if(data.optBoolean("ok")) { forecast=data.optJSONObject("data"); weather=forecast?.optJSONObject("current") }
             }catch(e:CancellationException){throw e}catch(_:Exception){}
             delay(300_000)
         }
@@ -297,11 +307,15 @@ private fun NativeTv(player: ExoPlayer, activity: Int, onHidden: (Boolean)->Unit
     }
     var bannerIndex by remember(banners) { mutableIntStateOf(0) }
     LaunchedEffect(banners) { if (banners.size>1) while(true) { delay(5000); bannerIndex=(bannerIndex+1)%banners.size } }
+    LaunchedEffect(panel,track.str("titulo"),track.str("artista")) {
+        if(panel=="lyrics"){lyrics=null;try { lyrics=api.lyrics(track.str("titulo"),track.str("artista")) } catch(e:CancellationException){throw e} catch(_:Exception){lyrics="Letra indisponível para esta música."}}
+    }
     val onChannel: (Int)->Unit = { direction ->
-        val list = if(screen==Screen.VIDEO) video else audio
+        val list = audio+video
         if (list.isNotEmpty()) {
             val index=list.indexOfFirst { it.id==selected?.id }.coerceAtLeast(0)
-            select(list[(index+direction+list.size)%list.size],screen)
+            val ch=list[(index+direction+list.size)%list.size]
+            select(ch,if(ch.type=="video_live") Screen.VIDEO else Screen.AUDIO)
         }
     }
     Box(Modifier.fillMaxSize()) {
@@ -312,6 +326,8 @@ private fun NativeTv(player: ExoPlayer, activity: Int, onHidden: (Boolean)->Unit
         banner=banners.getOrNull(bannerIndex).str("url"),sponsor=sponsorUrls.getOrNull(sponsorIndex),weather=weather,history=history,historyLoading=historyLoading,historyError=historyError,
         notice=notice,video=video,selected=selected, onRetry={retry++},onToggle=::toggle,onBack=::back,
         entryPending=entryPending, guestName=guestName, guestAvatar=guestAvatar,
+        spectrum=spectrum, panel=panel,forecast=forecast,lyrics=lyrics,cep=cep,api=api,
+        onPanel={panel=it;interaction=false},onCepSaved={digits,loc -> prefs.edit().putString("cep",digits).putString("location",loc.toString()).apply();cep=digits;location=loc;panel=null},
         onGuestSave={name,avatar -> guestName=name;guestAvatar=avatar},
         onProfileContinue={
             if(entryPending) {
@@ -325,6 +341,8 @@ private fun NativeTv(player: ExoPlayer, activity: Int, onHidden: (Boolean)->Unit
                 Screen.HOME -> home()
                 Screen.AUDIO -> { if(audio.isEmpty()) notice="Canal de áudio indisponível" else if(selected?.id==audio.first().id) screen=Screen.AUDIO else select(audio.first(),Screen.AUDIO,audioIntent) }
                 Screen.VIDEO -> { if(video.isEmpty()) notice="Canal de vídeo indisponível" else { if(selected?.type=="audio_live") audioIntent=player.playWhenReady; select(video.first(),Screen.VIDEO) } }
+                Screen.SEARCH -> { panel="search";interaction=false }
+                Screen.HISTORY -> { panel="history";interaction=false }
                 else -> openPage(destination)
             }
         },onChannel=onChannel,onVideo={select(it,Screen.VIDEO)},onInteraction={interaction=!interaction},

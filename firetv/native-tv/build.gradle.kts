@@ -8,7 +8,8 @@ val referenceResources = layout.buildDirectory.dir("generated/reference-resource
 val stageReferenceResources by tasks.registering(Sync::class) {
     into(referenceResources)
     from("../../public/logos/nexo-positiva-splash-v17.png") { into("drawable-nodpi"); rename { "splash_positiva.png" } }
-    from("../../public/logos/interativa.png") { into("drawable-nodpi"); rename { "splash_interativa.png" } }
+    from("../app/src/interativa/res/drawable-nodpi/nexo_startup_logo.png") { into("drawable-nodpi"); rename { "splash_interativa.png" } }
+    from("../../src/assets/logo-nexo-solucoes-visuais.png") { into("drawable-nodpi"); rename { "splash_company.png" } }
     from("../../src/components/player/tv/nexo-lote13-hotpark.png") { into("drawable-nodpi"); rename { "home_hotpark.png" } }
     from("../../public/avatars/usr-default.png") { into("drawable-nodpi"); rename { "visitor_avatar.png" } }
     (1..8).forEach { n ->
@@ -28,8 +29,8 @@ android {
         applicationId = "br.com.nexobrasil.nexoplayer.nativepilot"
         minSdk = 26
         targetSdk = 35
-        versionCode = 4
-        versionName = "0.1.3-native-preview"
+        versionCode = 5
+        versionName = "0.1.4-native-preview"
         buildConfigField("String", "SUPABASE_URL", "\"https://qazvgmgdidjhbvcuinpy.supabase.co\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"sb_publishable_BzjxF3H_PSgFYVA3OQIaoA_Pytdg2V3\"")
     }
@@ -38,6 +39,8 @@ android {
         create("positiva") {
             dimension = "station"
             applicationIdSuffix = ".positiva"
+            manifestPlaceholders["stationIcon"] = "@mipmap/positiva_launcher"
+            manifestPlaceholders["stationBanner"] = "@drawable/positiva_tv_banner"
             resValue("string", "app_name", "Positiva FM Nativo (teste)")
             buildConfigField("String", "STATION_SLUG", "\"positivafm\"")
             buildConfigField("String", "STATION_NAME", "\"Positiva FM\"")
@@ -45,6 +48,8 @@ android {
         create("interativa") {
             dimension = "station"
             applicationIdSuffix = ".interativa"
+            manifestPlaceholders["stationIcon"] = "@mipmap/interativa_launcher"
+            manifestPlaceholders["stationBanner"] = "@drawable/interativa_tv_banner"
             resValue("string", "app_name", "Interativa FM Nativo (teste)")
             buildConfigField("String", "STATION_SLUG", "\"interativafm\"")
             buildConfigField("String", "STATION_NAME", "\"Interativa FM\"")
@@ -52,6 +57,8 @@ android {
     }
     buildFeatures { compose = true; buildConfig = true }
     sourceSets.getByName("main").res.srcDir(referenceResources)
+    sourceSets.getByName("positiva").res.srcDir("../app/src/positiva/res")
+    sourceSets.getByName("interativa").res.srcDir("../app/src/interativa/res")
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
