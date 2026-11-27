@@ -209,7 +209,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                         Copy("tempo agora",u,22,500)
                         val temp=forecast?.optJSONObject("current")?.optDouble("temperature_2m")
                         val current=forecast?.optJSONObject("current")
-                        Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(12))){WeatherMotion(u,current?.optInt("weather_code",-1)?:-1);Copy(temp?.takeIf{it.isFinite()}?.let{it.toInt().toString()+"°"}?:"--°",u,56,600)}
+                        Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(12))){NativeWeatherIcon(current?.optInt("weather_code",-1)?:-1,Modifier.size(u.space(70)),isDay=current?.optInt("is_day",1)!=0);Copy(temp?.takeIf{it.isFinite()}?.let{it.toInt().toString()+"°"}?:"--°",u,56,600)}
                         val humid=current?.optDouble("relative_humidity_2m");val rain=d?.optJSONArray("precipitation_probability_max")?.optDouble(0)
                         Copy("Chuva "+(rain?.takeIf{it.isFinite()}?.toInt()?.toString()?.plus("%")?:"—")+"  ·  Umidade "+(humid?.takeIf{it.isFinite()}?.toInt()?.toString()?.plus("%")?:"—"),u,19,500)
                         if(dates==null){Copy("Previsão indisponível.",u,22)}
@@ -218,7 +218,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                                 val code=d?.optJSONArray("weather_code")?.optInt(i)?:0
                                 val min=d?.optJSONArray("temperature_2m_min")?.optDouble(i);val max=d?.optJSONArray("temperature_2m_max")?.optDouble(i)
                                 Row((if(i==0)Modifier.focusRequester(focus)else Modifier).fillMaxWidth().height(u.space(67)).clip(u.round(16)).background(Color.White.copy(alpha=.08f)).clickable{}.padding(u.space(8)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(10))){
-                                    Symbol(if(code<=1)"sun" else if(code>=51)"rain" else "cloud",Modifier.size(u.space(34)))
+                                    NativeWeatherIcon(code,Modifier.size(u.space(42)))
                                     Copy(dates.optString(i).takeLast(5),u,20,500,Modifier.weight(1f));Copy((min?.toInt()?.toString()?:"--")+"° / "+(max?.toInt()?.toString()?:"--")+"°",u,20)
                                 }
                             }
@@ -241,4 +241,4 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
     LaunchedEffect(panel,loading,history.isNotEmpty(),forecast!=null){runCatching{focus.requestFocus()}}
 }
 
-@Composable private fun WeatherMotion(u:TvUnits,code:Int){val transition=rememberInfiniteTransition(label="weather");val angle by transition.animateFloat(-5f,5f,infiniteRepeatable(tween(1200),RepeatMode.Reverse),label="weatherIcon");Symbol(if(code in 0..1)"sun" else if(code>=51)"rain" else "cloud",Modifier.size(u.space(65)).rotate(angle))}
+

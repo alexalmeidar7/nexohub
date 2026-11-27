@@ -154,7 +154,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
 }
 
 @Composable internal fun NativeLayout(
-    screen:Screen,station:StationBootstrap?,stationName:String,payload:JSONObject?,track:JSONObject?,program:JSONObject?,presenter:JSONObject?,artistArtwork:String,backgroundAd:String,bannerLink:String,
+    screen:Screen,station:StationBootstrap?,stationName:String,payload:JSONObject?,track:JSONObject?,program:JSONObject?,presenter:JSONObject?,artistArtwork:String,backgroundAd:String,bannerLink:String,bannerQr:Boolean,onBannerQr:(Boolean)->Unit,
     player:ExoPlayer,playing:Boolean,buffering:Boolean,failure:String?,playerError:String?,controls:Boolean,chrome:Float,interaction:Boolean,
     banner:String,sponsor:String?,weather:JSONObject?,history:List<JSONObject>,historyLoading:Boolean,historyError:Boolean,notice:String?,video:List<StationChannel>,selected:StationChannel?,
     onRetry:()->Unit,onToggle:()->Unit,onBack:()->Unit,onOpen:(Screen)->Unit,onChannel:(Int)->Unit,onVideo:(StationChannel)->Unit,
@@ -180,8 +180,8 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     val sparkFocus=remember{FocusRequester()}
     val bannerFocus=remember{FocusRequester()}
     val likeFocus=remember{FocusRequester()}
-    var bannerQr by remember { mutableStateOf(false) }
-    val modal=panel!=null||notice!=null||interaction||bannerQr
+    val modal=panel!=null||notice!=null||interaction
+    LaunchedEffect(screen,banner,bannerLink,panel,interaction,notice){onBannerQr(false)}
     val watchScreen=screen==Screen.AUDIO||screen==Screen.VIDEO
     val ready=station!=null||failure!=null
     LaunchedEffect(screen,ready,modal,if(watchScreen)controls else true) {
@@ -213,7 +213,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                     val fade by androidx.compose.animation.core.animateFloatAsState(if(showArtist && artistPhoto.isNotBlank()) 1f else 0f,tween(1500),label="artist")
                     Crossfade(artistPhoto,animationSpec=tween(800),label="artistChange"){url->Artwork(safeImage(url),Modifier.fillMaxSize().alpha(fade),scale=ContentScale.Crop)}
                     Box(Modifier.fillMaxSize().alpha(fade).background(Brush.horizontalGradient(listOf(Color.Black.copy(alpha=.74f),Color.Black.copy(alpha=.45f)))))
-                    if(screen==Screen.HOME&&backgroundAd.isNotBlank()) Artwork(safeImage(backgroundAd),Modifier.fillMaxSize(),scale=ContentScale.Crop)
+                    if(screen==Screen.HOME) Crossfade(backgroundAd,animationSpec=tween(700),label="backgroundAd"){url->if(url.isNotBlank())Artwork(safeImage(url),Modifier.fillMaxSize(),scale=ContentScale.Crop)}
                     if(screen==Screen.HOME||screen==Screen.SCHEDULE) AnimatedPresenter(u,activePresenter.str("foto"),u.at(1152,108,768,972))
                     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent,Color.Transparent,Color.Black.copy(alpha=.78f)))))
                 }
@@ -237,7 +237,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                     Column(Modifier.offset(u.space(108),u.space(272)).zIndex(2f),verticalArrangement=Arrangement.spacedBy(u.space(4))) {
                         fun route(i:Int)=Modifier.focusRequester(rail[i]).focusProperties{
                             up=if(i==0)focus else rail[i-1]
-                            down=if(i==4)rail[0] else rail[i+1]
+                            down=if(i==4){if(banner.isNotBlank())bannerFocus else sparkFocus}else rail[i+1]
                             right=programFocus
                         }
                         RailItem(u,"audio","Ouvir",accent,route(0)){onOpen(Screen.AUDIO)}
@@ -257,7 +257,19 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                     if(banner.isNotBlank() && !interaction && panel==null) {
                         val model:Any?=if(banner.substringBefore("?")=="https://qazvgmgdidjhbvcuinpy.supabase.co/storage/v1/object/public/comercial/452ebd1e-61a0-42dd-bf80-231a3f426c83/player-ads/00198081-b99d-4548-8561-ff953209d17a.png") R.drawable.home_hotpark else safeImage(banner)
                         var bannerFocused by remember{mutableStateOf(false)}
-                        Box(u.at(265,886,1320,140).focusRequester(bannerFocus).focusProperties{up=programFocus;right=sparkFocus;canFocus=!modal}.onFocusChanged{bannerFocused=it.isFocused}.border(u.space(if(bannerFocused)3 else 0),Color.White,u.round(12)).clickable(enabled=!modal){if(bannerLink.startsWith("https://"))bannerQr=true}.padding(u.space(5))){Artwork(model,Modifier.fillMaxSize().clip(u.round(12)),scale=ContentScale.Fit)}
+                        Box(u.at(265,886,1320,140).focusRequester(bannerFocus)
+                            .focusProperties{up=rail[4];right=sparkFocus;canFocus=!modal}
+                            .onFocusChanged{bannerFocused=it.isFocused;if(!it.isFocused)onBannerQr(false)}
+                            .drawBehind{if(bannerFocused){val gap=u.space(5).toPx();drawRoundRect(Color.White,Offset(-gap,-gap),Size(size.width+gap*2,size.height+gap*2),CornerRadius(u.space(16).toPx()),style=Stroke(u.space(3).toPx()))}}
+                            .clickable(enabled=!modal){if(safeImage(bannerLink)!=null)onBannerQr(!bannerQr)}){
+                            Artwork(model,Modifier.fillMaxSize().clip(u.round(12)),scale=ContentScale.Fit)
+                        }
+                        AnimatedVisibility(bannerQr&&safeImage(bannerLink)!=null,modifier=u.at(48,822,198,204).zIndex(3f),enter=fadeIn(tween(220)),exit=fadeOut(tween(180))){
+                            Box(Modifier.fillMaxSize().background(glass,u.round(20)).padding(u.space(10)),contentAlignment=Alignment.Center){
+                                if(bannerLink.isNotBlank())NativeQr(bannerLink,Modifier.size(u.space(178)).clip(u.round(5)),compact=true)
+                            }
+                        }
+                        if(bannerQr)BackHandler{onBannerQr(false)}
                     }
                     GlassButton(u,"",u.at(1744,950,76,76).focusRequester(sparkFocus).focusProperties{left=if(banner.isNotBlank())bannerFocus else programFocus;up=clockFocus},icon="spark",accent=accent,accentRing=true){onInteraction()}
                     Copy("Nexo TV v"+BuildConfig.VERSION_NAME,u,15,400,u.at(100,1030,800,25),color=Color.White.copy(alpha=.55f))
@@ -273,7 +285,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                             Copy("tocando",u,20,700)
                             Copy(title.uppercase(),u,50,700,lines=2)
                             Copy(artist.uppercase(),u,27,400,lines=2)
-                            SpectrumBars(spectrum,playing,accent,Modifier.size(u.space(415),u.space(76)),42)
+                            // Standard live audio renderer is used until PCM compatibility is confirmed on Fire TV.
                             if(buffering) Copy("Carregando…",u,22,500)
                         }
                     }
@@ -326,7 +338,6 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
 
             }
             if(reminderText.isNotBlank()) Box(u.at(580,170,760,72).background(glass,u.round(24)).padding(u.space(15)),contentAlignment=Alignment.Center){Copy(reminderText,u,24,600)}
-            if(bannerQr) { BackHandler { bannerQr=false };Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.65f)),contentAlignment=Alignment.Center){Column(Modifier.background(glass,u.round(28)).padding(u.space(30)),horizontalAlignment=Alignment.CenterHorizontally){val close=remember{FocusRequester()};LaunchedEffect(Unit){close.requestFocus()};GlassButton(u,"",Modifier.align(Alignment.End).size(u.space(56)).focusRequester(close),icon="left"){bannerQr=false};NativeQr(bannerLink,Modifier.size(u.space(310)))}} }
             if(notice!=null) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.60f)),contentAlignment=Alignment.Center) {
                 val close=remember{FocusRequester()};LaunchedEffect(notice){close.requestFocus()}
                 Column(Modifier.width(u.space(620)).background(glass,u.round(28)).padding(u.space(38)),verticalArrangement=Arrangement.spacedBy(u.space(28))) {
@@ -350,7 +361,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     val active=LocalControlsEnabled.current
     Row(modifier.clip(CircleShape).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=active}.background(glass,CircleShape).border(u.space(if(focused)3 else 1),Color.White.copy(alpha=if(focused)1f else .17f),CircleShape).clickable(enabled=active,onClick=onClick).semantics{contentDescription="Configurar previsão do tempo pelo CEP"},horizontalArrangement=Arrangement.Center,verticalAlignment=Alignment.CenterVertically){
         Copy(clock.format(DateTimeFormatter.ofPattern("HH:mm")),u,29,400)
-        run {Spacer(Modifier.width(u.space(12)));Copy("|",u,22,400,color=Color.White.copy(alpha=.55f));Spacer(Modifier.width(u.space(12)));Symbol(when(weatherCode ?: -1){0,1->"sun";in 51..99->"rain";else->"cloud"},Modifier.size(u.space(30)));Spacer(Modifier.width(u.space(8)));Copy(temp?.let{kotlin.math.round(it.toDouble()).toInt().toString()+"°"}?:"--°",u,28,400)}
+        run {Spacer(Modifier.width(u.space(12)));Copy("|",u,22,400,color=Color.White.copy(alpha=.55f));Spacer(Modifier.width(u.space(12)));NativeWeatherIcon(weatherCode?:-1,Modifier.size(u.space(34)),isDay=weather?.optInt("is_day",1)!=0);Spacer(Modifier.width(u.space(8)));Copy(temp?.let{kotlin.math.round(it.toDouble()).toInt().toString()+"°"}?:"--°",u,28,400)}
     }
 }
 @OptIn(ExperimentalFoundationApi::class)
@@ -363,7 +374,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
         Artwork(safeImage(cover)?:logo,Modifier.size(u.space(60)).clip(u.round(8)),scale=ContentScale.Crop)
         Spacer(Modifier.width(u.space(15)))
         Column(Modifier.weight(1f)){Copy(title.uppercase(),u,22,700,Modifier.basicMarquee(iterations=Int.MAX_VALUE,initialDelayMillis=2000,repeatDelayMillis=3000));Copy(artist,u,18,400,Modifier.basicMarquee(iterations=Int.MAX_VALUE,initialDelayMillis=2000,repeatDelayMillis=3000))}
-        SpectrumBars(spectrum,playing,Color.White,Modifier.size(u.space(62),u.space(52)),9)
+        Symbol(if(playing)"pause" else "play",Modifier.size(u.space(38)))
     }
     GlassButton(u,"",u.at(1512,76,56,56).then(searchModifier),icon="search",onClick=onSearch)
     Clock(u,u.at(1592,76,230,56).then(clockModifier),weather,onCep)

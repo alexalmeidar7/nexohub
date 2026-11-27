@@ -25,8 +25,8 @@ import java.util.UUID
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 
-@Composable internal fun NativeQr(value:String,modifier:Modifier){
-    val matrix=remember(value){QRCodeWriter().encode(value,BarcodeFormat.QR_CODE,256,256)}
+@Composable internal fun NativeQr(value:String,modifier:Modifier,compact:Boolean=false){
+    val matrix=remember(value,compact){if(compact)QRCodeWriter().encode(value,BarcodeFormat.QR_CODE,1,1,mapOf(com.google.zxing.EncodeHintType.MARGIN to 4,com.google.zxing.EncodeHintType.ERROR_CORRECTION to com.google.zxing.qrcode.decoder.ErrorCorrectionLevel.M))else QRCodeWriter().encode(value,BarcodeFormat.QR_CODE,256,256)}
     Canvas(modifier.background(Color.White)){
         val cell=minOf(size.width,size.height)/matrix.width
         for(y in 0 until matrix.height)for(x in 0 until matrix.width)if(matrix[x,y])drawRect(Color.Black,Offset(x*cell,y*cell),Size(cell,cell))

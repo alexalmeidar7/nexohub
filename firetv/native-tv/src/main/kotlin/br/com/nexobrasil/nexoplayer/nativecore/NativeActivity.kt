@@ -23,6 +23,9 @@ import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
 import androidx.media3.common.PlaybackException
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.HttpDataSource
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -36,7 +39,6 @@ import java.util.Locale
 class NativeActivity : ComponentActivity() {
     private var playerState by mutableStateOf<ExoPlayer?>(null)
     private val player get()=requireNotNull(playerState)
-    private var spectrumFallback=false
     private var resumeOnForeground=false
     private val spectrum = PcmSpectrum()
     private var activity by mutableIntStateOf(0)
@@ -47,24 +49,13 @@ class NativeActivity : ComponentActivity() {
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         @Suppress("DEPRECATION")
         window.decorView.systemUiVisibility = 5894
-        playerState = ExoPlayer.Builder(this,SpectrumRenderers(this,spectrum)).build().apply {
+        val http=DefaultHttpDataSource.Factory().setUserAgent("NexoTV/"+BuildConfig.VERSION_NAME).setConnectTimeoutMs(15000).setReadTimeoutMs(20000)
+        playerState = ExoPlayer.Builder(this).setMediaSourceFactory(DefaultMediaSourceFactory(this).setDataSourceFactory(androidx.media3.datasource.DefaultDataSource.Factory(this,http))).build().apply {
             setAudioAttributes(AudioAttributes.DEFAULT,true)
         }
         val info=applicationInfo
         runCatching { android.util.Log.i("NexoLauncher","package="+packageName+" icon="+resources.getResourceName(info.icon)+" banner="+resources.getResourceName(info.banner)+" model="+android.os.Build.MODEL+" sdk="+android.os.Build.VERSION.SDK_INT) }
-        setContent { playerState?.let{NativeTv(it, spectrum, activity, { failed -> fallback(failed) }) { hidden = it }} }
-    }
-    private fun fallback(failed:ExoPlayer):Boolean {
-        if(spectrumFallback||playerState!==failed)return false
-        val item=failed.currentMediaItem?:return false
-        spectrumFallback=true
-        val requested=failed.playWhenReady
-        failed.release()
-        playerState=ExoPlayer.Builder(this).build().apply{
-            setAudioAttributes(AudioAttributes.DEFAULT,true)
-            setMediaItem(item);prepare();playWhenReady=requested
-        }
-        return true
+        setContent { playerState?.let{NativeTv(it, spectrum, activity) { hidden = it }} }
     }
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_UP && consumedKey == event.keyCode) {
@@ -108,7 +99,7 @@ internal val brasilia = ZoneId.of("America/Sao_Paulo")
 internal fun safeImage(url: String): String? = url.takeIf { it.startsWith("https://") || it.startsWith("http://") }
 
 @Composable
-private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onFallback:(ExoPlayer)->Boolean, onHidden: (Boolean)->Unit) {
+private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onHidden: (Boolean)->Unit) {
     val api = remember { HouseMixClient(BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_ANON_KEY) }
     var startup by remember { mutableStateOf(true) }
     var entryPending by remember { mutableStateOf(true) }
@@ -169,10 +160,16 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onF
 
     var playbackAttempt by remember { mutableIntStateOf(0) }
     var recoveryCount by remember { mutableIntStateOf(0) }
+    fun liveItem(channel:StationChannel):MediaItem {
+        val url=channel.url.trim()
+        val item=MediaItem.Builder().setUri(url)
+        if(url.contains(".m3u8",ignoreCase=true))item.setMimeType(MimeTypes.APPLICATION_M3U8)
+        return item.build()
+    }
     fun resumeLive(autoplay:Boolean) {
         if(player.mediaItemCount==0)return
-        if(player.playbackState==Player.STATE_IDLE || player.playbackState==Player.STATE_ENDED) {
-            player.seekToDefaultPosition();player.prepare()
+        if(player.playbackState==Player.STATE_IDLE || player.playbackState==Player.STATE_ENDED || player.playerError!=null) {
+            selected?.let{player.setMediaItem(liveItem(it))};player.prepare()
         }
         playerError=null
         if(autoplay&&!player.isPlaying){player.volume=0f;fadeRequest++}
@@ -191,10 +188,9 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onF
         // Live must not wait on the commercial API.
         if(nextAd!=null)player.pause()
         smartQueue=emptyList()
-        if(selected?.id!=channel.id||player.mediaItemCount==0){
-            val item=MediaItem.Builder().setUri(channel.url)
-            if(channel.url.contains(".m3u8",ignoreCase=true))item.setMimeType(MimeTypes.APPLICATION_M3U8)
-            player.setMediaItem(item.build());selected=channel;recoveryCount=0
+        if(selected?.id!=channel.id||selected?.url!=channel.url||player.mediaItemCount==0||player.playerError!=null){
+            player.setMediaItem(liveItem(channel));selected=channel;recoveryCount=0
+            android.util.Log.i("NexoPlayback","SELECT "+channel.type+" host="+android.net.Uri.parse(channel.url.trim()).host)
             player.prepare()
         }
         playerError=null;resumeAfterAd=autoplay;ad=nextAd
@@ -246,8 +242,11 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onF
             override fun onPlaybackSuppressionReasonChanged(playbackSuppressionReason:Int){android.util.Log.w("NexoPlayback","SUPPRESSION="+playbackSuppressionReason)}
             override fun onPlayerError(error: PlaybackException) {
                 android.util.Log.w("NexoPlayback",error.errorCodeName,error)
-                if(error.errorCode in 4000..5999&&onFallback(player))return
-                playerError = "Sinal indisponível ("+error.errorCodeName+"). Pressione Play para tentar novamente."
+                val cause=generateSequence<Throwable>(error){it.cause}.take(8).toList()
+                val http=cause.filterIsInstance<HttpDataSource.InvalidResponseCodeException>().firstOrNull()?.responseCode
+                val detail=http?.let{"HTTP "+it}?:cause.last().javaClass.simpleName
+                android.util.Log.w("NexoPlayback","LIVE_FAILURE code="+error.errorCodeName+" detail="+detail+" channel="+selected?.type)
+                playerError = "Sinal indisponível ("+error.errorCodeName+" · "+detail+"). Pressione Play para tentar novamente."
             }
         }
         player.addListener(listener)
@@ -336,18 +335,18 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onF
         catch (_: Exception) { historyError = true }
         finally { historyLoading = false }
     }
-    LaunchedEffect(player,selected?.id,entryPending,ad,playbackAttempt){
-        if(entryPending||ad!=null||!player.playWhenReady)return@LaunchedEffect
+    LaunchedEffect(player,selected?.id,startup,ad,playbackAttempt){
+        if(startup||ad!=null||!player.playWhenReady)return@LaunchedEffect
         while(player.playWhenReady&&recoveryCount<2){
             delay(12000)
             if(player.isPlaying||!player.playWhenReady||ad!=null)break
             recoveryCount++
             android.util.Log.w("NexoPlayback","LIVE_RETRY="+recoveryCount)
-            player.seekToDefaultPosition();player.prepare();player.play()
+            selected?.let{player.setMediaItem(liveItem(it))};player.prepare();player.play()
         }
         if(player.playWhenReady&&!player.isPlaying&&recoveryCount>=2){
             delay(12000)
-            if(player.playWhenReady&&!player.isPlaying)playerError="Sinal indisponível. Pressione Play para tentar novamente."
+            if(player.playWhenReady&&!player.isPlaying&&playerError==null)playerError="Sinal indisponível. Pressione Play para tentar novamente."
         }
     }
     LaunchedEffect(player){
@@ -396,7 +395,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onF
         }
     }
     LaunchedEffect(smartQueue.isNotEmpty()){
-        if(smartQueue.isEmpty()&&player.playWhenReady){player.volume=0f;fadeRequest++}
+        if(smartQueue.isEmpty()){if(player.isPlaying){player.volume=0f;fadeRequest++}else player.volume=1f}
     }
     LaunchedEffect(screen,activity,interaction,notice,panel,buffering,playerError,playing) {
         controls = true
@@ -455,7 +454,24 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onF
     }
     val backgroundAds=campaigns.filter{it.str("start_date")<=stationDate&&it.str("end_date")>=stationDate&&(it.strings("program_ids").isEmpty()||currentProgram.str("id") in it.strings("program_ids"))}.flatMap{it.rows("media")}.filter{it.str("placement")=="background_ads"}
     var bannerIndex by remember(banners) { mutableIntStateOf(0) }
-    LaunchedEffect(banners) { if (banners.size>1) while(true) { delay(5000); bannerIndex=(bannerIndex+1)%banners.size } }
+    var bannerQr by remember { mutableStateOf(false) }
+    LaunchedEffect(banners,bannerQr) { if (!bannerQr&&banners.size>1) while(true) { delay(5000); bannerIndex=(bannerIndex+1)%banners.size } }
+    val latestBackgroundAds by rememberUpdatedState(backgroundAds.map{it.str("url")}.filter{safeImage(it)!=null}.distinct())
+    var visibleBackgroundAd by remember { mutableStateOf("") }
+    LaunchedEffect(screen,entryPending,station?.ownerId) {
+        visibleBackgroundAd=""
+        if(screen!=Screen.HOME||entryPending)return@LaunchedEffect
+        var index=0
+        while(true){
+            delay(60_000L)
+            while(latestBackgroundAds.isEmpty())delay(1000)
+            val pool=latestBackgroundAds
+            visibleBackgroundAd=pool[index%pool.size]
+            index++
+            delay(10_000L)
+            visibleBackgroundAd=""
+        }
+    }
     LaunchedEffect(panel,track.str("titulo"),track.str("artista")) {
         if(panel=="lyrics"){lyrics=null;try { lyrics=api.lyrics(track.str("titulo"),track.str("artista"),track?.optInt("duracao",0)?:0) } catch(e:CancellationException){throw e} catch(_:Exception){lyrics="Letra indisponível para esta música."}}
     }
@@ -470,7 +486,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onF
     Box(Modifier.fillMaxSize()) {
     if(!startup && ad==null && smartQueue.isEmpty()) NativeLayout(
         screen=screen, station=station, stationName=stationName, payload=data, track=track,
-        program=currentProgram,presenter=currentPresenter,artistArtwork=artistArtwork,backgroundAd=backgroundAds.getOrNull(bannerIndex%maxOf(1,backgroundAds.size)).str("url"),bannerLink=banners.getOrNull(bannerIndex).takeIf{it?.optBoolean("clickable")==true}.str("link"),player=player,playing=playing,buffering=buffering,
+        program=currentProgram,presenter=currentPresenter,artistArtwork=artistArtwork,backgroundAd=visibleBackgroundAd.takeIf{screen==Screen.HOME&&it in latestBackgroundAds}.orEmpty(),bannerLink=banners.getOrNull(bannerIndex).takeIf{it?.optBoolean("clickable")==true}.str("link"),bannerQr=bannerQr,onBannerQr={bannerQr=it},player=player,playing=playing,buffering=buffering,
         failure=failure,playerError=playerError,controls=controls,chrome=chrome,interaction=interaction,
         banner=banners.getOrNull(bannerIndex).str("url"),sponsor=sponsorUrls.getOrNull(sponsorIndex),weather=weather,history=history,historyLoading=historyLoading,historyError=historyError,
         notice=notice,video=video,selected=selected, onRetry={retry++},onToggle=::toggle,onBack=::back,

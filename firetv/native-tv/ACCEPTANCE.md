@@ -34,3 +34,6 @@ Restaurado ExoPlayer padrão da versão anterior ao processador PCM customizado;
 
 ## 0.1.10 — correções de campo
 Fade de áudio e perfis, espectro PCM com fallback de renderer, foto de artista atualizada com faixa, rotação de locutores, foco de programação/banner/curtida/interatividade, clima, letras, fotos de batalha, pré-roll 15s, Smart Sync via relógio HLS, Smart Break via campanha e prazo de duração. Lembretes locais por perfil. Requer validação em TV física; nenhuma alteração na chave de assinatura.
+
+## 0.1.12 — reprodução e Home
+Media3 padrão, conexão HTTPS com timeouts explícitos, reconstrução de media item após falhas e diagnóstico LIVE_FAILURE. Espectro PCM temporariamente suspenso para isolar regressão de playback (sem animação simulada). Background ads independente: 60s após entrar, 10s de publicidade, 60s sem publicidade, rotação e fade. Avatar para banner; QR lateral sem modal, alternável por clique e encerrado por mudança de foco; margem QR padrão de quatro módulos. Ícones climáticos vetoriais brancos animados. Sem mudanças de assinatura ou launcher. Requer teste físico, especialmente streaming e QR.
