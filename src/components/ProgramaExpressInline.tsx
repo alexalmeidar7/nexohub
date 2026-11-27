@@ -1,3 +1,4 @@
+import { publishDesktopRoteiro, resolveDesktopRoteiroSlug } from "@/lib/desktopRoteiroPublish";
 import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { createPortal } from "react-dom";
@@ -1854,26 +1855,11 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       }
       window.dispatchEvent(new CustomEvent("nexohub:roteiros-updated", { detail: { roteiro: fullBaseRecord } }));
 
-      // Immediately sync to /api/sync-xml-roteiro so roteiro.xml updates in real-time
-      try {
-        const clientAcc = (ownerId && findClientAccountById(ownerId)) ||
-          (user?.id && findClientAccountById(user.id)) ||
-          (user?.email && findClientAccountByEmail(user.email));
-         const targetSlug = clientAcc?.slug || ownerId;
-        await fetch("/api/sync-xml-roteiro", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            slug: targetSlug,
-            userId: ownerId,
-            estudio,
-            programaNome,
-            xml: xmlContent,
-            roteiro: fullBaseRecord,
-          }),
-        });
-      } catch (eSync) {
-        console.warn("[ProgramaExpress] sync-xml-roteiro notice:", eSync);
+      // The local cache has just been committed. Publish this edition directly to
+      // the same file vMix reads, before any optional cloud generation.
+      if (!schedule || isPodcast) {
+        await publishDesktopRoteiro(resolveDesktopRoteiroSlug(ownerId), estudio,
+          xmlContent, nowIso, html, targetHorario);
       }
 
       // Push to XML on "Salvar" and always on Podcast "Agendar e salvar"
@@ -1883,7 +1869,9 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           const projectId = urlMatch ? urlMatch[1] : "";
           if (projectId && roteiroId) {
             const fnUrl = `https://${projectId}.supabase.co/functions/v1/roteiro-xml?id=${roteiroId}&force=1&persist=1&t=${Date.now()}`;
-            await fetch(fnUrl, { method: "GET" });
+            const push = fetch(fnUrl, { method: "GET" });
+            if (window.houseMixDesktop) void push.catch(console.warn);
+            else await push;
           }
         } catch (eXmlFn) {
           console.warn("[ProgramaExpress] roteiro-xml invoke error:", eXmlFn);

@@ -1,3 +1,4 @@
+import { notifyLocalOnAir } from "@/lib/desktopLocalOnAir";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { AlertCircle, Trash2, Clock, Calendar, Building2, Pencil, X, Power, Loader2, Info, CalendarDays, CheckCircle, ChevronsUpDown, Check, PlaySquare, Download, ChevronDown, Plus, Upload, Image as ImageIcon, Minus } from "lucide-react";
@@ -1327,6 +1328,7 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
       saveCustomStudio(estudio.trim().toUpperCase(), normCli);
 
       try {
+        notifyLocalOnAir(effectiveOwnerId, "programas", { id: targetId, ...programPayload });
         window.dispatchEvent(new CustomEvent("nexohub:programas-updated", { detail: { programId: targetId } }));
         window.dispatchEvent(new CustomEvent("housemix:programas-updated", { detail: { clientKey: normCli, programId: targetId } }));
       } catch {}
@@ -1420,7 +1422,8 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
     saveCustomStudio(estudio.trim().toUpperCase(), normCli);
 
     try {
-      window.dispatchEvent(new CustomEvent("nexohub:programas-updated", { detail: { programId: targetId } }));
+      notifyLocalOnAir(effectiveOwnerId, "programas", { id: targetId, ...programPayload });
+        window.dispatchEvent(new CustomEvent("nexohub:programas-updated", { detail: { programId: targetId } }));
       window.dispatchEvent(new CustomEvent("housemix:programas-updated", { detail: { clientKey: normCli, programId: targetId } }));
     } catch {}
 

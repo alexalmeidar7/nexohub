@@ -1,3 +1,5 @@
+import { startLocalOnAir } from "@/lib/desktopLocalOnAir";
+import { refreshLocalOnAirFile } from "@/lib/desktopPromotionBanners";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -133,6 +135,7 @@ export default function DesktopLocalMediaSync() {
     let imagesRunning = false;
     let lastImages = 0;
     const localizing = new Set<string>();
+    const onAir = startLocalOnAir(desktop, ownerId, slug, file => refreshLocalOnAirFile(desktop, slug, file));
 
     const sync = async () => {
       if (stopped) return;
@@ -256,14 +259,15 @@ export default function DesktopLocalMediaSync() {
     };
     const channel = createOwnedRealtimeChannel(supabase.realtime, `desktop-local-xml-${ownerId}`);
     for (const table of ["programas", "roteiros", "agenda_eventos", "apresentadores", "empresa_config", "user_settings", "logos_patrocinadores", "promocoes", "enquetes_agendadas", "quiz_agendados", "batalhas_agendadas", "musicas_tocadas", "cenario_estudio_grupos", "cenario_estudio_tvs"]) {
-      channel.on("postgres_changes", { event: "*", schema: "public", table, filter: `user_id=eq.${ownerId}` }, onChange);
+      const handler = ["programas", "cenario_estudio_grupos", "cenario_estudio_tvs"].includes(table) ? () => { void onAir.refresh(); onChange(); } : onChange;
+      channel.on("postgres_changes", { event: "*", schema: "public", table, filter: `user_id=eq.${ownerId}` }, handler);
     }
     channel.subscribe(status => { if (status === "SUBSCRIBED") refresh.request(); });
     window.addEventListener("online", onChange);
     window.addEventListener(MUSIC_DATA_EVENT, onMusic);
     refresh.request();
     return () => {
-      stopped = true; refresh.stop();
+      stopped = true; onAir.stop(); refresh.stop();
       window.removeEventListener("online", onChange);
       window.removeEventListener(MUSIC_DATA_EVENT, onMusic);
       void supabase.removeChannel(channel);

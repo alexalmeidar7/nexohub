@@ -1,3 +1,4 @@
+import { publishDesktopRoteiro, resolveDesktopRoteiroSlug } from "@/lib/desktopRoteiroPublish";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -656,30 +657,8 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
       }
 
 
-      // Sync immediately to /api/sync-xml-roteiro
-      try {
-        const clientAcc = findClientAccountById(user.id) || (user.email ? findClientAccountByEmail(user.email) : null);
-        const targetSlug = clientAcc?.slug || "positivafm";
-        await fetch("/api/sync-xml-roteiro", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            slug: targetSlug,
-            userId: user.id,
-            estudio,
-            programaNome,
-            xml: xmlContent,
-            roteiro: {
-              id: editingId || `rot_${Date.now()}`,
-              programa_nome: programaNome,
-              estudio,
-              data_programa: savedDate,
-            },
-          }),
-        });
-      } catch (syncErr) {
-        console.warn("[ProgramaExpressPopup] sync-xml-roteiro notice:", syncErr);
-      }
+      await publishDesktopRoteiro(resolveDesktopRoteiroSlug(user.id), estudio,
+        xmlContent, nowIso, html, new Date().toTimeString().slice(0, 5));
 
       toast.success("Programa Express salvo com sucesso!");
       reset();

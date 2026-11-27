@@ -1,3 +1,4 @@
+import { applyLocalOnAirXml } from "./desktopLocalOnAir";
 type Desktop = NonNullable<Window["houseMixDesktop"]>;
 export interface PromotionBanner {
   id: string;
@@ -111,7 +112,18 @@ function enqueue<T>(slug: string, filename: string, task: () => Promise<T>): Pro
 }
 
 export function saveDesktopXml(desktop: Pick<Desktop, "saveXml">, slug: string, filename: string, xml: string) {
-  return enqueue(slug, filename, () => desktop.saveXml(slug, filename, applyLocalPromotionBanner(xml, slug)));
+  return enqueue(slug, filename, () => desktop.saveXml(slug, filename, applyLocalOnAirXml(applyLocalPromotionBanner(xml, slug), slug, filename)));
+}
+
+/** Local on-air clock or save event updates the existing file inside the shared writer queue. */
+export function refreshLocalOnAirFile(desktop: Pick<Desktop, "readXml" | "saveXml">, slug: string, filename: string) {
+  return enqueue(slug, filename, async () => {
+    const old = await desktop.readXml(slug, filename);
+    const base = old || (filename === "cenarios-estudio.xml" ? "<cenarios_estudio/>" : "");
+    if (!base) return;
+    const next = applyLocalOnAirXml(base, slug, filename);
+    if (next !== old) await desktop.saveXml(slug, filename, next);
+  });
 }
 
 export function rotateDesktopBanner(desktop: Pick<Desktop, "readXml" | "saveXml">, slug: string, filename: string) {
