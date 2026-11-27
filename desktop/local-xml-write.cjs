@@ -14,6 +14,15 @@ async function persistOne(target, content, { io = fs, emit = () => {} } = {}) {
   catch (error) {
     if (error?.code !== "ENOENT") throw error;
   }
+  // Roteiro may arrive from an old cloud download after an operator published locally.
+  // Compare editions inside the native per-path queue, including across windows/restarts.
+  if (/(?:^|[\\/])roteiro\.xml$/i.test(target) && previous) {
+    const version = (xml) => Date.parse(xml.match(/<atualizado_em>([^<]+)<\/atualizado_em>/i)?.[1] || "");
+    const old = version(previous), next = version(content);
+    if (Number.isFinite(old) && (!Number.isFinite(next) || next < old)) {
+      return { path: target, changed: false };
+    }
+  }
   if (previous === content) return { path: target, changed: false };
   const id = crypto.randomUUID();
   const temp = `${target}.${process.pid}.${id}.tmp`;
