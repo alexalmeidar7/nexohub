@@ -29,8 +29,8 @@ android {
         applicationId = "br.com.nexobrasil.nexoplayer.nativepilot"
         minSdk = 26
         targetSdk = 35
-        versionCode = 6
-        versionName = "0.1.5-native-preview"
+        versionCode = 7
+        versionName = "0.1.6-native-preview"
         buildConfigField("String", "SUPABASE_URL", "\"https://qazvgmgdidjhbvcuinpy.supabase.co\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"sb_publishable_BzjxF3H_PSgFYVA3OQIaoA_Pytdg2V3\"")
     }
@@ -39,8 +39,8 @@ android {
         create("positiva") {
             dimension = "station"
             applicationIdSuffix = ".positiva"
-            manifestPlaceholders["stationIcon"] = "@mipmap/positiva_launcher"
-            manifestPlaceholders["stationBanner"] = "@drawable/positiva_tv_banner"
+            manifestPlaceholders["stationIcon"] = "@drawable/native_tv_launcher"
+            manifestPlaceholders["stationBanner"] = "@drawable/native_tv_banner"
             resValue("string", "app_name", "Positiva FM Nativo (teste)")
             buildConfigField("String", "STATION_SLUG", "\"positivafm\"")
             buildConfigField("String", "STATION_NAME", "\"Positiva FM\"")
@@ -48,8 +48,8 @@ android {
         create("interativa") {
             dimension = "station"
             applicationIdSuffix = ".interativa"
-            manifestPlaceholders["stationIcon"] = "@mipmap/interativa_launcher"
-            manifestPlaceholders["stationBanner"] = "@drawable/interativa_tv_banner"
+            manifestPlaceholders["stationIcon"] = "@drawable/native_tv_launcher"
+            manifestPlaceholders["stationBanner"] = "@drawable/native_tv_banner"
             resValue("string", "app_name", "Interativa FM Nativo (teste)")
             buildConfigField("String", "STATION_SLUG", "\"interativafm\"")
             buildConfigField("String", "STATION_NAME", "\"Interativa FM\"")
