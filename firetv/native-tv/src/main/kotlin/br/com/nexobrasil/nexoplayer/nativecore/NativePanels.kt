@@ -5,6 +5,10 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
+import androidx.compose.ui.input.key.*
+import androidx.compose.animation.core.*
+import androidx.compose.ui.draw.rotate
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -177,7 +181,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
         }
     }else{
         Box(u.at(1350,165,470,735)){
-            GlassButton(u,"",Modifier.align(Alignment.TopEnd).size(u.space(56)).then(if(panel=="lyrics"||(panel=="history"&&history.isEmpty())||(panel=="weather"&&forecast?.optJSONObject("daily")?.optJSONArray("time")==null))Modifier.focusRequester(focus)else Modifier),icon="left",onClick=onClose)
+            GlassButton(u,"",Modifier.align(Alignment.TopEnd).size(u.space(56)).then(if((panel=="history"&&history.isEmpty())||(panel=="weather"&&forecast?.optJSONObject("daily")?.optJSONArray("time")==null))Modifier.focusRequester(focus)else Modifier),icon="left",onClick=onClose)
             Column(Modifier.offset(y=u.space(75)).fillMaxWidth().height(u.space(650)).clip(u.round(28)).background(glass).padding(u.space(20)),horizontalAlignment=Alignment.CenterHorizontally){
                 when(panel){
                     "history" -> {
@@ -204,7 +208,10 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                         val d=forecast?.optJSONObject("daily");val dates=d?.optJSONArray("time")
                         Copy("tempo agora",u,22,500)
                         val temp=forecast?.optJSONObject("current")?.optDouble("temperature_2m")
-                        Copy(temp?.takeIf{it.isFinite()}?.let{it.toInt().toString()+"°"}?:"--°",u,56,600)
+                        val current=forecast?.optJSONObject("current")
+                        Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(12))){WeatherMotion(u,current?.optInt("weather_code",-1)?:-1);Copy(temp?.takeIf{it.isFinite()}?.let{it.toInt().toString()+"°"}?:"--°",u,56,600)}
+                        val humid=current?.optDouble("relative_humidity_2m");val rain=d?.optJSONArray("precipitation_probability_max")?.optDouble(0)
+                        Copy("Chuva "+(rain?.takeIf{it.isFinite()}?.toInt()?.toString()?.plus("%")?:"—")+"  ·  Umidade "+(humid?.takeIf{it.isFinite()}?.toInt()?.toString()?.plus("%")?:"—"),u,19,500)
                         if(dates==null){Copy("Previsão indisponível.",u,22)}
                         else LazyColumn(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(u.space(8))){
                             items(minOf(7,dates.length())){i->
@@ -219,7 +226,9 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                     }
                     "lyrics" -> {
                         Copy(track.str("titulo"),u,25,600,lines=2);Copy(track.str("artista"),u,20)
-                        Column(Modifier.weight(1f).verticalScroll(rememberScrollState())){Text(lyrics?:"Carregando letra...",style=u.referenceText(22),color=Color.White)}
+                        val scroll=rememberScrollState();val scope=rememberCoroutineScope();val distance=with(androidx.compose.ui.platform.LocalDensity.current){u.space(140).roundToPx()}
+                        LaunchedEffect(lyrics){scroll.scrollTo(0)}
+                        Column(Modifier.weight(1f).fillMaxWidth().focusRequester(focus).onPreviewKeyEvent{event->if(event.type==KeyEventType.KeyDown&&(event.key==Key.DirectionDown||event.key==Key.DirectionUp)){val delta=if(event.key==Key.DirectionDown)distance else -distance;scope.launch{scroll.animateScrollTo((scroll.value+delta).coerceIn(0,scroll.maxValue),tween(300))};true}else false}.focusable().verticalScroll(scroll)){Text(lyrics?:"Carregando letra...",style=u.referenceText(22),color=Color.White)}
 
                     }
                     else -> {
@@ -231,3 +240,5 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
     }
     LaunchedEffect(panel,loading,history.isNotEmpty(),forecast!=null){runCatching{focus.requestFocus()}}
 }
+
+@Composable private fun WeatherMotion(u:TvUnits,code:Int){val transition=rememberInfiniteTransition(label="weather");val angle by transition.animateFloat(-5f,5f,infiniteRepeatable(tween(1200),RepeatMode.Reverse),label="weatherIcon");Symbol(if(code in 0..1)"sun" else if(code>=51)"rain" else "cloud",Modifier.size(u.space(65)).rotate(angle))}

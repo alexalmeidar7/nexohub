@@ -39,8 +39,10 @@ class HouseMixClient(supabaseOrigin: String, internal val publishableKey: String
         if(location!=null) body.put("lat",location.optDouble("lat")).put("lon",location.optDouble("lon")) else body.put("user_id",ownerId)
         return function("fetch-weather",body=body)
     }
-    suspend fun lyrics(title:String,artist:String):String {
-        val r=function("fetch-lyrics",body=JSONObject().put("title",title).put("artist",artist))
+    suspend fun lyrics(title:String,artist:String,duration:Int=0):String {
+        val body=JSONObject().put("title",title).put("artist",artist)
+        if(duration>0)body.put("duration",duration)
+        val r=function("fetch-lyrics",body=body)
         return r.str("plainLyrics").ifBlank{r.str("syncedLyrics").replace(Regex("\\[\\d{2}:\\d{2}[.:]\\d{2,3}\\]"),"")}.ifBlank{"Letra indisponível para esta música."}
     }
     suspend fun geocode(city:String):JSONObject=function("fetch-weather",body=JSONObject().put("action","geocode").put("query",city).put("count",20))

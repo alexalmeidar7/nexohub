@@ -33,7 +33,7 @@ internal class PcmSpectrum:BaseAudioProcessor() {
         val channels=inputAudioFormat.channelCount.coerceAtLeast(1)
         val n=512
         val frameBytes=channels*2
-        if(now-last>=40 && inputBuffer.remaining()>=n*frameBytes) {
+        try { if(now-last>=40 && inputBuffer.remaining()>=n*frameBytes) {
             last=now
             val src=inputBuffer.duplicate().order(ByteOrder.LITTLE_ENDIAN)
             val start=src.position()
@@ -74,6 +74,7 @@ internal class PcmSpectrum:BaseAudioProcessor() {
                 maxOf(prior[i]*.76f,(sqrt(peak)*2.8).toFloat().coerceIn(0f,1f))
             }
         }
+        } catch (_:Exception) { levels=FloatArray(42) }
         val out=replaceOutputBuffer(inputBuffer.remaining())
         out.put(inputBuffer);out.flip()
     }

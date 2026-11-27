@@ -6,6 +6,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.viewinterop.AndroidView
@@ -17,10 +19,13 @@ import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.delay
 import org.json.JSONObject
 
-@Composable internal fun NativePreroll(media:JSONObject,audio:Boolean,onStarted:()->Unit,onFinish:()->Unit){
+@Composable internal fun NativePreroll(media:JSONObject,audio:Boolean,onStarted:()->Unit,onFinish:()->Unit,smart:Boolean=false,breakStart:Long=0L,breakDuration:Double=0.0,onPlayed:()->Unit={}){
     val context=LocalContext.current
     val finish by rememberUpdatedState(onFinish)
     val started by rememberUpdatedState(onStarted)
+    val playedCallback by rememberUpdatedState(onPlayed)
+    val skipFocus=remember{FocusRequester()}
+    var progress by remember{mutableFloatStateOf(0f)}
     val player=remember(media){ExoPlayer.Builder(context).build()}
     var remaining by remember(media){mutableIntStateOf(-1)}
     var done by remember(media){mutableStateOf(false)}
@@ -29,7 +34,7 @@ import org.json.JSONObject
     fun complete(){if(!done){done=true;player.stop();finish()}}
     DisposableEffect(player){
         val listener=object:Player.Listener{
-            override fun onIsPlayingChanged(isPlaying:Boolean){if(isPlaying&&!played){played=true;started()}}
+            override fun onIsPlayingChanged(isPlaying:Boolean){if(isPlaying&&!played){played=true;started();playedCallback()}}
             override fun onPlaybackStateChanged(playbackState:Int){if(playbackState==Player.STATE_ENDED)complete()}
             override fun onPlayerError(error:PlaybackException){android.util.Log.w("NexoPlayback","PREROLL_"+error.errorCodeName);complete()}
         }
@@ -44,6 +49,7 @@ import org.json.JSONObject
             if(position==player.currentPosition)stall++ else stall=0
             position=player.currentPosition
             if(stall>=32||android.os.SystemClock.elapsedRealtime()>=deadline){complete();break}
+            if(smart&&breakDuration>0&&breakStart>0)progress=((System.currentTimeMillis()-breakStart)/(breakDuration*1000)).toFloat().coerceIn(0f,1f)
             delay(250)
         }
     }
@@ -51,12 +57,13 @@ import org.json.JSONObject
         Box(Modifier.fillMaxSize().background(Color.Black)){
             if(audio)Artwork(safeImage(media.str("backgroundUrl")),Modifier.fillMaxSize(),scale=ContentScale.Fit)
             else AndroidView(factory={ctx->PlayerView(ctx).apply{useController=false;this.player=player;isFocusable=false}},modifier=Modifier.fillMaxSize(),onRelease={it.player=null})
-            Copy("publicidade"+if(remaining>=0)" · "+remaining/60+":"+("%02d".format(remaining%60))else "",u,25,600,u.at(100,75,700,60))
+            Copy((if(smart)"smart break" else "publicidade")+if(remaining>=0)" · "+remaining/60+":"+("%02d".format(remaining%60))else "",u,25,600,u.at(100,75,700,60))
             if(media.str("link").startsWith("https://")){
                 GlassButton(u,"Saiba mais +",u.at(1450,890,330,65)){qr=!qr}
                 if(qr)NativeQr(media.str("link"),u.at(1440,510,330,330))
             }
-            if(remaining in 1..5)GlassButton(u,"pular",u.at(1600,75,210,65)){complete()}
+            if(!smart&&remaining in 1..15){LaunchedEffect(Unit){skipFocus.requestFocus()};GlassButton(u,"pular",u.at(405,75,210,65).focusRequester(skipFocus)){complete()}}
+            if(smart&&breakDuration>0&&breakStart>0)Box(u.at(100,155,650,8).background(Color.White.copy(alpha=.25f))){Box(Modifier.fillMaxHeight().fillMaxWidth(progress).background(Color.White))}
         }
     }
 }

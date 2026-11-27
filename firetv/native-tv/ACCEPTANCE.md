@@ -31,3 +31,6 @@ Reprodução ao vivo não aguarda API de campanha: pré-roll somente com campanh
 
 ## 0.1.8 — retorno de campo
 Restaurado ExoPlayer padrão da versão anterior ao processador PCM customizado; espectro real temporariamente substituído por indicador play/pause, sem simulação. HLS explícito para .m3u8, retomada limitada e logs NexoPlayback. Pré-roll não repete em cada tentativa e libera stream após desmontagem da publicidade. CEP aceita country Brasil/Brazil e country_code BR, valida cidade/UF e fallback de geocodificação. Foco direcionado, modal sem foco nos controles de fundo e timeout de 8s. Capas/mipmaps já conferidos visualmente no repositório; logs NexoLauncher e manifesto no CI permitem distinguir recurso local de bug de launcher do Fire OS. A capa horizontal da Appstore depende da listagem Amazon; sideload não garante a capa. Não validado em TV física.
+
+## 0.1.10 — correções de campo
+Fade de áudio e perfis, espectro PCM com fallback de renderer, foto de artista atualizada com faixa, rotação de locutores, foco de programação/banner/curtida/interatividade, clima, letras, fotos de batalha, pré-roll 15s, Smart Sync via relógio HLS, Smart Break via campanha e prazo de duração. Lembretes locais por perfil. Requer validação em TV física; nenhuma alteração na chave de assinatura.

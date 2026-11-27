@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -61,7 +62,7 @@ import com.google.zxing.qrcode.QRCodeWriter
     }
     LaunchedEffect(Unit){focus.requestFocus()}
 }
-@Composable internal fun NativeLike(u:TvUnits,services:NativeServices,account:JSONObject?,owner:String,title:String,artist:String,cover:String,modifier:Modifier){
+@Composable internal fun NativeLike(u:TvUnits,services:NativeServices,account:JSONObject?,owner:String,title:String,artist:String,cover:String,modifier:Modifier,buttonModifier:Modifier=Modifier){
     val user=account.str("id")
     var liked by remember(user,title,artist){mutableStateOf(false)}
     var busy by remember(user,title,artist){mutableStateOf(false)}
@@ -70,7 +71,7 @@ import com.google.zxing.qrcode.QRCodeWriter
     LaunchedEffect(user,title,artist){if(user.isNotBlank())try{liked=services.liked(owner,user,title,artist)}catch(e:CancellationException){throw e}catch(_:Exception){}}
     Column(modifier,horizontalAlignment=Alignment.End){
         if(msg.isNotBlank())Copy(msg,u,15,400,lines=2)
-        GlassButton(u,if(liked)"♥" else "♡",Modifier.size(u.space(58)),enabled=!busy){
+        GlassButton(u,if(liked)"♥" else "♡",buttonModifier.size(u.space(58)),enabled=!busy){
             if(user.isBlank())msg="Conecte sua conta Google." else {busy=true;scope.launch{
                 try{liked=services.toggleLike(owner,user,title,artist,cover);msg=""}catch(e:CancellationException){throw e}catch(_:Exception){msg="Não foi possível salvar."}finally{busy=false}
             }}
@@ -107,9 +108,10 @@ import com.google.zxing.qrcode.QRCodeWriter
     }
     if(panel=="chat"){
         Copy("Chat",u,28,600)
-        GlassButton(u,if(qr)"Ver mensagens" else "entrar na conversa",Modifier.height(u.space(60)).focusRequester(focus)){qr=!qr}
         if(qr)NativeQr("https://housemix.nexobrasil.net/"+BuildConfig.STATION_SLUG+"/pair?mode=chat&radio="+owner+"&tv="+device,Modifier.size(u.space(310)))
-        else LazyColumn(Modifier.fillMaxWidth().heightIn(max=u.space(480)),verticalArrangement=Arrangement.spacedBy(u.space(10))){items(messages){m->Column(Modifier.fillMaxWidth().background(Color.White.copy(alpha=.08f),u.round(12)).padding(u.space(8))){Copy(m.str("nome"),u,19,600);Copy(m.str("message"),u,19,400,lines=5)}}}
+        else LazyColumn(Modifier.fillMaxWidth().heightIn(max=u.space(390)).background(Color.Black.copy(alpha=.20f),u.round(16)).padding(u.space(8)),verticalArrangement=Arrangement.spacedBy(u.space(10))){items(messages){m->Column(Modifier.fillMaxWidth().background(Color.White.copy(alpha=.08f),u.round(12)).padding(u.space(8))){Copy(m.str("nome"),u,19,600);Copy(m.str("message"),u,19,400,lines=5)}}}
+        Spacer(Modifier.height(u.space(12)))
+        GlassButton(u,if(qr)"Ver mensagens" else "entrar na conversa",Modifier.height(u.space(60)).focusRequester(focus)){qr=!qr}
     }else{
         val poll=panel=="poll"
         Copy(if(poll)"Enquete" else "Batalha musical",u,28,600)
@@ -121,6 +123,7 @@ import com.google.zxing.qrcode.QRCodeWriter
                 answers.forEachIndexed{i,answer->
                     val choice=if(poll)i else i+1
                     val result=if(poll)counts?.optInt(i)?.let{" · "+it+" votos"}.orEmpty() else " · "+item.optInt("artista"+choice+"_porcentagem")+"%"
+                    if(!poll) Artwork(safeImage(item.str("artista"+choice+"_imagem")),Modifier.fillMaxWidth().height(u.space(105)).clip(u.round(12)),scale=ContentScale.Crop)
                     GlassButton(u,(if(voted==choice)"✓ " else "")+answer+result,Modifier.fillMaxWidth().height(u.space(83)).then(if(i==0&&(voted<0||editing))Modifier.focusRequester(focus)else Modifier),enabled=!busy&&(voted<0||editing)){
                         if(account==null){msg="Conecte sua conta Google para votar."}
                         else{busy=true;scope.launch{
