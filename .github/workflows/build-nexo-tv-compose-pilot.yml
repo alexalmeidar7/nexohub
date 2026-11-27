@@ -71,28 +71,41 @@ jobs:
             "$aapt" dump xmltree "$apk" AndroidManifest.xml > /tmp/nexo-$station-manifest.txt
             grep -E 'android:(icon|banner|roundIcon)' /tmp/nexo-$station-manifest.txt
           done
-      - name: Verify APK signer against permanent key
+      - name: Sign final APKs and verify permanent certificate
         run: |
           set -euo pipefail
           signer=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)
           test -x "$signer"
-          mkdir -p firetv/native-tv/build/outputs/apk
-          report=firetv/native-tv/build/outputs/apk/SIGNATURE-SHA256.txt
+          test -s "$NEXO_TV_SIGNING_FILE"
+          # Sign the exact files to be distributed, independently of Gradle signing/cache.
+          out="$GITHUB_WORKSPACE/firetv/native-tv/build/verified-apks"
+          rm -rf "$out"
+          mkdir -p "$out"
+          report="$out/SIGNATURE-SHA256.txt"
           printf 'Certificate SHA-256: %s\nVersion: 0.1.9-native-preview\nCommit: %s\n' "$NEXO_TV_CERT_SHA256" "$GITHUB_SHA" > "$report"
           for station in positiva interativa; do
-            apk=$(find "firetv/native-tv/build/outputs/apk/$station/debug" -name '*.apk' | head -1)
-            details=$("$signer" verify --print-certs "$apk")
-            actual=$(printf '%s\n' "$details" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | tr '[:upper:]' '[:lower:]')
+            mapfile -t inputs < <(find "firetv/native-tv/build/outputs/apk/$station/debug" -maxdepth 1 -name '*.apk' -type f)
+            test "${#inputs[@]}" -eq 1
+            src="${inputs[0]}"
+            dst="$out/NexoNativeTv-$station-v0.1.9.apk"
+            "$signer" sign --ks "$NEXO_TV_SIGNING_FILE" --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android --min-sdk-version 26 --out "$dst" "$src"
+            details=$("$signer" verify --verbose --print-certs --min-sdk-version 26 "$dst")
+            printf '%s\n' "$details"
+            actual=$(printf '%s\n' "$details" | awk '/^Signer #[0-9]+ certificate SHA-256 digest:/ {print $NF}' | tr -d ':\r' | tr '[:upper:]' '[:lower:]')
+            echo "$station expected certificate: $NEXO_TV_CERT_SHA256"
+            echo "$station actual certificate: $actual"
+            [[ "$actual" =~ ^[a-f0-9]{64}$ ]]
             test "$actual" = "$NEXO_TV_CERT_SHA256" || { echo "::error::$station APK certificate mismatch"; exit 1; }
             printf '%s: %s\n' "$station" "$actual" >> "$report"
-            echo "$station signing certificate verified: $actual"
+            (cd "$out" && sha256sum "$(basename "$dst")") >> "$report"
           done
+          rm -f "$out"/*.idsig
       - uses: actions/upload-artifact@v4
         with:
-          name: nexo-tv-compose-pilot-v0.1.9
+          name: nexo-tv-compose-pilot-v0.1.9-verified
           path: |
-            firetv/native-tv/build/outputs/apk/*/debug/*.apk
-            firetv/native-tv/build/outputs/apk/SIGNATURE-SHA256.txt
+            firetv/native-tv/build/verified-apks/*.apk
+            firetv/native-tv/build/verified-apks/SIGNATURE-SHA256.txt
           if-no-files-found: error
       - name: Remove temporary signing key
         if: always()
