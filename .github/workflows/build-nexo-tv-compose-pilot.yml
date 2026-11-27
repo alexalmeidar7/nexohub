@@ -19,28 +19,19 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Restore pilot debug signing identity
-        uses: actions/cache@v4
-        with:
-          path: ~/.android/debug.keystore
-          key: nexo-tv-compose-pilot-debug-signing-v1
-      - name: Initialize pilot signing key if absent
-        run: |
-          mkdir -p "$HOME/.android"
-          if [ ! -s "$HOME/.android/debug.keystore" ]; then
-            keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
-          fi
-      - name: Use protected persistent pilot signing key when configured
+      - name: Require protected persistent pilot signing key
         env:
           NEXO_TV_KEYSTORE_B64: ${{ secrets.NEXO_TV_KEYSTORE_B64 }}
         run: |
-          if [ -n "$NEXO_TV_KEYSTORE_B64" ]; then
-            printf %s "$NEXO_TV_KEYSTORE_B64" | base64 -d > "$HOME/.android/debug.keystore"
-            chmod 600 "$HOME/.android/debug.keystore"
-            keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey >/dev/null
-          else
-            echo "::warning::Persistent signing secret missing; pilot cache only, updates may require reinstall."
+          set -euo pipefail
+          if [ -z "$NEXO_TV_KEYSTORE_B64" ]; then
+            echo "::error::Configure repository Actions secret NEXO_TV_KEYSTORE_B64 before building pilot APKs. Random signing and signing-key cache are disabled."
+            exit 1
           fi
+          mkdir -p "$HOME/.android"
+          umask 077
+          printf %s "$NEXO_TV_KEYSTORE_B64" | base64 -d > "$HOME/.android/debug.keystore"
+          keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey >/dev/null
       - name: Verify preinstalled Android SDK
         run: |
           sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
@@ -79,3 +70,6 @@ jobs:
           name: nexo-tv-compose-pilot
           path: firetv/native-tv/build/outputs/apk/*/debug/*.apk
           if-no-files-found: error
+      - name: Remove temporary signing key
+        if: always()
+        run: rm -f "$HOME/.android/debug.keystore"
