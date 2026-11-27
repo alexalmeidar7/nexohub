@@ -1,4 +1,4 @@
-import { publishDesktopRoteiro } from "@/lib/desktopRoteiroPublish";
+import { publishDesktopRoteiro, resolveDesktopRoteiroSlug } from "@/lib/desktopRoteiroPublish";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -657,8 +657,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
       }
 
 
-      const clientAcc = findClientAccountById(user.id) || (user.email ? findClientAccountByEmail(user.email) : null);
-      await publishDesktopRoteiro(clientAcc?.slug || user.id.slice(0, 8), estudio,
+      await publishDesktopRoteiro(resolveDesktopRoteiroSlug(user.id), estudio,
         xmlContent, nowIso, html, new Date().toTimeString().slice(0, 5));
 
       toast.success("Programa Express salvo com sucesso!");
