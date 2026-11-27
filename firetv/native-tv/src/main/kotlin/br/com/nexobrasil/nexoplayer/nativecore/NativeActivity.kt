@@ -459,7 +459,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
     LaunchedEffect(watch,breakActive,breakId,ad,campaigns,playing,hasSyncEpoch){
         if(!watch||!breakActive){smartAttempt="";smartQueue=emptyList();return@LaunchedEffect}
         if(ad!=null||!playing||smartQueue.isNotEmpty()||smartAttempt==breakId)return@LaunchedEffect
-        if(breakDuration>0&&trackLocalStart>0&&System.currentTimeMillis()>=trackLocalStart+(breakDuration*1000).toLong())return@LaunchedEffect
+        if(smartBreakTiming(trackStart,breakDuration,System.currentTimeMillis()+api.serverClockOffsetMs)?.second==0L)return@LaunchedEffect
         val date=LocalDate.now(brasilia).toString()
         val program=nativeCurrentProgram(payload).str("id")
         val media=campaigns.filter{it.str("start_date")<=date&&it.str("end_date")>=date&&(it.strings("program_ids").isEmpty()||program in it.strings("program_ids"))}.sortedBy{it.str("id")}.flatMap{it.rows("media")}.filter{it.str("url").startsWith("https://")}
@@ -468,13 +468,9 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         if(queue.isNotEmpty()){smartAttempt=breakId;smartIndex=0;smartFailures=0;smartSerial++;smartQueue=queue;player.volume=0f}
     }
     LaunchedEffect(smartQueue.isNotEmpty(),breakDuration,trackStart){
-        if(smartQueue.isNotEmpty()&&breakDuration>0&&trackLocalStart>0){
-            val deadline=trackStart+(breakDuration*1000).toLong()
-            while(smartQueue.isNotEmpty()){
-                if(trackStart>0&&syncEpoch>0&&syncEpoch>=deadline) {smartQueue=emptyList();break}
-                if((syncEpoch<=0||trackStart<=0)&&System.currentTimeMillis()>=trackLocalStart+(breakDuration*1000).toLong()){smartQueue=emptyList();break}
-                delay(250)
-            }
+        while(smartQueue.isNotEmpty()&&trackStart>0&&breakDuration>0){
+            if(smartBreakTiming(trackStart,breakDuration,System.currentTimeMillis()+api.serverClockOffsetMs)?.second==0L){smartQueue=emptyList();break}
+            delay(250)
         }
     }
     LaunchedEffect(smartQueue.isNotEmpty()){
@@ -546,6 +542,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
     var bannerIndex by remember(bannerIdentity) { mutableIntStateOf(0) }
     var bannerQr by remember { mutableStateOf(false) }
     LaunchedEffect(bannerIdentity,bannerQr) { if (!bannerQr&&banners.size>1) while(true) { delay(300000); bannerIndex=(bannerIndex+1)%banners.size } }
+    val homeAdBlocked by rememberUpdatedState(interaction||panel!=null||notice!=null)
     val latestBackgroundAds by rememberUpdatedState(backgroundAds.map{it.str("url")}.filter{safeImage(it)!=null}.distinct())
     var visibleBackgroundAd by remember { mutableStateOf("") }
     LaunchedEffect(screen,entryPending,station?.ownerId) {
@@ -554,7 +551,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         var index=0
         while(true){
             delay(60_000L)
-            while(latestBackgroundAds.isEmpty())delay(1000)
+            while(latestBackgroundAds.isEmpty()||homeAdBlocked)delay(1000)
             val pool=latestBackgroundAds
             visibleBackgroundAd=pool[index%pool.size]
             index++
@@ -608,7 +605,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         },onChannel=onChannel,onVideo={select(it,Screen.VIDEO)},onInteraction={if(interaction){interaction=false;interactionReturn++}else interaction=true},
         onNotice={notice=it})
     ad?.let{media->NativePreroll(media,selected?.type=="audio_live",onStarted={prerollFrequency.played(activeAdPlacement,System.currentTimeMillis())},onFinish={ad=null;activeAdPlacement="";scope.launch { withFrameNanos { };resumeLive(resumeAfterAd) }})}
-    if(ad==null&&smartQueue.isNotEmpty())key(smartSerial){smartQueue.getOrNull(smartIndex)?.let{media->NativePreroll(media,media.str("placement")=="smart_break_audio",onStarted={},onFinish={if(smartQueue.isNotEmpty()){smartFailures++;if(smartFailures>=smartQueue.size)smartQueue=emptyList()else{smartIndex=(smartIndex+1)%smartQueue.size;smartSerial++}}},smart=true,breakStart=trackLocalStart,breakDuration=breakDuration,onPlayed={smartFailures=0},onBack={home()},commercialPhone=data?.optJSONObject("empresa").str("telefone_comercial"))}}
+    if(ad==null&&smartQueue.isNotEmpty())key(smartSerial){smartQueue.getOrNull(smartIndex)?.let{media->NativePreroll(media,media.str("placement")=="smart_break_audio",onStarted={},onFinish={if(smartQueue.isNotEmpty()){smartFailures++;if(smartFailures>=smartQueue.size)smartQueue=emptyList()else{smartIndex=(smartIndex+1)%smartQueue.size;smartSerial++}}},smart=true,breakStart=trackStart,breakDuration=breakDuration,serverClockOffset=api.serverClockOffsetMs,onPlayed={smartFailures=0},onBack={home()},commercialPhone=data?.optJSONObject("empresa").str("telefone_comercial"))}}
     AnimatedVisibility(visible=startup, enter=fadeIn(tween(650)), exit=fadeOut(tween(650))) {
         StartupSplash(startupStage)
     }

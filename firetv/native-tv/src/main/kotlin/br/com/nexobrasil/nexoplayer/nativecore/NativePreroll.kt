@@ -1,6 +1,15 @@
 package br.com.nexobrasil.nexoplayer.nativecore
 
 import androidx.compose.foundation.background
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.zIndex
+import kotlin.math.ceil
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
 import androidx.compose.ui.draw.clip
@@ -31,13 +40,17 @@ import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.delay
 import org.json.JSONObject
 
-@Composable internal fun NativePreroll(media:JSONObject,audio:Boolean,onStarted:()->Unit,onFinish:()->Unit,smart:Boolean=false,breakStart:Long=0L,breakDuration:Double=0.0,onPlayed:()->Unit={},onBack:()->Unit={},commercialPhone:String=""){
+@Composable internal fun NativePreroll(media:JSONObject,audio:Boolean,onStarted:()->Unit,onFinish:()->Unit,smart:Boolean=false,breakStart:Long=0L,breakDuration:Double=0.0,serverClockOffset:Long=0L,onPlayed:()->Unit={},onBack:()->Unit={},commercialPhone:String=""){
     val context=LocalContext.current
     val finish by rememberUpdatedState(onFinish)
     val started by rememberUpdatedState(onStarted)
     val playedCallback by rememberUpdatedState(onPlayed)
     val skipFocus=remember{FocusRequester()}
     var progress by remember{mutableFloatStateOf(0f)}
+    var breakRemaining by remember{mutableLongStateOf(-1L)}
+    val currentBreakStart by rememberUpdatedState(breakStart)
+    val currentBreakDuration by rememberUpdatedState(breakDuration)
+    val currentClockOffset by rememberUpdatedState(serverClockOffset)
     val player=remember(media){
         val http=DefaultHttpDataSource.Factory().setUserAgent("NexoTV/"+BuildConfig.VERSION_NAME).setConnectTimeoutMs(15000).setReadTimeoutMs(20000)
         ExoPlayer.Builder(context,LevelingRenderers(context)).setMediaSourceFactory(DefaultMediaSourceFactory(context).setDataSourceFactory(DefaultDataSource.Factory(context,http))).build().apply{setAudioAttributes(AudioAttributes.DEFAULT,false);volume=0f}
@@ -77,7 +90,7 @@ import org.json.JSONObject
             if(position==player.currentPosition)stall++ else stall=0
             position=player.currentPosition
             if(stall>=48||android.os.SystemClock.elapsedRealtime()>=deadline){complete();break}
-            if(smart&&breakDuration>0&&breakStart>0)progress=((System.currentTimeMillis()-breakStart)/(breakDuration*1000)).toFloat().coerceIn(0f,1f)
+            if(smart){val timing=smartBreakTiming(currentBreakStart,currentBreakDuration,System.currentTimeMillis()+currentClockOffset);progress=timing?.first?:0f;breakRemaining=timing?.second?:-1L}
             delay(250)
         }
     }
@@ -86,11 +99,14 @@ import org.json.JSONObject
             if(audio){val image=safeImage(media.str("backgroundUrl"));if(image!=null)Artwork(image,Modifier.fillMaxSize(),scale=ContentScale.Fit)else if(smart)Column(Modifier.align(Alignment.Center),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(20))){Symbol("music",Modifier.size(u.space(80)));Copy("Intervalo comercial",u,36,600);Copy("A programação volta em instantes",u,24)}}
             else AndroidView(factory={ctx->PlayerView(ctx).apply{useController=false;this.player=player;isFocusable=false}},modifier=Modifier.fillMaxSize(),onRelease={it.player=null})
             if(smart){
-                Row(u.at(1440,75,390,64),horizontalArrangement=Arrangement.spacedBy(u.space(14)),verticalAlignment=Alignment.CenterVertically){
+                Row(Modifier.align(Alignment.TopEnd).padding(top=u.space(75),end=u.space(100)),horizontalArrangement=Arrangement.spacedBy(u.space(14)),verticalAlignment=Alignment.CenterVertically){
                     GlassButton(u,"",Modifier.size(u.space(60)),icon="left",enabled=!info,onClick=onBack)
                     GlassButton(u,"smart break +",Modifier.height(u.space(60)).focusRequester(infoFocus),enabled=!info){info=true}
                 }
-            }else Box(Modifier.offset(u.space(100),u.space(75)).height(u.space(60)).border(u.space(2),Color.White,u.round(30)).padding(horizontal=u.space(22)),contentAlignment=Alignment.Center){Copy("publicidade"+if(remaining>=0)" · "+remaining/60+":"+("%02d".format(remaining%60))else "",u,25,600)}
+            }else Row(Modifier.offset(u.space(100),u.space(75)),horizontalArrangement=Arrangement.spacedBy(u.space(12)),verticalAlignment=Alignment.CenterVertically){
+                Box(Modifier.height(u.space(60)).border(u.space(2),Color.White,u.round(30)).padding(horizontal=u.space(22)),contentAlignment=Alignment.Center){Copy("publicidade"+if(remaining>=0)" · "+remaining/60+":"+("%02d".format(remaining%60))else "",u,25,600)}
+                if(remaining in 1..15){LaunchedEffect(Unit){skipFocus.requestFocus()};GlassButton(u,"pular",Modifier.height(u.space(60)).focusRequester(skipFocus),icon="right",iconAfter=true){complete()}}
+            }
             if(showLink){
                 val side=if(qr)218 else 156
                 var focused by remember{mutableStateOf(false)}
@@ -99,22 +115,36 @@ import org.json.JSONObject
                     NativeQr(media.str("link"),Modifier.size(u.space(side)).clip(u.round(8)),compact=true)
                 }
             }
-            if(!smart&&remaining in 1..15){LaunchedEffect(Unit){skipFocus.requestFocus()};GlassButton(u,"pular",u.at(500,75,210,65).focusRequester(skipFocus)){complete()}}
-            if(smart&&breakDuration>0&&breakStart>0)Box(u.at(100,155,650,8).background(Color.White.copy(alpha=.25f))){Box(Modifier.fillMaxHeight().fillMaxWidth(progress).background(Color.White))}
-            if(smart&&info)Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.65f)),contentAlignment=Alignment.Center){
-                Column(Modifier.width(u.space(800)).background(Color(0xFF242529),u.round(28)).padding(u.space(36)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(24))){
-                    if(!contact){
-                        GlassButton(u,"",Modifier.align(Alignment.End).size(u.space(54)).focusRequester(closeFocus),icon="left"){info=false}
-                        Copy("O que é o Smart Break?",u,32,700,align=TextAlign.Center)
-                        Copy("Uma experiência de publicidade digital que conecta marcas e ouvintes durante os intervalos da programação ao vivo.",u,24,400,lines=4,align=TextAlign.Center)
-                        GlassButton(u,"Entre no Smart Break / Dep. Comercial",Modifier.height(u.space(64)),enabled=contactUrl.isNotBlank()){contact=true}
-                        if(contactUrl.isBlank())Copy("Contato comercial não cadastrado.",u,19,400)
-                    }else{
-                        NativeQr(contactUrl,Modifier.size(u.space(220)).clip(u.round(12)),compact=true)
-                        GlassButton(u,"",Modifier.size(u.space(54)).focusRequester(contactFocus),icon="left"){contact=false}
+            if(smart&&breakRemaining>=0)Column(u.at(100,75,480,100),verticalArrangement=Arrangement.spacedBy(u.space(10))){
+                Copy("intervalo · "+formatSmartBreakTime(breakRemaining),u,32,600)
+                Box(Modifier.fillMaxWidth().height(u.space(8)).clip(u.round(5)).background(Color.White.copy(alpha=.25f))){Box(Modifier.fillMaxHeight().fillMaxWidth(progress).background(Color.White))}
+            }
+            if(smart&&info)Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.65f))){
+                val panelX by animateDpAsState(u.space(if(contact)300 else 435),tween(350),label="smartPanelX")
+                AnimatedVisibility(contact&&contactUrl.isNotBlank(),modifier=Modifier.offset(x=u.space(1366),y=u.space(388)),enter=slideInHorizontally(tween(350)){-it}+fadeIn(tween(250)),exit=slideOutHorizontally(tween(300)){-it}+fadeOut(tween(200))){
+                    Column(Modifier.size(u.space(254),u.space(304)).clip(u.round(24)).background(Color(0xFF242529)).padding(u.space(16)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(8))){
+                        NativeQr(contactUrl,Modifier.size(u.space(214)).clip(u.round(12)),compact=true)
+                        GlassButton(u,"",Modifier.size(u.space(48)).focusRequester(contactFocus),icon="left"){contact=false}
+                    }
+                }
+                Box(Modifier.offset(x=panelX,y=u.space(309)).size(u.space(1050),u.space(462)).zIndex(2f).clip(u.round(28)).background(Color(0xFF222224))){
+                    Artwork(R.drawable.smart_break_popup,Modifier.fillMaxSize(),scale=ContentScale.FillBounds)
+                    GlassButton(u,"",Modifier.align(Alignment.TopEnd).padding(u.space(20)).size(u.space(54)).focusRequester(closeFocus),icon="left"){contact=false;info=false}
+                    Column(u.at(372,190,624,248),verticalArrangement=Arrangement.spacedBy(u.space(18)),horizontalAlignment=Alignment.Start){
+                        Copy("Uma experiência de publicidade digital que conecta marcas e ouvintes durante os intervalos da programação ao vivo.",u,22,400,lines=4,align=TextAlign.Start)
+                        GlassButton(u,"Anuncie no Smart Break",Modifier.height(u.space(60)),enabled=contactUrl.isNotBlank()){contact=!contact}
+                        if(contactUrl.isBlank())Copy("Contato comercial não cadastrado.",u,17,400)
                     }
                 }
             }
         }
     }
 }
+
+/** Use the House Mix source clock, not the duration of the current ad. */
+internal fun smartBreakTiming(start:Long,duration:Double,now:Long):Pair<Float,Long>?{
+    if(start<=0L||!duration.isFinite()||duration<=0.0)return null
+    val elapsed=((now-start)/1000.0).coerceIn(0.0,duration)
+    return (elapsed/duration).toFloat() to ceil(duration-elapsed).toLong()
+}
+internal fun formatSmartBreakTime(seconds:Long):String=String.format(java.util.Locale.ROOT,"%02d:%02d",seconds/60,seconds%60)

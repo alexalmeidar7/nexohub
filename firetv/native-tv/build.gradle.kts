@@ -53,8 +53,8 @@ android {
         applicationId = "br.com.nexobrasil.nexoplayer.nativepilot"
         minSdk = 26
         targetSdk = 35
-        versionCode = 18
-        versionName = "0.1.17-native-preview"
+        versionCode = 19
+        versionName = "0.1.18-native-preview"
         buildConfigField("String", "SUPABASE_URL", "\"https://qazvgmgdidjhbvcuinpy.supabase.co\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"sb_publishable_BzjxF3H_PSgFYVA3OQIaoA_Pytdg2V3\"")
     }

@@ -32,3 +32,7 @@ Base remota: a5aa947 (0.1.15); correções no módulo firetv/native-tv, sem alte
 ## 27/11/2026 — Nexo TV 0.1.17 (PR #327)
 
 Base ee68d38, build 0.1.16 aprovado; usuário reportou banner, diferenças de volume, Smart Break, histórico e navegação. Alterações nativas: seleção de programa pela grade local, banner fora do container animado, nivelamento PCM RMS comum, Smart Break sem bloqueio por relógio indisponível, grade sobreposta, histórico quadrado com anúncio a cada cinco faixas, teclado de busca interno, curtida de vídeo e selo de canal. Smart Sync automático desde splash; sem garantia de alinhamento para stream sem relógio ou metadados. CI e testes físicos pendentes. Nenhuma alteração de dados ou backend.
+
+## 27/11/2026 — Nexo TV 0.1.18 (PR #327)
+
+Base a25b5a5, build 0.1.17 aprovado. Home: ocultar programa, patrocinador, interatividade e degradê durante background ads; animar banner e escurecer interatividade. Pre-roll: botão pular ao lado da publicidade com seta. Smart Break: arte fornecida pelo usuário empacotada em WebP; popup com texto à direita e QR deslizante; contador e encerramento usam music_start_time e music_current_duration do House Mix via API existente (sem inventar horário quando ausente). Teste de build e TV pendentes; sem alterações no HMD/HMO/Supabase/WebView.

@@ -97,7 +97,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
         labels.forEachIndexed{i,item->
             var focused by remember{mutableStateOf(false)}
             val shape=u.round(28)
-            Column((if(i==0)Modifier.focusRequester(focus) else Modifier).size(u.space(188),u.space(152)).clip(shape).onFocusChanged{focused=it.isFocused}.background(glass,shape).border(u.space(if(focused)3 else 1),Color.White.copy(alpha=if(focused)1f else .16f),shape).clickable{onPanel(item.first)}.padding(u.space(20)),verticalArrangement=Arrangement.SpaceBetween){
+            Column((if(i==0)Modifier.focusRequester(focus) else Modifier).size(u.space(188),u.space(152)).clip(shape).onFocusChanged{focused=it.isFocused}.background(interactionGlass,shape).border(u.space(if(focused)3 else 1),Color.White.copy(alpha=if(focused)1f else .16f),shape).clickable{onPanel(item.first)}.padding(u.space(20)),verticalArrangement=Arrangement.SpaceBetween){
                 Copy(item.second,u,18,400,lines=2)
                 Symbol(item.third,Modifier.size(u.space(46)).align(Alignment.End))
             }
@@ -193,11 +193,11 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
             }
         }
     }else if(panel=="battle"){
-        Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){Column(Modifier.width(u.space(1030)).background(glass,u.round(32)).padding(u.space(32)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(20))){GlassButton(u,"",Modifier.align(Alignment.End).size(u.space(52)).focusRequester(focus),icon="left",onClick=onClose);if(owner!=null)NativeCommunity(u,panel,owner,services,account)else Copy("Emissora indisponível.",u,23)}}
+        Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){Column(Modifier.width(u.space(1030)).background(interactionGlass,u.round(32)).padding(u.space(32)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(20))){GlassButton(u,"",Modifier.align(Alignment.End).size(u.space(52)).focusRequester(focus),icon="left",onClick=onClose);if(owner!=null)NativeCommunity(u,panel,owner,services,account)else Copy("Emissora indisponível.",u,23)}}
     }else{
         Box(u.at(1350,165,470,735)){
             GlassButton(u,"",Modifier.align(Alignment.TopEnd).size(u.space(56)).then(if((panel=="history"&&history.isEmpty())||(panel=="weather"&&forecast?.optJSONObject("daily")?.optJSONArray("time")==null))Modifier.focusRequester(focus)else Modifier),icon="left",onClick=onClose)
-            Column(Modifier.offset(y=u.space(75)).fillMaxWidth().height(u.space(650)).clip(u.round(28)).background(glass).padding(u.space(20)),horizontalAlignment=Alignment.CenterHorizontally){
+            Column(Modifier.offset(y=u.space(75)).fillMaxWidth().height(u.space(650)).clip(u.round(28)).background(interactionGlass).padding(u.space(20)),horizontalAlignment=Alignment.CenterHorizontally){
                 when(panel){
                     "history" -> {
                         var index by remember{mutableIntStateOf(0)}

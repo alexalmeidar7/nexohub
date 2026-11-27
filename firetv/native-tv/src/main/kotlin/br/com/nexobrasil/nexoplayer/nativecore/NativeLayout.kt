@@ -85,6 +85,7 @@ import java.util.Locale
 internal fun TvUnits.at(x:Number,y:Number,w:Number,h:Number) = Modifier.offset(space(x),space(y)).size(space(w),space(h))
 internal val LocalControlsEnabled = compositionLocalOf { true }
 internal val glass = Brush.linearGradient(listOf(Color(0x705C5C60),Color(0x80232327),Color(0xA018181B)))
+internal val interactionGlass = Brush.linearGradient(listOf(Color(0xED303034),Color(0xF2212125),Color(0xF518181B)))
 private fun accentGlass(c:Color)=Brush.linearGradient(listOf(androidx.compose.ui.graphics.lerp(c,Color.White,.24f),c,Color(0xFF292124)))
 internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
 
@@ -94,7 +95,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
 @Composable internal fun Artwork(model:Any?,modifier:Modifier,desc:String?=null,scale:ContentScale=ContentScale.Fit,filter:ColorFilter?=null) {
     if(model!=null && model!="") AsyncImage(model,desc,modifier,contentScale=scale,colorFilter=filter)
 }
-@Composable internal fun GlassButton(u:TvUnits,label:String,modifier:Modifier=Modifier,icon:String?=null,accent:Color?=null,enabled:Boolean=true,outline:Boolean=false,accentRing:Boolean=false,loading:Boolean=false,onClick:()->Unit) {
+@Composable internal fun GlassButton(u:TvUnits,label:String,modifier:Modifier=Modifier,icon:String?=null,accent:Color?=null,enabled:Boolean=true,outline:Boolean=false,accentRing:Boolean=false,loading:Boolean=false,iconAfter:Boolean=false,onClick:()->Unit) {
     var focused by remember { mutableStateOf(false) }
     val shape=CircleShape
     val active=enabled && LocalControlsEnabled.current
@@ -104,11 +105,12 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
         .clickable(enabled=active,onClick=onClick).semantics { contentDescription=label.ifEmpty{when(icon){"play"->"Reproduzir";"pause"->"Pausar";"left"->"Voltar";"up"->"Canal anterior";"down"->"Próximo canal";"search"->"Buscar";"spark"->"Interatividade";else->"Controle"}} }
         .padding(horizontal=u.space(if(icon!=null && label.isEmpty()) 0 else 20)),
         verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.Center) {
-        if(loading) NativeSpinner(u,Modifier.size(u.space(29))) else if(icon!=null) Symbol(icon,Modifier.size(u.space(29)))
+        if(loading) NativeSpinner(u,Modifier.size(u.space(29))) else if(icon!=null&&!iconAfter) Symbol(icon,Modifier.size(u.space(29)))
         if(label.isNotEmpty()) {
-            if(icon!=null) Spacer(Modifier.width(u.space(10)))
+            if(icon!=null&&!iconAfter) Spacer(Modifier.width(u.space(10)))
             Copy(label,u,22,500)
         }
+        if(!loading&&icon!=null&&iconAfter){if(label.isNotEmpty())Spacer(Modifier.width(u.space(10)));Symbol(icon,Modifier.size(u.space(29)))}
     }
 }
 
@@ -122,6 +124,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
             "play" -> { val s=Path().apply{moveTo(w*.34f,h*.20f);lineTo(w*.80f,h*.50f);lineTo(w*.34f,h*.80f);close()};drawPath(s,Color.White) }
             "pause" -> { line(p(.37f,.24f),p(.37f,.76f));line(p(.63f,.24f),p(.63f,.76f)) }
             "left" -> path(.62f to .20f,.32f to .50f,.62f to .80f)
+            "right" -> path(.32f to .20f,.62f to .50f,.32f to .80f)
             "up" -> path(.20f to .62f,.50f to .32f,.80f to .62f)
             "down" -> path(.20f to .38f,.50f to .68f,.80f to .38f)
             "search" -> { drawCircle(Color.White,w*.27f,p(.40f,.40f),style=Stroke(sw));line(p(.60f,.60f),p(.84f,.84f)) }
@@ -209,7 +212,11 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     LaunchedEffect(screen,ready,modal,if(watchScreen)controls else true,interactionReturn) {
         if(ready&&!modal&&(!watchScreen||controls)){withFrameNanos{};val restore=interactionReturn!=restoredInteraction;if(restore)restoredInteraction=interactionReturn;runCatching{(if(restore&&(screen==Screen.HOME||watchScreen))sparkFocus else focus).requestFocus()}}
     }
-    val homeBannerVisible=screen==Screen.HOME&&backgroundAd.isBlank()&&safeImage(banner)!=null
+    val homeBackgroundAd=screen==Screen.HOME&&backgroundAd.isNotBlank()
+    val homeBannerVisible=screen==Screen.HOME&&!homeBackgroundAd&&!interaction&&safeImage(banner)!=null
+    val bannerMotion=animateFloatAsState(if(homeBannerVisible)1f else 0f,tween(if(homeBannerVisible)550 else 350),label="homeBannerMotion")
+    val homeChrome=animateFloatAsState(if(homeBackgroundAd)0f else 1f,tween(350),label="homeAdChrome")
+    LaunchedEffect(homeBackgroundAd){if(homeBackgroundAd&&!modal){withFrameNanos{};runCatching{rail[0].requestFocus()}}}
     LaunchedEffect(homeBannerVisible){if(!homeBannerVisible)onBannerQr(false)}
     val scheduleDate=LocalDate.now(brasilia)
     val programRows=remember(payload){payload.rows("programas")}
@@ -242,7 +249,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                     Box(Modifier.fillMaxSize().alpha(fade).background(Brush.horizontalGradient(listOf(Color.Black.copy(alpha=.74f),Color.Black.copy(alpha=.45f)))))
                     if(screen==Screen.HOME) Crossfade(backgroundAd,animationSpec=tween(700),label="backgroundAd"){url->if(url.isNotBlank())Artwork(safeImage(url),Modifier.fillMaxSize(),scale=ContentScale.Crop)}
                     if(screen==Screen.HOME||screen==Screen.SCHEDULE) AnimatedVisibility(screen!=Screen.HOME||backgroundAd.isBlank(),modifier=u.at(1152,108,768,972),enter=fadeIn(tween(650))+slideInHorizontally(tween(650)){it/10},exit=fadeOut(tween(500))){AnimatedPresenter(u,activePresenter.str("foto"),Modifier.fillMaxSize())}
-                    Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent,Color.Transparent,Color.Black.copy(alpha=.78f)))))
+                    Box(Modifier.fillMaxSize().graphicsLayer{alpha=if(screen==Screen.HOME)homeChrome.value else 1f}.background(Brush.verticalGradient(listOf(Color.Transparent,Color.Transparent,Color.Black.copy(alpha=.78f)))))
                 }
             }
             if(screen==Screen.VIDEO) {
@@ -258,15 +265,15 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
             } else {
                 CompositionLocalProvider(LocalControlsEnabled provides (!modal&&!leavingScreen)) {
                 Box(Modifier.fillMaxSize().graphicsLayer{alpha=screenMotion.value;translationY=(1f-screenMotion.value)*u.space(18).toPx()}){
-                if(!watch && screen!=Screen.PROFILE) Header(u,logo,title,artist,cover,playing,accent,screen,weather,if(screen==Screen.HOME) Modifier.focusRequester(focus).focusProperties{down=rail[0];right=searchFocus} else Modifier,spectrum,onToggle,{onOpen(Screen.SEARCH)},{onPanel("cep")},Modifier.focusRequester(searchFocus).focusProperties{if(screen==Screen.HOME)left=focus;right=clockFocus},Modifier.focusRequester(clockFocus).focusProperties{left=searchFocus;down=sparkFocus})
+                if(!watch && screen!=Screen.PROFILE) Header(u,logo,title,artist,cover,playing,accent,screen,weather,if(screen==Screen.HOME) Modifier.focusRequester(focus).focusProperties{down=rail[0];right=searchFocus} else Modifier,spectrum,onToggle,{onOpen(Screen.SEARCH)},{onPanel("cep")},Modifier.focusRequester(searchFocus).focusProperties{if(screen==Screen.HOME)left=focus;right=clockFocus},Modifier.focusRequester(clockFocus).focusProperties{left=searchFocus;down=if(homeBackgroundAd)rail[0] else sparkFocus})
                 if(screen==Screen.HOME) {
                     val programLeft = 265f
                     Box(u.at(96,254,102,432).background(glass,CircleShape).border(u.space(1),Color.White.copy(alpha=.16f),CircleShape))
                     Column(Modifier.offset(u.space(108),u.space(272)).zIndex(2f),verticalArrangement=Arrangement.spacedBy(u.space(4))) {
                         fun route(i:Int)=Modifier.focusRequester(rail[i]).focusProperties{
                             up=if(i==0)focus else rail[i-1]
-                            down=if(i==4){if(homeBannerVisible)bannerFocus else sparkFocus}else rail[i+1]
-                            right=programFocus
+                            down=if(i==4){if(homeBackgroundAd)rail[0] else if(homeBannerVisible)bannerFocus else sparkFocus}else rail[i+1]
+                            right=if(homeBackgroundAd)focus else programFocus
                         }
                         RailItem(u,"audio","Ouvir",accent,route(0),loading=channelOpening==Screen.AUDIO){onOpen(Screen.AUDIO)}
                         RailItem(u,"video","Assistir",accent,route(1),loading=channelOpening==Screen.VIDEO){onOpen(Screen.VIDEO)}
@@ -274,23 +281,25 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                         RailItem(u,"calendar","Grade de programação",accent,route(3),loading=scheduleOpening){onOpen(Screen.SCHEDULE)}
                         RailItem(u,"user","Olá, $guestName",accent,route(4),avatar=guestAvatar){onOpen(Screen.PROFILE)}
                     }
-                    Column(u.at(programLeft,272,505,340),verticalArrangement=Arrangement.spacedBy(u.space(12))) {
+                    if(!homeBackgroundAd||homeChrome.value>.01f) CompositionLocalProvider(LocalControlsEnabled provides (!modal&&!leavingScreen&&!homeBackgroundAd)){
+                    Column(u.at(programLeft,272,505,340).graphicsLayer{alpha=homeChrome.value},verticalArrangement=Arrangement.spacedBy(u.space(12))) {
                         HomeProgramInfo(u,program,activePresenter,stationName,accent)
                         Spacer(Modifier.height(u.space(6)))
                         ExpandableProgram(u,Modifier.focusRequester(programFocus).focusProperties{left=rail[0];right=sparkFocus;down=if(homeBannerVisible)bannerFocus else sparkFocus},loading=scheduleOpening){onOpen(Screen.SCHEDULE)}
                     }
+                    }
                     // Footer shares one vertical center (912): sponsor, centered banner, interactivity.
-                    AnimatedVisibility(sponsor!=null&&(!interaction)&&(panel==null||scheduleOverlay||panel=="cep")&&!bannerQr,modifier=u.at(55,770,283,283),enter=fadeIn(tween(450)),exit=fadeOut(tween(350))){
+                    AnimatedVisibility(sponsor!=null&&!homeBackgroundAd&&(!interaction)&&(panel==null||scheduleOverlay||panel=="cep")&&!bannerQr,modifier=u.at(55,770,283,283),enter=fadeIn(tween(450)),exit=fadeOut(tween(350))){
                         Crossfade(sponsor,animationSpec=tween(500),label="footerSponsor"){url->if(url!=null)Artwork(url,Modifier.fillMaxSize(),scale=ContentScale.Fit)}
                     }
-                    if(homeBannerVisible) {
+                    if(safeImage(banner)!=null) {
                         val model:Any?=if(banner.substringBefore("?")=="https://qazvgmgdidjhbvcuinpy.supabase.co/storage/v1/object/public/comercial/452ebd1e-61a0-42dd-bf80-231a3f426c83/player-ads/00198081-b99d-4548-8561-ff953209d17a.png") R.drawable.home_hotpark else safeImage(banner)
                         var bannerFocused by remember{mutableStateOf(false)}
-                        Box(u.at(400,842,1120,140).zIndex(1f).focusRequester(bannerFocus)
+                        Box(u.at(400,842,1120,140).zIndex(1f).graphicsLayer{alpha=bannerMotion.value;translationY=(1f-bannerMotion.value)*u.space(24).toPx()}.focusRequester(bannerFocus)
                             .focusProperties{up=rail[4];right=sparkFocus;canFocus=!modal&&homeBannerVisible}
                             .onFocusChanged{bannerFocused=it.isFocused;if(!it.isFocused)onBannerQr(false)}
                             .drawBehind{if(bannerFocused){val gap=u.space(5).toPx();drawRoundRect(Color.White,Offset(-gap,-gap),Size(size.width+gap*2,size.height+gap*2),CornerRadius(u.space(16).toPx()),style=Stroke(u.space(3).toPx()))}}
-                            .clickable(enabled=!modal){if(safeImage(bannerLink)!=null)onBannerQr(!bannerQr)}){
+                            .clickable(enabled=!modal&&homeBannerVisible){if(safeImage(bannerLink)!=null)onBannerQr(!bannerQr)}){
                             if(model!=null)AsyncImage(model,"Banner publicitário",Modifier.fillMaxSize().clip(u.round(12)),contentScale=ContentScale.Fit,onSuccess={android.util.Log.i("NexoAds","HOME_BANNER_VISIBLE")},onError={android.util.Log.w("NexoAds","HOME_BANNER_LOAD_FAILED",it.result.throwable)})
                         }
                         AnimatedVisibility(bannerQr&&safeImage(bannerLink)!=null,modifier=u.at(184,810,198,204).zIndex(3f),enter=fadeIn(tween(220)),exit=fadeOut(tween(180))){
@@ -300,7 +309,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                         }
                         if(bannerQr)BackHandler{onBannerQr(false)}
                     }
-                    GlassButton(u,"",u.at(1744,874,76,76).focusRequester(sparkFocus).focusProperties{left=if(homeBannerVisible)bannerFocus else programFocus;up=clockFocus},icon="spark",accent=accent,accentRing=true){onInteraction()}
+                    if(!homeBackgroundAd||homeChrome.value>.01f) GlassButton(u,"",u.at(1744,874,76,76).graphicsLayer{alpha=homeChrome.value}.focusRequester(sparkFocus).focusProperties{left=if(homeBannerVisible)bannerFocus else programFocus;up=clockFocus},icon="spark",accent=accent,accentRing=true,enabled=!homeBackgroundAd){onInteraction()}
                     Copy("Nexo TV v"+BuildConfig.VERSION_NAME,u,15,400,u.at(100,1050,800,24),color=Color.White.copy(alpha=.55f))
                 }
                 if(watch) {
@@ -367,7 +376,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                 }
                 }
                 }
-                if(interaction && panel==null) InteractionCards(u, {onPanel(it)}, onInteraction,sparkFocus,screen==Screen.HOME)
+                if(interaction && panel==null&&!homeBackgroundAd) InteractionCards(u, {onPanel(it)}, onInteraction,sparkFocus,screen==Screen.HOME)
                 if(scheduleOverlay){Box(Modifier.fillMaxSize()){Schedule(u,payload,program,accent,scheduleFocus,{onPanel(null)},account.str("id").ifBlank{guestName},scheduleGrid)}} else if(panel!=null) NativePanel(u,panel,payload,track,history,historyLoading,historyError,forecast,lyrics,cep,api,station?.ownerId,accent,{onPanel(null)},onCepSaved,onOpen,services,account,onAccount,historyAd)
 
             }
