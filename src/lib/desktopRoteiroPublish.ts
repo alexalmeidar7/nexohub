@@ -1,5 +1,11 @@
 import { localizeXmlImageUrls } from "./desktopLocalXml";
 import { saveDesktopXml } from "./desktopPromotionBanners";
+import { localXmlSlug } from "./desktopLocalOnAir";
+import { findClientAccountById } from "./clientAuthAccounts";
+
+export function resolveDesktopRoteiroSlug(ownerId: string) {
+  return findClientAccountById(ownerId)?.slug || localXmlSlug(ownerId);
+}
 
 /** The permanent roteiro.xml is the FM feed; never replace it with a podcast or future draft. */
 export function isFmRoteiroStudio(studio: string) {
