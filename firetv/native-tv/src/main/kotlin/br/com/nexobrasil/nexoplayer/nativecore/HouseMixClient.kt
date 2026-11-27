@@ -61,8 +61,9 @@ class HouseMixClient(supabaseOrigin: String, internal val publishableKey: String
         val connection = URL(builder.build().toString()).openConnection() as HttpURLConnection
         try {
             connection.requestMethod = if (body == null) "GET" else "POST"
-            connection.connectTimeout = 8_000
-            connection.readTimeout = 10_000
+            val liveRead=name=="public-player-data"&&body?.optString("section")=="now_playing"
+            connection.connectTimeout = if(liveRead)4_000 else 8_000
+            connection.readTimeout = if(liveRead)5_000 else 10_000
             connection.instanceFollowRedirects = false
             connection.setRequestProperty("apikey", publishableKey)
             connection.setRequestProperty("Authorization", "Bearer $publishableKey")

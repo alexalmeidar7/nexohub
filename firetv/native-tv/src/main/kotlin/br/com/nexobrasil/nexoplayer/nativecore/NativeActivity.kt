@@ -217,6 +217,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
     var playbackAttempt by remember { mutableIntStateOf(0) }
     var recoveryCount by remember { mutableIntStateOf(0) }
     var totalRecoveries by remember{mutableIntStateOf(0)}
+    var liveRequested by remember{mutableStateOf(false)}
     var musicReads by remember{mutableIntStateOf(0)}
     var verifiedWakes by remember{mutableIntStateOf(0)}
     var musicMode by remember{mutableStateOf("Consulta 2s")}
@@ -230,6 +231,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
         return item.build()
     }
     fun resumeLive(autoplay:Boolean) {
+        liveRequested=autoplay
         if(player.mediaItemCount==0)return
         if(player.playbackState==Player.STATE_IDLE || player.playbackState==Player.STATE_ENDED || player.playerError!=null) {
             sync.resetPlayback();syncEpoch=0L
@@ -286,8 +288,8 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
     }
     fun toggle() {
         if (selected == null) { audio.firstOrNull()?.let { select(it,screen) }; return }
-        if (player.playWhenReady && player.playbackState != Player.STATE_ENDED && playerError == null) {
-            player.pause()
+        if (liveRequested && player.playbackState != Player.STATE_ENDED && playerError == null) {
+            liveRequested=false;player.pause()
         } else {
             recoveryCount=0
             resumeLive(true)
@@ -422,7 +424,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
                     val start=nativeEpoch(data.opt("musicStartTime")?:next.opt("startTime")?:next.opt("startedAt"))
                     val event=MusicEvent(next.str("titulo"),next.str("artista"),start)
                     if(start<=0L||incomingStart<=0L||start>=incomingStart){
-                        if(previous!=null&&!event.matches(previous!!)){val verified=expected?.matches(event)==true&&android.os.SystemClock.elapsedRealtime()-expectedAt<=8000;proof.observe(verified);if(verified)verifiedWakes++;expected=null}
+                        if(previous!=null&&!event.matches(previous!!)){val verified=expected?.matches(event)==true&&android.os.SystemClock.elapsedRealtime()-expectedAt<=8000;proof.observe(verified);if(verified)verifiedWakes++;expected=null}else if(expected?.matches(event)==true){expected=null}
                         previous=event
                         if(incomingTrack?.toString()!=next.toString()||incomingStart!=start){incomingTrack=next;incomingStart=start}
                         sync.accept(SyncTrack(event.title,event.artist,start,System.currentTimeMillis(),next,data.str("musicDeezerArtistImg")))
@@ -433,7 +435,8 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
                 val untilEnd=if(incomingStart>0&&dur>0)incomingStart+(dur*1000).toLong()-(System.currentTimeMillis()+api.serverClockOffsetMs)else Long.MIN_VALUE
                 val critical=isNativeBreak(incomingTrack)||untilEnd<=15000L||expected!=null
                 waiting=proof.interval(wake?.healthy()==true&&!forcePolling,critical)
-                musicMode=if(waiting>2000)"Realtime + segurança 10s" else if(wake?.healthy()==true)"Realtime + segurança 2s" else "Consulta 2s"
+                if(waiting>2000L)waiting=waiting.coerceAtMost((untilEnd-15000L).coerceAtLeast(2000L))
+                musicMode=if(waiting>2000)"Realtime + segurança ${waiting/1000}s" else if(wake?.healthy()==true)"Realtime + segurança 2s" else "Consulta 2s"
                 android.util.Log.d("NexoMusicRead","mode=$musicMode calls=$musicReads confirmed=$verifiedWakes rtt=$lastMusicRtt")
             }catch(e:CancellationException){throw e}catch(_:Exception){proof.reset();expected=null;errors++;waiting=(2000L*(1L shl errors.coerceAtMost(3))).coerceAtMost(16000L);musicMode="Reconectando metadados"}
         }}finally{wake?.close()}
@@ -479,13 +482,20 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
         try{val key="history_cache:"+owner;runCatching{val cached=org.json.JSONArray(prefs.getString(key,"[]"));history=(0 until cached.length()).mapNotNull{cached.optJSONObject(it)}};refreshHistory(owner);if(history.isNotEmpty())prefs.edit().putString(key,org.json.JSONArray(history).toString()).apply();while(startup)delay(200);for(batch in history.take(50).chunked(2)){coroutineScope{batch.map{song->async{resolveHistoryCover(context,song,track)}}.awaitAll()};delay(300)}}finally{historyWarmFinished=true}
     }
     LaunchedEffect(panel,station?.ownerId){if(panel in listOf("history","search")){val owner=station?.ownerId?:return@LaunchedEffect;if(System.currentTimeMillis()-historyFetchedAt>60_000L)refreshHistory(owner)}}
+    LaunchedEffect(selected?.id,foreground,mosaic){
+        if(!foreground||mosaic||selected==null)return@LaunchedEffect
+        delay(1500)
+        val next=(audio+video).let{list->val i=list.indexOfFirst{it.id==selected?.id};if(i>=0&&list.size>1)list[(i+1)%list.size]else null}
+        val host=next?.url?.let{android.net.Uri.parse(it).host}
+        if(!host.isNullOrBlank())kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO){runCatching{java.net.InetAddress.getAllByName(host)}}
+    }
     LaunchedEffect(player,selected?.id,startup,ad,foreground,mosaic,playbackAttempt){
         if(startup||ad!=null||!foreground||mosaic||selected==null)return@LaunchedEffect
         var position=player.currentPosition;var stalledAt=0L;var nextRetry=0L
         while(true){
             delay(1000)
             val now=android.os.SystemClock.elapsedRealtime();val current=player.currentPosition
-            if(!player.playWhenReady||player.playbackSuppressionReason!=Player.PLAYBACK_SUPPRESSION_REASON_NONE){stalledAt=0L;position=current;continue}
+            if(!liveRequested||player.playbackSuppressionReason!=Player.PLAYBACK_SUPPRESSION_REASON_NONE){stalledAt=0L;position=current;continue}
             if(player.isPlaying&&current>position+100){stalledAt=0L;recoveryCount=0;nextRetry=0;playerError=null}
             else{if(stalledAt==0L)stalledAt=now;val expired=now-stalledAt>=8000L||player.playerError!=null||player.playbackState==Player.STATE_ENDED
                 if(expired&&now>=nextRetry&&nativeNetworkAvailable(context)){
@@ -688,7 +698,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
                 else -> openPage(destination)
             }}
             if(destination in listOf(Screen.HOME,Screen.PROFILE,Screen.VIDEO,Screen.CATALOG))transition(navigate) else navigate()
-        },onChannel=onChannel,onVideo={select(it,Screen.VIDEO)},onMosaic={if(video.size>1){mosaicReturn=selected;pendingWatch=null;ad=null;smartQueue=emptyList();player.pause();player.stop();player.clearMediaItems();selected=null;sync.resetPlayback();syncEpoch=0L;mosaic=true}},onInteraction={if(interaction){interaction=false;interactionReturn++}else interaction=true},
+        },onChannel=onChannel,onVideo={select(it,Screen.VIDEO)},onMosaic={if(video.size>1){mosaicReturn=selected;pendingWatch=null;ad=null;smartQueue=emptyList();liveRequested=false;player.pause();player.stop();player.clearMediaItems();selected=null;sync.resetPlayback();syncEpoch=0L;mosaic=true}},onInteraction={if(interaction){interaction=false;interactionReturn++}else interaction=true},
         onNotice={notice=it})
     ad?.let{media->NativePreroll(media,selected?.type=="audio_live",onStarted={prerollFrequency.played(activeAdPlacement,System.currentTimeMillis())},onFinish={ad=null;activeAdPlacement="";scope.launch { withFrameNanos { };resumeLive(resumeAfterAd) }})}
     val activeSmartMedia=if(ad==null)smartQueue.getOrNull(smartIndex)?.let{smartSerial to it}else null
