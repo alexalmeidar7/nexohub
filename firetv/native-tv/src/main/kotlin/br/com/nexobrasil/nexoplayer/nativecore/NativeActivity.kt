@@ -132,6 +132,8 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
     var smartFailures by remember { mutableIntStateOf(0) }
     var smartAttempt by remember { mutableStateOf("") }
     var screen by remember { mutableStateOf(Screen.PROFILE) }
+    var mosaic by remember { mutableStateOf(false) }
+    var mosaicReturn by remember { mutableStateOf<StationChannel?>(null) }
     var returnScreen by remember { mutableStateOf(Screen.HOME) }
     var leavingScreen by remember { mutableStateOf(false) }
     var videoTrayFocused by remember { mutableStateOf(false) }
@@ -228,6 +230,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         return smartBreakVideoMedia(media)
     }
     fun select(channel: StationChannel, destination: Screen, autoplay: Boolean = true, allowCampaignWait:Boolean=true) {
+        mosaic=false
         val watch=destination==Screen.AUDIO||destination==Screen.VIDEO
         val now=System.currentTimeMillis()
         val date=LocalDate.now(brasilia).toString()
@@ -276,8 +279,9 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         if (selected?.type == "audio_live") audioIntent = player.playWhenReady
     }
     fun home() {
+        mosaic=false
         pendingWatch=null;ad=null;smartQueue=emptyList();prerollFrequency.home()
-        if (selected?.type == "video_live") {
+        if (selected?.type == "video_live" || selected==null) {
             sync.resetPlayback();syncEpoch=0L
             player.stop(); player.clearMediaItems(); selected = null
             audio.firstOrNull()?.let { select(it,Screen.HOME,audioIntent) }
@@ -292,7 +296,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         interaction = false
         controls = true
     }
-    LaunchedEffect(scheduleOpening){if(scheduleOpening){withFrameNanos{};delay(220);if(scheduleOpening){panel="schedule";scheduleOpening=false;controls=true;interaction=false}}}
+    LaunchedEffect(scheduleOpening){if(scheduleOpening){withFrameNanos{};delay(500);if(scheduleOpening){panel="schedule";scheduleOpening=false;controls=true;interaction=false}}}
     fun back() {
         if (ad!=null) return
         if(pendingWatch!=null){pendingWatch=null;return}
@@ -367,10 +371,12 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         }
         screen = Screen.PROFILE
         startupStage="sincronizando música no ar"
-        if(entryPending&&selected?.type=="audio_live"&&audioIntent){resumeLive(true);withTimeoutOrNull(4000L){while(syncEpoch<=0L&&track==null&&playerError==null)delay(100)}}
+        // Keep the prepared stream silent throughout splash and cover warmup.
         startupStage="pré-carregando capas das músicas"
         withTimeoutOrNull(8000L){while(!historyWarmFinished)delay(100)}
         startup = false
+        delay(650)
+        if(entryPending&&screen==Screen.PROFILE&&selected?.type=="audio_live"&&audioIntent)resumeLive(true)
         var wait = 2_000L
         while (true) {
             delay(wait)
@@ -427,7 +433,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
     LaunchedEffect(station?.ownerId){
         val owner=station?.ownerId?:return@LaunchedEffect
         historyWarmFinished=false
-        try{refreshHistory(owner);for(batch in history.take(10).chunked(2)){coroutineScope{batch.map{song->async{resolveHistoryCover(context,song,track)}}.awaitAll()}}}finally{historyWarmFinished=true}
+        try{refreshHistory(owner);for(batch in history.take(50).chunked(3)){coroutineScope{batch.map{song->async{resolveHistoryCover(context,song,track)}}.awaitAll()}}}finally{historyWarmFinished=true}
     }
     LaunchedEffect(panel,station?.ownerId){if(panel in listOf("history","search")){val owner=station?.ownerId?:return@LaunchedEffect;if(System.currentTimeMillis()-historyFetchedAt>60_000L)refreshHistory(owner)}}
     LaunchedEffect(player,selected?.id,startup,ad,playbackAttempt){
@@ -606,8 +612,9 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         }
     }
     Box(Modifier.fillMaxSize()) {
-    if(!startup && ad==null && smartQueue.isEmpty()) NativeLayout(
-        screen=screen, station=station, stationName=stationName, payload=data, track=track,
+    if(!startup && mosaic && ad==null && smartQueue.isEmpty()) NativeMosaic(video,data,onExit={mosaic=false;val ch=mosaicReturn?:video.firstOrNull();if(ch!=null)select(ch,Screen.VIDEO)else home()},onSelect={select(it,Screen.VIDEO)})
+    else if(!startup && ad==null && smartQueue.isEmpty()) NativeLayout(
+        screen=screen, inputSerial=activity, station=station, stationName=stationName, payload=data, track=track,
         program=currentProgram,presenter=currentPresenter,artistArtwork=artistArtwork,backgroundAd=visibleBackgroundAd.takeIf{screen==Screen.HOME&&it in latestBackgroundAds}.orEmpty(),bannerLink=banners.getOrNull(bannerIndex).takeIf{it?.optBoolean("clickable")==true}.str("link"),bannerQr=bannerQr,onBannerQr={bannerQr=it},player=player,playing=playing,buffering=buffering,
         failure=failure,playerError=playerError,controls=controls,chrome=chrome,interaction=interaction,
         banner=banners.getOrNull(bannerIndex).str("url"),historyAd=historyAd,panelAd=panelAd,chatAds=eligibleInteractionAds["chat_ads"].orEmpty(),backgroundAdEndsAt=backgroundAdEndsAt,sponsor=sponsorUrls.getOrNull(sponsorIndex),weather=weather,history=history,historyLoading=historyLoading,historyError=historyError,
@@ -636,7 +643,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
                 else -> openPage(destination)
             }}
             if(destination in listOf(Screen.HOME,Screen.PROFILE,Screen.VIDEO,Screen.CATALOG))transition(navigate) else navigate()
-        },onChannel=onChannel,onVideo={select(it,Screen.VIDEO)},onInteraction={if(interaction){interaction=false;interactionReturn++}else interaction=true},
+        },onChannel=onChannel,onVideo={select(it,Screen.VIDEO)},onMosaic={if(video.size>1){mosaicReturn=selected;pendingWatch=null;ad=null;smartQueue=emptyList();player.pause();player.stop();player.clearMediaItems();selected=null;sync.resetPlayback();syncEpoch=0L;mosaic=true}},onInteraction={if(interaction){interaction=false;interactionReturn++}else interaction=true},
         onNotice={notice=it})
     ad?.let{media->NativePreroll(media,selected?.type=="audio_live",onStarted={prerollFrequency.played(activeAdPlacement,System.currentTimeMillis())},onFinish={ad=null;activeAdPlacement="";scope.launch { withFrameNanos { };resumeLive(resumeAfterAd) }})}
     val activeSmartMedia=if(ad==null)smartQueue.getOrNull(smartIndex)?.let{smartSerial to it}else null
@@ -654,13 +661,13 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
 internal fun nativeEpoch(value:Any?):Long {val n=(value as? Number)?.toDouble()?:value?.toString()?.toDoubleOrNull();return if(n!=null&&n.isFinite()&&n>0)(if(n<1e12)n*1000 else n).toLong()else runCatching{java.time.Instant.parse(value.toString()).toEpochMilli()}.getOrDefault(0L)}
 
 internal fun deduplicateNativeHistory(rows:List<JSONObject>):List<JSONObject>{
-    fun key(row:JSONObject)=row.str("musica").trim().lowercase(java.util.Locale.ROOT)+"|"+row.str("artista").trim().lowercase(java.util.Locale.ROOT)
+    fun key(row:JSONObject)=historyNormalized(row.str("musica"))+"|"+historyNormalized(row.str("artista"))
     fun second(row:JSONObject):Int?{val p=row.str("horario").substringBefore(".").split(":");if(p.size<2)return null;return (p[0].toIntOrNull()?:return null)*3600+(p[1].toIntOrNull()?:return null)*60+(p.getOrNull(2)?.toIntOrNull()?:0)}
     val seen=mutableSetOf<String>();val out=mutableListOf<JSONObject>()
     for(row in rows){val k=key(row);if(k=="|")continue
         if(!seen.add(k+"|"+row.str("dia")+"|"+row.str("horario").take(8)))continue
         val prev=out.lastOrNull();val a=second(row);val b=prev?.let{second(it)}
-        if(prev!=null&&key(prev)==k&&row.str("dia")==prev.str("dia")&&a!=null&&b!=null&&kotlin.math.abs(a-b)<=120)continue
+        if(prev!=null&&key(prev)==k&&row.str("dia")==prev.str("dia")&&a!=null&&b!=null&&kotlin.math.abs(a-b)<=180)continue
         out.add(row)
     };return out
 }

@@ -5,6 +5,9 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -54,7 +57,9 @@ internal fun nativeProfileAvatar(url:String):Any{
 @Composable private fun AccountCircle(u:TvUnits,model:Any?,label:String,modifier:Modifier=Modifier,onClick:()->Unit){
     var focused by remember{mutableStateOf(false)}
     val active=LocalControlsEnabled.current
-    Box(modifier.size(u.space(164)).onFocusChanged{focused=it.isFocused}.border(u.space(if(focused)3 else 0),Color.White,CircleShape).clip(CircleShape).clickable(enabled=active,onClick=onClick).semantics{contentDescription=label}.padding(u.space(7)),contentAlignment=Alignment.Center){
+    val interaction=remember{MutableInteractionSource()};val hovered by interaction.collectIsHoveredAsState()
+    val ring by animateFloatAsState(if(active&&(focused||hovered))1f else 0f,tween(180),label="profileRing")
+    Box(modifier.size(u.space(164)).onFocusChanged{focused=it.isFocused}.hoverable(interaction,enabled=active).border(u.space(3),Color.White.copy(alpha=ring),CircleShape).clip(CircleShape).clickable(enabled=active,onClick=onClick).semantics{contentDescription=label}.padding(u.space(7)),contentAlignment=Alignment.Center){
         Box(Modifier.fillMaxSize().clip(CircleShape).background(glass),contentAlignment=Alignment.Center){
             if(model==null)Symbol("plus",Modifier.size(u.space(64)))else NativeAvatarImage(model,Modifier.fillMaxSize())
         }
@@ -96,10 +101,10 @@ internal fun nativeProfileAvatar(url:String):Any{
     }
     BackHandler(mode!="select"||confirmLogout||confirmDelete){if(!busy){when{confirmLogout->confirmLogout=false;confirmDelete->confirmDelete=false;else->mode="select"}}}
     LaunchedEffect(mode,confirmLogout,confirmDelete){withFrameNanos{};runCatching{(if(confirmLogout||confirmDelete)cancelFocus else if(mode=="select")focus else editFocus).requestFocus()}}
-    val enter=remember{Animatable(0f)};LaunchedEffect(mode){enter.snapTo(0f);enter.animateTo(1f,tween(420))}
+    val enter=remember{Animatable(0f)};LaunchedEffect(mode){enter.snapTo(0f);if(mode=="select")kotlinx.coroutines.delay(650);enter.animateTo(1f,tween(420))}
     Box(Modifier.fillMaxSize().background(Brush.linearGradient(if(BuildConfig.STATION_SLUG=="positivafm")listOf(Color(0xFFDF1B22),Color(0xFF8D1E23),Color(0xFF111114))else listOf(accent,androidx.compose.ui.graphics.lerp(accent,Color.Black,.43f),Color(0xFF111114))))){
         Artwork(logo?:if(BuildConfig.STATION_SLUG=="positivafm")R.drawable.splash_positiva else R.drawable.splash_interativa,u.at(100,64,100,90))
-        Copy(if(mode=="select")"Escolha seu perfil ou crie um novo" else if(mode=="add")"Criar novo perfil" else "Editar perfil",u,30,600,u.at(265,80,1450,60))
+        Copy(if(mode=="select")"Escolha seu perfil ou crie um novo" else if(mode=="add")"Criar novo perfil" else "Editar perfil",u,30,400,u.at(187,80,1450,60))
         if(mode=="select"){
             CompositionLocalProvider(LocalControlsEnabled provides (!confirmLogout&&!confirmDelete)){
                 Column(u.at(180,275,1100,705).graphicsLayer{alpha=enter.value;translationX=(1f-enter.value)*-u.space(36).toPx()}.verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(u.space(20))){

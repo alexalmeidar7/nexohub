@@ -33,6 +33,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.text.style.TextAlign
 import androidx.activity.compose.BackHandler
@@ -92,8 +94,10 @@ import org.json.JSONObject
     var buttonsEntered by remember{mutableStateOf(false)}
     LaunchedEffect(smart,smartActive){if(smart){if(smartActive){delay(100);buttonsEntered=true}else buttonsEntered=false}}
     BackHandler(enabled=!smart||smartActive) {if(contact)contact=false else if(info)info=false else if(smart)onBack()}
-    LaunchedEffect(info,buttonsEntered,smartActive){if(smart&&smartActive&&buttonsEntered){withFrameNanos{};runCatching{(if(info&&contactUrl.isNotBlank())announceFocus else if(info)closeFocus else infoFocus).requestFocus()}}}
-    LaunchedEffect(showLink,info,smartActive,buttonsEntered){if(smart&&smartActive&&!info&&buttonsEntered&&!showLink)runCatching{infoFocus.requestFocus()}}
+    val focusManager=LocalFocusManager.current
+    var neutral by remember(smartSerial){mutableStateOf(true)}
+    val neutralFocus=remember{FocusRequester()}
+    LaunchedEffect(info,buttonsEntered,smartActive,smartSerial){if(smart&&smartActive&&buttonsEntered){withFrameNanos{};neutral=!info&&!showLink;if(neutral)runCatching{neutralFocus.requestFocus()}else runCatching{(if(info&&contactUrl.isNotBlank())announceFocus else if(info)closeFocus else qrFocus).requestFocus()}}}
     fun complete(){if(!done){done=true;player.stop();if(!smart||active)finish()}}
     DisposableEffect(player){
         val listener=object:Player.Listener{
@@ -123,7 +127,8 @@ import org.json.JSONObject
         }
     }
     TvViewport(Modifier.background(Color.Black)){u->
-        Box(Modifier.fillMaxSize().background(Color.Black)){
+        Box(Modifier.fillMaxSize().background(Color.Black).onPreviewKeyEvent{event->if(smart&&neutral&&!info&&event.type==KeyEventType.KeyDown&&(event.key==Key.DirectionUp||event.key==Key.DirectionDown)){neutral=false;runCatching{infoFocus.requestFocus()};true}else false}){
+            if(smart&&neutral)Box(Modifier.size(u.space(1)).focusRequester(neutralFocus).focusable())
             if(audio){val image=safeImage(media.str("backgroundUrl"));if(image!=null)Artwork(image,Modifier.fillMaxSize(),scale=ContentScale.Fit)else if(smart)Column(Modifier.align(Alignment.Center),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(20))){Symbol("music",Modifier.size(u.space(80)));Copy("Intervalo comercial",u,36,600);Copy("A programação volta em instantes",u,24)}}
             else key(player){AndroidView(factory={ctx->(if(smart)LayoutInflater.from(ctx).inflate(R.layout.smart_break_player,null) as PlayerView else PlayerView(ctx)).apply{useController=false;this.player=player;isFocusable=false;isFocusableInTouchMode=false;descendantFocusability=android.view.ViewGroup.FOCUS_BLOCK_DESCENDANTS}},modifier=Modifier.fillMaxSize(),onRelease={it.player=null},update={it.player=player})}
             if(smart){
@@ -134,8 +139,8 @@ import org.json.JSONObject
                     }
                 }
             }else Row(Modifier.offset(u.space(100),u.space(75)),horizontalArrangement=Arrangement.spacedBy(u.space(12)),verticalAlignment=Alignment.CenterVertically){
-                Box(Modifier.height(u.space(60)).border(u.space(2),Color.White,u.round(30)).padding(horizontal=u.space(22)),contentAlignment=Alignment.Center){Copy("publicidade"+if(remaining>=0)" · "+remaining/60+":"+("%02d".format(remaining%60))else "",u,25,600)}
-                if(remaining in 1..15){LaunchedEffect(Unit){skipFocus.requestFocus()};GlassButton(u,"pular",Modifier.height(u.space(60)).focusRequester(skipFocus),icon="right",iconAfter=true){complete()}}
+                Box(Modifier.width(u.space(310)).height(u.space(60)).border(u.space(2),Color.White,u.round(30)).padding(horizontal=u.space(12)),contentAlignment=Alignment.Center){Copy("publicidade"+if(remaining>=0)" · "+remaining/60+":"+("%02d".format(remaining%60))else "",u,25,600)}
+                AnimatedVisibility(remaining in 1..15,enter=slideInHorizontally(tween(420)){it/2}+fadeIn(tween(420)),exit=fadeOut(tween(200))){LaunchedEffect(Unit){withFrameNanos{};skipFocus.requestFocus()};GlassButton(u,"pular",Modifier.height(u.space(60)).focusRequester(skipFocus),icon="right",iconAfter=true){complete()}}
             }
             if(smart){
                 // Identity includes the playback sequence so identical links animate on every creative change.
@@ -144,7 +149,7 @@ import org.json.JSONObject
                     AnimatedContent(targetState=target,contentAlignment=Alignment.BottomEnd,transitionSpec={
                         ((slideInHorizontally(tween(700,delayMillis=550,easing=FastOutSlowInEasing)){it+(120*u.pixelsPerUnit).toInt()}+fadeIn(tween(700,delayMillis=550))) togetherWith (slideOutHorizontally(tween(550,easing=FastOutSlowInEasing)){it+(120*u.pixelsPerUnit).toInt()}+fadeOut(tween(550)))).using(SizeTransform(clip=false))
                     },label="smartCreativeQr"){entry->
-                        entry.second?.let{details->if(details.music&&details.hasMusic)SmartMusicCard(u,details,(qrFocused||qrHovered)&&qrEnabled&&entry==target)else if(details.link.isNotBlank())CreativeQr(u,details.link,focused=(qrFocused||qrHovered)&&qrEnabled&&entry==target,smart=true)}
+                        entry.second?.let{details->if(details.hasContent)SmartMusicCard(u,details,(qrFocused||qrHovered)&&qrEnabled&&entry==target)else if(details.link.isNotBlank())CreativeQr(u,details.link,focused=(qrFocused||qrHovered)&&qrEnabled&&entry==target,smart=true)}
                     }
                 }
             }else if(showLink){
@@ -195,10 +200,11 @@ internal fun formatSmartBreakTime(seconds:Long):String=String.format(java.util.L
     }}
 }
 
-internal data class SmartCreativeDetails(val music:Boolean,val song:String,val artist:String,val image:String,val link:String){
+internal data class SmartCreativeDetails(val music:Boolean,val song:String,val artist:String,val image:String,val link:String,val description:String="",val price:String="",val cta:String=""){
     val hasMusic:Boolean get()=song.isNotBlank()||artist.isNotBlank()||image.isNotBlank()
+    val hasContent:Boolean get()=hasMusic||description.isNotBlank()||price.isNotBlank()||cta.isNotBlank()
 }
-internal fun smartCreativeDetails(media:JSONObject):SmartCreativeDetails=SmartCreativeDetails(media.str("categoryKind")=="music",media.str("song"),media.str("artist"),safeImage(media.str("artistImage")).orEmpty(),safeImage(media.str("link")).orEmpty())
+internal fun smartCreativeDetails(media:JSONObject):SmartCreativeDetails=SmartCreativeDetails(media.str("categoryKind")=="music",media.str("song"),media.str("artist"),safeImage(media.str("artistImage")).orEmpty(),safeImage(media.str("link")).orEmpty(),media.str("productDescription"),media.str("productPrice"),media.str("buttonLabel"))
 @Composable private fun SmartMusicCard(u:TvUnits,details:SmartCreativeDetails,focused:Boolean){
     val shape=u.round(24)
     val ring by animateFloatAsState(if(focused)1f else 0f,tween(180),label="musicRing")
@@ -206,7 +212,10 @@ internal fun smartCreativeDetails(media:JSONObject):SmartCreativeDetails=SmartCr
     Row(Modifier.width(u.space(if(details.link.isNotBlank())760 else 530)).clip(shape).background(interactionGlass).border(u.space(1),Color.White.copy(alpha=.22f),shape).padding(u.space(22)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(20))){
         if(details.image.isNotBlank())Artwork(details.image,Modifier.size(u.space(174)).clip(u.round(18)),"Foto do artista",scale=ContentScale.Crop)
         Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(u.space(10))){
-            Copy("Tocando agora",u,19,500,color=Color.White.copy(alpha=.72f))
+            if(details.music)Copy("Tocando agora",u,19,500,color=Color.White.copy(alpha=.72f))
+            if(details.description.isNotBlank())Copy(details.description,u,27,700,lines=3)
+            if(details.price.isNotBlank())Copy(details.price,u,23,600)
+            if(details.cta.isNotBlank())Copy(details.cta,u,21,500,lines=2)
             if(details.song.isNotBlank())Copy(details.song,u,27,700,lines=3)
             if(details.artist.isNotBlank())Copy(details.artist,u,22,500,lines=2)
         }

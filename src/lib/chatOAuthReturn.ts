@@ -1,7 +1,7 @@
 /** Pending Google login for the phone's station-scoped chat (never the dashboard). */
 const KEY = "nexo_player_chat_oauth_return_v1";
 const TTL = 20 * 60 * 1000;
-const CHAT_ROUTE = /^\/[a-z0-9_-]+\/pair\?mode=chat&radio=[0-9a-f-]{36}$/i;
+const CHAT_ROUTE = /^\/[a-z0-9_-]+\/pair\?mode=chat&radio=[0-9a-f-]{36}(?:&tv=[0-9a-f-]{0,36})?$/i;
 
 export function getChatOAuthReturn(): string | null {
   if (typeof window === "undefined") return null;

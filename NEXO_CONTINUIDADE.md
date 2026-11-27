@@ -68,3 +68,7 @@ Base 55b4e75 (CI 0.1.22 aprovado). Smart Break Música: foto, título, artista e
 ## 27/11/2026 — Nexo TV 0.1.24 (PR #327)
 
 Base dd48647, v0.1.23 CI aprovado e foto/Smart Break testados pelo usuário. Smart Break QR sem legenda, maior e anel afastado em foco/hover; avatar dos canais com anel circular externo; banners de interatividade em proporção 600:240, margem inferior reduzida e cantos comuns, chat sem rodapé publicitário com mídia intercalada a cada oito mensagens e rodízio das campanhas elegíveis; separador da letra; enquete/batalha sem conteúdo com ícones e texto do WebView; previsão com dias em português e DD/MM, peso 300, selo escuro, lista navegável e foco; batalha com capas empilhadas e porcentagens reais atualizadas da resposta do voto. Sem alterações HMD/HMO, Supabase ou WebView. Testes adicionados, build e validação física pendentes.
+
+## 27/11/2026 — Nexo TV 0.1.25 (PR #327)
+
+Base f7a5c32. Chat Ads passivo; chat do celular por rádio, visitante via sessão anônima Supabase (requer habilitação/configuração de produção), sem exigir QR de usuário logado; QR comercial com descrição/preço/CTA; foco neutro Smart Break e Background Ads; margens e histórico; perfis e pré-buffer silencioso; selo pre-roll fixo e animação; grade; Mosaico dinâmico com seleção de áudio e players liberados ao sair, limite adaptativo 360p (dependente do stream), links YouTube não são streams Media3 diretos. Sem alterações destrutivas. Validação física, deploy pairing e configuração visitante pendentes.

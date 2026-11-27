@@ -94,7 +94,7 @@ import com.google.zxing.qrcode.QRCodeWriter
     if(videoStyle){
         Row(modifier.then(buttonModifier).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=controlsEnabled&&enabled}.clip(u.round(20)).background(glass).border(u.space(if(focused)3 else 0),if(focused)Color.White else Color.Transparent,u.round(20)).clickable(enabled=active){if(user.isBlank())msg="Conecte sua conta Google." else{busy=true;scope.launch{try{liked=services.toggleLike(owner,user,title,artist,cover);msg=""}catch(e:CancellationException){throw e}catch(_:Exception){msg="Não foi possível salvar."}finally{busy=false}}}}.padding(u.space(12)),verticalAlignment=Alignment.CenterVertically){
             Artwork(safeImage(cover),Modifier.size(u.space(144)).clip(u.round(22)),scale=ContentScale.Crop)
-            Spacer(Modifier.width(u.space(18)));Column(Modifier.weight(1f)){Copy("tocando",u,18,700);Copy(title,u,40,700);Copy(artist,u,29);if(msg.isNotBlank())Copy(msg,u,17)};FlatHeart(liked,Modifier.size(u.space(38)))
+            Spacer(Modifier.width(u.space(18)));Column(Modifier.weight(1f)){Copy("tocando",u,18,700);Copy(title,u,40,700);Copy(artist,u,29);if(msg.isNotBlank())Copy(msg,u,17)};Spacer(Modifier.width(u.space(14)));FlatHeart(liked,Modifier.size(u.space(38)));Spacer(Modifier.width(u.space(14)))
         };return
     }
     Box(modifier.then(buttonModifier).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=controlsEnabled&&enabled}
@@ -143,23 +143,24 @@ import com.google.zxing.qrcode.QRCodeWriter
     if(panel=="chat"){
         val listState=rememberLazyListState();val qrBack=remember{FocusRequester()}
         val chatRows=remember(messages,chatAds){nativeChatRows(messages,chatAds)}
-        LaunchedEffect(messages.lastOrNull()?.str("id"),chatRows.size){if(chatRows.isNotEmpty())listState.scrollToItem(chatRows.lastIndex)}
+        var chatHint by remember{mutableStateOf(false)}
+        LaunchedEffect(messages.lastOrNull()?.str("id"),chatRows.size){if(chatRows.isNotEmpty())listState.animateScrollToItem(chatRows.lastIndex)}
         LaunchedEffect(qr){withFrameNanos{};runCatching{(if(qr)qrBack else focus).requestFocus()}}
         BackHandler(qr){qr=false}
         Copy("Chat",u,28,600)
         Box(Modifier.fillMaxWidth().weight(1f).background(Color.Black.copy(alpha=.20f),u.round(16))){
             LazyColumn(Modifier.fillMaxSize().padding(u.space(10)),state=listState,verticalArrangement=Arrangement.spacedBy(u.space(10))){
-                itemsIndexed(chatRows,key={index,row->row.key}){_,entry->val m=entry.media;if(entry.ad)NativeInteractionBanner(u,m)else Column(Modifier.fillMaxWidth().background(Color.White.copy(alpha=.08f),u.round(12)).padding(u.space(8))){Copy(m.str("nome"),u,19,600);Copy(m.str("message"),u,19,400,lines=5)}}
+                itemsIndexed(chatRows,key={index,row->row.key}){_,entry->val m=entry.media;if(entry.ad)NativeInteractionBanner(u,m,interactive=false)else Column(Modifier.fillMaxWidth().background(Color.White.copy(alpha=.08f),u.round(12)).padding(u.space(8))){Copy(m.str("nome"),u,19,600);Copy(m.str("message"),u,19,400,lines=5)}}
             }
             if(qr)Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.58f),u.round(16)),contentAlignment=Alignment.Center){
                 Column(horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(24))){
-                    NativeQr("https://housemix.nexobrasil.net/"+BuildConfig.STATION_SLUG+"/pair?mode=chat&radio="+owner+"&tv="+device,Modifier.size(u.space(225)).clip(u.round(14)),compact=true)
+                    NativeQr("https://housemix.nexobrasil.net/"+BuildConfig.STATION_SLUG+"/pair?mode=chat&radio="+owner,Modifier.size(u.space(225)).clip(u.round(14)),compact=true)
                     GlassButton(u,"",Modifier.size(u.space(54)).focusRequester(qrBack),icon="left"){qr=false}
                 }
             }
         }
         Spacer(Modifier.height(u.space(12)))
-        if(!qr)GlassButton(u,"entrar na conversa",Modifier.height(u.space(60)).focusRequester(focus)){qr=true}
+        if(!qr){if(chatHint&&account!=null)Copy("Digite sua mensagem no chat da sua área no celular.",u,20,400,lines=3,align=TextAlign.Center);GlassButton(u,"entrar na conversa",Modifier.height(u.space(60)).focusRequester(focus)){if(account!=null)chatHint=!chatHint else qr=true}}
     }else{
         val poll=panel=="poll"
         Copy(if(poll)"Enquete" else "Batalha musical",u,28,600)

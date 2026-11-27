@@ -127,7 +127,7 @@ internal class NativeServices(private val api:HouseMixClient,context:Context) {
         return api.function("public-cenario-data",query=mapOf("uid" to owner,"date" to day,"time" to time)).rows("enquetes").filter{it.str("data_enquete").take(10)==day&&it.str("horario_inicio").take(5)<=time&&it.str("horario_fim").take(5)>=time}
     }
     suspend fun chat(owner:String):List<JSONObject>{
-        val a=request(listOf("rest","v1","player_chat_messages"),mapOf("select" to "id,nome,message,avatar_url,created_at","channel_id" to "eq.radio-"+owner.lowercase(),"order" to "created_at.desc","limit" to "40"),token=access()) as? JSONArray
+        val a=request(listOf("rest","v1","player_chat_messages"),mapOf("select" to "id,nome,message,avatar_url,created_at","channel_id" to "eq.radio-"+owner.lowercase(),"created_at" to "gte."+java.time.Instant.now().minusSeconds(86400).toString(),"order" to "created_at.desc","limit" to "40"),token=access()) as? JSONArray
         return (0 until (a?.length()?:0)).mapNotNull{a?.optJSONObject(it)}.reversed()
     }
     private fun likeQuery(owner:String,user:String,title:String,artist:String)=mapOf("radio_user_id" to "eq."+owner,"user_id" to "eq."+user,"titulo" to "eq."+title,"artista" to "eq."+artist)

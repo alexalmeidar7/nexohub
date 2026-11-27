@@ -45,10 +45,11 @@ export default function TvChatPhone({ userSlug }: { userSlug: string }) {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [guestName, setGuestName] = useState("Ouvinte");
   const [signingIn, setSigningIn] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const channelId = radioChatChannelId(validatedRadio);
-  const displayName = String(user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Ouvinte").slice(0, 100);
+  const displayName = String((user?.is_anonymous || !user) ? guestName.trim() || "Ouvinte" : user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Ouvinte").slice(0, 100);
 
 
   useEffect(() => {
@@ -90,7 +91,7 @@ export default function TvChatPhone({ userSlug }: { userSlug: string }) {
         .select("id,channel_id,nome,message,created_at")
         .eq("channel_id", channelId)
         .gte("created_at", new Date(Date.now() - 86400000).toISOString())
-        .order("created_at", { ascending: false }).limit(5);
+        .order("created_at", { ascending: false }).limit(40);
       if (active && data) setMessages((data as ChatMessage[]).filter(m => m.channel_id === channelId).reverse());
     };
     const realtime = playerSupabase.channel(`phone-chat-${channelId}`)
@@ -98,7 +99,7 @@ export default function TvChatPhone({ userSlug }: { userSlug: string }) {
         const incoming = payload.new as ChatMessage;
         if (incoming.channel_id !== channelId) return;
         setMessages(prev => [...prev.filter(m => m.id !== incoming.id), incoming]
-          .sort((a,b) => a.created_at.localeCompare(b.created_at)).slice(-5));
+          .sort((a,b) => a.created_at.localeCompare(b.created_at)).slice(-40));
       }).subscribe();
     void load();
     const poll = window.setInterval(() => void load(), 5000);
@@ -170,11 +171,12 @@ export default function TvChatPhone({ userSlug }: { userSlug: string }) {
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     const text = message.trim();
-    if (!user || !channelId || !chatIsJoined || !text || sending) return;
+    if (!channelId || !text || sending) return;
     setSending(true); setError("");
     try {
+      if (!user) { const { error: guestError } = await playerSupabase.auth.signInAnonymously(); if (guestError) throw guestError; }
       const { data: sessionData } = await playerSupabase.auth.getUser();
-      if (sessionData.user?.id !== user.id) throw new Error("Faça login novamente para enviar mensagens.");
+      if (!sessionData.user) throw new Error("Não foi possível iniciar a sessão de visitante.");
       const { error: insertError } = await playerSupabase.from("player_chat_messages").insert({
         channel_id: channelId, nome: displayName, cidade: "", message: text,
       });
@@ -197,32 +199,13 @@ export default function TvChatPhone({ userSlug }: { userSlug: string }) {
             {messages.length > 0 && <section aria-label="Mensagens recentes" style={{ display: "grid", gap: 9, marginBottom: 24 }}>
               {messages.map(m => <div key={m.id} style={{ background: "#303030", borderRadius: 18, padding: "14px 18px" }}><strong>{m.nome}</strong><p style={{ marginTop: 4, overflowWrap:"anywhere" }}>{m.message}</p></div>)}
             </section>}
-            {loading ? <p>Verificando login...</p> : !user ? (
-              <div style={{ background: "#292929", borderRadius: 22, padding: 22 }}>
-                <p style={{ marginBottom: 18 }}>Entre com o Google para enviar mensagens que aparecem na televisão.</p>
-                <button type="button" onClick={() => void loginGoogle()} disabled={signingIn} style={{ width: "100%", minHeight: 52, color: "#111", background: "#fff", borderRadius: 14, fontWeight: 700 }}>
-                  {signingIn ? "Conectando..." : "Entrar com Google"}
-                </button>
-              </div>
-            ) : !chatTvDeviceId ? (
-              <p role="alert">QR Code desatualizado. Escaneie novamente o QR na TV.</p>
-            ) : !chatIsJoined ? (
-              <div style={{ background: '#292929', borderRadius: 22, padding: 22 }}>
-                <p style={{ marginBottom: 16 }}>Voce saiu da conversa. Seu login Google continua salvo.</p>
-                <button type="button" onClick={() => void joinChatAgain()} disabled={chatJoinBusy}
-                  style={{ width: '100%', minHeight: 50, borderRadius: 15, background: 'var(--player-dominant-color, #e20a12)', color: '#fff', fontWeight: 700 }}>
-                  {chatJoinBusy ? 'Conectando...' : 'Entrar na conversa'}
-                </button>
-              </div>
-            ) : (
+            {loading ? <p>Verificando login...</p> : (
               <form onSubmit={event => void submit(event)} style={{ background: "#292929", borderRadius: 22, padding: 18 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                   <p style={{ fontWeight: 700, minWidth: 0 }}>Participando como {displayName}</p>
-                  <button type="button" onClick={() => void leaveChat()} disabled={chatLeaveBusy}
-                    style={{ flexShrink: 0, background: '#444', color: '#fff', borderRadius: 999, padding: '9px 15px', fontSize: 14, fontWeight: 600 }}>
-                    {chatLeaveBusy ? 'Saindo...' : 'Sair'}
-                  </button>
+
                 </div>
+                {(!user || user.is_anonymous) && <input aria-label="Seu nome" value={guestName} onChange={e=>setGuestName(e.target.value.slice(0,100))} placeholder="Seu nome" style={{width:"100%", padding:12, borderRadius:12, background:"#444", color:"#fff", marginBottom:12}}/>}
                 <label htmlFor="tv-chat-phone-text" style={{ display: "block", opacity:.8, fontSize: 14, marginBottom: 8 }}>Sua mensagem</label>
                 <textarea id="tv-chat-phone-text" maxLength={400} rows={4} value={message} onChange={e => setMessage(e.target.value)} placeholder="Escreva aqui..." style={{ display: "block", width: "100%", resize: "vertical", border: 0, outline: 0, borderRadius: 14, background: "#444", padding: 14, color: "#fff" }} />
                 <button type="submit" disabled={sending || !message.trim()} style={{ marginTop: 14, width: "100%", minHeight: 50, borderRadius: 15, background: "var(--player-dominant-color, #e20a12)", color: "#fff", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 9 }}>

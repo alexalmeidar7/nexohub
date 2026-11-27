@@ -73,6 +73,7 @@ private val coverMisses=mutableMapOf<String,Long>()
 private val verifiedHistoryCovers=mutableMapOf<String,String>()
 private fun historyCoverKey(song:JSONObject)=coverKey(song.str("musica"))+"|"+coverKey(song.str("artista"))
 internal fun cachedHistoryCover(song:JSONObject?):String=if(song==null)"" else verifiedHistoryCovers[historyCoverKey(song)].orEmpty()
+internal fun historyNormalized(s:String)=coverKey(s)
 private fun coverKey(s:String)=norm(s).replace(Regex("[^\\p{L}\\p{N}]+")," ").trim()
 private suspend fun coverFor(title:String,artist:String):String {
     if(title.isBlank()||artist.isBlank())return ""
@@ -200,7 +201,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
     }else{
         Box(u.at(1350,165,470,735)){
             GlassButton(u,"",Modifier.align(Alignment.TopEnd).size(u.space(56)).then(if(panel=="poll"||panel=="battle"||(panel=="history"&&history.isEmpty())||(panel=="weather"&&forecast?.optJSONObject("daily")?.optJSONArray("time")==null))Modifier.focusRequester(focus)else Modifier),icon="left",onClick=onClose)
-            Column(Modifier.offset(y=u.space(75)).fillMaxWidth().height(u.space(650)).clip(u.round(28)).background(interactionGlass).padding(start=u.space(20),end=u.space(20),top=u.space(20),bottom=u.space(12)),horizontalAlignment=Alignment.CenterHorizontally){
+            Column(Modifier.offset(y=u.space(75)).fillMaxWidth().height(u.space(700)).clip(u.round(28)).background(interactionGlass).padding(start=u.space(20),end=u.space(20),top=u.space(20),bottom=u.space(20)),horizontalAlignment=Alignment.CenterHorizontally){
                 Column(Modifier.weight(1f).fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally){when(panel){
                     "history" -> {
                         var index by remember{mutableIntStateOf(0)}
@@ -212,15 +213,17 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                         LaunchedEffect(song){if(song!=null&&image.isBlank())image=resolveHistoryCover(context,song,track)}
                         if(song==null){Copy(if(loading)"Carregando músicas tocadas..." else if(error)"Histórico indisponível" else "Nenhuma música registrada.",u,23,400,lines=3)}
                         else{
-                            Box(Modifier.fillMaxWidth().height(u.space(128)),contentAlignment=Alignment.Center){AnimatedContent(index to adStep,label="historyInfo"){state->val item=history.getOrNull(state.first);Column(horizontalAlignment=Alignment.CenterHorizontally){Copy(if(state.second)"publicidade" else item.str("horario").take(5),u,20,400);if(!state.second){Copy(item.str("musica").uppercase(),u,25,700,lines=2,align=TextAlign.Center);Copy(item.str("artista").uppercase(),u,20,400,lines=2)}}}}
+                            Box(Modifier.fillMaxWidth().height(u.space(112)),contentAlignment=Alignment.Center){AnimatedContent(index to adStep,label="historyInfo"){state->val item=history.getOrNull(state.first);Column(Modifier.fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally){Copy(if(state.second)"publicidade" else item.str("horario").take(5),u,20,400,Modifier.fillMaxWidth(),align=TextAlign.Center);if(!state.second){Copy(item.str("musica").uppercase(),u,25,700,Modifier.fillMaxWidth(),lines=2,align=TextAlign.Center);Copy(item.str("artista").uppercase(),u,20,400,Modifier.fillMaxWidth(),lines=2,align=TextAlign.Center)}}}}
+                            Spacer(Modifier.weight(1f))
                             GlassButton(u,"",Modifier.size(u.space(46)),icon="up"){move(-1)}
-                            Box(Modifier.size(u.space(350)).clip(u.round(18)).background(Color.White.copy(alpha=.06f)),contentAlignment=Alignment.Center){
+                            Spacer(Modifier.height(u.space(14)))
+                            Box(Modifier.size(u.space(340)).clip(u.round(18)).background(Color.White.copy(alpha=.06f)),contentAlignment=Alignment.Center){
                                 if(adStep){Artwork(safeImage(historyAd.str("url")),Modifier.fillMaxSize(),scale=ContentScale.Fit)}else NativeLike(u,services,account,owner.orEmpty(),song.str("musica"),song.str("artista"),image,Modifier.fillMaxSize())
                             }
-                            Box(Modifier.fillMaxWidth(),contentAlignment=Alignment.Center){
-                                GlassButton(u,"",Modifier.size(u.space(46)).focusRequester(focus),icon="down"){move(1)}
-                                Copy((index+1).toString()+"/"+history.size,u,19,500,Modifier.align(Alignment.CenterEnd))
-                            }
+                            Spacer(Modifier.height(u.space(14)))
+                            GlassButton(u,"",Modifier.size(u.space(46)).focusRequester(focus),icon="down"){move(1)}
+                            Spacer(Modifier.weight(1f))
+                            Box(Modifier.fillMaxWidth().height(u.space(24))){Copy((index+1).toString()+"/"+history.size,u,19,500,Modifier.align(Alignment.BottomEnd))}
                         }
                     }
                     "weather" -> {
@@ -228,9 +231,9 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                         val temp=forecast?.optJSONObject("current")?.optDouble("temperature_2m")
                         val current=forecast?.optJSONObject("current")
                         val humid=current?.optDouble("relative_humidity_2m");val rain=d?.optJSONArray("precipitation_probability_max")?.optDouble(0)
-                        Column(Modifier.fillMaxWidth().padding(top=u.space(4),bottom=u.space(12)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(8))){
-                            Copy("Tempo agora",u,24,600)
-                            Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))){NativeWeatherIcon(current?.optInt("weather_code",-1)?:-1,Modifier.size(u.space(64)),isDay=current?.optInt("is_day",1)!=0);Copy(temp?.takeIf{it.isFinite()}?.let{it.toInt().toString()+"°"}?:"--°",u,60,600)}
+                        Column(Modifier.fillMaxWidth().padding(top=u.space(4),bottom=u.space(5)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(8))){
+                            Copy("Tempo agora",u,22,600)
+                            Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(18))){NativeWeatherIcon(current?.optInt("weather_code",-1)?:-1,Modifier.size(u.space(64)),isDay=current?.optInt("is_day",1)!=0);Copy(temp?.takeIf{it.isFinite()}?.let{it.toInt().toString()+"°"}?:"--°",u,52,600)}
                             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(u.space(16))){
                                 Column(Modifier.weight(1f).background(Color.White.copy(alpha=.07f),u.round(12)).padding(vertical=u.space(10)),horizontalAlignment=Alignment.CenterHorizontally){Copy("Chuva",u,18,400);Copy(rain?.takeIf{it.isFinite()}?.toInt()?.toString()?.plus("%")?:"—",u,24,600)}
                                 Column(Modifier.weight(1f).background(Color.White.copy(alpha=.07f),u.round(12)).padding(vertical=u.space(10)),horizontalAlignment=Alignment.CenterHorizontally){Copy("Umidade",u,18,400);Copy(humid?.takeIf{it.isFinite()}?.toInt()?.toString()?.plus("%")?:"—",u,24,600)}
@@ -244,7 +247,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                                 var focused by remember{mutableStateOf(false)}
                                 val date=forecastDayLabel(dates.optString(i))
                                 val shape=u.round(15)
-                                Row((if(i==0)Modifier.focusRequester(focus)else Modifier).fillMaxWidth().height(u.space(59)).onFocusChanged{focused=it.isFocused}.clip(shape).background(Color.White.copy(alpha=.08f)).border(u.space(if(focused)2.5f else 0f),if(focused)Color.White else Color.Transparent,shape).focusable().padding(horizontal=u.space(9)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(7))){
+                                Row((if(i==0)Modifier.focusRequester(focus)else Modifier).fillMaxWidth().height(u.space(55)).onFocusChanged{focused=it.isFocused}.clip(shape).background(Color.White.copy(alpha=.08f)).border(u.space(if(focused)2.5f else 0f),if(focused)Color.White else Color.Transparent,shape).focusable().padding(horizontal=u.space(9)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(7))){
                                     Row(Modifier.width(u.space(108)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(5))){NativeWeatherIcon(code,Modifier.size(u.space(36)));Copy(date.first,u,18,500)}
                                     Box(Modifier.weight(1f),contentAlignment=Alignment.Center){Box(Modifier.background(Color.Black.copy(alpha=.28f),androidx.compose.foundation.shape.CircleShape).padding(horizontal=u.space(10),vertical=u.space(6))){Copy(date.second,u,16,300,align=TextAlign.Center)}}
                                     Copy((min?.takeIf{it.isFinite()}?.toInt()?.toString()?:"--")+"° / "+(max?.takeIf{it.isFinite()}?.toInt()?.toString()?:"--")+"°",u,18,500,Modifier.width(u.space(100)),align=TextAlign.End)
@@ -266,7 +269,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                         if(owner!=null)NativeCommunity(u,panel,owner,services,account,chatAds,accent,focus) else Copy("Emissora indisponível.",u,23)
                     }
                 }}
-                if(panel!="history"&&panel!="chat"&&safeImage(panelAd.str("url"))!=null){Spacer(Modifier.height(u.space(10)));NativeInteractionBanner(u,panelAd)}
+                if(panel!="history"&&panel!="chat"&&safeImage(panelAd.str("url"))!=null){Spacer(Modifier.height(u.space(4)));NativeInteractionBanner(u,panelAd)}
             }
         }
     }
@@ -298,24 +301,25 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
 
 internal suspend fun resolveHistoryCover(context:android.content.Context,song:JSONObject,track:JSONObject?=null):String{
     val key=historyCoverKey(song);verifiedHistoryCovers[key]?.let{return it}
+    val prefs=context.getSharedPreferences("native_history_cover_v2",0)
     suspend fun usable(url:String)=try{context.imageLoader.execute(ImageRequest.Builder(context).data(url).size(350,350).build()) is SuccessResult}catch(e:CancellationException){throw e}catch(_:Exception){false}
-    val direct=listOf(song.str("capa_url"),song.str("capa"),song.str("cover_url"),if(song.str("musica")==track.str("titulo")&&song.str("artista")==track.str("artista"))track.str("capa")else "").mapNotNull{safeImage(it)}.distinct()
+    val direct=listOf(prefs.getString(key,"").orEmpty(),song.str("capa_url"),song.str("capa"),song.str("cover_url"),song.str("artwork_url"),song.str("album_cover"),if(song.str("musica")==track.str("titulo")&&song.str("artista")==track.str("artista"))track.str("capa")else "").mapNotNull{safeImage(it)}.distinct()
     var result=""
     for(url in direct){if(usable(url)){result=url;break}}
     if(result.isBlank()){
         val artist=song.str("artista");val title=song.str("musica")
-        val artists=(listOf(artist)+artist.split(Regex("(?i)\\\\s*(?:/|;| feat\\\\.? | ft\\\\.? | & )\\\\s*")).filter{it.isNotBlank()}).distinct().take(3)
+        val artists=(artist.split(Regex("(?i)\\s*(?:/|;|,|\\s+feat\\.?\\s+|\\s+ft\\.?\\s+|\\s+&\\s+|\\s+e\\s+)\\s*")).filter{it.isNotBlank()}+artist).distinct().take(5)
         for(name in artists){val url=coverFor(title,name);if(url.isNotBlank()&&usable(url)){result=url;break}}
     }
-    if(result.isNotBlank()){if(verifiedHistoryCovers.size>=250)verifiedHistoryCovers.clear();verifiedHistoryCovers[key]=result}
+    if(result.isNotBlank()){if(verifiedHistoryCovers.size>=250)verifiedHistoryCovers.clear();verifiedHistoryCovers[key]=result;prefs.edit().putString(key,result).apply()}
     return result
 }
 
 internal fun forecastDayLabel(raw:String):Pair<String,String> = runCatching{val day=java.time.LocalDate.parse(raw);val locale=Locale("pt","BR");day.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM",locale)) to day.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL,locale)}.getOrDefault(raw to "")
 
-@Composable internal fun NativeInteractionBanner(u:TvUnits,media:JSONObject?){
+@Composable internal fun NativeInteractionBanner(u:TvUnits,media:JSONObject?,interactive:Boolean=true){
     val url=safeImage(media.str("url"))?:return
-    val link=safeImage(media.str("link")).takeIf{media?.optBoolean("clickable")==true}
+    val link=safeImage(media.str("link")).takeIf{interactive&&media?.optBoolean("clickable")==true}
     var focused by remember(url){mutableStateOf(false)}
     var qr by remember(url,link){mutableStateOf(false)}
     val shape=u.round(10)

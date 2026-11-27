@@ -45,6 +45,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusProperties
@@ -154,7 +156,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     val active=LocalControlsEnabled.current
     Row(modifier.onFocusChanged { focused=it.isFocused }.focusProperties { canFocus=active }
         .height(u.space(76)).clip(shape)
-        .background(if(focused) accentGlass(accent) else Brush.linearGradient(listOf(Color.Transparent,Color.Transparent)),shape)
+        .background(if(focused&&active) accentGlass(accent) else Brush.linearGradient(listOf(Color.Transparent,Color.Transparent)),shape)
         .border(u.space(if(focused) 3 else 0),if(focused) Color.White else Color.Transparent,shape)
         .clickable(enabled=active,onClick=onClick).semantics { contentDescription=label }
         .padding(u.space(7)),verticalAlignment=Alignment.CenterVertically) {
@@ -162,7 +164,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
             if(loading)NativeSpinner(u,Modifier.size(u.space(32))) else if(icon=="user") NativeAvatarImage(avatar,Modifier.fillMaxSize())
             else Symbol(icon,Modifier.size(u.space(30)))
         }
-        AnimatedVisibility(visible=focused,
+        AnimatedVisibility(visible=focused&&active,
             enter=expandHorizontally(tween(260,easing=CubicBezierEasing(.2f,.82f,.2f,1f)),expandFrom=Alignment.Start)+fadeIn(tween(220,delayMillis=60)),
             exit=shrinkHorizontally(tween(260,easing=CubicBezierEasing(.2f,.82f,.2f,1f)),shrinkTowards=Alignment.Start)+fadeOut(tween(220))) {
             Row(verticalAlignment=Alignment.CenterVertically){Spacer(Modifier.width(u.space(12)));Copy(label,u,24,600);Spacer(Modifier.width(u.space(22)))}
@@ -171,10 +173,10 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
 }
 
 @Composable internal fun NativeLayout(
-    screen:Screen,station:StationBootstrap?,stationName:String,payload:JSONObject?,track:JSONObject?,program:JSONObject?,presenter:JSONObject?,artistArtwork:String,backgroundAd:String,bannerLink:String,bannerQr:Boolean,onBannerQr:(Boolean)->Unit,
+    screen:Screen,inputSerial:Int,station:StationBootstrap?,stationName:String,payload:JSONObject?,track:JSONObject?,program:JSONObject?,presenter:JSONObject?,artistArtwork:String,backgroundAd:String,bannerLink:String,bannerQr:Boolean,onBannerQr:(Boolean)->Unit,
     player:ExoPlayer,playing:Boolean,buffering:Boolean,failure:String?,playerError:String?,controls:Boolean,chrome:Float,interaction:Boolean,
     banner:String,historyAd:JSONObject?,panelAd:JSONObject?,chatAds:List<JSONObject>,backgroundAdEndsAt:Long,sponsor:String?,weather:JSONObject?,history:List<JSONObject>,historyLoading:Boolean,historyError:Boolean,notice:String?,video:List<StationChannel>,selected:StationChannel?,
-    onRetry:()->Unit,onToggle:()->Unit,onBack:()->Unit,onOpen:(Screen)->Unit,onChannel:(Int)->Unit,onVideo:(StationChannel)->Unit,
+    onRetry:()->Unit,onToggle:()->Unit,onBack:()->Unit,onOpen:(Screen)->Unit,onChannel:(Int)->Unit,onVideo:(StationChannel)->Unit,onMosaic:()->Unit,
     onInteraction:()->Unit,onNotice:(String?)->Unit,leavingScreen:Boolean,onVideoTrayFocus:(Boolean)->Unit,
     entryPending:Boolean,guestName:String,guestAvatar:Int,displayAvatar:Any,mainProfileName:String,mainAvatar:Any,listenerProfile:JSONObject?,onListenerProfile:(JSONObject)->Unit,onSelectProfile:(String)->Unit,onGuestSave:(String,Int)->Unit,onProfileContinue:()->Unit,
     spectrum:PcmSpectrum,panel:String?,forecast:JSONObject?,lyrics:String?,cep:String,api:HouseMixClient,services:NativeServices,account:JSONObject?,onAccount:(JSONObject)->Unit,onLogout:()->Unit,onPanel:(String?)->Unit,onCepSaved:(String,JSONObject)->Unit,scheduleOpening:Boolean,interactionReturn:Int,channelOpening:Screen?,syncStatus:SyncStatus,manualSync:Long?,onSaveSync:(Long?)->Unit,onCalibrateSync:()->Unit,canCalibrateSync:Boolean
@@ -207,17 +209,21 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     var scheduleFromRail by remember{mutableStateOf(false)}
     val scheduleFocus=remember{FocusRequester()}
     LaunchedEffect(screen,banner,bannerLink,panel,interaction,notice){onBannerQr(false)}
+    val homeBackgroundAd=screen==Screen.HOME&&backgroundAd.isNotBlank()
+    val focusManager=LocalFocusManager.current
+    var homeFocusSuppressed by remember{mutableStateOf(false)}
+    var adInput by remember{mutableIntStateOf(inputSerial)}
+    LaunchedEffect(homeBackgroundAd){if(homeBackgroundAd){homeFocusSuppressed=true;focusManager.clearFocus(force=true);adInput=inputSerial}else if(homeFocusSuppressed){focusManager.clearFocus(force=true);adInput=inputSerial}}
+    LaunchedEffect(inputSerial,screen,homeBackgroundAd){if(screen!=Screen.HOME)homeFocusSuppressed=false else if(!homeBackgroundAd&&homeFocusSuppressed&&inputSerial!=adInput){homeFocusSuppressed=false;withFrameNanos{};runCatching{focus.requestFocus()}}}
     val watchScreen=screen==Screen.AUDIO||screen==Screen.VIDEO
     val ready=station!=null||failure!=null
     var restoredInteraction by remember { mutableIntStateOf(interactionReturn) }
     LaunchedEffect(screen,ready,modal,if(watchScreen)controls else true,interactionReturn) {
-        if(ready&&!modal&&(!watchScreen||controls)){withFrameNanos{};val restore=interactionReturn!=restoredInteraction;if(restore)restoredInteraction=interactionReturn;runCatching{(if(restore&&(screen==Screen.HOME||watchScreen))sparkFocus else focus).requestFocus()}}
+        if(ready&&!modal&&!homeBackgroundAd&&!homeFocusSuppressed&&(!watchScreen||controls)){withFrameNanos{};val restore=interactionReturn!=restoredInteraction;if(restore)restoredInteraction=interactionReturn;runCatching{(if(restore&&(screen==Screen.HOME||watchScreen))sparkFocus else focus).requestFocus()}}
     }
-    val homeBackgroundAd=screen==Screen.HOME&&backgroundAd.isNotBlank()
     val homeBannerVisible=screen==Screen.HOME&&!homeBackgroundAd&&!interaction&&safeImage(banner)!=null
     val bannerMotion=animateFloatAsState(if(homeBannerVisible)1f else 0f,tween(if(homeBannerVisible)550 else 350),label="homeBannerMotion")
     val homeChrome=animateFloatAsState(if(homeBackgroundAd)0f else 1f,tween(350),label="homeAdChrome")
-    LaunchedEffect(homeBackgroundAd){if(homeBackgroundAd&&!modal){withFrameNanos{};runCatching{rail[0].requestFocus()}}}
     LaunchedEffect(homeBannerVisible){if(!homeBannerVisible)onBannerQr(false)}
     val scheduleDate=LocalDate.now(brasilia)
     val programRows=remember(payload){payload.rows("programas")}
@@ -265,7 +271,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                 Copy(failure,u,35,500,u.at(100,300,1500,70))
                 GlassButton(u,"Tentar novamente",u.at(100,400,330,64).focusRequester(focus),onClick=onRetry)
             } else {
-                CompositionLocalProvider(LocalControlsEnabled provides (!modal&&!leavingScreen)) {
+                CompositionLocalProvider(LocalControlsEnabled provides (!modal&&!leavingScreen&&!homeBackgroundAd&&!homeFocusSuppressed)) {
                 Box(Modifier.fillMaxSize().graphicsLayer{alpha=screenMotion.value;translationY=(1f-screenMotion.value)*u.space(18).toPx()}){
                 if(!watch && screen!=Screen.PROFILE) Header(u,logo,title,artist,cover,playing,accent,screen,weather,if(screen==Screen.HOME) Modifier.focusRequester(focus).focusProperties{down=rail[0];right=searchFocus} else Modifier,spectrum,onToggle,{onOpen(Screen.SEARCH)},{onPanel("cep")},Modifier.focusRequester(searchFocus).focusProperties{if(screen==Screen.HOME)left=focus;right=clockFocus},Modifier.focusRequester(clockFocus).focusProperties{left=searchFocus;down=if(homeBackgroundAd)rail[0] else sparkFocus})
                 if(screen==Screen.HOME) {
@@ -283,7 +289,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                         RailItem(u,"calendar","Grade de programação",accent,route(3),loading=scheduleOpening&&scheduleFromRail){scheduleFromRail=true;onOpen(Screen.SCHEDULE)}
                         RailItem(u,"user","Olá, $guestName",accent,route(4),avatar=displayAvatar){onOpen(Screen.PROFILE)}
                     }
-                    if(!homeBackgroundAd||homeChrome.value>.01f) CompositionLocalProvider(LocalControlsEnabled provides (!modal&&!leavingScreen&&!homeBackgroundAd)){
+                    if(!homeBackgroundAd||homeChrome.value>.01f) CompositionLocalProvider(LocalControlsEnabled provides (!modal&&!leavingScreen&&!homeBackgroundAd&&!homeFocusSuppressed)){
                     Column(u.at(programLeft,272,505,340).graphicsLayer{alpha=homeChrome.value},verticalArrangement=Arrangement.spacedBy(u.space(12))) {
                         HomeProgramInfo(u,program,activePresenter,stationName,accent)
                         Spacer(Modifier.height(u.space(6)))
@@ -349,7 +355,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                         if(hasTray&&!interaction){
                             val main=video.firstOrNull{!it.name.contains("cast",true)&&!it.name.contains("podcast",true)}?:video.firstOrNull()
                             val cast=video.firstOrNull{it.name.contains("cast",true)||it.name.contains("podcast",true)}
-                            Row(Modifier.offset(u.space(278),trayY).size(u.space(664),u.space(180)).alpha(chrome).onFocusChanged{trayOpen=it.hasFocus;onVideoTrayFocus(it.hasFocus)}.focusGroup(),horizontalArrangement=Arrangement.spacedBy(u.space(22))){
+                            Row(Modifier.offset(u.space(278),trayY).size(u.space(1320),u.space(180)).alpha(chrome).onFocusChanged{trayOpen=it.hasFocus;onVideoTrayFocus(it.hasFocus)}.focusGroup(),horizontalArrangement=Arrangement.spacedBy(u.space(22))){
                                 if(BuildConfig.STATION_SLUG=="positivafm"){
                                     if(main!=null)VideoChannelCard(u,R.drawable.positiva_channel_one,"Canal 1",selected?.id==main.id&&playing,controls,Modifier.focusRequester(trayFocus).focusProperties{up=focus}){onVideo(main)}
                                     VideoChannelCard(u,R.drawable.positiva_channel_two,"Positiva Cast",cast!=null&&selected?.id==cast.id&&playing,controls,if(main==null)Modifier.focusRequester(trayFocus).focusProperties{up=focus}else Modifier.focusProperties{up=focus}){
@@ -357,6 +363,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                                         else onNotice("O Positiva Cast utiliza YouTube. A reprodução nativa deste canal ainda não está disponível.")
                                     }
                                 }else video.forEachIndexed{index,ch->VideoChannelCard(u,safeImage(ch.coverUrl),ch.name,selected?.id==ch.id&&playing,controls,if(index==0)Modifier.focusRequester(trayFocus).focusProperties{up=focus}else Modifier.focusProperties{up=focus}){onVideo(ch)}}
+                                if(video.size>1)VideoChannelCard(u,null,"Mosaico",false,controls,Modifier.focusProperties{up=focus}){onMosaic()}
                             }
                         }
                     }
@@ -499,12 +506,12 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
                             .then(if(live)Modifier.focusRequester(liveFocus)else Modifier).onFocusChanged{focused=it.isFocused}
                             .background(if(live||focused)accentGlass(accent) else Brush.linearGradient(listOf(Color(0xFF303136),Color(0xFF202123))),shape)
                             .border(u.space(if(focused)3 else 0),if(focused)Color.White else Color.Transparent,shape)
-                            .clip(shape).clickable{details=p}.padding(u.space(9)),verticalArrangement=Arrangement.spacedBy(u.space(5))) {
+                            .clip(shape).clickable{details=p}.padding(horizontal=u.space(15),vertical=u.space(10)),verticalArrangement=Arrangement.spacedBy(u.space(5))) {
                             Copy(p.str("nome"),u,19,700,lines=if(height>100)3 else 1)
                             if(seg.end-seg.start>90) {
                                 val ids=p.strings("apresentadores_ids").ifEmpty{listOf(p.str("apresentador_id"))}
                                 Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(u.space(5))) {
-                                    ids.take(2).forEach{id-> Artwork(safeImage(people[id].str("foto")),Modifier.size(u.space(56)).clip(CircleShape).background(accentGlass(accent)).alpha(if(live||focused)1f else .4f),scale=ContentScale.Crop,filter=if(live||focused)null else ColorFilter.colorMatrix(ColorMatrix().apply{setToSaturation(0f)}))}
+                                    ids.take(2).forEach{id-> AsyncImage(safeImage(people[id].str("foto")),null,Modifier.size(u.space(56)).clip(CircleShape).background(accentGlass(accent)).alpha(if(live||focused)1f else .4f),contentScale=ContentScale.Crop,alignment=Alignment.TopCenter,colorFilter=if(live||focused)null else ColorFilter.colorMatrix(ColorMatrix().apply{setToSaturation(0f)}))}
                                 }
                             }
                             Spacer(Modifier.weight(1f))
@@ -546,7 +553,7 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
     var avatar by remember { mutableIntStateOf(guestAvatar) }
     val editFocus=remember { FocusRequester() }
     var first by remember{mutableStateOf(false)};var second by remember{mutableStateOf(false)}
-    LaunchedEffect(editing){if(!editing){first=true;delay(100);second=true}else{first=false;second=false}}
+    LaunchedEffect(editing){if(!editing){first=false;second=false;delay(650);first=true;delay(100);second=true}else{first=false;second=false}}
     val firstMotion=animateFloatAsState(if(first)1f else 0f,tween(380),label="profileFirst")
     val secondMotion=animateFloatAsState(if(second)1f else 0f,tween(380),label="profileSecond")
     val avatarList=listOf(R.drawable.visitor_avatar,R.drawable.visitor_avatar_1,R.drawable.visitor_avatar_2,R.drawable.visitor_avatar_3,R.drawable.visitor_avatar_4,R.drawable.visitor_avatar_5,R.drawable.visitor_avatar_6,R.drawable.visitor_avatar_7,R.drawable.visitor_avatar_8)
