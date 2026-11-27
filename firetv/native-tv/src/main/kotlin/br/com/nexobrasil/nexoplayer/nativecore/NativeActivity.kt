@@ -21,6 +21,9 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
+import androidx.media3.common.Metadata
+import androidx.media3.extractor.metadata.icy.IcyInfo
+import androidx.media3.extractor.metadata.id3.TextInformationFrame
 import androidx.media3.common.PlaybackException
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.datasource.DefaultHttpDataSource
@@ -112,8 +115,11 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
     var artistArtwork by remember { mutableStateOf("") }
     var incomingTrack by remember { mutableStateOf<JSONObject?>(null) }
     var incomingStart by remember { mutableLongStateOf(0L) }
-    var incomingArtwork by remember { mutableStateOf("") }
+    val sync=remember{NativeSmartSync<JSONObject>()}
+    var syncStatus by remember{mutableStateOf(SyncStatus())}
+    var syncEpoch by remember{mutableLongStateOf(0L)}
     var trackStart by remember { mutableLongStateOf(0L) }
+    var trackLocalStart by remember { mutableLongStateOf(0L) }
     var fadeRequest by remember { mutableIntStateOf(0) }
     var smartQueue by remember { mutableStateOf<List<JSONObject>>(emptyList()) }
     var smartIndex by remember { mutableIntStateOf(0) }
@@ -137,6 +143,18 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
     var weather by remember { mutableStateOf<JSONObject?>(null) }
     val context=LocalContext.current
     val prefs=remember { context.getSharedPreferences("native_tv_settings",0) }
+    val syncKey="smart_sync_ms:"+BuildConfig.STATION_SLUG+":"+selected?.id.orEmpty()
+    var manualSync by remember(syncKey){mutableStateOf(if(prefs.contains(syncKey))prefs.getLong(syncKey,0L).coerceIn(0L,120000L) else null)}
+    fun saveSync(delayMs:Long?){
+        if(delayMs==null)prefs.edit().remove(syncKey).apply()else prefs.edit().putLong(syncKey,delayMs.coerceIn(0L,120000L)).apply()
+        manualSync=delayMs?.coerceIn(0L,120000L)
+    }
+    fun calibrateNow(){
+        if(!player.isPlaying)return
+        val start=sync.latestStart()?:return
+        val delta=System.currentTimeMillis()+api.serverClockOffsetMs-start
+        if(delta in 0L..120000L)saveSync(delta)
+    }
     val services=remember { NativeServices(api,context) }
     val scope=rememberCoroutineScope()
     var account by remember { mutableStateOf<JSONObject?>(null) }
@@ -166,13 +184,14 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
     var recoveryCount by remember { mutableIntStateOf(0) }
     fun liveItem(channel:StationChannel):MediaItem {
         val url=channel.url.trim()
-        val item=MediaItem.Builder().setUri(url)
+        val item=MediaItem.Builder().setMediaId(channel.id).setUri(url)
         if(url.contains(".m3u8",ignoreCase=true))item.setMimeType(MimeTypes.APPLICATION_M3U8)
         return item.build()
     }
     fun resumeLive(autoplay:Boolean) {
         if(player.mediaItemCount==0)return
         if(player.playbackState==Player.STATE_IDLE || player.playbackState==Player.STATE_ENDED || player.playerError!=null) {
+            sync.resetPlayback();syncEpoch=0L
             selected?.let{player.setMediaItem(liveItem(it))};player.prepare()
         }
         playerError=null
@@ -193,6 +212,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         if(nextAd!=null)player.pause()
         smartQueue=emptyList()
         if(selected?.id!=channel.id||selected?.url!=channel.url||player.mediaItemCount==0||player.playerError!=null){
+            sync.resetPlayback();syncEpoch=0L
             player.setMediaItem(liveItem(channel));selected=channel;recoveryCount=0
             android.util.Log.i("NexoPlayback","SELECT "+channel.type+" host="+android.net.Uri.parse(channel.url.trim()).host)
             player.prepare()
@@ -217,6 +237,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
     fun home() {
         ad=null;smartQueue=emptyList();fromHome=true
         if (selected?.type == "video_live") {
+            sync.resetPlayback();syncEpoch=0L
             player.stop(); player.clearMediaItems(); selected = null
             audio.firstOrNull()?.let { select(it,Screen.HOME,audioIntent) }
         }
@@ -243,6 +264,18 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
     BackHandler(ad!=null || screen != Screen.HOME || interaction || notice != null || panel != null) { back() }
     DisposableEffect(player) {
         val listener = object : Player.Listener {
+            override fun onMetadata(metadata:Metadata){
+                if(!player.isPlaying)return
+                var title="";var artist=""
+                for(i in 0 until metadata.length())when(val entry=metadata.get(i)){
+                    is IcyInfo->title=entry.title.orEmpty()
+                    is TextInformationFrame->when(entry.id){
+                        "TIT2","TT2"->title=entry.values.firstOrNull().orEmpty()
+                        "TPE1","TP1"->artist=entry.values.firstOrNull().orEmpty()
+                    }
+                }
+                if(title.isNotBlank())sync.timedMetadata(SyncSignal(title,artist,player.currentPosition,System.currentTimeMillis()))
+            }
             override fun onIsPlayingChanged(isPlaying: Boolean) { playing = isPlaying; if(isPlaying){playerError=null;android.util.Log.i("NexoPlayback","LIVE_PLAYING")} }
             override fun onPlaybackStateChanged(playbackState: Int) { buffering = playbackState == Player.STATE_BUFFERING;android.util.Log.i("NexoPlayback","STATE="+playbackState+" requested="+player.playWhenReady) }
             override fun onPlaybackSuppressionReasonChanged(playbackSuppressionReason:Int){android.util.Log.w("NexoPlayback","SUPPRESSION="+playbackSuppressionReason)}
@@ -268,9 +301,10 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
             val data = api.stationPayload(BuildConfig.STATION_SLUG)
             station = StationBootstrap.fromJson(data)
             payload = data
-            track = data.optJSONObject("musicData");incomingTrack=track
-            incomingStart=nativeEpoch(data.opt("musicStartTime"));trackStart=incomingStart
-            artistArtwork=data.str("musicDeezerArtistImg");incomingArtwork=artistArtwork
+            sync.clear();track=null;artistArtwork="";trackStart=0L;trackLocalStart=0L
+            incomingTrack=data.optJSONObject("musicData")
+            incomingStart=nativeEpoch(data.opt("musicStartTime")?:incomingTrack?.opt("startTime")?:incomingTrack?.opt("startedAt"))
+            incomingTrack?.let{sync.accept(SyncTrack(it.str("titulo"),it.str("artista"),incomingStart,System.currentTimeMillis(),it,data.str("musicDeezerArtistImg").ifBlank{it.str("capa")}))}
         } catch (e: CancellationException) { throw e }
         catch (_: Exception) { failure = "Não foi possível carregar a emissora."; startup = false }
     }
@@ -290,8 +324,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         screen = Screen.PROFILE
         startup = false
         if(entryPending&&selected?.type=="audio_live"&&audioIntent)resumeLive(true)
-        var wait = 5_000L
-        var refresh = 0
+        var wait = 2_000L
         while (true) {
             delay(wait)
             try {
@@ -299,24 +332,33 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
                 if (data.str("userId") == owner) {
                     val next=data.optJSONObject("musicData")
                     if(next!=null&&next.str("titulo").isNotBlank()){
-                        val changed=next.str("titulo")!=incomingTrack.str("titulo")||next.str("artista")!=incomingTrack.str("artista")
-                        if(changed)incomingArtwork=next.str("capa")
-                        incomingTrack=next;incomingStart=nativeEpoch(data.opt("musicStartTime"))
-                        if(changed||++refresh>=24){
-                            refresh=0
-                            val full=api.stationPayload(BuildConfig.STATION_SLUG)
-                            if(full.str("userId")==owner){
-                                payload=full
-                                val current=full.optJSONObject("musicData")
-                                if(current.str("titulo")==next.str("titulo")&&current.str("artista")==next.str("artista"))
-                                    incomingArtwork=full.str("musicDeezerArtistImg").ifBlank{next.str("capa")}
-                            }
-                        }
+                        val start=nativeEpoch(data.opt("musicStartTime")?:next.opt("startTime")?:next.opt("startedAt"))
+                        incomingTrack=next;incomingStart=start
+                        sync.accept(SyncTrack(next.str("titulo"),next.str("artista"),start,System.currentTimeMillis(),next,data.str("musicDeezerArtistImg")))
                     }
-                    wait=5_000L
+                    wait=2_000L
                 } else wait = 60_000L
             } catch (e: CancellationException) { throw e }
             catch (_: Exception) { wait = (wait * 2).coerceAtMost(60_000L) }
+        }
+    }
+    LaunchedEffect(station?.ownerId,incomingTrack.str("titulo"),incomingTrack.str("artista"),incomingStart){
+        val owner=station?.ownerId?:return@LaunchedEffect
+        val title=incomingTrack.str("titulo");val artist=incomingTrack.str("artista");val start=incomingStart
+        if(title.isBlank())return@LaunchedEffect
+        while(true){
+            try{
+                val full=api.stationPayload(BuildConfig.STATION_SLUG)
+                if(full.str("userId")==owner){
+                    payload=full
+                    val current=full.optJSONObject("musicData")
+                    val actualStart=nativeEpoch(full.opt("musicStartTime"))
+                    if(current.str("titulo")==title&&current.str("artista")==artist&&(start<=0||actualStart==start)){
+                        sync.enrich(title,artist,start,full.str("musicDeezerArtistImg").ifBlank{current.str("capa")})
+                    }
+                }
+            }catch(e:CancellationException){throw e}catch(_:Exception){}
+            delay(120_000L)
         }
     }
     LaunchedEffect(station?.ownerId) {
@@ -348,6 +390,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
             if(player.isPlaying||!player.playWhenReady||ad!=null)break
             recoveryCount++
             android.util.Log.w("NexoPlayback","LIVE_RETRY="+recoveryCount)
+            sync.resetPlayback();syncEpoch=0L
             selected?.let{player.setMediaItem(liveItem(it))};player.prepare();player.play()
         }
         if(player.playWhenReady&&!player.isPlaying&&recoveryCount>=2){
@@ -358,20 +401,22 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
     LaunchedEffect(player){
         val window=androidx.media3.common.Timeline.Window()
         while(true){
-            val next=incomingTrack
-            if(next!=null){
-                val now=System.currentTimeMillis()
-                val epoch=runCatching{
-                    if(!player.isPlaying||player.currentTimeline.isEmpty)0L else {
-                        player.currentTimeline.getWindow(player.currentMediaItemIndex,window)
-                        if(window.windowStartTimeMs>0)window.windowStartTimeMs+player.currentPosition else 0L
-                    }
-                }.getOrDefault(0L)
-                val valid=epoch>0&&now-epoch in -2000L..120000L
-                val manual=prefs.getLong("smart_sync_delay_ms",0L).coerceIn(0L,120000L)
-                if(track==null||incomingStart<=0||incomingStart>now+1000||now-incomingStart>86400000L||(if(valid)epoch>=incomingStart else now>=incomingStart+manual)){
-                    track=next;artistArtwork=incomingArtwork;trackStart=incomingStart
+            val now=System.currentTimeMillis()
+            val serverNow=now+api.serverClockOffsetMs
+            val pdt=runCatching{
+                if(!player.isPlaying||!player.isCurrentMediaItemLive||player.currentTimeline.isEmpty)null else {
+                    player.currentTimeline.getWindow(player.currentMediaItemIndex,window)
+                    window.windowStartTimeMs.takeIf{it>0}?.plus(player.currentPosition)
                 }
+            }.getOrNull()
+            val result=sync.resolve(now,serverNow,player.currentPosition,player.isPlaying,pdt,manualSync)
+            if(syncStatus.mode!=result.status.mode)android.util.Log.i("NexoSmartSync",result.status.mode)
+            syncStatus=result.status
+            syncEpoch=result.epoch?:0L
+            result.track?.let{item->
+                val changed=trackStart!=item.start||track.str("titulo")!=item.title||track.str("artista")!=item.artist
+                track=item.content;artistArtwork=item.artwork;trackStart=item.start
+                if(changed||trackLocalStart==0L)trackLocalStart=if(item.start>0&&result.epoch!=null)now-(result.epoch-item.start).coerceAtLeast(0L)else now
             }
             delay(250)
         }
@@ -386,9 +431,9 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
     val breakActive=listOf(track.str("titulo"),track.str("artista")).any{it.trim().equals("BREAK",true)}
     val breakDuration=track?.optDouble("duracao",0.0)?:0.0
     val breakId=selected?.id.orEmpty()+":"+trackStart
-    LaunchedEffect(watch,breakActive,breakId,ad,campaigns,playing){
+    LaunchedEffect(watch,breakActive,breakId,ad,campaigns,playing,syncEpoch>0){
         if(!watch||!breakActive){smartAttempt="";smartQueue=emptyList();return@LaunchedEffect}
-        if(ad!=null||!playing||smartQueue.isNotEmpty()||smartAttempt==breakId)return@LaunchedEffect
+        if(ad!=null||!playing||syncEpoch<=0||smartQueue.isNotEmpty()||smartAttempt==breakId)return@LaunchedEffect
         val date=LocalDate.now(brasilia).toString()
         val program=payload?.optJSONObject("currentProgram").str("id")
         val queue=campaigns.filter{it.str("start_date")<=date&&it.str("end_date")>=date&&(it.strings("program_ids").isEmpty()||program in it.strings("program_ids"))}.sortedBy{it.str("id")}.flatMap{it.rows("media")}.filter{it.str("placement")=="smart_break_video"&&it.str("url").startsWith("https://")}.sortedBy{it.optInt("order")}
@@ -396,8 +441,12 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
     }
     LaunchedEffect(smartQueue.isNotEmpty(),breakDuration,trackStart){
         if(smartQueue.isNotEmpty()&&breakDuration>0&&trackStart>0){
-            delay((trackStart+(breakDuration*1000).toLong()-System.currentTimeMillis()).coerceAtLeast(0L))
-            smartQueue=emptyList()
+            val deadline=trackStart+(breakDuration*1000).toLong()
+            while(smartQueue.isNotEmpty()){
+                if(syncEpoch>0&&syncEpoch>=deadline) {smartQueue=emptyList();break}
+                if(syncEpoch<=0&&System.currentTimeMillis()>=trackLocalStart+(breakDuration*1000).toLong()){smartQueue=emptyList();break}
+                delay(250)
+            }
         }
     }
     LaunchedEffect(smartQueue.isNotEmpty()){
@@ -499,7 +548,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         entryPending=entryPending, guestName=account?.optJSONObject("user_metadata").str("full_name").ifBlank{account?.optJSONObject("user_metadata").str("name")}.ifBlank{guestName}, guestAvatar=guestAvatar,
         spectrum=spectrum, panel=panel,forecast=forecast,lyrics=lyrics,cep=cep,api=api,services=services,account=account,
         onAccount={account=it;panel=null},onLogout={scope.launch{try{services.logout();account=null}catch(e:CancellationException){throw e}catch(_:Exception){notice="Não foi possível encerrar a sessão."}}},
-        scheduleOpening=scheduleOpening,interactionReturn=interactionReturn,
+        scheduleOpening=scheduleOpening,interactionReturn=interactionReturn,syncStatus=syncStatus,manualSync=manualSync,onSaveSync=::saveSync,onCalibrateSync=::calibrateNow,canCalibrateSync=playing&&sync.latestStart()?.let{System.currentTimeMillis()+api.serverClockOffsetMs-it in 0L..120000L}==true,
         onPanel={next->if(next==null)closePanel()else{fromInteraction=interaction;panel=next;interaction=false}},onCepSaved={digits,loc -> prefs.edit().putString("cep",digits).putString("location",loc.toString()).apply();cep=digits;location=loc;panel=null},
         onGuestSave={name,avatar -> guestName=name;guestAvatar=avatar},
         onProfileContinue={
@@ -522,14 +571,14 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         },onChannel=onChannel,onVideo={select(it,Screen.VIDEO)},onInteraction={if(interaction){interaction=false;interactionReturn++}else interaction=true},
         onNotice={notice=it})
     ad?.let{media->NativePreroll(media,selected?.type=="audio_live",onStarted={lastAdAt=System.currentTimeMillis()},onFinish={ad=null;scope.launch { withFrameNanos { };resumeLive(resumeAfterAd) }})}
-    if(ad==null&&smartQueue.isNotEmpty())key(smartSerial){smartQueue.getOrNull(smartIndex)?.let{media->NativePreroll(media,false,onStarted={},onFinish={if(smartQueue.isNotEmpty()){smartFailures++;if(smartFailures>=smartQueue.size)smartQueue=emptyList()else{smartIndex=(smartIndex+1)%smartQueue.size;smartSerial++}}},smart=true,breakStart=trackStart,breakDuration=breakDuration,onPlayed={smartFailures=0},onBack={home()},commercialPhone=data?.optJSONObject("empresa").str("telefone_comercial"))}}
+    if(ad==null&&smartQueue.isNotEmpty())key(smartSerial){smartQueue.getOrNull(smartIndex)?.let{media->NativePreroll(media,false,onStarted={},onFinish={if(smartQueue.isNotEmpty()){smartFailures++;if(smartFailures>=smartQueue.size)smartQueue=emptyList()else{smartIndex=(smartIndex+1)%smartQueue.size;smartSerial++}}},smart=true,breakStart=trackLocalStart,breakDuration=breakDuration,onPlayed={smartFailures=0},onBack={home()},commercialPhone=data?.optJSONObject("empresa").str("telefone_comercial"))}}
     AnimatedVisibility(visible=startup, enter=fadeIn(tween(650)), exit=fadeOut(tween(650))) {
         StartupSplash(startupStage)
     }
     }
 }
 
-internal fun nativeEpoch(value:Any?):Long {val n=(value as? Number)?.toDouble()?:value?.toString()?.toDoubleOrNull()?:return 0L;return if(n.isFinite()&&n>0)(if(n<1e12)n*1000 else n).toLong()else 0L}
+internal fun nativeEpoch(value:Any?):Long {val n=(value as? Number)?.toDouble()?:value?.toString()?.toDoubleOrNull();return if(n!=null&&n.isFinite()&&n>0)(if(n<1e12)n*1000 else n).toLong()else runCatching{java.time.Instant.parse(value.toString()).toEpochMilli()}.getOrDefault(0L)}
 
 internal fun deduplicateNativeHistory(rows:List<JSONObject>):List<JSONObject>{
     fun key(row:JSONObject)=row.str("musica").trim().lowercase(java.util.Locale.ROOT)+"|"+row.str("artista").trim().lowercase(java.util.Locale.ROOT)

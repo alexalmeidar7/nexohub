@@ -8,6 +8,9 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 class HouseMixClient(supabaseOrigin: String, internal val publishableKey: String) {
+    @Volatile internal var serverClockOffsetMs:Long=0L
+        private set
+    private var clockSampled=false
     internal val origin = Uri.parse(supabaseOrigin).also {
         require(it.scheme == "https" && it.host != null && it.encodedUserInfo == null)
     }
@@ -69,7 +72,13 @@ class HouseMixClient(supabaseOrigin: String, internal val publishableKey: String
                 connection.setRequestProperty("Content-Type", "application/json")
                 connection.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
             }
+            val sent=System.currentTimeMillis()
             val status = connection.responseCode
+            val received=System.currentTimeMillis()
+            if(name=="public-player-data"&&body?.optString("section")=="now_playing"&&received-sent in 0L..1500L){
+                val date=connection.getHeaderFieldDate("Date",-1L)
+                if(date>0){val sample=date-(sent+received)/2;if(kotlin.math.abs(sample)<86400000L){serverClockOffsetMs=if(!clockSampled||kotlin.math.abs(sample-serverClockOffsetMs)>1500)sample else (serverClockOffsetMs*.9+sample*.1).toLong();clockSampled=true}}
+            }
             check(status in 200..299) { "House Mix request failed ($name, HTTP $status)" }
             JSONObject(connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() })
         } finally {

@@ -64,7 +64,7 @@ jobs:
             apk=$(find "firetv/native-tv/build/outputs/apk/$station/debug" -name '*.apk' | head -1)
             test -s "$apk"
             "$aapt" dump badging "$apk" > /tmp/nexo-$station-badging.txt
-            grep -q "versionCode='14'" /tmp/nexo-$station-badging.txt
+            grep -q "versionCode='15'" /tmp/nexo-$station-badging.txt
             grep -E "application-icon-[0-9]+:.*${station}_launcher" /tmp/nexo-$station-badging.txt
             unzip -Z1 "$apk" | grep 'native_tv_banner.png'
             unzip -Z1 "$apk" | grep 'native_tv_launcher.png'
@@ -90,12 +90,12 @@ jobs:
           rm -rf "$out"
           mkdir -p "$out"
           report="$out/SIGNATURE-SHA256.txt"
-          printf 'Certificate SHA-256: %s\nVersion: 0.1.13-native-preview\nCommit: %s\n' "$NEXO_TV_CERT_SHA256" "$GITHUB_SHA" > "$report"
+          printf 'Certificate SHA-256: %s\nVersion: 0.1.14-native-preview\nCommit: %s\n' "$NEXO_TV_CERT_SHA256" "$GITHUB_SHA" > "$report"
           for station in positiva interativa; do
             mapfile -t inputs < <(find "firetv/native-tv/build/outputs/apk/$station/debug" -maxdepth 1 -name '*.apk' -type f)
             test "${#inputs[@]}" -eq 1
             src="${inputs[0]}"
-            dst="$out/NexoNativeTv-$station-v0.1.13.apk"
+            dst="$out/NexoNativeTv-$station-v0.1.14.apk"
             "$signer" sign --ks "$NEXO_TV_SIGNING_FILE" --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android --min-sdk-version 26 --out "$dst" "$src"
             details=$("$signer" verify --verbose --print-certs --min-sdk-version 26 "$dst")
             printf '%s\n' "$details"
@@ -111,7 +111,7 @@ jobs:
           rm -f "$out"/*.idsig
       - uses: actions/upload-artifact@v4
         with:
-          name: nexo-tv-compose-pilot-v0.1.13-verified
+          name: nexo-tv-compose-pilot-v0.1.14-verified
           path: |
             firetv/native-tv/build/verified-apks/*.apk
             firetv/native-tv/build/verified-apks/SIGNATURE-SHA256.txt

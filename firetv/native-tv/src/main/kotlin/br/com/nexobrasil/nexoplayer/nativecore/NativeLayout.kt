@@ -164,7 +164,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     onRetry:()->Unit,onToggle:()->Unit,onBack:()->Unit,onOpen:(Screen)->Unit,onChannel:(Int)->Unit,onVideo:(StationChannel)->Unit,
     onInteraction:()->Unit,onNotice:(String?)->Unit,
     entryPending:Boolean,guestName:String,guestAvatar:Int,onGuestSave:(String,Int)->Unit,onProfileContinue:()->Unit,
-    spectrum:PcmSpectrum,panel:String?,forecast:JSONObject?,lyrics:String?,cep:String,api:HouseMixClient,services:NativeServices,account:JSONObject?,onAccount:(JSONObject)->Unit,onLogout:()->Unit,onPanel:(String?)->Unit,onCepSaved:(String,JSONObject)->Unit,scheduleOpening:Boolean,interactionReturn:Int
+    spectrum:PcmSpectrum,panel:String?,forecast:JSONObject?,lyrics:String?,cep:String,api:HouseMixClient,services:NativeServices,account:JSONObject?,onAccount:(JSONObject)->Unit,onLogout:()->Unit,onPanel:(String?)->Unit,onCepSaved:(String,JSONObject)->Unit,scheduleOpening:Boolean,interactionReturn:Int,syncStatus:SyncStatus,manualSync:Long?,onSaveSync:(Long?)->Unit,onCalibrateSync:()->Unit,canCalibrateSync:Boolean
 ) {
     val accent = remember(payload) {
         val colors=payload?.optJSONObject("playerColors")
@@ -354,7 +354,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                 }
                 }
                 if(interaction && panel==null) InteractionCards(u, {onPanel(it)}, onInteraction)
-                if(panel!=null) NativePanel(u,panel,payload,track,history,historyLoading,historyError,forecast,lyrics,cep,api,station?.ownerId,accent,{onPanel(null)},onCepSaved,onOpen,services,account,onAccount)
+                if(panel=="sync") NativeSyncPanel(u,syncStatus,manualSync,onSaveSync,onCalibrateSync,canCalibrateSync){onPanel(null)} else if(panel!=null) NativePanel(u,panel,payload,track,history,historyLoading,historyError,forecast,lyrics,cep,api,station?.ownerId,accent,{onPanel(null)},onCepSaved,onOpen,services,account,onAccount)
 
             }
             if(reminderText.isNotBlank()) Box(u.at(580,170,760,72).background(glass,u.round(24)).padding(u.space(15)),contentAlignment=Alignment.Center){Copy(reminderText,u,24,600)}

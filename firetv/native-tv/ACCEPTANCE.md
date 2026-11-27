@@ -40,3 +40,6 @@ Media3 padrão, conexão HTTPS com timeouts explícitos, reconstrução de media
 
 ## 0.1.13 — ajustes de campo
 Retorno de foco à interatividade; transição de apresentador/banner na publicidade de fundo; pré-cálculo da grade e spinner; informações do programa opacas; CEP centralizado; QR de anúncios compacto e sempre visível, Smart Break com retorno à Home e explicação/contato; chat com rolagem ao fim e QR central sobre mensagens; histórico com deduplicação de registros próximos e cache de capas; batalha horizontal; capas originais dos canais Positiva. YouTube não é URL Media3: canal Cast exige implementação de reprodução compatível ou fonte direta. Assinatura e streaming da versão anterior preservados. Validar em TV física.
+
+## 0.1.14 — Smart Sync nativo
+Fila de faixas por timestamp; prioridade HLS/PDT, metadados temporizados ICY/ID3 quando correspondem à faixa, e calibração opcional local por estação/canal. Sem referência temporal, mantém a última faixa conhecida até obter referência ou calibração. Consulta leve a cada 2s (como WebView), arte enriquecida fora da consulta. Smart Break usa o relógio sincronizado. Nenhum atraso universal; sem alterações de assinatura, endpoints, engine de reprodução ou WebView. Validar latências diferentes, troca de canal, pausa/reconexão e streams sem timestamp em TV física.

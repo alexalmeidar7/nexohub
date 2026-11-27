@@ -88,7 +88,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
 
 @Composable internal fun InteractionCards(u:TvUnits,onPanel:(String)->Unit,onClose:()->Unit) {
     val focus=remember{FocusRequester()}
-    val labels=listOf(Triple("lyrics","letra da música","mic"),Triple("chat","chat","chat"),Triple("poll","enquete","poll"),Triple("weather","previsão do tempo","sun"),Triple("history","músicas tocadas","history"),Triple("battle","batalha musical","battle"))
+    val labels=listOf(Triple("lyrics","letra da música","mic"),Triple("chat","chat","chat"),Triple("poll","enquete","poll"),Triple("weather","previsão do tempo","sun"),Triple("history","músicas tocadas","history"),Triple("battle","batalha musical","battle"),Triple("sync","Smart Sync","history"))
     Row(u.at(285,862,1535,152),horizontalArrangement=Arrangement.spacedBy(u.space(23)),verticalAlignment=Alignment.Bottom){
         labels.forEachIndexed{i,item->
             var focused by remember{mutableStateOf(false)}
@@ -250,3 +250,24 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
 }
 
 
+
+@Composable internal fun NativeSyncPanel(u:TvUnits,status:SyncStatus,manual:Long?,onSave:(Long?)->Unit,onCalibrate:()->Unit,canCalibrate:Boolean,onClose:()->Unit){
+    val focus=remember{FocusRequester()}
+    Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.58f)),contentAlignment=Alignment.Center){
+        Column(Modifier.width(u.space(820)).background(Color(0xFF242529),u.round(28)).padding(u.space(36)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(24))){
+            GlassButton(u,"",Modifier.align(Alignment.End).size(u.space(54)).focusRequester(focus),icon="left",onClick=onClose)
+            Copy("Smart Sync",u,32,700)
+            Copy(status.mode+(status.delaySeconds?.let{" · "+it+" s"}?:""),u,24,600,align=TextAlign.Center)
+            Copy("A sincronização automática usa o relógio ou os metadados do streaming. Sem referência, ajuste somente esta TV e este canal.",u,22,400,lines=4,align=TextAlign.Center)
+            Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(20))){
+                GlassButton(u,"− 1 s",Modifier.height(u.space(58))){onSave(((manual?:0L)-1000L).coerceAtLeast(0L))}
+                Copy(manual?.let{String.format(java.util.Locale.US,"%.1f s",it/1000.0)}?:"Automático",u,26,600)
+                GlassButton(u,"+ 1 s",Modifier.height(u.space(58))){onSave(((manual?:0L)+1000L).coerceAtMost(120000L))}
+            }
+            GlassButton(u,"Sincronizar agora",Modifier.height(u.space(62)),enabled=canCalibrate){onCalibrate()}
+            Copy("Pressione quando a nova música começar a tocar.",u,19,400,align=TextAlign.Center)
+            GlassButton(u,"Usar automático",Modifier.height(u.space(58))){onSave(null)}
+        }
+    }
+    LaunchedEffect(Unit){focus.requestFocus()}
+}
