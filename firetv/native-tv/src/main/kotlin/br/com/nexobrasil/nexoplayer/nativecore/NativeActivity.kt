@@ -214,11 +214,10 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         player.playWhenReady=autoplay
         if(autoplay) playbackAttempt++
     }
-    fun smartMediaFor(channel:StationChannel):List<JSONObject>{
+    fun smartMediaFor():List<JSONObject>{
         val date=LocalDate.now(brasilia).toString();val program=nativeCurrentProgram(payload).str("id")
         val media=campaigns.filter{it.str("start_date")<=date&&it.str("end_date")>=date&&(it.strings("program_ids").isEmpty()||program in it.strings("program_ids"))}.sortedBy{it.str("id")}.flatMap{it.rows("media")}.filter{it.str("url").startsWith("https://")}
-        val placement=if(channel.type=="audio_live")"smart_break_audio" else "smart_break_video"
-        return media.filter{it.str("placement")==placement}.sortedBy{it.optInt("order")}.ifEmpty{if(placement=="smart_break_audio")media.filter{it.str("placement")=="smart_break_video"}.sortedBy{it.optInt("order")}else emptyList()}
+        return smartBreakVideoMedia(media)
     }
     fun select(channel: StationChannel, destination: Screen, autoplay: Boolean = true, allowCampaignWait:Boolean=true) {
         val watch=destination==Screen.AUDIO||destination==Screen.VIDEO
@@ -232,7 +231,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         val candidates=if(eligible) campaigns.filter{it.str("start_date")<=date&&it.str("end_date")>=date&&(it.strings("program_ids").isEmpty()||program in it.strings("program_ids"))}.sortedBy{it.str("id")}.flatMap{it.rows("media")}.filter{it.str("placement")==placement&&it.str("url").startsWith("https://")} else emptyList()
         val entryTrack=incomingTrack?:track
         val entryStart=if(incomingTrack!=null)incomingStart else trackStart
-        val directSmart=if(watch&&autoplay&&isNativeBreak(entryTrack)&&smartBreakTiming(entryStart,entryTrack?.optDouble("duracao",0.0)?:0.0,now+api.serverClockOffsetMs)?.second!=0L)smartMediaFor(channel)else emptyList()
+        val directSmart=if(watch&&autoplay&&isNativeBreak(entryTrack)&&smartBreakTiming(entryStart,entryTrack?.optDouble("duracao",0.0)?:0.0,now+api.serverClockOffsetMs)?.second!=0L)smartMediaFor()else emptyList()
         val nextAd=if(directSmart.isNotEmpty())null else candidates.getOrNull(if(candidates.isEmpty())0 else ((now/300000)%candidates.size).toInt())
         // Live must not wait on the commercial API.
         if(nextAd!=null)player.pause()
@@ -480,7 +479,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
         if(!watch||!breakActive){smartAttempt="";smartQueue=emptyList();return@LaunchedEffect}
         if(ad!=null||!playing||smartQueue.isNotEmpty()||smartAttempt==breakId)return@LaunchedEffect
         if(smartBreakTiming(breakStart,breakDuration,System.currentTimeMillis()+api.serverClockOffsetMs)?.second==0L)return@LaunchedEffect
-        val queue=selected?.let{smartMediaFor(it)}.orEmpty()
+        val queue=selected?.let{smartMediaFor()}.orEmpty()
         if(queue.isNotEmpty()){smartAttempt=breakId;smartIndex=0;smartFailures=0;smartSerial++;smartQueue=queue;player.volume=0f}
     }
     LaunchedEffect(smartQueue.isNotEmpty(),breakDuration,breakStart){
@@ -625,7 +624,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, onH
     var retainedSmartMedia by remember{mutableStateOf<Pair<Int,JSONObject>?>(null)}
     SideEffect{if(activeSmartMedia!=null)retainedSmartMedia=activeSmartMedia}
     AnimatedVisibility(visible=activeSmartMedia!=null,enter=fadeIn(tween(500)),exit=fadeOut(tween(500))){
-        (activeSmartMedia?:retainedSmartMedia)?.let{(serial,media)->NativePreroll(media,media.str("placement")=="smart_break_audio",onStarted={},onFinish={if(smartQueue.isNotEmpty()&&smartSerial==serial){smartFailures++;if(smartFailures>=smartQueue.size)smartQueue=emptyList()else{smartIndex=(smartIndex+1)%smartQueue.size;smartSerial++}}},smart=true,breakStart=breakStart,breakDuration=breakDuration,serverClockOffset=api.serverClockOffsetMs,onPlayed={if(smartSerial==serial)smartFailures=0},onBack={home()},commercialPhone=data?.optJSONObject("empresa").str("telefone_comercial"),smartSerial=serial,smartActive=activeSmartMedia!=null)}
+        (activeSmartMedia?:retainedSmartMedia)?.let{(serial,media)->NativePreroll(media,false,onStarted={},onFinish={if(smartQueue.isNotEmpty()&&smartSerial==serial){smartFailures++;if(smartFailures>=smartQueue.size)smartQueue=emptyList()else{smartIndex=(smartIndex+1)%smartQueue.size;smartSerial++}}},smart=true,breakStart=breakStart,breakDuration=breakDuration,serverClockOffset=api.serverClockOffsetMs,onPlayed={if(smartSerial==serial)smartFailures=0},onBack={home()},commercialPhone=data?.optJSONObject("empresa").str("telefone_comercial"),smartSerial=serial,smartActive=activeSmartMedia!=null)}
     }
     AnimatedVisibility(visible=startup, enter=fadeIn(tween(650)), exit=fadeOut(tween(650))) {
         StartupSplash(startupStage)
@@ -648,3 +647,6 @@ internal fun deduplicateNativeHistory(rows:List<JSONObject>):List<JSONObject>{
 }
 
 internal fun isNativeBreak(track:JSONObject?):Boolean=listOf(track.str("titulo"),track.str("artista")).any{it.trim().equals("BREAK",true)}
+
+/** Both live channels show the dedicated video creative during a Smart Break. */
+internal fun smartBreakVideoMedia(media:List<JSONObject>):List<JSONObject> = media.filter{it.str("placement")=="smart_break_video"&&it.str("url").startsWith("https://")}.sortedBy{it.optInt("order")}

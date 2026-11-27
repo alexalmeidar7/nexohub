@@ -2,6 +2,10 @@ package br.com.nexobrasil.nexoplayer.nativecore
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.focusable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -77,11 +81,14 @@ import org.json.JSONObject
     val phone=commercialPhone.filter{it.isDigit()}.let{if(it.length in 10..11)"55"+it else it}
     val contactUrl=if(phone.length in 12..15)"https://wa.me/"+phone else ""
     val showLink=media.str("link").startsWith("https://")
+    val qrEnabled=smart&&showLink&&smartActive&&!info
+    var qrFocused by remember{mutableStateOf(false)}
     val active by rememberUpdatedState(smartActive)
     var buttonsEntered by remember{mutableStateOf(false)}
     LaunchedEffect(smart,smartActive){if(smart){if(smartActive){delay(100);buttonsEntered=true}else buttonsEntered=false}}
     BackHandler(enabled=!smart||smartActive) {if(contact)contact=false else if(info)info=false else if(smart)onBack()}
     LaunchedEffect(info,buttonsEntered,smartActive){if(smart&&smartActive&&buttonsEntered){withFrameNanos{};runCatching{(if(info&&contactUrl.isNotBlank())announceFocus else if(info)closeFocus else infoFocus).requestFocus()}}}
+    LaunchedEffect(showLink,info,smartActive,buttonsEntered){if(smart&&smartActive&&!info&&buttonsEntered&&!showLink)runCatching{infoFocus.requestFocus()}}
     fun complete(){if(!done){done=true;player.stop();if(!smart||active)finish()}}
     DisposableEffect(player){
         val listener=object:Player.Listener{
@@ -118,7 +125,7 @@ import org.json.JSONObject
                 AnimatedVisibility(buttonsEntered,modifier=Modifier.align(Alignment.TopStart).padding(top=u.space(75),start=u.space(100)),enter=slideInHorizontally(tween(400)){-it/3}+fadeIn(tween(400)),exit=slideOutHorizontally(tween(400)){-it/3}+fadeOut(tween(400))){
                     Row(horizontalArrangement=Arrangement.spacedBy(u.space(14)),verticalAlignment=Alignment.CenterVertically){
                         GlassButton(u,"",Modifier.size(u.space(60)),icon="left",enabled=!info&&smartActive,onClick=onBack)
-                        GlassButton(u,"smart break +",Modifier.height(u.space(60)).focusRequester(infoFocus),enabled=!info&&smartActive){info=true}
+                        GlassButton(u,"smart break +",Modifier.height(u.space(60)).focusRequester(infoFocus).focusProperties{if(qrEnabled){down=qrFocus;right=qrFocus}},enabled=!info&&smartActive){info=true}
                     }
                 }
             }else Row(Modifier.offset(u.space(100),u.space(75)),horizontalArrangement=Arrangement.spacedBy(u.space(12)),verticalAlignment=Alignment.CenterVertically){
@@ -128,11 +135,11 @@ import org.json.JSONObject
             if(smart){
                 // Identity includes the playback sequence so identical links animate on every creative change.
                 val target=smartSerial to media.str("link").takeIf{showLink&&smartActive}.orEmpty()
-                AnimatedContent(targetState=target,modifier=Modifier.align(Alignment.BottomEnd).padding(end=u.space(105),bottom=u.space(75)).size(u.space(246),u.space(266)),contentAlignment=Alignment.BottomEnd,transitionSpec={
-                    ((slideInHorizontally(tween(250,delayMillis=250)){it+(120*u.pixelsPerUnit).toInt()}+fadeIn(tween(250,delayMillis=250))) togetherWith (slideOutHorizontally(tween(250)){it+(120*u.pixelsPerUnit).toInt()}+fadeOut(tween(250)))).using(SizeTransform(clip=false))
-                },label="smartCreativeQr"){entry->
-                    if(entry.second.isNotBlank()){
-                        CreativeQr(u,entry.second)
+                Box(Modifier.align(Alignment.BottomEnd).padding(end=u.space(105),bottom=u.space(75)).size(u.space(246),u.space(266)).focusRequester(qrFocus).onFocusChanged{qrFocused=it.isFocused}.focusProperties{canFocus=qrEnabled;up=infoFocus;left=infoFocus}.semantics{contentDescription="Saiba mais, QR Code da publicidade"}.focusable(enabled=qrEnabled)){
+                    AnimatedContent(targetState=target,modifier=Modifier.fillMaxSize(),contentAlignment=Alignment.BottomEnd,transitionSpec={
+                        ((slideInHorizontally(tween(700,delayMillis=550,easing=FastOutSlowInEasing)){it+(120*u.pixelsPerUnit).toInt()}+fadeIn(tween(700,delayMillis=550))) togetherWith (slideOutHorizontally(tween(550,easing=FastOutSlowInEasing)){it+(120*u.pixelsPerUnit).toInt()}+fadeOut(tween(550)))).using(SizeTransform(clip=false))
+                    },label="smartCreativeQr"){entry->
+                        if(entry.second.isNotBlank())CreativeQr(u,entry.second,focused=qrFocused&&qrEnabled&&entry==target)
                     }
                 }
             }else if(showLink){
@@ -140,8 +147,9 @@ import org.json.JSONObject
             }
             if(smart){
                 val ring=animateFloatAsState(progress,tween(250,easing=LinearEasing),label="breakProgress")
-                Row(Modifier.align(Alignment.TopEnd).padding(top=u.space(75),end=u.space(100)).height(u.space(60)).clip(CircleShape).background(glass,CircleShape).border(u.space(1),Color.White.copy(alpha=.16f),CircleShape).padding(horizontal=u.space(20)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(12))){
-                    Copy("voltamos em "+if(breakRemaining>=0)formatSmartBreakTime(breakRemaining)else "--:--",u,22,600)
+                Row(Modifier.align(Alignment.TopEnd).padding(top=u.space(75),end=u.space(100)).width(u.space(330)).height(u.space(60)).clip(CircleShape).background(glass,CircleShape).border(u.space(1),Color.White.copy(alpha=.16f),CircleShape).padding(horizontal=u.space(20)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(12))){
+                    Copy("voltamos em",u,22,600,Modifier.weight(1f))
+                    Copy(if(breakRemaining>=0)formatSmartBreakTime(breakRemaining)else "--:--",u,22,600,Modifier.width(u.space(84)),align=TextAlign.Center)
                     if(breakRemaining>=0)Canvas(Modifier.size(u.space(30))){val sw=size.minDimension*.11f;val top=Offset(sw,sw);val arc=Size(size.width-2*sw,size.height-2*sw);drawArc(Color.White.copy(alpha=.25f),-90f,360f,false,top,arc,style=Stroke(sw));drawArc(Color.White,-90f,360f*ring.value.coerceIn(0f,1f),false,top,arc,style=Stroke(sw,cap=StrokeCap.Round))}else NativeSpinner(u,Modifier.size(u.space(30)))
                 }
             }
@@ -174,8 +182,8 @@ internal fun smartBreakTiming(start:Long,duration:Double,now:Long):Pair<Float,Lo
 }
 internal fun formatSmartBreakTime(seconds:Long):String=String.format(java.util.Locale.ROOT,"%02d:%02d",seconds/60,seconds%60)
 
-@Composable private fun CreativeQr(u:TvUnits,url:String){
-    Column(Modifier.width(u.space(246)).clip(u.round(22)).background(glass).border(u.space(1),Color.White.copy(alpha=.34f),u.round(22)).padding(u.space(18)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(10))){
+@Composable private fun CreativeQr(u:TvUnits,url:String,focused:Boolean=false){
+    Column(Modifier.width(u.space(246)).clip(u.round(22)).background(glass).border(u.space(if(focused)3 else 1),Color.White.copy(alpha=if(focused)1f else .34f),u.round(22)).padding(u.space(18)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(10))){
         Copy("Saiba mais +",u,19,600)
         NativeQr(url,Modifier.size(u.space(210)).clip(u.round(8)),compact=true)
     }
