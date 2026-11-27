@@ -36,3 +36,7 @@ Base ee68d38, build 0.1.16 aprovado; usuário reportou banner, diferenças de vo
 ## 27/11/2026 — Nexo TV 0.1.18 (PR #327)
 
 Base a25b5a5, build 0.1.17 aprovado. Home: ocultar programa, patrocinador, interatividade e degradê durante background ads; animar banner e escurecer interatividade. Pre-roll: botão pular ao lado da publicidade com seta. Smart Break: arte fornecida pelo usuário empacotada em WebP; popup com texto à direita e QR deslizante; contador e encerramento usam music_start_time e music_current_duration do House Mix via API existente (sem inventar horário quando ausente). Teste de build e TV pendentes; sem alterações no HMD/HMO/Supabase/WebView.
+
+## 27/11/2026 — Nexo TV 0.1.19 (PR #327)
+
+A função public-player-data em produção omitia music_current_duration do objeto musicData apesar do valor existir no banco. Corrigida em produção (v6) preservando JWT, consultas e demais contratos; mantido o mesmo campo no GitHub com fallback legado. No Smart Break: controles no canto superior esquerdo, contador no direito com indicação --:-- se dados ausentes, botão Voltar menor e recuado, CTA no rodapé, QR sem botão adicional e foco mantido no CTA ao alternar. Build e teste físico pendentes.
