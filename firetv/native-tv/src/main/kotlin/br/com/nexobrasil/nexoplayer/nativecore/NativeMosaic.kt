@@ -23,23 +23,26 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import org.json.JSONObject
 internal fun mosaicDirectStream(url:String):Boolean = url.startsWith("https://",true)&&!url.contains("youtu",true)
-@Composable internal fun NativeMosaic(channels:List<StationChannel>,payload:JSONObject?,onExit:()->Unit,onSelect:(StationChannel)->Unit){
+@Composable internal fun NativeMosaic(channels:List<StationChannel>,payload:JSONObject?,foreground:Boolean,onExit:()->Unit,onSelect:(StationChannel)->Unit){
     val context=LocalContext.current
     val focus=remember{FocusRequester()}
     var index by remember(channels.map{it.id}){mutableIntStateOf(-1)}
     val colors=payload?.optJSONObject("playerColors")
     val accent=runCatching{Color(android.graphics.Color.parseColor(colors.str("dominantColor").ifBlank{colors.str("homeAccent")}))}.getOrElse{if(BuildConfig.STATION_SLUG=="positivafm")Color(0xFFF20D0F)else Color(0xFF343434)}
-    val players=remember(channels.map{it.id+"|"+it.url}){
-        channels.map{ch->if(!mosaicDirectStream(ch.url))null else ExoPlayer.Builder(context).build().apply{
+    val memory=remember{context.getSystemService(android.content.Context.ACTIVITY_SERVICE) as android.app.ActivityManager}
+    val limit=if(memory.isLowRamDevice||memory.memoryClass<192)2 else 4
+    val activeIndices=(listOf(index).filter{it in channels.indices} + channels.indices).distinct().filter{mosaicDirectStream(channels[it].url)}.take(limit).toSet()
+    val players=remember(channels.map{it.id+"|"+it.url},activeIndices){
+        channels.mapIndexed{i,ch->if(i !in activeIndices)null else ExoPlayer.Builder(context).setLoadControl(nativeLoadControl(context,true)).build().apply{
             setAudioAttributes(AudioAttributes.DEFAULT,false)
             volume=0f
             trackSelectionParameters=trackSelectionParameters.buildUpon().setMaxVideoSize(640,360).setMaxVideoBitrate(900000).build()
             val item=MediaItem.Builder().setUri(ch.url);if(ch.url.contains(".m3u8",true))item.setMimeType(MimeTypes.APPLICATION_M3U8)
-            setMediaItem(item.build());prepare();play()
+            setMediaItem(item.build());prepare();playWhenReady=foreground
         }}
     }
     DisposableEffect(players){onDispose{players.filterNotNull().forEach{it.release()}}}
-    LaunchedEffect(index,players){players.forEachIndexed{i,p->p?.volume=if(i==index)1f else 0f}}
+    LaunchedEffect(index,players,foreground){players.forEachIndexed{i,p->p?.volume=if(i==index&&foreground)1f else 0f;p?.playWhenReady=foreground}}
     LaunchedEffect(Unit){withFrameNanos{};runCatching{focus.requestFocus()}}
     BackHandler{onExit()}
     TvViewport(Modifier.background(Color.Black)){u->
@@ -61,7 +64,7 @@ internal fun mosaicDirectStream(url:String):Boolean = url.startsWith("https://",
                     Column(Modifier.width(u.space(width)),horizontalAlignment=Alignment.CenterHorizontally){
                         Box(Modifier.fillMaxWidth().aspectRatio(16f/9f).border(u.space(3),if(index==i)Color.White else Color.Transparent,shape).padding(u.space(5)).clip(shape).background(Color.Black),contentAlignment=Alignment.Center){
                             if(p!=null)AndroidView(factory={ctx->PlayerView(ctx).apply{useController=false;player=p;isFocusable=false;isFocusableInTouchMode=false;descendantFocusability=android.view.ViewGroup.FOCUS_BLOCK_DESCENDANTS}},modifier=Modifier.fillMaxSize(),onRelease={it.player=null},update={it.player=p})
-                            else Copy("Stream direto indisponível",u,20,400,lines=2,align=TextAlign.Center)
+                            else if(mosaicDirectStream(ch.url)){Artwork(safeImage(ch.coverUrl),Modifier.fillMaxSize());Copy("Selecione para reproduzir",u,20,400,lines=2,align=TextAlign.Center)}else Copy("Stream direto indisponível",u,20,400,lines=2,align=TextAlign.Center)
                         }
                         Copy(ch.name+(if(index==i&&p!=null)"  •  Áudio ativo" else ""),u,20,500,Modifier.fillMaxWidth(),align=TextAlign.Center)
                     }

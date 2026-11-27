@@ -480,6 +480,10 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
     val scroll=rememberScrollState()
     val initial=u.space(((now/30)*56-230).coerceAtLeast(0))
     val density=androidx.compose.ui.platform.LocalDensity.current
+    val halfHourPx=with(density){u.space(56).roundToPx()}.coerceAtLeast(1)
+    val firstSlot by remember(scroll,halfHourPx){derivedStateOf{(scroll.value/halfHourPx-12).coerceAtLeast(0)}}
+    val lastSlot=(firstSlot+34).coerceAtMost(47)
+    var focusedSegment by remember{mutableStateOf("")}
     LaunchedEffect(prepared,current.str("id")){withFrameNanos{};runCatching{focus.requestFocus()};if(prepared!=null){scroll.scrollTo(with(density){initial.roundToPx()});withFrameNanos{};runCatching{liveFocus.requestFocus()}}}
     GlassButton(u,"",u.at(1768,148,52,52).focusRequester(focus),icon="left",onClick=onBack)
     Column(u.at(100,216,1720,654).background(Color(0xF5101113),u.round(30)).padding(u.space(14))) {
@@ -491,19 +495,20 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
         }
         Spacer(Modifier.height(u.space(8)))
         if(prepared==null||programs.isEmpty()) Box(Modifier.weight(1f).fillMaxWidth(),contentAlignment=Alignment.Center){Column(horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(18))){if(prepared==null)NativeSpinner(u,Modifier.size(u.space(52)));Copy(if(prepared==null)"Carregando programação…" else "Nenhuma programação cadastrada.",u,28,500)}} else Row(Modifier.weight(1f).verticalScroll(scroll),horizontalArrangement=Arrangement.spacedBy(u.space(12))) {
-            Column(Modifier.width(u.space(120)).background(Color(0xFF212224),u.round(18))) {
-                repeat(48){n-> Box(Modifier.height(u.space(56)).fillMaxWidth(),contentAlignment=Alignment.Center){Copy(labelMinute(n*30),u,18,700,color=if(n==now/30)Color.White else Color(0xFF8B8D94))} }
+            Box(Modifier.width(u.space(120)).height(u.space(2688)).background(Color(0xFF212224),u.round(18))) {
+                for(n in firstSlot..lastSlot){ Box(Modifier.offset(y=u.space(n*56)).height(u.space(56)).fillMaxWidth(),contentAlignment=Alignment.Center){Copy(labelMinute(n*30),u,18,700,color=if(n==now/30)Color.White else Color(0xFF8B8D94))} }
             }
             repeat(7){d->
                 val date=today.plusDays(d.toLong())
                 Box(Modifier.weight(1f).height(u.space(2688)).background(Color(0xFF171819),u.round(18))) {
-                    prepared[d].forEach{seg->
+                    prepared[d].filter{seg->seg.end>=firstSlot*30&&seg.start<=(lastSlot+1)*30||"$d:${seg.p.str("id")}:${seg.start}"==focusedSegment||d==0&&seg.p.str("id")==current.str("id")&&now in seg.start until seg.end}.forEach{seg->key(d,seg.p.str("id"),seg.start){
+                        val segmentKey="$d:${seg.p.str("id")}:${seg.start}"
                         val p=seg.p;val live=d==0&&p.str("id")==current.str("id")&&now in seg.start until seg.end
                         var focused by remember(p.str("id"),seg.start){mutableStateOf(false)}
                         val shape=u.round(20)
                         val height=((seg.end-seg.start)*56f/30-8).coerceAtLeast(35f)
                         Column(Modifier.offset(y=u.space(seg.start*56f/30)).height(u.space(height)).fillMaxWidth()
-                            .then(if(live)Modifier.focusRequester(liveFocus)else Modifier).onFocusChanged{focused=it.isFocused}
+                            .then(if(live)Modifier.focusRequester(liveFocus)else Modifier).onFocusChanged{focused=it.isFocused;if(it.isFocused)focusedSegment=segmentKey}
                             .background(if(live||focused)accentGlass(accent) else Brush.linearGradient(listOf(Color(0xFF303136),Color(0xFF202123))),shape)
                             .border(u.space(if(focused)3 else 0),if(focused)Color.White else Color.Transparent,shape)
                             .clip(shape).clickable{details=p}.padding(horizontal=u.space(15),vertical=u.space(10)),verticalArrangement=Arrangement.spacedBy(u.space(5))) {
@@ -517,7 +522,7 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
                             Spacer(Modifier.weight(1f))
                             if(height>64)Copy((if(live)"no ar • " else "")+labelMinute(seg.start)+"–"+labelMinute(seg.end),u,16,500)
                         }
-                    }
+                    }}
                 }
             }
         }
