@@ -104,13 +104,14 @@ export default function XmlLinkRow({
   }, [externalUrl]);
 
   useEffect(() => {
-    // DesktopLocalMediaSync owns feed refresh. This row only exposes the native path.
     if (!externalUrl || !supabaseUrl || !window.houseMixDesktop) return;
     let active = true;
     const parts = new URL(externalUrl).pathname.split("/").filter(Boolean);
     const slug = decodeURIComponent(parts.at(-2) || "");
     const filename = decodeURIComponent(parts.at(-1) || "");
-    // Avoid a second independent 30-second download loop overwriting local edits.
+    // DesktopLocalMediaSync owns these permanent on-air feeds. Opening the settings
+    // page must not launch an independent download of an older edition.
+    if (["geral.xml","broadcast.xml","roteiro.xml","cenarios-estudio.xml"].includes(filename)) return;
     const sync = async () => {
       try {
         const response = await fetch(supabaseUrl, { cache: "no-store", signal: AbortSignal.timeout(12000) });
