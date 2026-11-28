@@ -59,9 +59,10 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 
-@Composable internal fun NativePreroll(media:JSONObject,audio:Boolean,onStarted:()->Unit,onFinish:()->Unit,smart:Boolean=false,breakStart:Long=0L,breakDuration:Double=0.0,serverClockOffset:Long=0L,onPlayed:()->Unit={},onBack:()->Unit={},commercialPhone:String="",smartSerial:Int=0,smartActive:Boolean=true){
+@Composable internal fun NativePreroll(media:JSONObject,audio:Boolean,onStarted:()->Unit,onFinish:()->Unit,smart:Boolean=false,breakStart:Long=0L,breakDuration:Double=0.0,serverClockOffset:Long=0L,onPlayed:()->Unit={},onBack:()->Unit={},commercialPhone:String="",smartSerial:Int=0,smartActive:Boolean=true,onSaveProduct:suspend (JSONObject)->Boolean={false}){
     val context=LocalContext.current
     val finish by rememberUpdatedState(onFinish)
     val started by rememberUpdatedState(onStarted)
@@ -88,6 +89,10 @@ import org.json.JSONObject
     val showLink=safeImage(media.str("link"))!=null
     val qrEnabled=smart&&showLink&&smartActive&&!info
     var productOpen by remember(media,smartSerial){mutableStateOf(false)}
+    var productSaved by remember(media,smartSerial){mutableStateOf(false)}
+    var productBusy by remember(media,smartSerial){mutableStateOf(false)}
+    val productScope=rememberCoroutineScope()
+    fun openProduct(){productOpen=true;if(!productBusy&&!productSaved&&media.str("productDescription").isNotBlank()){productBusy=true;productScope.launch{try{productSaved=onSaveProduct(media)}finally{productBusy=false}}}}
     var qrFocused by remember{mutableStateOf(false)}
     val qrInteraction=remember{MutableInteractionSource()}
     val qrHovered by qrInteraction.collectIsHoveredAsState()
@@ -146,15 +151,15 @@ import org.json.JSONObject
             if(smart){
                 // Identity includes the playback sequence so identical links animate on every creative change.
                 val target=smartSerial to if(smartActive)smartCreativeDetails(media)else null
-                Box(Modifier.align(Alignment.BottomEnd).padding(end=u.space(105),bottom=u.space(75)).focusRequester(qrFocus).onFocusChanged{qrFocused=it.isFocused}.focusProperties{canFocus=qrEnabled;up=infoFocus;left=infoFocus}.semantics{contentDescription="Saiba mais, QR Code da publicidade"}.hoverable(qrInteraction,enabled=qrEnabled).clickable(enabled=qrEnabled){productOpen=!productOpen}){
+                Box(Modifier.align(Alignment.BottomEnd).padding(end=u.space(105),bottom=u.space(75)).focusRequester(qrFocus).onFocusChanged{qrFocused=it.isFocused}.focusProperties{canFocus=qrEnabled;up=infoFocus;left=infoFocus}.semantics{contentDescription="Saiba mais, QR Code da publicidade"}.hoverable(qrInteraction,enabled=qrEnabled).clickable(enabled=qrEnabled){openProduct()}){
                     AnimatedContent(targetState=target,contentAlignment=Alignment.BottomEnd,transitionSpec={
                         ((slideInHorizontally(tween(700,delayMillis=550,easing=FastOutSlowInEasing)){it+(120*u.pixelsPerUnit).toInt()}+fadeIn(tween(700,delayMillis=550))) togetherWith (slideOutHorizontally(tween(550,easing=FastOutSlowInEasing)){it+(120*u.pixelsPerUnit).toInt()}+fadeOut(tween(550)))).using(SizeTransform(clip=false))
                     },label="smartCreativeQr"){entry->
-                        entry.second?.let{details->if(details.hasContent)SmartMusicCard(u,details,(qrFocused||qrHovered)&&qrEnabled&&entry==target,productOpen)else if(details.link.isNotBlank())CreativeQr(u,details.link,focused=(qrFocused||qrHovered)&&qrEnabled&&entry==target,smart=true)}
+                        entry.second?.let{details->if(details.hasContent)SmartMusicCard(u,details,(qrFocused||qrHovered)&&qrEnabled&&entry==target,productOpen,productSaved)else if(details.link.isNotBlank())CreativeQr(u,details.link,focused=(qrFocused||qrHovered)&&qrEnabled&&entry==target,smart=true)}
                     }
                 }
             }else if(showLink){
-                Box(Modifier.align(Alignment.BottomEnd).padding(end=u.space(105),bottom=u.space(75))){CreativeQr(u,media.str("link"))}
+                Box(Modifier.align(Alignment.BottomEnd).padding(end=u.space(105),bottom=u.space(75))){if(media.str("productDescription").isNotBlank())Box(Modifier.clickable{openProduct()}){SmartMusicCard(u,smartCreativeDetails(media),false,productOpen,productSaved)}else CreativeQr(u,media.str("link"))}
             }
             if(smart){
                 val ring=animateFloatAsState(progress,tween(250,easing=LinearEasing),label="breakProgress")
@@ -205,8 +210,8 @@ internal data class SmartCreativeDetails(val music:Boolean,val song:String,val a
     val hasMusic:Boolean get()=song.isNotBlank()||artist.isNotBlank()||image.isNotBlank()
     val hasContent:Boolean get()=hasMusic||description.isNotBlank()||price.isNotBlank()||cta.isNotBlank()
 }
-internal fun smartCreativeDetails(media:JSONObject):SmartCreativeDetails=SmartCreativeDetails(media.str("categoryKind")=="music",media.str("song"),media.str("artist"),safeImage(media.str("artistImage")).orEmpty(),safeImage(media.str("link")).orEmpty(),media.str("productDescription"),media.str("productPrice"),media.str("buttonLabel"))
-@Composable private fun SmartMusicCard(u:TvUnits,details:SmartCreativeDetails,focused:Boolean,productOpen:Boolean=false){
+internal fun smartCreativeDetails(media:JSONObject):SmartCreativeDetails=SmartCreativeDetails(media.str("categoryKind")=="music",media.str("song"),media.str("artist"),safeImage(media.str("productImage").ifBlank{media.str("artistImage")}).orEmpty(),safeImage(media.str("link")).orEmpty(),media.str("productDescription"),media.str("productPrice"),media.str("buttonLabel"))
+@Composable private fun SmartMusicCard(u:TvUnits,details:SmartCreativeDetails,focused:Boolean,productOpen:Boolean=false,productSaved:Boolean=false){
     val shape=u.round(24)
     val ring by animateFloatAsState(if(focused)1f else 0f,tween(180),label="musicRing")
     Box(Modifier.border(u.space(3),Color.White.copy(alpha=ring),u.round(33)).padding(u.space(9))){
@@ -222,6 +227,6 @@ internal fun smartCreativeDetails(media:JSONObject):SmartCreativeDetails=SmartCr
             if(details.song.isNotBlank())Copy(details.song,u,27,700,lines=3)
             if(details.artist.isNotBlank())Copy(details.artist,u,22,500,lines=2)
         }
-        if(details.link.isNotBlank()&&(!product||productOpen))NativeQr(details.link,Modifier.size(u.space(218)).clip(u.round(8)),compact=true)
+        if(details.link.isNotBlank()&&(!product||productOpen))Column(Modifier.width(u.space(218)),verticalArrangement=Arrangement.spacedBy(u.space(8))){NativeQr(details.link,Modifier.size(u.space(218)).clip(u.round(8)),compact=true);if(product&&productSaved)Copy("Adicionado no seu carrinho",u,16,600,lines=2)}
     }}
 }
