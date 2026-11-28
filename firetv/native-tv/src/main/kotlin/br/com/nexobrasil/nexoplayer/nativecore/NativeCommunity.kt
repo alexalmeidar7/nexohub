@@ -185,7 +185,7 @@ import com.google.zxing.qrcode.QRCodeWriter
         Spacer(Modifier.height(u.space(12)))
         val item=row
         if(item!=null){
-            Column(Modifier.weight(1f,fill=true).fillMaxWidth().verticalScroll(rememberScrollState()),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(18))){
+            Column(Modifier.weight(1f,fill=true).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal=u.space(6),vertical=u.space(6)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(18))){
             if(poll)androidx.tv.material3.Text(item.str("pergunta"),style=u.referenceText(24,600),color=Color.White) else Copy("Quem merece ganhar essa batalha?",u,20,500,lines=2,align=TextAlign.Center)
             Spacer(Modifier.height(u.space(10)))
             val answers=if(poll)(1..4).map{item.str("resposta"+it)}.filter{it.isNotBlank()} else (1..2).map{item.str("artista"+it+"_musica")+" — "+item.str("artista"+it+"_nome")}
@@ -205,12 +205,12 @@ import com.google.zxing.qrcode.QRCodeWriter
             Column(Modifier.fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(10))){
                 if(poll)answers.forEachIndexed{i,answer->
                     val result=counts?.optInt(i)?.let{" · "+it+" votos"}.orEmpty()
-                    NativePollAnswer(u,(if(voted==i)"✓ " else "")+answer+result,answer,Modifier.fillMaxWidth().height(u.space(66)).then(if(i==0&&(voted<0||editing))Modifier.focusRequester(focus)else Modifier),enabled=!busy&&(voted<0||editing)){submit(i)}
+                    NativePollAnswer(u,answer+result+(if(voted==i)" · ✓ Seu voto" else ""),answer,Modifier.fillMaxWidth().height(u.space(66)).then(if(i==voted||i==0&&voted<0)Modifier.focusRequester(focus)else Modifier),enabled=!busy){if(voted!=i)submit(i)else editing=true}
                 }else Column(Modifier.fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(u.space(18))){
                     (1..2).forEach{choice->
                         var focused by remember{mutableStateOf(false)}
-                        val enabled=!busy&&(voted<0||editing);val shape=u.round(24)
-                        Box(Modifier.fillMaxWidth().height(u.space(155)).then(if(choice==1&&enabled)Modifier.focusRequester(focus)else Modifier).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=enabled}.border(u.space(if(focused)4 else if(voted==choice)2 else 0),if(focused||voted==choice)Color.White else Color.Transparent,shape).clip(shape).background(Color(0xFF242529)).clickable(enabled=enabled){submit(choice)}){
+                        val enabled=!busy;val shape=u.round(24)
+                        Box(Modifier.fillMaxWidth().height(u.space(155)).then(if((choice==voted||voted<0&&choice==1)&&enabled)Modifier.focusRequester(focus)else Modifier).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=enabled}.border(u.space(if(focused)4 else if(voted==choice)2 else 0),if(focused||voted==choice)Color.White else Color.Transparent,shape).clip(shape).background(Color(0xFF242529)).clickable(enabled=enabled){if(voted!=choice)submit(choice)else editing=true}){
                             Row(Modifier.fillMaxSize().padding(u.space(10)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(14))){
                                 Artwork(safeImage(item.str("artista"+choice+"_imagem")),Modifier.size(u.space(132)).clip(u.round(15)),scale=ContentScale.Crop)
                                 Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(u.space(6))){
@@ -218,13 +218,12 @@ import com.google.zxing.qrcode.QRCodeWriter
                                     Copy(item.str("artista"+choice+"_nome"),u,19,500,lines=2)
                                     val percent=item.optDouble("artista"+choice+"_porcentagem",Double.NaN)
                                     if(percent.isFinite()){val pct=percent.coerceIn(0.0,100.0);Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(8))){Box(Modifier.weight(1f).height(u.space(6)).clip(CircleShape).background(Color.White.copy(alpha=.16f))){Box(Modifier.fillMaxWidth((pct/100).toFloat()).fillMaxHeight().background(accent))};Copy(pct.toInt().toString()+"%",u,18,600)}}
-                                    if(voted==choice)Copy("Seu voto",u,15,500)
+                                    if(voted==choice)Copy("✓ Seu voto · mudar voto",u,15,500,color=Color(0xFF78D99B))
                                 }
                             }
                         }
                     }
                 }
-                if(voted>=0&&!editing)GlassButton(u,"Mudar meu voto",Modifier.height(u.space(60)).focusRequester(focus)){editing=true}
             }
             }
         }else if(msg.startsWith("Opa,")){
@@ -252,7 +251,7 @@ internal fun nativeChatRows(messages:List<JSONObject>,ads:List<JSONObject>):List
         androidx.tv.material3.Text(label,style=u.referenceText(22,500),color=Color.White,maxLines=1,overflow=TextOverflow.Ellipsis,onTextLayout={truncated=it.hasVisualOverflow})
         if(truncated&&(focused||hovered)){
             val gap=with(androidx.compose.ui.platform.LocalDensity.current){u.space(70).roundToPx()}
-            Popup(alignment=Alignment.TopCenter,offset=IntOffset(0,-gap),properties=PopupProperties(focusable=false,clippingEnabled=false)){
+            Popup(alignment=Alignment.CenterStart,offset=IntOffset(-gap*6,0),properties=PopupProperties(focusable=false,clippingEnabled=false)){
                 Box(Modifier.widthIn(max=u.space(430)).background(Color(0xFF303030),u.round(12)).padding(u.space(14))){androidx.tv.material3.Text(fullAnswer,style=u.referenceText(20,400),color=Color.White)}
             }
         }

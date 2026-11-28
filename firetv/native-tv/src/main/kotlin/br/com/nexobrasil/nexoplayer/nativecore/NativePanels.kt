@@ -217,7 +217,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
 }
 
 @Composable private fun NativeInteractionPanel(u:TvUnits,panel:String,track:JSONObject?,history:List<JSONObject>,loading:Boolean,error:Boolean,forecast:JSONObject?,lyrics:String?,owner:String?,accent:Color,onClose:()->Unit,services:NativeServices,account:JSONObject?,historyAd:JSONObject?,panelAd:JSONObject?,chatAds:List<JSONObject>,pinned:Boolean,onPin:()->Unit,preview:Boolean,focus:FocusRequester,panelBottom:Int){
-    Box(u.at(1350,if(preview)145 else 150,470,if(preview)620 else panelBottom-150)){
+    Box(u.at(1350,150,470,panelBottom-150)){
         Column(Modifier.fillMaxSize().clip(u.round(28)).background(interactionGlass).padding(u.space(20)),horizontalAlignment=Alignment.CenterHorizontally){
             val pinFocus=remember{FocusRequester()}
             NativeInteractionHeader(u,panel,track,history.isEmpty(),forecast?.optJSONObject("daily")?.optJSONArray("time")==null,pinned,onPin,preview,focus,onClose,pinFocus)

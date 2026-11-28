@@ -237,7 +237,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     val scheduleKey=remember(programRows){programRows.map{it.toString()}}
     val scheduleGrid by produceState<List<List<Segment>>?>(null,scheduleKey,scheduleDate){value=null;value=withContext(Dispatchers.Default){(0..6).map{d->programRows.flatMap{segments(it,scheduleDate.plusDays(d.toLong()))}}}}
     LaunchedEffect(scheduleOpening,scheduleGrid){if(scheduleOpening&&scheduleGrid!=null){withFrameNanos{};withFrameNanos{};onPanel("schedule")}}
-    val cover=track.str("capa")
+    val cover=track.str("capa").takeUnless{url->payload.rows("apresentadores").any{it.str("foto").isNotBlank()&&it.str("foto").substringBefore("?")==url.substringBefore("?")}}.orEmpty()
     val title=track.str("titulo").ifBlank{"Ao vivo"}
     val artist=track.str("artista")
     val people=remember(payload){payload.rows("apresentadores").associateBy{it.str("id")}}
@@ -246,6 +246,9 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     var presenterIndex by remember(program.str("id"),presenters.map{it.str("id")}){mutableIntStateOf(0)}
     LaunchedEffect(program.str("id"),presenters.map{it.str("id")}){if(presenters.size>1)while(true){delay(4000);presenterIndex=(presenterIndex+1)%presenters.size}}
     val activePresenter=presenters.getOrNull(presenterIndex)
+    val portraitContext=androidx.compose.ui.platform.LocalContext.current
+    val portraitUrls=presenters.map{it.str("foto")}.filter{safeImage(it)!=null}.distinct()
+    LaunchedEffect(portraitUrls){portraitUrls.forEach{url->coil.Coil.imageLoader(portraitContext).enqueue(coil.request.ImageRequest.Builder(portraitContext).data(url).size(768,972).build())}}
     val reminderContext=androidx.compose.ui.platform.LocalContext.current
     val reminderPrefs=remember{reminderContext.getSharedPreferences("native_tv_settings",0)}
     val reminderProfile=account.str("id").ifBlank{guestName}
@@ -314,10 +317,6 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                         Spacer(Modifier.height(u.space(6)))
                         ExpandableProgram(u,Modifier.focusRequester(programFocus).focusProperties{left=rail[0];right=sparkFocus;down=if(homeBannerVisible)bannerFocus else sparkFocus},loading=scheduleOpening&&!scheduleFromRail){scheduleFromRail=false;onOpen(Screen.SCHEDULE)}
                     }
-                    }
-                    // Footer shares one vertical center (912): sponsor, centered banner, interactivity.
-                    AnimatedVisibility(sponsor!=null&&!homeBackgroundAd&&(!interaction)&&(panelAllowsNavigation||panel=="cep")&&!bannerQr,modifier=u.at(55,770,283,283),enter=fadeIn(tween(450)),exit=fadeOut(tween(350))){
-                        Crossfade(sponsor,animationSpec=tween(500),label="footerSponsor"){url->if(url!=null)Artwork(url,Modifier.fillMaxSize(),scale=ContentScale.Fit)}
                     }
                     if(safeImage(banner)!=null) {
                         val model:Any?=if(banner.substringBefore("?")=="https://qazvgmgdidjhbvcuinpy.supabase.co/storage/v1/object/public/comercial/452ebd1e-61a0-42dd-bf80-231a3f426c83/player-ads/00198081-b99d-4548-8561-ff953209d17a.png") R.drawable.home_hotpark else safeImage(banner)
@@ -696,7 +695,7 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
     val shape=u.round(18)
     val interactions=remember{MutableInteractionSource()};val hovered by interactions.collectIsHoveredAsState()
     Box(modifier.size(u.space(310),u.space(175)).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=active}.hoverable(interactions).border(u.space(if(focused||hovered)4 else 0),if(focused||hovered)Color.White else Color.Transparent,shape).clip(shape).background(glass).clickable(enabled=active,onClick=onClick).semantics{contentDescription=label},contentAlignment=Alignment.Center){
-        if(image!=null)Artwork(image,Modifier.fillMaxSize(),scale=ContentScale.Fit)else Copy(label,u,24,600,align=TextAlign.Center)
+        if(image!=null)Artwork(image,Modifier.fillMaxSize(),scale=ContentScale.Fit)else if(label=="Mosaico") Row(Modifier.background(Color(0xFF26262A),u.round(18)).padding(u.space(18)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(14))){Canvas(Modifier.size(u.space(48))){val gap=size.width*.12f;val side=(size.width-gap)/2;for(y in 0..1)for(x in 0..1)drawRoundRect(if(BuildConfig.STATION_SLUG=="positivafm")Color(0xFFF20D0F)else Color.White,Offset(x*(side+gap),y*(side+gap)),Size(side,side),CornerRadius(side*.18f))};Copy(label,u,26,700)}else Copy(label,u,24,600,align=TextAlign.Center)
         if(selected)Box(Modifier.align(Alignment.TopEnd).padding(u.space(9)).background(Color(0xFFF20D0F),u.round(9)).padding(horizontal=u.space(10),vertical=u.space(4))){Copy("no ar",u,18,700)}
     }
 }

@@ -109,14 +109,14 @@ internal fun nativeProfileAvatar(url:String):Any{
     }
     BackHandler(mode!="select"||confirmLogout||confirmDelete){if(!busy){when{avatarPicker->avatarPicker=false;confirmLogout->confirmLogout=false;confirmDelete->confirmDelete=false;else->mode="select"}}}
     LaunchedEffect(mode,confirmLogout,confirmDelete){withFrameNanos{};runCatching{(if(confirmLogout||confirmDelete)cancelFocus else if(mode=="select")focus else editFocus).requestFocus()}}
-    val enter=remember{Animatable(0f)};LaunchedEffect(mode){enter.snapTo(0f);if(mode=="select")kotlinx.coroutines.delay(650);enter.animateTo(1f,tween(420))}
+    val enter=remember{Animatable(0f)};LaunchedEffect(mode){enter.snapTo(0f);enter.animateTo(1f,tween(420))}
     Box(Modifier.fillMaxSize().background(Brush.linearGradient(if(BuildConfig.STATION_SLUG=="positivafm")listOf(Color(0xFFDF1B22),Color(0xFF8D1E23),Color(0xFF111114))else listOf(accent,androidx.compose.ui.graphics.lerp(accent,Color.Black,.43f),Color(0xFF111114))))){
         Artwork(logo?:if(BuildConfig.STATION_SLUG=="positivafm")R.drawable.splash_positiva else R.drawable.splash_interativa,u.at(100,64,100,90))
         Copy(if(mode=="select")"Escolha seu perfil ou crie um novo" else if(mode=="add")"Criar novo perfil" else myStation,u,30,300,u.at(245,94,1450,60))
         if(mode=="select"){
             CompositionLocalProvider(LocalControlsEnabled provides (!confirmLogout&&!confirmDelete)){
-                Column(u.at(180,275,1100,705).graphicsLayer{alpha=enter.value;translationX=(1f-enter.value)*-u.space(36).toPx()}.verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(u.space(20))){
-                    Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))){
+                Column(u.at(180,275,1100,705).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(u.space(20))){
+                    Row(profileEntrance(u,0),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))){
                         AccountCircle(u,mainAvatar,"Entrar no perfil $mainName",Modifier.focusRequester(focus)){onSelect("");onContinue()}
                         Column(verticalArrangement=Arrangement.spacedBy(u.space(8))){
                             Copy(mainName,u,29,600,lines=2)
@@ -127,13 +127,13 @@ internal fun nativeProfileAvatar(url:String):Any{
                             }
                         }
                     }
-                    subs.forEach{sub->key(sub.str("id")){
-                        Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))){
+                    subs.forEachIndexed{index,sub->key(sub.str("id")){
+                        Row(profileEntrance(u,index+1),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))){
                             AccountCircle(u,nativeProfileAvatar(sub.str("avatar_url")),"Entrar no perfil "+sub.str("name")){onSelect(sub.str("id"));onContinue()}
                             Column(verticalArrangement=Arrangement.spacedBy(u.space(8))){Copy(sub.str("name"),u,29,600);GlassButton(u,"★  "+myStation,Modifier.height(u.space(44)),enabled=enabled){openEditor(sub)}}
                         }
                     }}
-                    Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))){
+                    Row(profileEntrance(u,subs.size+1),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))){
                         AccountCircle(u,null,"Criar novo perfil"){if(enabled)openEditor(add=true)}
                         Copy("Novo perfil",u,29,500)
                     }
@@ -229,4 +229,10 @@ private data class NativeAccountActions(val services:NativeServices,val owner:St
         Column(Modifier.weight(1f)){Copy(song.str("titulo").ifBlank{song.str("musica")},u,24,500);Copy(song.str("artista"),u,20,400)}
         GlassButton(u,"Descurtir",Modifier.height(u.space(48)).onFocusChanged{focused=it.isFocused},onClick=onUnlike)
     }
+}
+
+@Composable private fun profileEntrance(u:TvUnits,index:Int):Modifier {
+    val motion=remember{Animatable(0f)}
+    LaunchedEffect(index){motion.snapTo(0f);kotlinx.coroutines.delay(index*120L);motion.animateTo(1f,tween(280))}
+    return Modifier.graphicsLayer{alpha=motion.value;translationX=(1f-motion.value)*-u.space(30).toPx()}
 }

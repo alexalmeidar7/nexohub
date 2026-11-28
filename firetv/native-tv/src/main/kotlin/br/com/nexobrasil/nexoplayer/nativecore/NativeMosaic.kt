@@ -67,7 +67,8 @@ internal fun mosaicDirectStream(url:String):Boolean = url.startsWith("https://",
                             else if(youtubeVideoId(ch.url)!=null)NativeYoutubeEmbed(requireNotNull(youtubeVideoId(ch.url)),Modifier.fillMaxSize(),foreground&&(i==index||channels.indexOfFirst{youtubeVideoId(it.url)!=null}==i),i!=index,{}, {})
                             else if(mosaicDirectStream(ch.url)){Artwork(safeImage(ch.coverUrl),Modifier.fillMaxSize());Copy("Selecione para reproduzir",u,20,400,lines=2,align=TextAlign.Center)}else Copy("Stream direto indisponível",u,20,400,lines=2,align=TextAlign.Center)
                         }
-                        Copy(ch.name+(if(index==i&&(p!=null||youtubeVideoId(ch.url)!=null))"  •  Áudio ativo" else ""),u,20,500,Modifier.fillMaxWidth(),align=TextAlign.Center)
+                        Spacer(Modifier.height(u.space(14)))
+                        Box(Modifier.background(glass,u.round(12)).padding(horizontal=u.space(20),vertical=u.space(10))){Copy(ch.name+(if(index==i&&(p!=null||youtubeVideoId(ch.url)!=null))"  •  Áudio ativo" else ""),u,20,500,align=TextAlign.Center)}
                     }
                 }}}
             }
