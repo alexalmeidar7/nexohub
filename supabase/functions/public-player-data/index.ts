@@ -35,7 +35,7 @@ function readMusicFromDashboard(dashboardItems: Record<string, any> | null) {
       titulo: title,
       artista: dashboardItems.music_current_artist || "",
       capa: dashboardItems.music_current_cover || "",
-      duracao: Number.isFinite(Number(dashboardItems.music_current_duration)) && Number(dashboardItems.music_current_duration) > 0 ? Number(dashboardItems.music_current_duration) : undefined,
+      duracao: [dashboardItems.music_current_duration, dashboardItems.music_current_duracao].map(Number).find(n => Number.isFinite(n) && n > 0),
     } as MusicPayload,
     musicStartTime: typeof dashboardItems.music_start_time === "number"
       ? dashboardItems.music_start_time

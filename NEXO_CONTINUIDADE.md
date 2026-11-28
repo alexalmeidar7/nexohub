@@ -28,3 +28,51 @@
 ## 27/11/2026 — Cadastro Smart Break HMO/HMD (PR independente)
 
 Base main 251727f. Componente PlayerAdsPage compartilhado: categorias por emissora em dashboard_items.smart_break_categories_v1, gravação otimista sem fallback destrutivo; nomes e modelos editáveis, arquivamento lógico, sete categorias iniciais; campos e vídeo opcionais para Smart Break, foto automática com cache e URL alternativa, preço/descrição/CTA com prévia QR, múltiplos SBS de entrada/saída. Mídias e metadados existentes preservados, sem alteração de schema. Edge public-player-ads versionada a partir da v4 de produção, metadados adicionais e SBS separado do array de reprodução legado. Não implantada em produção nesta tarefa; sem alterações no app TV ou PR #327. Sorteio SBS, box real de compra e exibição de metadados serão implementados na PR de TV. Testes unitários adicionados; CI, HMO/HMD e funcionamento offline pendentes de validação. PC local não acessível, alterações feitas apenas em branch remota a partir da main.
+
+## 27/11/2026 — Nexo TV nativo, 0.1.16 (PR #327)
+
+Base remota: a5aa947 (0.1.15); correções no módulo firetv/native-tv, sem alteração de HMD/HMO, WebView ou banco. Transições de perfis e áudio, capa clicável para curtidas, patrocinador 283×283u, bandeja de vídeo abaixo do Agora com elevação por foco, contorno da publicidade, pré-carga do banner e redução de recomposição do mini-player. Smart Sync rejeita timestamps anteriores e usa dados ao vivo explicitamente não sincronizados quando não há referência temporal; Smart Audio tenta efeito de plataforma alternativo se DynamicsProcessing falhar. Adicionado teste de regressão de recuperação de metadados. Build e teste físico ainda não confirmados. Conferir na TV banners reais, sincronismo audível, nivelamento e foco antes de merge; alternativa LoudnessEnhancer não comprova paridade de normalização entre fontes.
+
+## 27/11/2026 — Nexo TV 0.1.17 (PR #327)
+
+Base ee68d38, build 0.1.16 aprovado; usuário reportou banner, diferenças de volume, Smart Break, histórico e navegação. Alterações nativas: seleção de programa pela grade local, banner fora do container animado, nivelamento PCM RMS comum, Smart Break sem bloqueio por relógio indisponível, grade sobreposta, histórico quadrado com anúncio a cada cinco faixas, teclado de busca interno, curtida de vídeo e selo de canal. Smart Sync automático desde splash; sem garantia de alinhamento para stream sem relógio ou metadados. CI e testes físicos pendentes. Nenhuma alteração de dados ou backend.
+
+## 27/11/2026 — Nexo TV 0.1.18 (PR #327)
+
+Base a25b5a5, build 0.1.17 aprovado. Home: ocultar programa, patrocinador, interatividade e degradê durante background ads; animar banner e escurecer interatividade. Pre-roll: botão pular ao lado da publicidade com seta. Smart Break: arte fornecida pelo usuário empacotada em WebP; popup com texto à direita e QR deslizante; contador e encerramento usam music_start_time e music_current_duration do House Mix via API existente (sem inventar horário quando ausente). Teste de build e TV pendentes; sem alterações no HMD/HMO/Supabase/WebView.
+
+## 27/11/2026 — Nexo TV 0.1.19 (PR #327)
+
+A função public-player-data em produção omitia music_current_duration do objeto musicData apesar do valor existir no banco. Corrigida em produção (v6) preservando JWT, consultas e demais contratos; mantido o mesmo campo no GitHub com fallback legado. No Smart Break: controles no canto superior esquerdo, contador no direito com indicação --:-- se dados ausentes, botão Voltar menor e recuado, CTA no rodapé, QR sem botão adicional e foco mantido no CTA ao alternar. Build e teste físico pendentes.
+
+### Complemento 0.1.19 — mesma PR
+
+Removido FocusRequester.Cancel experimental que bloqueava a compilação Kotlin. Smart Break mantém o container entre criativos, fade de entrada/saída de 500 ms (TextureView para vídeo), animação dos controles e QR de campanha com saída à direita e entrada sequencial a cada troca, inclusive URL repetida. Ao sair, publicidade pausa e áudio é silenciado imediatamente; CTA comercial permanece focável, sem QR adicional focável. Build e TV pendentes.
+
+## 27/11/2026 — Nexo TV 0.1.20 (PR #327)
+
+Base f1f4550, 0.1.19 instalada e contador real observado na TV. Ajustes: launcher dedicado 1280×720 sem fallback quadrado no ícone principal, mantendo artes 320×180 empacotadas como banners alternativos; selo voltamos em com progresso circular; QR publicitário fixo maior, sem foco/ampliação; retrato ancorado à base no detalhe de programa; loading apenas no botão acionado e rotação no draw; mini-player com ícones flat proporcionais e área reservada; CEP e Google compactos; coração vetorial; pré-carga de dez capas em lotes de dois, Splash limitado a oito segundos adicionais e cache de histórico; Smart Break elegível tem prioridade sobre pre-roll ao entrar nos canais. Não alterados IDs/assinatura, HMD/HMO, Supabase ou WebView. Build e teste físico pendentes; launcher do Fire OS pode usar cache próprio, e capas externas dependem da disponibilidade dos catálogos. Não há benchmark físico nesta sessão.
+
+## 27/11/2026 — Nexo TV 0.1.21 (PR #327)
+
+Base 43f4b92, v0.1.20 com CI aprovado. Smart Break nos canais de áudio e vídeo passa a utilizar exclusivamente o placement smart_break_video, inclusive na entrada direta; sem vídeo elegível, permanece a regra normal de pre-roll. Selo voltamos em com largura fixa de 330u, tempo em área fixa e progresso circular preservado. QR de campanha selecionável por D-pad com contorno branco e tamanho fixo, sem ampliação; mantém o foco entre criativos com link e volta ao botão Smart Break quando não há link. Saída pela direita em 550ms e entrada em 700ms após a saída, com easing suave. QR comercial do popup e pre-roll inalterados. Sem mudanças de banco, HMD/HMO, assinatura ou IDs. CI e validação física pendentes.
+
+## 27/11/2026 — Nexo TV 0.1.22 (PR #327)
+
+Base 1341fe7 (0.1.21, CI aprovado). Interatividade: filtrar mídia das campanhas já carregadas por programa/período, mapear letra/chat/enquete/tempo e batalha (mesmo formato poll_ads usado no OTT legado), reservar rodapé proporcional 600×240 quando há mídia, rotacionar a cada 5 min sem consultas adicionais, QR opcional para links clicáveis; batalha alinhada à direita no mesmo painel de 470u, duas opções empilhadas com foto e informações; previsão com respiro, temperatura destacada e chuva/umidade separadas. Home Background Ads: círculo no canto inferior esquerdo usa relógio monotônico e mesma duração de 10 s da exibição existente. Sem alterações HMD/HMO, Supabase, PR #330 ou categorias Smart Break. Testes unitários adicionados. CI e validação física pendentes; sem acesso à TV ou arquivos locais do usuário.
+
+## 27/11/2026 — Nexo TV 0.1.23 (PR #327)
+
+Base 55b4e75 (CI 0.1.22 aprovado). Smart Break Música: foto, título, artista e QR opcional juntos no mesmo box inferior direito, animação por criativo. Avatar Home/áudio/vídeo usa identidade Google (avatar_url/picture) com fallback; perfis autenticados conforme estrutura do OttProfiles (linhas alinhadas, Sair compacto junto ao Editar, círculo +, sem seta na seleção). Criação/edição/exclusão de subperfis usa tabela existente player_listener_profiles, JWT próprio, atualização otimista e erro explícito se servidor negar. Perfil principal edita nome e usa foto Google, sem alterar dados de autenticação. Sem alterações HMO/HMD/WebView ou schema. API public-player-ads aditiva da PR #330 necessária; publicação e verificação registradas separadamente. CI e validação física pendentes; referência WebView consultada pelo código/CSS, não executada nesta sessão. Testes de parsing adicionados.
+
+## 27/11/2026 — Nexo TV 0.1.24 (PR #327)
+
+Base dd48647, v0.1.23 CI aprovado e foto/Smart Break testados pelo usuário. Smart Break QR sem legenda, maior e anel afastado em foco/hover; avatar dos canais com anel circular externo; banners de interatividade em proporção 600:240, margem inferior reduzida e cantos comuns, chat sem rodapé publicitário com mídia intercalada a cada oito mensagens e rodízio das campanhas elegíveis; separador da letra; enquete/batalha sem conteúdo com ícones e texto do WebView; previsão com dias em português e DD/MM, peso 300, selo escuro, lista navegável e foco; batalha com capas empilhadas e porcentagens reais atualizadas da resposta do voto. Sem alterações HMD/HMO, Supabase ou WebView. Testes adicionados, build e validação física pendentes.
+
+## 27/11/2026 — Nexo TV 0.1.25 (PR #327)
+
+Base f7a5c32. Chat Ads passivo; chat do celular por rádio, visitante via sessão anônima Supabase (requer habilitação/configuração de produção), sem exigir QR de usuário logado; QR comercial com descrição/preço/CTA; foco neutro Smart Break e Background Ads; margens e histórico; perfis e pré-buffer silencioso; selo pre-roll fixo e animação; grade; Mosaico dinâmico com seleção de áudio e players liberados ao sair, limite adaptativo 360p (dependente do stream), links YouTube não são streams Media3 diretos. Sem alterações destrutivas. Validação física, deploy pairing e configuração visitante pendentes.
+
+## 27/11/2026 — Nexo TV 0.1.26 (PR #327)
+
+Base ef166ac, APK 0.1.25 CI aprovado e preservado. Performance: cache local do bootstrap/histórico, preparação de áudio limitada a 3s sem bloquear por capas, aquecimento progressivo, LoadControl por capacidade do aparelho, watchdog de reprodução contínuo, grade com janela de renderização, Mosaico limitado por memória e suspenso em background, diagnóstico pelo Menu 3 vezes. Smart Realtime experimental: sinal público já existente music-live-sync somente desperta leitura HTTP, nunca substitui a fonte oficial; três mudanças confirmadas antes de intervalo de 10s, 2s durante BREAK/final de faixa, perda de conexão, divergência ou modo manual. Nenhuma mudança no schema, HMD ou HMO. O canal existente pode não ser publicado por todas as rotinas; se não houver evidência, não reduz leitura. Metas físicas, latência, precisão ADS e economia real ainda não medidas. CI pendente.

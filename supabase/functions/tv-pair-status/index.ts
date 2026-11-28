@@ -1,9 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
-// Retorna o status de um código de pareamento SOMENTE para a própria TV
-// que criou o código (validado por tv_session_id). Substitui a leitura
-// pública direta da tabela tv_pairing_codes.
+// Retorna o status de um cÃ³digo de pareamento SOMENTE para a prÃ³pria TV
+// que criou o cÃ³digo (validado por tv_session_id). Substitui a leitura
+// pÃºblica direta da tabela tv_pairing_codes.
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   const json = (b: unknown, status = 200) =>
@@ -12,7 +12,8 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const code = typeof body?.code === "string" ? body.code.trim() : "";
     const tvSessionId = typeof body?.tvSessionId === "string" ? body.tvSessionId.trim().slice(0, 128) : "";
-    if (!/^\d{4}$/.test(code) || !tvSessionId) return json({ ok: false, reason: "invalid_params" });
+    const isToken = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(code);
+    if ((!isToken && !/^\d{4}$/.test(code)) || !tvSessionId) return json({ ok: false, reason: "invalid_params" });
 
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -42,3 +43,4 @@ Deno.serve(async (req) => {
     return json({ ok: false, reason: "server_error" });
   }
 });
+

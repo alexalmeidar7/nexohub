@@ -33,9 +33,9 @@ data class TvUnits(
 
 @OptIn(ExperimentalTextApi::class)
 private val referenceFont = FontFamily(
-    listOf(400, 450, 500, 550, 600, 700).map { weight ->
+    listOf(400, 450, 500, 550, 600, 650, 700).map { weight ->
         Font(
-            resId = R.font.ott_roboto,
+            resId = R.font.ott_montserrat,
             weight = FontWeight(weight),
             variationSettings = FontVariation.Settings(FontVariation.weight(weight)),
         )

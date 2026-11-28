@@ -149,3 +149,6 @@ verify_jwt = false # requireUser enforces JWT inside the handler
 # Public station campaign feed: validates radio id and tenant-owned public media paths.
 [functions.public-player-ads]
 verify_jwt = false
+
+[functions.nexo-tv-device]
+verify_jwt = false # handler validates device proof or user JWT
