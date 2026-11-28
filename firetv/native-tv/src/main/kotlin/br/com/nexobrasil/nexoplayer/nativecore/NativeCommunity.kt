@@ -4,6 +4,10 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -143,15 +147,19 @@ import com.google.zxing.qrcode.QRCodeWriter
     if(panel=="chat"){
         val listState=rememberLazyListState();val qrBack=remember{FocusRequester()}
         val chatRows=remember(messages,chatAds){nativeChatRows(messages,chatAds)}
-        var chatHint by remember{mutableStateOf(false)}
+        var chatFocused by remember{mutableStateOf(false)}
+        val chatInteraction=remember{MutableInteractionSource()}
+        val chatHovered by chatInteraction.collectIsHoveredAsState()
+        var dots by remember{mutableIntStateOf(1)}
+        LaunchedEffect(messages.isEmpty(),msg){if(messages.isEmpty()&&msg.startsWith("Aguardando"))while(true){delay(400);dots=dots%3+1}}
         LaunchedEffect(messages.lastOrNull()?.str("id"),chatRows.size){if(chatRows.isNotEmpty())listState.animateScrollToItem(chatRows.lastIndex)}
         LaunchedEffect(qr){withFrameNanos{};runCatching{(if(qr)qrBack else focus).requestFocus()}}
         BackHandler(qr){qr=false}
-        Copy("Chat",u,28,600)
         Box(Modifier.fillMaxWidth().weight(1f).background(Color.Black.copy(alpha=.20f),u.round(16))){
             LazyColumn(Modifier.fillMaxSize().padding(u.space(10)),state=listState,verticalArrangement=Arrangement.spacedBy(u.space(10))){
                 itemsIndexed(chatRows,key={index,row->row.key}){_,entry->val m=entry.media;if(entry.ad)NativeInteractionBanner(u,m,interactive=false)else Column(Modifier.fillMaxWidth().background(Color.White.copy(alpha=.08f),u.round(12)).padding(u.space(8))){Copy(m.str("nome"),u,19,600);Copy(m.str("message"),u,19,400,lines=5)}}
             }
+            if(messages.isEmpty()&&msg.startsWith("Aguardando")&&!qr)Box(Modifier.align(Alignment.Center).background(Color.Black.copy(alpha=.36f),u.round(14)).padding(horizontal=u.space(16),vertical=u.space(14))){Copy("Aguardando mensagens dos ouvintes"+".".repeat(dots)+" ".repeat(3-dots),u,19,300,lines=2,align=TextAlign.Center)}
             if(qr)Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.58f),u.round(16)),contentAlignment=Alignment.Center){
                 Column(horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(24))){
                     NativeQr("https://housemix.nexobrasil.net/"+BuildConfig.STATION_SLUG+"/pair?mode=chat&radio="+owner,Modifier.size(u.space(225)).clip(u.round(14)),compact=true)
@@ -160,10 +168,14 @@ import com.google.zxing.qrcode.QRCodeWriter
             }
         }
         Spacer(Modifier.height(u.space(12)))
-        if(!qr){if(chatHint&&account!=null)Copy("Digite sua mensagem no chat da sua área no celular.",u,20,400,lines=3,align=TextAlign.Center);GlassButton(u,"entrar na conversa",Modifier.height(u.space(60)).focusRequester(focus)){if(account!=null)chatHint=!chatHint else qr=true}}
+        if(!qr)Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.Start){
+            Row(Modifier.height(u.space(48)).focusRequester(focus).onFocusChanged{chatFocused=it.isFocused}.hoverable(chatInteraction).clip(u.round(24)).background(Color.White.copy(alpha=.12f)).border(u.space(if(chatFocused)2 else 0),if(chatFocused)Color.White else Color.Transparent,u.round(24)).clickable{if(account==null)qr=true}.animateContentSize().padding(horizontal=u.space(12)),verticalAlignment=Alignment.CenterVertically){
+                Symbol("chat",Modifier.size(u.space(24)))
+                if(chatFocused||chatHovered){Spacer(Modifier.width(u.space(9)));Copy("Participe do chat através da sua área no celular.",u,17,300,Modifier.width(u.space(320)),lines=2)}
+            }
+        }
     }else{
         val poll=panel=="poll"
-        Copy(if(poll)"Enquete" else "Batalha musical",u,28,600)
         Spacer(Modifier.height(u.space(12)))
         val item=row
         if(item!=null){
@@ -211,7 +223,7 @@ import com.google.zxing.qrcode.QRCodeWriter
             Box(Modifier.weight(1f).fillMaxWidth(),contentAlignment=Alignment.Center){Column(Modifier.padding(horizontal=u.space(25)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(22))){Box(Modifier.size(u.space(104)).clip(CircleShape).background(Color.White.copy(alpha=.10f)),contentAlignment=Alignment.Center){Symbol(if(poll)"poll" else "battle",Modifier.size(u.space(64)))};Copy(msg,u,24,400,lines=4,align=TextAlign.Center)}}
         }else if(msg.startsWith("Carregando")){Box(Modifier.weight(1f).fillMaxWidth(),contentAlignment=Alignment.Center){NativeSpinner(u,Modifier.size(u.space(48)))}}
     }
-    if(msg.isNotBlank()&&!msg.startsWith("Opa,")&&!(panel!="chat"&&msg.startsWith("Carregando")))Copy(msg,u,19,400,lines=3)
+    if(msg.isNotBlank()&&!msg.startsWith("Opa,")&&!msg.startsWith("Aguardando")&&!(panel!="chat"&&msg.startsWith("Carregando")))Copy(msg,u,19,400,lines=3)
     }
     LaunchedEffect(row!=null,editing,voted>=0,panel){if(panel!="chat"){withFrameNanos{};runCatching{(if(row==null)emptyFocus else focus).requestFocus()}}}
 }

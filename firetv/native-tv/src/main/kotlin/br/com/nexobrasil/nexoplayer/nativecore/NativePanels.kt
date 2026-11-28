@@ -115,7 +115,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
 @Composable private fun InputBox(u:TvUnits,value:String,onChange:(String)->Unit,placeholder:String,modifier:Modifier=Modifier,numeric:Boolean=false) {
     BasicTextField(value,onChange,modifier.clip(u.round(18)).background(Color(0xFF303030)).padding(u.space(16)),singleLine=true,textStyle=u.referenceText(23).copy(color=Color.White),cursorBrush=SolidColor(Color.White),keyboardOptions=KeyboardOptions(keyboardType=if(numeric)KeyboardType.Number else KeyboardType.Text),decorationBox={inner->Box{if(value.isEmpty())Copy(placeholder,u,23,400,color=Color.White.copy(alpha=.55f));inner()}})
 }
-@Composable internal fun NativePanel(u:TvUnits,panel:String,payload:JSONObject?,track:JSONObject?,history:List<JSONObject>,loading:Boolean,error:Boolean,forecast:JSONObject?,lyrics:String?,cep:String,api:HouseMixClient,owner:String?,accent:Color,onClose:()->Unit,onCepSaved:(String,JSONObject)->Unit,onOpen:(Screen)->Unit,services:NativeServices,account:JSONObject?,onAccount:(JSONObject)->Unit,historyAd:JSONObject?=null,panelAd:JSONObject?=null,chatAds:List<JSONObject> = emptyList()) {
+@Composable internal fun NativePanel(u:TvUnits,panel:String,payload:JSONObject?,track:JSONObject?,history:List<JSONObject>,loading:Boolean,error:Boolean,forecast:JSONObject?,lyrics:String?,cep:String,api:HouseMixClient,owner:String?,accent:Color,onClose:()->Unit,onCepSaved:(String,JSONObject)->Unit,onOpen:(Screen)->Unit,services:NativeServices,account:JSONObject?,onAccount:(JSONObject)->Unit,historyAd:JSONObject?=null,panelAd:JSONObject?=null,chatAds:List<JSONObject> = emptyList(),pinned:Boolean=false,onPin:()->Unit={},preview:Boolean=false) {
     val focus=remember(panel){FocusRequester()}
     val scope=rememberCoroutineScope()
     if(panel=="pair"){NativePairPanel(u,services,onClose,onAccount);return}
@@ -199,9 +199,19 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
             }
         }
     }else{
-        Box(u.at(1350,165,470,735)){
-            GlassButton(u,"",Modifier.align(Alignment.TopEnd).size(u.space(56)).then(if(panel=="poll"||panel=="battle"||(panel=="history"&&history.isEmpty())||(panel=="weather"&&forecast?.optJSONObject("daily")?.optJSONArray("time")==null))Modifier.focusRequester(focus)else Modifier),icon="left",onClick=onClose)
-            Column(Modifier.offset(y=u.space(75)).fillMaxWidth().height(u.space(700)).clip(u.round(28)).background(interactionGlass).padding(start=u.space(20),end=u.space(20),top=u.space(20),bottom=u.space(20)),horizontalAlignment=Alignment.CenterHorizontally){
+        Box(u.at(1350,if(preview)145 else 150,470,620)){
+            Column(Modifier.fillMaxSize().clip(u.round(28)).background(interactionGlass).padding(u.space(20)),horizontalAlignment=Alignment.CenterHorizontally){
+                Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(8))){
+                    Column(Modifier.weight(1f)){
+                        Copy(when(panel){"lyrics"->track.str("titulo").ifBlank{"Letra da música"};"chat"->"Chat";"poll"->"Enquete";"battle"->"Batalha musical";"weather"->"Previsão do tempo";"history"->"Músicas tocadas";else->panel},u,23,500,lines=2)
+                        if(panel=="lyrics")Copy(track.str("artista"),u,18,300,lines=2)
+                    }
+                    if(!preview){
+                        GlassButton(u,if(pinned)"Desafixar" else "Fixar",Modifier.height(u.space(42)),onClick=onPin)
+                        GlassButton(u,"",Modifier.size(u.space(42)).then(if(panel=="poll"||panel=="battle"||(panel=="history"&&history.isEmpty())||(panel=="weather"&&forecast?.optJSONObject("daily")?.optJSONArray("time")==null))Modifier.focusRequester(focus)else Modifier),icon="left",onClick=onClose)
+                    }
+                }
+                Spacer(Modifier.height(u.space(14)))
                 Column(Modifier.weight(1f).fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally){when(panel){
                     "history" -> {
                         var index by remember{mutableIntStateOf(0)}
@@ -213,11 +223,11 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                         LaunchedEffect(song){if(song!=null&&image.isBlank())image=resolveHistoryCover(context,song,track)}
                         if(song==null){Copy(if(loading)"Carregando músicas tocadas..." else if(error)"Histórico indisponível" else "Nenhuma música registrada.",u,23,400,lines=3)}
                         else{
-                            Box(Modifier.fillMaxWidth().height(u.space(112)),contentAlignment=Alignment.Center){AnimatedContent(index to adStep,label="historyInfo"){state->val item=history.getOrNull(state.first);Column(Modifier.fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally){Copy(if(state.second)"publicidade" else item.str("horario").take(5),u,20,400,Modifier.fillMaxWidth(),align=TextAlign.Center);if(!state.second){Copy(item.str("musica").uppercase(),u,25,700,Modifier.fillMaxWidth(),lines=2,align=TextAlign.Center);Copy(item.str("artista").uppercase(),u,20,400,Modifier.fillMaxWidth(),lines=2,align=TextAlign.Center)}}}}
+                            Box(Modifier.fillMaxWidth().height(u.space(96)),contentAlignment=Alignment.Center){AnimatedContent(index to adStep,label="historyInfo"){state->val item=history.getOrNull(state.first);Column(Modifier.fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally){Copy(if(state.second)"publicidade" else item.str("horario").take(5),u,20,400,Modifier.fillMaxWidth(),align=TextAlign.Center);if(!state.second){Copy(item.str("musica").uppercase(),u,25,700,Modifier.fillMaxWidth(),lines=2,align=TextAlign.Center);Copy(item.str("artista").uppercase(),u,20,400,Modifier.fillMaxWidth(),lines=2,align=TextAlign.Center)}}}}
                             Spacer(Modifier.weight(1f))
                             GlassButton(u,"",Modifier.size(u.space(46)),icon="up"){move(-1)}
                             Spacer(Modifier.height(u.space(14)))
-                            Box(Modifier.size(u.space(340)).clip(u.round(18)).background(Color.White.copy(alpha=.06f)),contentAlignment=Alignment.Center){
+                            Box(Modifier.size(u.space(235)).clip(u.round(18)).background(Color.White.copy(alpha=.06f)),contentAlignment=Alignment.Center){
                                 if(adStep){Artwork(safeImage(historyAd.str("url")),Modifier.fillMaxSize(),scale=ContentScale.Fit)}else NativeLike(u,services,account,owner.orEmpty(),song.str("musica"),song.str("artista"),image,Modifier.fillMaxSize())
                             }
                             Spacer(Modifier.height(u.space(14)))
@@ -247,7 +257,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                                 var focused by remember{mutableStateOf(false)}
                                 val date=forecastDayLabel(dates.optString(i))
                                 val shape=u.round(15)
-                                Row((if(i==0)Modifier.focusRequester(focus)else Modifier).fillMaxWidth().height(u.space(55)).onFocusChanged{focused=it.isFocused}.clip(shape).background(Color.White.copy(alpha=.08f)).border(u.space(if(focused)2.5f else 0f),if(focused)Color.White else Color.Transparent,shape).focusable().padding(horizontal=u.space(9)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(7))){
+                                Row((if(i==0&&!preview)Modifier.focusRequester(focus)else Modifier).fillMaxWidth().height(u.space(55)).onFocusChanged{focused=it.isFocused}.clip(shape).background(Color.White.copy(alpha=.08f)).border(u.space(if(focused)2.5f else 0f),if(focused)Color.White else Color.Transparent,shape).focusable(enabled=!preview).padding(horizontal=u.space(9)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(7))){
                                     Row(Modifier.width(u.space(108)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(5))){NativeWeatherIcon(code,Modifier.size(u.space(36)));Copy(date.first,u,18,500)}
                                     Box(Modifier.weight(1f),contentAlignment=Alignment.Center){Box(Modifier.background(Color.Black.copy(alpha=.28f),androidx.compose.foundation.shape.CircleShape).padding(horizontal=u.space(10),vertical=u.space(6))){Copy(date.second,u,16,300,align=TextAlign.Center)}}
                                     Copy((min?.takeIf{it.isFinite()}?.toInt()?.toString()?:"--")+"° / "+(max?.takeIf{it.isFinite()}?.toInt()?.toString()?:"--")+"°",u,18,500,Modifier.width(u.space(100)),align=TextAlign.End)
@@ -256,7 +266,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                         }
                     }
                     "lyrics" -> {
-                        Copy(track.str("titulo"),u,25,600,lines=2);Copy(track.str("artista"),u,20)
+                        // Track title and artist are displayed in the common header.
                         Spacer(Modifier.height(u.space(13)))
                         Box(Modifier.fillMaxWidth().height(u.space(1)).background(Color.White.copy(alpha=.28f)))
                         Spacer(Modifier.height(u.space(14)))
@@ -269,11 +279,11 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                         if(owner!=null)NativeCommunity(u,panel,owner,services,account,chatAds,accent,focus) else Copy("Emissora indisponível.",u,23)
                     }
                 }}
-                if(panel!="history"&&panel!="chat"&&safeImage(panelAd.str("url"))!=null){Spacer(Modifier.height(u.space(4)));NativeInteractionBanner(u,panelAd)}
+                if(panel!="history"&&panel!="chat"&&safeImage(panelAd.str("url"))!=null){Spacer(Modifier.height(u.space(8)));NativeInteractionBanner(u,panelAd,interactive=!preview)}
             }
         }
     }
-    LaunchedEffect(panel,loading,history.isNotEmpty(),forecast!=null){if(panel!="chat"&&panel!="poll"&&panel!="battle")runCatching{focus.requestFocus()}}
+    LaunchedEffect(panel,loading,history.isNotEmpty(),forecast!=null){if(!preview&&!pinned&&panel!="chat"&&panel!="poll"&&panel!="battle")runCatching{focus.requestFocus()}}
 }
 
 

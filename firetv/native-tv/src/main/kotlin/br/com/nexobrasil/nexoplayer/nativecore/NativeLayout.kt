@@ -179,7 +179,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     onRetry:()->Unit,onToggle:()->Unit,onBack:()->Unit,onOpen:(Screen)->Unit,onChannel:(Int)->Unit,onVideo:(StationChannel)->Unit,onMosaic:()->Unit,
     onInteraction:()->Unit,onNotice:(String?)->Unit,leavingScreen:Boolean,onVideoTrayFocus:(Boolean)->Unit,
     entryPending:Boolean,guestName:String,guestAvatar:Int,displayAvatar:Any,mainProfileName:String,mainAvatar:Any,listenerProfile:JSONObject?,onListenerProfile:(JSONObject)->Unit,onSelectProfile:(String)->Unit,onGuestSave:(String,Int)->Unit,onProfileContinue:()->Unit,
-    spectrum:PcmSpectrum,panel:String?,forecast:JSONObject?,lyrics:String?,cep:String,api:HouseMixClient,services:NativeServices,account:JSONObject?,onAccount:(JSONObject)->Unit,onLogout:()->Unit,onPanel:(String?)->Unit,onCepSaved:(String,JSONObject)->Unit,scheduleOpening:Boolean,interactionReturn:Int,channelOpening:Screen?,syncStatus:SyncStatus,manualSync:Long?,onSaveSync:(Long?)->Unit,onCalibrateSync:()->Unit,canCalibrateSync:Boolean
+    spectrum:PcmSpectrum,panel:String?,panelPinned:Boolean,onPin:()->Unit,forecast:JSONObject?,lyrics:String?,cep:String,api:HouseMixClient,services:NativeServices,account:JSONObject?,onAccount:(JSONObject)->Unit,onLogout:()->Unit,onPanel:(String?)->Unit,onCepSaved:(String,JSONObject)->Unit,scheduleOpening:Boolean,interactionReturn:Int,channelOpening:Screen?,syncStatus:SyncStatus,manualSync:Long?,onSaveSync:(Long?)->Unit,onCalibrateSync:()->Unit,canCalibrateSync:Boolean
 ) {
     val accent = remember(payload) {
         val colors=payload?.optJSONObject("playerColors")
@@ -193,7 +193,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     LaunchedEffect(screen,leavingScreen){screenMotion.animateTo(if(leavingScreen)0f else 1f,tween(if(leavingScreen)220 else 420))}
     val trayFocus=remember{FocusRequester()}
     var trayOpen by remember(screen){mutableStateOf(false)}
-    LaunchedEffect(screen,controls,panel,interaction){if(screen!=Screen.VIDEO||!controls||panel!=null||interaction){trayOpen=false;onVideoTrayFocus(false)}}
+    LaunchedEffect(screen,controls,panel,interaction,panelPinned){if(screen!=Screen.VIDEO||!controls||(panel!=null&&!panelPinned)||interaction){trayOpen=false;onVideoTrayFocus(false)}}
     val rail=remember{List(5){FocusRequester()}}
     val programFocus=remember{FocusRequester()}
     val searchFocus=remember{FocusRequester()}
@@ -204,7 +204,9 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     val sparkFocus=remember{FocusRequester()}
     val bannerFocus=remember{FocusRequester()}
     val likeFocus=remember{FocusRequester()}
-    val modal=panel!=null||notice!=null||interaction
+    val modal=(panel!=null&&!panelPinned)||notice!=null||interaction
+    var clockPeek by remember(screen){mutableStateOf(false)}
+    val panelAllowsNavigation=panel==null||panelPinned||panel=="schedule"
     val scheduleOverlay=panel=="schedule"
     var scheduleFromRail by remember{mutableStateOf(false)}
     val scheduleFocus=remember{FocusRequester()}
@@ -228,7 +230,8 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     val scheduleDate=LocalDate.now(brasilia)
     val programRows=remember(payload){payload.rows("programas")}
     val scheduleKey=remember(programRows){programRows.map{it.toString()}}
-    val scheduleGrid by produceState<List<List<Segment>>?>(null,scheduleKey,scheduleDate){value=withContext(Dispatchers.Default){(0..6).map{d->programRows.flatMap{segments(it,scheduleDate.plusDays(d.toLong()))}}}}
+    val scheduleGrid by produceState<List<List<Segment>>?>(null,scheduleKey,scheduleDate){value=null;value=withContext(Dispatchers.Default){(0..6).map{d->programRows.flatMap{segments(it,scheduleDate.plusDays(d.toLong()))}}}}
+    LaunchedEffect(scheduleOpening,scheduleGrid){if(scheduleOpening&&scheduleGrid!=null){withFrameNanos{};withFrameNanos{};onPanel("schedule")}}
     val cover=track.str("capa")
     val title=track.str("titulo").ifBlank{"Ao vivo"}
     val artist=track.str("artista")
@@ -273,7 +276,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
             } else {
                 CompositionLocalProvider(LocalControlsEnabled provides (!modal&&!leavingScreen&&!homeBackgroundAd&&!homeFocusSuppressed)) {
                 Box(Modifier.fillMaxSize().graphicsLayer{alpha=screenMotion.value;translationY=(1f-screenMotion.value)*u.space(18).toPx()}){
-                if(!watch && screen!=Screen.PROFILE) Header(u,logo,title,artist,cover,playing,accent,screen,weather,if(screen==Screen.HOME) Modifier.focusRequester(focus).focusProperties{down=rail[0];right=searchFocus} else Modifier,spectrum,onToggle,{onOpen(Screen.SEARCH)},{onPanel("cep")},Modifier.focusRequester(searchFocus).focusProperties{if(screen==Screen.HOME)left=focus;right=clockFocus},Modifier.focusRequester(clockFocus).focusProperties{left=searchFocus;down=if(homeBackgroundAd)rail[0] else sparkFocus})
+                if(!watch && screen!=Screen.PROFILE) Header(u,logo,title,artist,cover,playing,accent,screen,weather,if(screen==Screen.HOME) Modifier.focusRequester(focus).focusProperties{down=rail[0];right=searchFocus} else Modifier,spectrum,onToggle,{onOpen(Screen.SEARCH)},{onPanel("cep")},Modifier.focusRequester(searchFocus).focusProperties{if(screen==Screen.HOME)left=focus;right=clockFocus},Modifier.focusRequester(clockFocus).focusProperties{left=searchFocus;down=if(homeBackgroundAd)rail[0] else sparkFocus},onClockPeek={clockPeek=it})
                 if(screen==Screen.HOME) {
                     val programLeft = 265f
                     Box(u.at(96,254,102,432).background(glass,CircleShape).border(u.space(1),Color.White.copy(alpha=.16f),CircleShape))
@@ -297,7 +300,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                     }
                     }
                     // Footer shares one vertical center (912): sponsor, centered banner, interactivity.
-                    AnimatedVisibility(sponsor!=null&&!homeBackgroundAd&&(!interaction)&&(panel==null||scheduleOverlay||panel=="cep")&&!bannerQr,modifier=u.at(55,770,283,283),enter=fadeIn(tween(450)),exit=fadeOut(tween(350))){
+                    AnimatedVisibility(sponsor!=null&&!homeBackgroundAd&&(!interaction)&&(panelAllowsNavigation||panel=="cep")&&!bannerQr,modifier=u.at(55,770,283,283),enter=fadeIn(tween(450)),exit=fadeOut(tween(350))){
                         Crossfade(sponsor,animationSpec=tween(500),label="footerSponsor"){url->if(url!=null)Artwork(url,Modifier.fillMaxSize(),scale=ContentScale.Fit)}
                     }
                     if(safeImage(banner)!=null) {
@@ -332,21 +335,21 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                         }
                     }
                     if(screen==Screen.AUDIO||controls||chrome>.01f) {
-                        WatchHeader(u,logo,stationName,screen,accent,weather,if(screen==Screen.VIDEO) chrome else 1f,controls||screen==Screen.AUDIO,displayAvatar,{onOpen(Screen.PROFILE)},{onPanel("cep")},Modifier.focusRequester(clockFocus).focusProperties{down=likeFocus;left=likeFocus})
+                        WatchHeader(u,logo,stationName,screen,accent,weather,if(screen==Screen.VIDEO) chrome else 1f,controls||screen==Screen.AUDIO,displayAvatar,{onOpen(Screen.PROFILE)},{onPanel("cep")},Modifier.focusRequester(clockFocus).focusProperties{down=likeFocus;left=likeFocus},onClockPeek={clockPeek=it})
                     }
                     if(screen==Screen.VIDEO && chrome>.01f && title!="Ao vivo") {
                         NativeLike(u,services,account,station?.ownerId.orEmpty(),title,artist,cover,u.at(134,455,850,165).alpha(chrome),Modifier.focusRequester(likeFocus).focusProperties{down=focus;right=clockFocus},videoStyle=true,enabled=controls)
                     }
-                    if(screen==Screen.AUDIO && !interaction && (panel==null||scheduleOverlay)) Crossfade(sponsor,modifier=u.at(1537,636,283,283),animationSpec=tween(350),label="audioSponsor"){url->if(url!=null)Artwork(url,Modifier.fillMaxSize(),scale=ContentScale.Fit)}
+                    if(screen==Screen.AUDIO && !interaction && panelAllowsNavigation) Crossfade(sponsor,modifier=u.at(1537,636,283,283),animationSpec=tween(350),label="audioSponsor"){url->if(url!=null)Artwork(url,Modifier.fillMaxSize(),scale=ContentScale.Fit)}
                     val hasTray=screen==Screen.VIDEO&&(video.size>1||BuildConfig.STATION_SLUG=="positivafm")
                     val lift by animateDpAsState(u.space(if(hasTray&&trayOpen)145 else 0),tween(340),label="trayLift")
                     val trayY by animateDpAsState(u.space(if(trayOpen)875 else 1038),tween(340),label="trayY")
                     val programX by animateDpAsState(u.space(if(screen==Screen.AUDIO&&!controls)100 else 280),tween(350),label="programX")
-                    if(!interaction && (panel==null||scheduleOverlay) && (screen==Screen.AUDIO || chrome>.01f)) Row(Modifier.offset(programX,u.space(928)-lift).width(u.space(900)).height(u.space(85)).alpha(if(screen==Screen.VIDEO)chrome else 1f),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(15))) {
+                    if(!interaction && panelAllowsNavigation && (screen==Screen.AUDIO || chrome>.01f)) Row(Modifier.offset(programX,u.space(928)-lift).width(u.space(900)).height(u.space(85)).alpha(if(screen==Screen.VIDEO)chrome else 1f),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(15))) {
                         Badge(u,"Agora",accent)
                         Column { Copy(program.str("nome"),u,26,700);Copy(program.str("horario_inicio").take(5)+" – "+program.str("horario_fim").take(5)+"   "+presenter.str("nome"),u,18) }
                     }
-                    if(chrome>.01f && (panel==null||scheduleOverlay)) {
+                    if(chrome>.01f && panelAllowsNavigation) {
                         GlassButton(u,"",u.at(100,936,40,40).offset(y=-lift).alpha(chrome).focusRequester(backFocus).focusProperties{right=focus},icon="left",enabled=controls){onBack()}
                         GlassButton(u,"",u.at(160,912,88,88).offset(y=-lift).alpha(chrome).focusRequester(focus).focusProperties{left=backFocus;up=channelUp;down=channelDown;right=sparkFocus},icon=if(playing)"pause" else "play",enabled=controls){onToggle()}
                         GlassButton(u,"",u.at(184,854,40,40).offset(y=-lift).alpha(chrome).focusRequester(channelUp).focusProperties{down=focus;right=if(title!="Ao vivo"||screen==Screen.AUDIO)likeFocus else sparkFocus;up=if(title!="Ao vivo"||screen==Screen.AUDIO)likeFocus else sparkFocus},icon="up",enabled=controls){onChannel(-1)}
@@ -367,7 +370,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                             }
                         }
                     }
-                    if((panel==null||scheduleOverlay) && (screen==Screen.AUDIO || chrome>.01f)) GlassButton(u,"",u.at(1744,922,64,64).offset(y=-lift).alpha(if(screen==Screen.VIDEO)chrome else 1f).focusRequester(sparkFocus).focusProperties{left=programFocus;up=if(screen==Screen.AUDIO||title!="Ao vivo")likeFocus else clockFocus;down=if(hasTray)trayFocus else FocusRequester.Default},icon="spark",enabled=screen==Screen.AUDIO||controls){onInteraction()}
+                    if(panelAllowsNavigation && (screen==Screen.AUDIO || chrome>.01f)) GlassButton(u,"",u.at(1744,922,64,64).offset(y=-lift).alpha(if(screen==Screen.VIDEO)chrome else 1f).focusRequester(sparkFocus).focusProperties{left=programFocus;up=if(screen==Screen.AUDIO||title!="Ao vivo")likeFocus else clockFocus;down=if(hasTray)trayFocus else FocusRequester.Default},icon="spark",enabled=screen==Screen.AUDIO||controls){onInteraction()}
                     playerError?.let { Copy(it,u,25,500,u.at(100,800,900,50)) }
                 }
                 if(screen==Screen.SCHEDULE) Schedule(u,payload,program,accent,focus,onBack,account.str("id").ifBlank{guestName},scheduleGrid)
@@ -387,8 +390,11 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                 }
                 }
                 }
-                if(interaction && panel==null&&!homeBackgroundAd) InteractionCards(u, {onPanel(it)}, onInteraction,sparkFocus,screen==Screen.HOME)
-                if(scheduleOverlay){Box(Modifier.fillMaxSize()){Schedule(u,payload,program,accent,scheduleFocus,{onPanel(null)},account.str("id").ifBlank{guestName},scheduleGrid)}} else if(panel!=null) NativePanel(u,panel,payload,track,history,historyLoading,historyError,forecast,lyrics,cep,api,station?.ownerId,accent,{onPanel(null)},onCepSaved,onOpen,services,account,onAccount,historyAd,panelAd,chatAds)
+                if(interaction && (panel==null||panelPinned)&&!homeBackgroundAd) InteractionCards(u, {onPanel(it)}, onInteraction,sparkFocus,screen==Screen.HOME)
+                if(scheduleOverlay){Box(Modifier.fillMaxSize()){Schedule(u,payload,program,accent,scheduleFocus,{onPanel(null)},account.str("id").ifBlank{guestName},scheduleGrid)}} else if(panel!=null && (!panelPinned||screen in listOf(Screen.HOME,Screen.AUDIO,Screen.VIDEO))) NativePanel(u,panel,payload,track,history,historyLoading,historyError,forecast,lyrics,cep,api,station?.ownerId,accent,{onPanel(null)},onCepSaved,onOpen,services,account,onAccount,historyAd,panelAd,chatAds,pinned=panelPinned,onPin=onPin)
+                if(clockPeek&&cep.length==8&&panel==null&&!interaction&&notice==null&&screen!=Screen.PROFILE){
+                    NativePanel(u,"weather",payload,track,history,historyLoading,historyError,forecast,lyrics,cep,api,station?.ownerId,accent,{},onCepSaved,onOpen,services,account,onAccount,preview=true)
+                }
 
             }
             if(reminderText.isNotBlank()) Box(u.at(580,170,760,72).background(glass,u.round(24)).padding(u.space(15)),contentAlignment=Alignment.Center){Copy(reminderText,u,24,600)}
@@ -406,20 +412,25 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
 @Composable private fun Badge(u:TvUnits,label:String,accent:Color,compact:Boolean=false) {
     Box(Modifier.background(accentGlass(accent),u.round(if(compact)10 else 13)).border(u.space(1),Color.White.copy(alpha=.25f),u.round(if(compact)10 else 13)).padding(horizontal=u.space(if(compact)13 else 15),vertical=u.space(if(compact)5 else 6))) { Copy(label,u,if(compact)15 else 21,650) }
 }
-@Composable private fun Clock(u:TvUnits,modifier:Modifier,weather:JSONObject?,onClick:()->Unit) {
+@Composable private fun Clock(u:TvUnits,modifier:Modifier,weather:JSONObject?,onPeek:(Boolean)->Unit,onClick:()->Unit) {
     var clock by remember { mutableStateOf(LocalTime.now(brasilia)) }
     LaunchedEffect(Unit){while(true){clock=LocalTime.now(brasilia);delay(15000)}}
     val temp=weather?.opt("temperature_2m") as? Number
     val weatherCode=(weather?.opt("weather_code") as? Number)?.toInt()
     var focused by remember { mutableStateOf(false) }
     val active=LocalControlsEnabled.current
-    Row(modifier.clip(CircleShape).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=active}.background(glass,CircleShape).border(u.space(if(focused)3 else 1),Color.White.copy(alpha=if(focused)1f else .17f),CircleShape).clickable(enabled=active,onClick=onClick).semantics{contentDescription="Configurar previsão do tempo pelo CEP"},horizontalArrangement=Arrangement.Center,verticalAlignment=Alignment.CenterVertically){
+    val clockInteraction=remember{MutableInteractionSource()}
+    val hovered by clockInteraction.collectIsHoveredAsState()
+    LaunchedEffect(active,focused,hovered){onPeek(active&&(focused||hovered))}
+    val latestPeek by rememberUpdatedState(onPeek)
+    DisposableEffect(Unit){onDispose{latestPeek(false)}}
+    Row(modifier.clip(CircleShape).hoverable(clockInteraction,enabled=active).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=active}.background(glass,CircleShape).border(u.space(if(focused)3 else 1),Color.White.copy(alpha=if(focused)1f else .17f),CircleShape).clickable(enabled=active,onClick=onClick).semantics{contentDescription="Configurar previsão do tempo pelo CEP"},horizontalArrangement=Arrangement.Center,verticalAlignment=Alignment.CenterVertically){
         Copy(clock.format(DateTimeFormatter.ofPattern("HH:mm")),u,29,400)
         run {Spacer(Modifier.width(u.space(12)));Copy("|",u,22,400,color=Color.White.copy(alpha=.55f));Spacer(Modifier.width(u.space(12)));NativeWeatherIcon(weatherCode?:-1,Modifier.size(u.space(34)),isDay=weather?.optInt("is_day",1)!=0);Spacer(Modifier.width(u.space(8)));Copy(temp?.let{kotlin.math.round(it.toDouble()).toInt().toString()+"°"}?:"--°",u,28,400)}
     }
 }
 @OptIn(ExperimentalFoundationApi::class)
-@Composable private fun Header(u:TvUnits,logo:String?,title:String,artist:String,cover:String,playing:Boolean,accent:Color,screen:Screen,weather:JSONObject?,trackFocus:Modifier,spectrum:PcmSpectrum,onToggle:()->Unit,onSearch:()->Unit,onCep:()->Unit,searchModifier:Modifier=Modifier,clockModifier:Modifier=Modifier) {
+@Composable private fun Header(u:TvUnits,logo:String?,title:String,artist:String,cover:String,playing:Boolean,accent:Color,screen:Screen,weather:JSONObject?,trackFocus:Modifier,spectrum:PcmSpectrum,onToggle:()->Unit,onSearch:()->Unit,onCep:()->Unit,searchModifier:Modifier=Modifier,clockModifier:Modifier=Modifier,onClockPeek:(Boolean)->Unit={}) {
     Artwork(logo,u.at(100,63,90,90))
     var focused by remember { mutableStateOf(false) }
     val shape=u.round(16)
@@ -434,14 +445,14 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
         }
     }
     GlassButton(u,"",u.at(1512,76,56,56).then(searchModifier),icon="search",onClick=onSearch)
-    Clock(u,u.at(1592,76,230,56).then(clockModifier),weather,onCep)
+    Clock(u,u.at(1592,76,230,56).then(clockModifier),weather,onClockPeek,onCep)
 }
-@Composable private fun WatchHeader(u:TvUnits,logo:String?,name:String,screen:Screen,accent:Color,weather:JSONObject?,alpha:Float,enabled:Boolean,guestAvatar:Any,onProfile:()->Unit,onCep:()->Unit,clockModifier:Modifier=Modifier) {
+@Composable private fun WatchHeader(u:TvUnits,logo:String?,name:String,screen:Screen,accent:Color,weather:JSONObject?,alpha:Float,enabled:Boolean,guestAvatar:Any,onProfile:()->Unit,onCep:()->Unit,clockModifier:Modifier=Modifier,onClockPeek:(Boolean)->Unit={}) {
     Row(u.at(100,76,1000,64).alpha(alpha),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(25))) {
         Artwork(logo,Modifier.size(u.space(70),u.space(60)));Copy(name,u,22,500);Badge(u,if(screen==Screen.VIDEO)"Vídeo" else "Áudio",accent)
     }
     Copy("• AO VIVO",u,20,600,u.at(1350,91,135,44).alpha(alpha))
-    Clock(u,u.at(1485,76,240,62).alpha(alpha).then(clockModifier),weather,onCep)
+    Clock(u,u.at(1485,76,240,62).alpha(alpha).then(clockModifier),weather,onClockPeek,onCep)
     var avatarFocused by remember{mutableStateOf(false)}
     val avatarInteraction=remember{MutableInteractionSource()}
     val avatarHovered by avatarInteraction.collectIsHoveredAsState()
@@ -569,7 +580,7 @@ private fun segments(p:JSONObject,date:LocalDate):List<Segment>{
         listOf(accent,androidx.compose.ui.graphics.lerp(accent,Color.Black,.43f),Color(0xFF111114))))) {
         Artwork(logo?:if(BuildConfig.STATION_SLUG=="positivafm")R.drawable.splash_positiva else R.drawable.splash_interativa,u.at(100,64,100,90))
         if(!editing) {
-            Copy(if(account==null)"Entre com sua conta Google para uma melhor experiência" else "Escolha seu perfil",u,30,500,u.at(265,80,1540,60))
+            Copy(if(account==null)"Entre com sua conta Google para uma melhor experiência" else "Escolha seu perfil",u,30,300,u.at(245,94,1540,60))
             Row(u.at(180,280,1100,160).graphicsLayer{alpha=firstMotion.value;translationX=(1f-firstMotion.value)*-u.space(36).toPx()},verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))) {
                 ProfileCircle(u,Modifier.focusRequester(focus),safeImage(account?.optJSONObject("user_metadata").str("avatar_url"))?:guestAvatar,"Continuar como $guestName",onContinue)
                 Column(verticalArrangement=Arrangement.spacedBy(u.space(8))) {

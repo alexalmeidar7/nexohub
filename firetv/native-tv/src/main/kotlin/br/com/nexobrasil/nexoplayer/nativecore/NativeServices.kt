@@ -106,7 +106,7 @@ internal class NativeServices(private val api:HouseMixClient,context:Context) {
     private fun listenerFilter(owner:String,user:String)=mapOf("auth_user_id" to "eq."+user,"radio_user_id" to "eq."+owner)
     suspend fun listenerProfile(owner:String,user:String):JSONObject?{
         val token=access()?:error("Conecte sua conta Google.")
-        val rows=request(listOf("rest","v1","player_listener_profiles"),listenerFilter(owner,user)+mapOf("select" to "nome,avatar_url,sub_profiles,updated_at","limit" to "1"),token=token) as? JSONArray
+        val rows=request(listOf("rest","v1","player_listener_profiles"),listenerFilter(owner,user)+mapOf("select" to "nome,avatar_url,sub_profiles,updated_at,cidade,estado","limit" to "1"),token=token) as? JSONArray
         return rows?.optJSONObject(0)
     }
     suspend fun updateListenerProfile(owner:String,user:String,change:(JSONObject?)->JSONObject):JSONObject{
@@ -129,6 +129,11 @@ internal class NativeServices(private val api:HouseMixClient,context:Context) {
     suspend fun chat(owner:String):List<JSONObject>{
         val a=request(listOf("rest","v1","player_chat_messages"),mapOf("select" to "id,nome,message,avatar_url,created_at","channel_id" to "eq.radio-"+owner.lowercase(),"created_at" to "gte."+java.time.Instant.now().minusSeconds(86400).toString(),"order" to "created_at.desc","limit" to "40"),token=access()) as? JSONArray
         return (0 until (a?.length()?:0)).mapNotNull{a?.optJSONObject(it)}.reversed()
+    }
+    suspend fun listAccountLikes(owner:String,user:String):List<JSONObject>{
+        val token=access()?:error("Conecte sua conta Google.")
+        val a=request(listOf("rest","v1","music_likes"),mapOf("radio_user_id" to "eq."+owner,"user_id" to "eq."+user,"select" to "id,titulo,musica,artista,capa,created_at","order" to "created_at.desc","limit" to "100"),token=token) as? JSONArray
+        return (0 until (a?.length()?:0)).mapNotNull{a?.optJSONObject(it)}
     }
     private fun likeQuery(owner:String,user:String,title:String,artist:String)=mapOf("radio_user_id" to "eq."+owner,"user_id" to "eq."+user,"titulo" to "eq."+title,"artista" to "eq."+artist)
     suspend fun liked(owner:String,user:String,title:String,artist:String):Boolean{
