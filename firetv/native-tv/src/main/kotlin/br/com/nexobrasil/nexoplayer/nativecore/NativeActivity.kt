@@ -452,6 +452,8 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
         }}finally{wake?.close()}
     }
     LaunchedEffect(station?.ownerId,incomingTrack.str("titulo"),incomingTrack.str("artista"),incomingStart){
+        // Allow the metadata transition to finish before fetching the full station payload.
+        delay(1000)
         val owner=station?.ownerId?:return@LaunchedEffect
         val title=incomingTrack.str("titulo");val artist=incomingTrack.str("artista");val start=incomingStart
         if(title.isBlank())return@LaunchedEffect

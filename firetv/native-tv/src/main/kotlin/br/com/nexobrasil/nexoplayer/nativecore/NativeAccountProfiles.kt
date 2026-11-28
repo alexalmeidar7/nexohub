@@ -73,6 +73,8 @@ internal fun nativeProfileAvatar(url:String):Any{
     var avatar by remember{mutableStateOf("/avatars/usr-default.png")}
     var busy by remember{mutableStateOf(false)}
     var message by remember{mutableStateOf("")}
+    var mobileQr by remember{mutableStateOf(false)}
+    val mobileFocus=remember{FocusRequester()}
     var confirmLogout by remember{mutableStateOf(false)}
     var confirmDelete by remember{mutableStateOf(false)}
     var showLikes by remember{mutableStateOf(false)}
@@ -107,14 +109,14 @@ internal fun nativeProfileAvatar(url:String):Any{
             }catch(e:CancellationException){throw e}catch(e:Exception){message=e.message?:"Não foi possível salvar o perfil.";confirmDelete=false}finally{busy=false}
         }
     }
-    BackHandler(mode!="select"||confirmLogout||confirmDelete){if(!busy){when{avatarPicker->avatarPicker=false;confirmLogout->confirmLogout=false;confirmDelete->confirmDelete=false;else->mode="select"}}}
+    BackHandler(mode!="select"||confirmLogout||confirmDelete||mobileQr){if(!busy){when{mobileQr->mobileQr=false;avatarPicker->avatarPicker=false;confirmLogout->confirmLogout=false;confirmDelete->confirmDelete=false;else->mode="select"}}}
     LaunchedEffect(mode,confirmLogout,confirmDelete){withFrameNanos{};runCatching{(if(confirmLogout||confirmDelete)cancelFocus else if(mode=="select")focus else editFocus).requestFocus()}}
     val enter=remember{Animatable(0f)};LaunchedEffect(mode){enter.snapTo(0f);enter.animateTo(1f,tween(420))}
     Box(Modifier.fillMaxSize().background(Brush.linearGradient(if(BuildConfig.STATION_SLUG=="positivafm")listOf(Color(0xFFDF1B22),Color(0xFF8D1E23),Color(0xFF111114))else listOf(accent,androidx.compose.ui.graphics.lerp(accent,Color.Black,.43f),Color(0xFF111114))))){
         Artwork(logo?:if(BuildConfig.STATION_SLUG=="positivafm")R.drawable.splash_positiva else R.drawable.splash_interativa,u.at(100,64,100,90))
         Copy(if(mode=="select")"Escolha seu perfil ou crie um novo" else if(mode=="add")"Criar novo perfil" else myStation,u,30,300,u.at(245,94,1450,60))
         if(mode=="select"){
-            CompositionLocalProvider(LocalControlsEnabled provides (!confirmLogout&&!confirmDelete)){
+            CompositionLocalProvider(LocalControlsEnabled provides (!confirmLogout&&!confirmDelete&&!mobileQr)){
                 Column(u.at(180,275,1100,705).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(u.space(20))){
                     Row(profileEntrance(u,0),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))){
                         AccountCircle(u,mainAvatar,"Entrar no perfil $mainName",Modifier.focusRequester(focus)){onSelect("");onContinue()}
@@ -123,6 +125,7 @@ internal fun nativeProfileAvatar(url:String):Any{
                             Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(12))){
                                 Box(Modifier.background(Color.White.copy(alpha=.15f),CircleShape).padding(horizontal=u.space(14),vertical=u.space(5))){Copy("Conta Google",u,18)}
                                 GlassButton(u,"★  "+myStation,Modifier.height(u.space(44)),enabled=enabled){openEditor()}
+                                GlassButton(u,"Acessar no celular",Modifier.height(u.space(44)),enabled=enabled){mobileQr=true}
                                 // Logout is inside Minha Rádio.
                             }
                         }
@@ -160,6 +163,15 @@ internal fun nativeProfileAvatar(url:String):Any{
             NativeAvatarImage(nativeProfileAvatar(avatar),u.at(1340,285,280,280).clip(CircleShape))
         }else{
             NativeMyStation(u,mode=="main",name,avatar,profile,account,accountTab,{accountTab=it;showLikes=it=="Músicas curtidas"&&mode=="main"},avatarPicker,{avatarPicker=it},busy,message,editFocus,{chosen->avatar=chosen;scope.launch{try{val radio=owner?:return@launch;busy=true;val updated=services.updateListenerProfile(radio,user){before->if(mode=="main")JSONObject().put("avatar_url",chosen)else JSONObject().put("sub_profiles",JSONArray(before.rows("sub_profiles").map{if(it.str("id")==editId)JSONObject(it.toString()).put("avatar_url",chosen)else it}))};onProfile(updated);avatarPicker=false;message=""}catch(e:CancellationException){throw e}catch(_:Exception){message="Não foi possível salvar o avatar."}finally{busy=false}}},{confirmLogout=true},{confirmDelete=true},{mode="select"},accountLikes,likesStatus,NativeAccountActions(services,owner,user),{song->scope.launch{try{val radio=owner?:return@launch;services.removeAccountLike(radio,user,song.str("id"));accountLikes=accountLikes.filterNot{it.str("id")==song.str("id")};likesStatus=if(accountLikes.isEmpty())"Nenhuma música curtida." else ""}catch(e:CancellationException){throw e}catch(_:Exception){likesStatus="Não foi possível remover a curtida."}}})
+        }
+        if(mobileQr)Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.64f)),contentAlignment=Alignment.Center){
+            LaunchedEffect(Unit){withFrameNanos{};runCatching{mobileFocus.requestFocus()}}
+            Column(Modifier.width(u.space(510)).background(interactionGlass,u.round(28)).padding(u.space(24)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(20))){
+                Copy("Acessar no celular",u,30,600)
+                NativeQr("https://housemix.nexobrasil.net/"+BuildConfig.STATION_SLUG+"/pair?resume=1",Modifier.size(u.space(300)))
+                Copy("Escaneie e entre com sua conta Google se necessário.",u,22,400,lines=3,align=androidx.compose.ui.text.style.TextAlign.Center)
+                GlassButton(u,"Fechar",Modifier.height(u.space(52)).focusRequester(mobileFocus)){mobileQr=false;runCatching{focus.requestFocus()}}
+            }
         }
         if(confirmLogout||confirmDelete)Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.64f)),contentAlignment=Alignment.Center){
             Column(Modifier.width(u.space(580)).background(interactionGlass,u.round(28)).padding(u.space(35)),verticalArrangement=Arrangement.spacedBy(u.space(20))){

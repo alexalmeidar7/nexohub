@@ -83,7 +83,8 @@ function PairPage() {
   const onBrandImageError=()=>{setStationRecord(null);setBrandFailure(true);};
   const [clock, setClock] = useState(() => new Date());
   // Nenhuma fonte de pontuação real está disponível no schema atual.
-  const points: number | null = null;
+  const [points,setPoints]=useState<number|null>(null);
+  useEffect(()=>{let active=true;setPoints(null);if(!user?.id||user.is_anonymous||!isRadioId(station?.userId))return;const refresh=async()=>{if(document.hidden)return;try{const {data,error}=await (playerSupabase as any).rpc("nexo_listener_points_total",{p_radio:station.userId});if(active&&!error&&data!=null&&Number.isFinite(Number(data)))setPoints(Number(data));}catch{/* keep last confirmed total */}};void refresh();const timer=window.setInterval(refresh,60000);return()=>{active=false;window.clearInterval(timer);};},[user?.id,user?.is_anonymous,station?.userId]);
   const [panel, setPanel] = useState<"profile" | "chat" | "friends" | null>(null);
   const [panelLeaving,setPanelLeaving]=useState(false);
   const openPanel=(next:"profile"|"chat"|"friends")=>{setPanelLeaving(false);setPanel(next);};
@@ -133,6 +134,7 @@ function PairPage() {
     try {
       const returnUrl = new URL(`/${encodeURIComponent(userSlug)}/pair`, window.location.origin);
       if (code) returnUrl.searchParams.set("pairCode", code);
+      if(sp.get("resume")==="1")returnUrl.searchParams.set("resume","1");
       if (window.houseMixDesktop?.openExternal) {
         const opened = await window.houseMixDesktop.openExternal(returnUrl.href);
         if (opened === false) throw new Error("Abra esta pagina no Chrome para entrar com Google.");
@@ -201,7 +203,7 @@ function PairPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const done = preview ? preview === "success" : status.kind === "ok" && !!user && !user.is_anonymous;
+  const done = preview ? preview === "success" : (status.kind === "ok" || sp.get("resume")==="1"&&!initialCode) && !!user && !user.is_anonymous;
   const [previewRegistration,setPreviewRegistration]=useState({...emptyRegistration,nome:"Ouvinte de teste",email:"ouvinte@example.com"});
   const [previewEarned,setPreviewEarned]=useState<RegistrationField[]>([]);
   const visiblePoints: number | null = preview ? 150 + previewEarned.length*10 : points;
