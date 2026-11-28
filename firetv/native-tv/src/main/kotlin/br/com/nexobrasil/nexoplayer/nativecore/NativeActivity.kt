@@ -150,6 +150,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
     var playerError by remember { mutableStateOf<String?>(null) }
     var retry by remember { mutableIntStateOf(0) }
     var playing by remember(player) { mutableStateOf(player.isPlaying) }
+    var youtubePlaying by remember { mutableStateOf(false) }
     var buffering by remember(player) { mutableStateOf(player.playbackState==Player.STATE_BUFFERING) }
     var selected by remember { mutableStateOf<StationChannel?>(null) }
     var audioIntent by remember { mutableStateOf(true) }
@@ -206,7 +207,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
     var scheduleOpening by remember { mutableStateOf(false) }
     var interactionReturn by remember { mutableIntStateOf(0) }
     var fromInteraction by remember { mutableStateOf(false) }
-    fun closePanel(){if(fromInteraction){interactionReturn++;controls=true};fromInteraction=false;panelPinned=false;restorePinnedPanel();interaction=false}
+    fun closePanel(){if(fromInteraction){interactionReturn++;if(screen!=Screen.VIDEO)controls=true};fromInteraction=false;panelPinned=false;restorePinnedPanel();interaction=false}
     var forecast by remember { mutableStateOf<JSONObject?>(null) }
     var lyrics by remember { mutableStateOf<String?>(null) }
     var history by remember { mutableStateOf<List<JSONObject>>(emptyList()) }
@@ -215,7 +216,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
     var historyFetchedAt by remember { mutableLongStateOf(0L) }
     var historyWarmFinished by remember { mutableStateOf(false) }
     val audio = station?.channels.orEmpty().filter { it.type == "audio_live" }
-    val video = station?.channels.orEmpty().filter { it.type == "video_live" }
+    val video = remember(station){nativeVideoChannels(station?.channels.orEmpty(),BuildConfig.STATION_SLUG)}
     val stationName = station?.name ?: BuildConfig.STATION_NAME
 
     var playbackAttempt by remember { mutableIntStateOf(0) }
@@ -236,6 +237,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
     }
     fun resumeLive(autoplay:Boolean) {
         liveRequested=autoplay
+        if(youtubeVideoId(selected?.url.orEmpty())!=null)return
         if(player.mediaItemCount==0)return
         if(player.playbackState==Player.STATE_IDLE || player.playbackState==Player.STATE_ENDED || player.playerError!=null) {
             sync.resetPlayback();syncEpoch=0L
@@ -264,12 +266,14 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
         val candidates=if(eligible) campaigns.filter{it.str("start_date")<=date&&it.str("end_date")>=date&&(it.strings("program_ids").isEmpty()||program in it.strings("program_ids"))}.sortedBy{it.str("id")}.flatMap{it.rows("media")}.filter{it.str("placement")==placement&&it.str("url").startsWith("https://")} else emptyList()
         val entryTrack=incomingTrack?:track
         val entryStart=if(incomingTrack!=null)incomingStart else trackStart
-        val directSmart=if(watch&&autoplay&&isNativeBreak(entryTrack)&&smartBreakTiming(entryStart,entryTrack?.optDouble("duracao",0.0)?:0.0,now+api.serverClockOffsetMs)?.second!=0L)smartMediaFor()else emptyList()
+        val directSmart=if(youtubeVideoId(channel.url)==null&&watch&&autoplay&&isNativeBreak(entryTrack)&&smartBreakTiming(entryStart,entryTrack?.optDouble("duracao",0.0)?:0.0,now+api.serverClockOffsetMs)?.second!=0L)smartMediaFor()else emptyList()
         val nextAd=if(directSmart.isNotEmpty())null else candidates.getOrNull(if(candidates.isEmpty())0 else ((now/300000)%candidates.size).toInt())
         // Live must not wait on the commercial API.
         if(nextAd!=null)player.pause()
         smartQueue=emptyList()
-        if(selected?.id!=channel.id||selected?.url!=channel.url||player.mediaItemCount==0||player.playerError!=null){
+        if(youtubeVideoId(channel.url)!=null){
+            player.pause();player.stop();player.clearMediaItems();sync.resetPlayback();syncEpoch=0L;selected=channel;youtubePlaying=false
+        }else if(selected?.id!=channel.id||selected?.url!=channel.url||player.mediaItemCount==0||player.playerError!=null){
             sync.resetPlayback();syncEpoch=0L
             player.setMediaItem(liveItem(channel));selected=channel;recoveryCount=0
             android.util.Log.i("NexoPlayback","SELECT "+channel.type+" host="+android.net.Uri.parse(channel.url.trim()).host)
@@ -291,6 +295,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
         if(pendingWatch==request)select(request.first,request.second,request.third,false)
     }
     fun toggle() {
+        if(youtubeVideoId(selected?.url.orEmpty())!=null){liveRequested=!liveRequested;return}
         if (selected == null) { audio.firstOrNull()?.let { select(it,screen) }; return }
         if (liveRequested && player.playbackState != Player.STATE_ENDED && playerError == null) {
             liveRequested=false;player.pause()
@@ -327,6 +332,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
         else if(scheduleOpening){scheduleOpening=false}
         else if (startup || entryPending) return
         else if (interaction) {interaction = false;interactionReturn++}
+        else if (screen==Screen.VIDEO&&!controls) controls=true
         else if (screen in listOf(Screen.SCHEDULE,Screen.HISTORY,Screen.PROFILE,Screen.SEARCH,Screen.CATALOG)) screen = returnScreen
         else home()
     }
@@ -494,7 +500,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
         if(!host.isNullOrBlank())kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO){runCatching{java.net.InetAddress.getAllByName(host)}}
     }
     LaunchedEffect(player,selected?.id,startup,ad,foreground,mosaic,playbackAttempt){
-        if(startup||ad!=null||!foreground||mosaic||selected==null)return@LaunchedEffect
+        if(startup||ad!=null||!foreground||mosaic||selected==null||youtubeVideoId(selected?.url.orEmpty())!=null)return@LaunchedEffect
         var position=player.currentPosition;var stalledAt=0L;var nextRetry=0L
         while(true){
             delay(1000)
@@ -541,6 +547,9 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
         }
     }
     val watch = screen == Screen.AUDIO || screen == Screen.VIDEO
+    val youtubeSelected=youtubeVideoId(selected?.url.orEmpty())!=null
+    val actualPlaying=if(youtubeSelected)youtubePlaying else playing
+    val actualBuffering=if(youtubeSelected)false else buffering
     val sourceBreak=if(isNativeBreak(incomingTrack)&&smartBreakTiming(incomingStart,incomingTrack?.optDouble("duracao",0.0)?:0.0,System.currentTimeMillis()+api.serverClockOffsetMs)?.second!=0L)incomingTrack else null
     val breakActive=isNativeBreak(track)||(smartQueue.isNotEmpty()&&sourceBreak!=null)
     val breakMetadata=if(isNativeBreak(track))track else sourceBreak
@@ -549,7 +558,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
     val breakId=selected?.id.orEmpty()+":"+(if(breakStart>0)breakStart else trackLocalStart)
     val hasSyncEpoch by remember{derivedStateOf{syncEpoch>0}}
     LaunchedEffect(watch,breakActive,breakId,ad,campaigns,playing,hasSyncEpoch){
-        if(!watch||!breakActive){smartAttempt="";smartQueue=emptyList();return@LaunchedEffect}
+        if(!watch||!breakActive||youtubeSelected){smartAttempt="";smartQueue=emptyList();return@LaunchedEffect}
         if(ad!=null||!playing||smartQueue.isNotEmpty()||smartAttempt==breakId)return@LaunchedEffect
         if(smartBreakTiming(breakStart,breakDuration,System.currentTimeMillis()+api.serverClockOffsetMs)?.second==0L)return@LaunchedEffect
         val queue=selected?.let{smartMediaFor()}.orEmpty()
@@ -564,14 +573,16 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
     LaunchedEffect(smartQueue.isNotEmpty()){
         if(smartQueue.isEmpty()){if(player.isPlaying){player.volume=0f;fadeRequest++}else player.volume=1f}
     }
-    LaunchedEffect(screen,activity,interaction,notice,panel,panelPinned,buffering,playerError,playing,scheduleOpening,interactionReturn,videoTrayFocused) {
+    LaunchedEffect(screen,activity,interaction,notice,panel,panelPinned,actualBuffering,playerError,actualPlaying,scheduleOpening,interactionReturn,videoTrayFocused) {
+        if(screen==Screen.VIDEO&&!controls&&playerError==null&&actualPlaying&&!actualBuffering)return@LaunchedEffect
         controls = true
-        if (watch && !videoTrayFocused && !scheduleOpening && !interaction && notice == null && (panel == null || panelPinned) && (screen == Screen.AUDIO || (playing && !buffering && playerError == null))) {
+        if (watch && !videoTrayFocused && !scheduleOpening && !interaction && notice == null && (panel == null || panelPinned) && (screen == Screen.AUDIO || (actualPlaying && !actualBuffering && playerError == null))) {
             delay(8000)
             controls = false
         }
     }
-    SideEffect { onHidden(!mosaic && watch && ad==null && !controls && !interaction && notice == null && panel == null) }
+    val videoPrompt by rememberVideoPrompt(screen==Screen.VIDEO&&!controls&&!mosaic&&ad==null&&smartQueue.isEmpty()&&actualPlaying&&!actualBuffering&&playerError==null,interaction||panel!=null)
+    SideEffect { onHidden(!mosaic && watch && ad==null && !controls && !interaction && notice == null && panel == null && !videoPrompt) }
     LaunchedEffect(screen,controls,panel,interaction){if(screen!=Screen.VIDEO||!controls||panel!=null||interaction)videoTrayFocused=false}
     val chrome by animateFloatAsState(if(controls) 1f else 0f, tween(350),label="watchChrome")
     val data = payload
@@ -672,14 +683,14 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
     }
     Box(Modifier.fillMaxSize()) {
     if(!startup && mosaic && ad==null && smartQueue.isEmpty()) NativeMosaic(video,data,foreground=foreground,onExit={mosaic=false;val ch=mosaicReturn?:video.firstOrNull();if(ch!=null)select(ch,Screen.VIDEO)else home()},onSelect={select(it,Screen.VIDEO)})
-    else if(!startup && ad==null && smartQueue.isEmpty()) NativeLayout(
+    else if(!startup && ad==null && smartQueue.isEmpty()) NativeRewardHost(services,station?.ownerId,account,screen){ NativeLayout(
         screen=screen, inputSerial=activity, station=station, stationName=stationName, payload=data, track=track,
-        program=currentProgram,presenter=currentPresenter,artistArtwork=artistArtwork,backgroundAd=visibleBackgroundAd.takeIf{screen==Screen.HOME&&it in latestBackgroundAds}.orEmpty(),bannerLink=banners.getOrNull(bannerIndex).takeIf{it?.optBoolean("clickable")==true}.str("link"),bannerQr=bannerQr,onBannerQr={bannerQr=it},player=player,playing=playing,buffering=buffering,
-        failure=failure,playerError=playerError,controls=controls,chrome=chrome,interaction=interaction,
+        program=currentProgram,presenter=currentPresenter,artistArtwork=artistArtwork,backgroundAd=visibleBackgroundAd.takeIf{screen==Screen.HOME&&it in latestBackgroundAds}.orEmpty(),bannerLink=banners.getOrNull(bannerIndex).takeIf{it?.optBoolean("clickable")==true}.str("link"),bannerQr=bannerQr,onBannerQr={bannerQr=it},player=player,playing=actualPlaying,buffering=actualBuffering,
+        failure=failure,playerError=playerError,controls=controls,chrome=chrome,interaction=interaction,videoPrompt=videoPrompt,youtubeRequested=liveRequested&&foreground,onYoutubePlaying={youtubePlaying=it},onYoutubeError={playerError=it},
         banner=banners.getOrNull(bannerIndex).str("url"),historyAd=historyAd,panelAd=panelAd,chatAds=eligibleInteractionAds["chat_ads"].orEmpty(),backgroundAdEndsAt=backgroundAdEndsAt,sponsor=sponsorUrls.getOrNull(sponsorIndex),weather=weather,history=history,historyLoading=historyLoading,historyError=historyError,
         notice=notice,video=video,selected=selected, onRetry={retry++},onToggle=::toggle,onBack=::animatedBack,leavingScreen=leavingScreen,onVideoTrayFocus={videoTrayFocused=it},
         entryPending=entryPending, guestName=displayProfileName, guestAvatar=guestAvatar, displayAvatar=displayAvatar, mainProfileName=mainProfileName, mainAvatar=mainAvatar, listenerProfile=listenerProfile, onListenerProfile={listenerProfile=it}, onSelectProfile={selectedProfileId=it},
-        spectrum=spectrum, panel=panel,panelPinned=panelPinned,onPin={panelPinned=!panelPinned;suspendedPin=null;controls=true},forecast=forecast,lyrics=lyrics,cep=cep,api=api,services=services,account=account,
+        spectrum=spectrum, panel=panel,panelPinned=panelPinned,onPin={panelPinned=!panelPinned;suspendedPin=null;if(screen!=Screen.VIDEO)controls=true},forecast=forecast,lyrics=lyrics,cep=cep,api=api,services=services,account=account,
         onAccount={account=it;restorePinnedPanel()},onLogout={scope.launch{try{services.logout();account=null}catch(e:CancellationException){throw e}catch(_:Exception){notice="Não foi possível encerrar a sessão."}}},
         scheduleOpening=scheduleOpening,interactionReturn=interactionReturn,channelOpening=pendingWatch?.second,syncStatus=syncStatus,manualSync=manualSync,onSaveSync=::saveSync,onCalibrateSync=::calibrateNow,canCalibrateSync=playing&&sync.latestStart()?.let{System.currentTimeMillis()+api.serverClockOffsetMs-it in 0L..120000L}==true,
         onPanel={next->if(next==null)closePanel()else{if(next in listOf("schedule","search","cep","pair"))showTemporaryPanel(next)else{if(next!=panel){panelPinned=false;suspendedPin=null};panel=next};fromInteraction=interaction;interaction=false;if(next=="schedule"){scheduleOpening=false;controls=true}}},onCepSaved={digits,loc -> prefs.edit().putString("cep",digits).putString("location",loc.toString()).apply();cep=digits;location=loc;restorePinnedPanel()},
@@ -703,7 +714,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
             }}
             if(destination in listOf(Screen.HOME,Screen.PROFILE,Screen.VIDEO,Screen.CATALOG))transition(navigate) else navigate()
         },onChannel=onChannel,onVideo={select(it,Screen.VIDEO)},onMosaic={if(video.size>1){mosaicReturn=selected;pendingWatch=null;ad=null;smartQueue=emptyList();liveRequested=false;player.pause();player.stop();player.clearMediaItems();selected=null;sync.resetPlayback();syncEpoch=0L;mosaic=true}},onInteraction={if(interaction){interaction=false;interactionReturn++}else interaction=true},
-        onNotice={notice=it})
+        onNotice={notice=it}) }
     ad?.let{media->NativePreroll(media,selected?.type=="audio_live",onStarted={prerollFrequency.played(activeAdPlacement,System.currentTimeMillis())},onFinish={ad=null;activeAdPlacement="";scope.launch { withFrameNanos { };resumeLive(resumeAfterAd) }})}
     val activeSmartMedia=if(ad==null)smartQueue.getOrNull(smartIndex)?.let{smartSerial to it}else null
     var retainedSmartMedia by remember{mutableStateOf<Pair<Int,JSONObject>?>(null)}

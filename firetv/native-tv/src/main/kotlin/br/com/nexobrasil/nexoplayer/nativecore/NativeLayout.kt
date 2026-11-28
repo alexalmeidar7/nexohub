@@ -3,6 +3,8 @@ package br.com.nexobrasil.nexoplayer.nativecore
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.SizeTransform
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.hoverable
@@ -174,7 +176,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
 
 @Composable internal fun NativeLayout(
     screen:Screen,inputSerial:Int,station:StationBootstrap?,stationName:String,payload:JSONObject?,track:JSONObject?,program:JSONObject?,presenter:JSONObject?,artistArtwork:String,backgroundAd:String,bannerLink:String,bannerQr:Boolean,onBannerQr:(Boolean)->Unit,
-    player:ExoPlayer,playing:Boolean,buffering:Boolean,failure:String?,playerError:String?,controls:Boolean,chrome:Float,interaction:Boolean,
+    player:ExoPlayer,playing:Boolean,buffering:Boolean,failure:String?,playerError:String?,controls:Boolean,chrome:Float,interaction:Boolean,videoPrompt:Boolean,youtubeRequested:Boolean,onYoutubePlaying:(Boolean)->Unit,onYoutubeError:(String?)->Unit,
     banner:String,historyAd:JSONObject?,panelAd:JSONObject?,chatAds:List<JSONObject>,backgroundAdEndsAt:Long,sponsor:String?,weather:JSONObject?,history:List<JSONObject>,historyLoading:Boolean,historyError:Boolean,notice:String?,video:List<StationChannel>,selected:StationChannel?,
     onRetry:()->Unit,onToggle:()->Unit,onBack:()->Unit,onOpen:(Screen)->Unit,onChannel:(Int)->Unit,onVideo:(StationChannel)->Unit,onMosaic:()->Unit,
     onInteraction:()->Unit,onNotice:(String?)->Unit,leavingScreen:Boolean,onVideoTrayFocus:(Boolean)->Unit,
@@ -218,8 +220,8 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     LaunchedEffect(homeBackgroundAd){if(homeBackgroundAd){homeFocusSuppressed=true;focusManager.clearFocus(force=true);adInput=inputSerial}else if(homeFocusSuppressed){focusManager.clearFocus(force=true);adInput=inputSerial}}
     LaunchedEffect(inputSerial,screen,homeBackgroundAd){if(screen!=Screen.HOME)homeFocusSuppressed=false else if(!homeBackgroundAd&&homeFocusSuppressed&&inputSerial!=adInput){homeFocusSuppressed=false;withFrameNanos{};runCatching{focus.requestFocus()}}}
     val watchScreen=screen==Screen.AUDIO||screen==Screen.VIDEO
-    val encourage by rememberInteractivePrompt(watchScreen&&panel==null&&!interaction&&notice==null&&!leavingScreen&&channelOpening==null,inputSerial)
-    LaunchedEffect(encourage){if(encourage){withFrameNanos{};runCatching{sparkFocus.requestFocus()}}}
+    val encourage by rememberInteractivePrompt(watchScreen&&(screen==Screen.AUDIO||controls)&&panel==null&&!interaction&&notice==null&&!leavingScreen&&channelOpening==null,inputSerial)
+    LaunchedEffect(encourage,videoPrompt,interaction,panel){if((encourage||videoPrompt)&&!interaction&&panel==null){withFrameNanos{};runCatching{sparkFocus.requestFocus()}}}
     val ready=station!=null||failure!=null
     var restoredInteraction by remember { mutableIntStateOf(interactionReturn) }
     LaunchedEffect(screen,ready,modal,if(watchScreen)controls else true,interactionReturn) {
@@ -249,6 +251,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     var reminderText by remember{mutableStateOf("")}
     LaunchedEffect(payload,reminderProfile){while(true){val next=java.time.ZonedDateTime.now(brasilia).plusMinutes(5);val ids=reminderPrefs.getStringSet("reminders:"+reminderProfile,emptySet()).orEmpty();payload.rows("programas").filter{it.str("id") in ids&&occurs(it,next.toLocalDate())&&it.str("horario_inicio").take(5)==next.format(DateTimeFormatter.ofPattern("HH:mm"))}.firstOrNull()?.let{p->val key="reminder-sent:"+reminderProfile+":"+p.str("id");if(reminderPrefs.getString(key,"")!=next.toLocalDate().toString()){reminderPrefs.edit().putString(key,next.toLocalDate().toString()).apply();reminderText=p.str("nome")+" começa em 5 minutos.";delay(12000);reminderText=""}};delay(10000)}}
     val logo=station?.logoUrl
+    val youtubeId=remember(selected?.url){youtubeVideoId(selected?.url.orEmpty())}
     TvViewport(Modifier.background(Color.Black)) { u ->
         Box(Modifier.fillMaxSize().clipToBounds().background(Color.Black)) {
             val watch=screen==Screen.VIDEO||screen==Screen.AUDIO
@@ -266,8 +269,18 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                 }
             }
             if(screen==Screen.VIDEO) {
+                if(youtubeId!=null){
+                    val embeddedBounds=when{
+                        panel!=null||interaction->u.at(100,150,1200,670)
+                        controls||chrome>.01f->u.at(100,150,1720,690)
+                        videoPrompt->u.at(100,0,1720,900)
+                        else->Modifier.fillMaxSize()
+                    }
+                    NativeYoutubeEmbed(youtubeId,embeddedBounds,youtubeRequested,false,onYoutubePlaying,onYoutubeError)
+                }else{
                 AndroidView(factory={ctx->PlayerView(ctx).apply{useController=false;this.player=player;isFocusable=false;isFocusableInTouchMode=false;descendantFocusability=android.view.ViewGroup.FOCUS_BLOCK_DESCENDANTS}},modifier=Modifier.fillMaxSize(),onReset={it.player=null},onRelease={it.player=null},update={it.player=player})
                 Box(Modifier.fillMaxSize().alpha(chrome).background(Brush.verticalGradient(listOf(Color.Black.copy(alpha=.7f),Color.Transparent,Color.Transparent,Color.Black.copy(alpha=.85f)))))
+                }
             }
             if(!ready) {
                 Artwork(logo,u.at(830,340,260,190))
@@ -328,10 +341,10 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                 }
                 if(watch) {
                     if(screen==Screen.AUDIO) {
-                        NativeLike(u,services,account,station?.ownerId.orEmpty(),title,artist,cover,u.at(100,296,440,440),Modifier.focusRequester(likeFocus).focusProperties{down=focus;right=sparkFocus})
+                        NativeAnimatedAudioCover(u,services,account,station?.ownerId.orEmpty(),title,artist,cover,u.at(100,296,440,440),Modifier.focusRequester(likeFocus).focusProperties{down=focus;right=sparkFocus})
                         Column(u.at(582,376,625,330),verticalArrangement=Arrangement.spacedBy(u.space(18))) {
                             Copy("tocando",u,20,700)
-                            AnimatedContent(targetState=title to artist,transitionSpec={fadeIn(tween(320)) togetherWith fadeOut(tween(220))},label="audioTrack"){song->Column(verticalArrangement=Arrangement.spacedBy(u.space(18))){Copy(song.first.uppercase(),u,50,700,lines=2);Copy(song.second.uppercase(),u,27,400,lines=2)}}
+                            NativeTrackText(u,title.uppercase(),artist.uppercase(),50,27,u.space(18),2)
                             // Standard live audio renderer is used until PCM compatibility is confirmed on Fire TV.
                             if(buffering) Copy("Carregando…",u,22,500)
                         }
@@ -339,7 +352,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                     if(screen==Screen.AUDIO||controls||chrome>.01f) {
                         WatchHeader(u,logo,stationName,screen,accent,weather,if(screen==Screen.VIDEO) chrome else 1f,controls||screen==Screen.AUDIO,displayAvatar,{onOpen(Screen.PROFILE)},{onPanel("cep")},Modifier.focusRequester(clockFocus).focusProperties{down=likeFocus;left=likeFocus},onClockPeek={clockPeek=it})
                     }
-                    if(screen==Screen.VIDEO && chrome>.01f && title!="Ao vivo") {
+                    if(screen==Screen.VIDEO && youtubeId==null && chrome>.01f && title!="Ao vivo") {
                         NativeLike(u,services,account,station?.ownerId.orEmpty(),title,artist,cover,u.at(134,455,850,165).alpha(chrome),Modifier.focusRequester(likeFocus).focusProperties{down=focus;right=clockFocus},videoStyle=true,enabled=controls)
                     }
                     if(screen==Screen.AUDIO && !interaction && panelAllowsNavigation) Crossfade(sponsor,modifier=u.at(1537,636,283,283),animationSpec=tween(350),label="audioSponsor"){url->if(url!=null)Artwork(url,Modifier.fillMaxSize(),scale=ContentScale.Fit)}
@@ -364,17 +377,21 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                                 if(BuildConfig.STATION_SLUG=="positivafm"){
                                     if(main!=null)VideoChannelCard(u,R.drawable.positiva_channel_one,"Canal 1",selected?.id==main.id&&playing,controls,Modifier.focusRequester(trayFocus).focusProperties{up=focus}){onVideo(main)}
                                     VideoChannelCard(u,R.drawable.positiva_channel_two,"Positiva Cast",cast!=null&&selected?.id==cast.id&&playing,controls,if(main==null)Modifier.focusRequester(trayFocus).focusProperties{up=focus}else Modifier.focusProperties{up=focus}){
-                                        if(cast!=null&&!cast.url.contains("youtu",true))onVideo(cast)
-                                        else onNotice("O Positiva Cast utiliza YouTube. A reprodução nativa deste canal ainda não está disponível.")
+                                        if(cast!=null)onVideo(cast)
+                                        else onNotice("Canal Positiva Cast ainda não cadastrado nesta emissora.")
                                     }
                                 }else video.forEachIndexed{index,ch->VideoChannelCard(u,safeImage(ch.coverUrl),ch.name,selected?.id==ch.id&&playing,controls,if(index==0)Modifier.focusRequester(trayFocus).focusProperties{up=focus}else Modifier.focusProperties{up=focus}){onVideo(ch)}}
                                 if(video.size>1)VideoChannelCard(u,null,"Mosaico",false,controls,Modifier.focusProperties{up=focus}){onMosaic()}
                             }
                         }
                     }
-                    if(panelAllowsNavigation && (screen==Screen.AUDIO || chrome>.01f || encourage)) {
-                        if(encourage) NativeInteractionInvitation(u,accent,u.at(1694,872,164,164).offset(y=-lift))
-                        GlassButton(u,"",u.at(1744,922,64,64).offset(y=-lift).alpha(if(screen==Screen.VIDEO&&!encourage)chrome else 1f).focusRequester(sparkFocus).focusProperties{left=programFocus;up=if(screen==Screen.AUDIO||title!="Ao vivo")likeFocus else clockFocus;down=if(hasTray)trayFocus else FocusRequester.Default},icon="spark",enabled=screen==Screen.AUDIO||controls||encourage){onInteraction()}
+                    if(panelAllowsNavigation && !interaction) {
+                        val sparkVisible=screen==Screen.AUDIO||controls||videoPrompt
+                        val sparkAlpha by animateFloatAsState(if(sparkVisible)1f else 0f,tween(400),label="sparkVisibility")
+                        if(sparkAlpha>.01f||sparkVisible){
+                            if(encourage||videoPrompt) NativeInteractionInvitation(u,accent,u.at(1694,872,164,164).offset(y=-lift).alpha(sparkAlpha))
+                            GlassButton(u,"",u.at(1744,922,64,64).offset(y=-lift).alpha(sparkAlpha).focusRequester(sparkFocus).focusProperties{left=if(controls||screen==Screen.AUDIO)programFocus else FocusRequester.Cancel;up=if(!controls&&screen==Screen.VIDEO)FocusRequester.Cancel else if(screen==Screen.AUDIO||title!="Ao vivo")likeFocus else clockFocus;down=if(controls&&hasTray)trayFocus else FocusRequester.Cancel},icon="spark",enabled=sparkVisible){onInteraction()}
+                        }
                     }
                     playerError?.let { Copy(it,u,25,500,u.at(100,800,900,50)) }
                 }
@@ -397,11 +414,12 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                 }
                 if(interaction && (panel==null||panelPinned)&&!homeBackgroundAd) InteractionCards(u, {onPanel(it)}, onInteraction,sparkFocus,screen==Screen.HOME)
                 if(scheduleOverlay){Box(Modifier.fillMaxSize()){Schedule(u,payload,program,accent,scheduleFocus,{onPanel(null)},account.str("id").ifBlank{guestName},scheduleGrid)}} else if(panel!=null) NativePanel(u,panel,payload,track,history,historyLoading,historyError,forecast,lyrics,cep,api,station?.ownerId,accent,{onPanel(null)},onCepSaved,onOpen,services,account,onAccount,historyAd,panelAd,chatAds,pinned=panelPinned,onPin=onPin,panelBottom=if(screen==Screen.VIDEO&&trayOpen)760 else 850)
-                if(clockPeek&&cep.length==8&&panel==null&&!interaction&&notice==null&&screen!=Screen.PROFILE){
+                AnimatedVisibility(clockPeek&&cep.length==8&&panel==null&&!interaction&&notice==null&&screen!=Screen.PROFILE,modifier=Modifier.fillMaxSize(),enter=fadeIn(tween(300))+slideInVertically(tween(320,easing=FastOutSlowInEasing)){-it/30},exit=fadeOut(tween(260))+slideOutVertically(tween(300)){-it/30}){
                     NativePanel(u,"weather",payload,track,history,historyLoading,historyError,forecast,lyrics,cep,api,station?.ownerId,accent,{},onCepSaved,onOpen,services,account,onAccount,preview=true)
                 }
 
             }
+            NativeRewardOverlay(u,LocalNexoRewards.current,screen,accent)
             if(reminderText.isNotBlank()) Box(u.at(580,170,760,72).background(glass,u.round(24)).padding(u.space(15)),contentAlignment=Alignment.Center){Copy(reminderText,u,24,600)}
             if(notice!=null) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.60f)),contentAlignment=Alignment.Center) {
                 val close=remember{FocusRequester()};LaunchedEffect(notice){close.requestFocus()}

@@ -106,7 +106,7 @@ internal class NativeServices(private val api:HouseMixClient,context:Context) {
     private fun listenerFilter(owner:String,user:String)=mapOf("auth_user_id" to "eq."+user,"radio_user_id" to "eq."+owner)
     suspend fun listenerProfile(owner:String,user:String):JSONObject?{
         val token=access()?:error("Conecte sua conta Google.")
-        val rows=request(listOf("rest","v1","player_listener_profiles"),listenerFilter(owner,user)+mapOf("select" to "id,nome,email,avatar_url,sub_profiles,updated_at,cidade,estado,whatsapp,sexo,cpf,data_nascimento,setor","limit" to "1"),token=token) as? JSONArray
+        val rows=request(listOf("rest","v1","player_listener_profiles"),listenerFilter(owner,user)+mapOf("select" to "id,nome,email,avatar_url,sub_profiles,updated_at,cidade,estado,whatsapp,sexo,cpf,data_nascimento,setor,cep","limit" to "1"),token=token) as? JSONArray
         return rows?.optJSONObject(0)
     }
     suspend fun updateListenerProfile(owner:String,user:String,change:(JSONObject?)->JSONObject):JSONObject{
@@ -146,5 +146,36 @@ internal class NativeServices(private val api:HouseMixClient,context:Context) {
         if(liked(owner,user,title,artist))request(listOf("rest","v1","music_likes"),likeQuery(owner,user,title,artist),method="DELETE",token=token)
         else request(listOf("rest","v1","music_likes"),body=JSONObject().put("radio_user_id",owner).put("user_id",user).put("titulo",title).put("musica",title).put("artista",artist).put("capa",cover.takeIf{it.isNotBlank()}?:JSONObject.NULL),token=token)
         return liked(owner,user,title,artist)
+    }
+
+    suspend fun pointsTotal(owner:String):Double{
+        val v=rpc("nexo_listener_points_total",JSONObject().put("p_radio",owner),true)
+        return (v as? Number)?.toDouble()?:v?.toString()?.toDoubleOrNull()?:error("Pontuação indisponível")
+    }
+    suspend fun removeAccountLike(owner:String,user:String,id:String){
+        val token=access()?:error("Sessão expirada")
+        request(listOf("rest","v1","music_likes"),mapOf("id" to "eq."+id,"radio_user_id" to "eq."+owner,"user_id" to "eq."+user),method="DELETE",token=token)
+    }
+    suspend fun friends(owner:String,profile:String):List<JSONObject>{
+        val token=access()?:error("Sessão expirada")
+        val a=request(listOf("rest","v1","player_listener_friendships"),mapOf("radio_user_id" to "eq."+owner,"or" to "(requester_id.eq."+profile+",recipient_id.eq."+profile+")","select" to "id,requester_id,recipient_id,requester_name,recipient_name,status","limit" to "100"),token=token) as? JSONArray
+        return (0 until (a?.length()?:0)).mapNotNull{a?.optJSONObject(it)}
+    }
+    suspend fun changeFriend(owner:String,id:String,accept:Boolean){
+        val token=access()?:error("Sessão expirada")
+        request(listOf("rest","v1","player_listener_friendships"),mapOf("id" to "eq."+id,"radio_user_id" to "eq."+owner),if(accept)JSONObject().put("status","accepted")else null,method=if(accept)"PATCH" else "DELETE",token=token,prefer="return=representation")
+    }
+    suspend fun nudge(owner:String,from:String,to:String){
+        val token=access()?:error("Sessão expirada")
+        request(listOf("rest","v1","nexo_listener_nudges"),body=JSONObject().put("radio_user_id",owner).put("sender_id",from).put("recipient_id",to).put("kind","shake"),token=token)
+    }
+    suspend fun receivedNudges(owner:String,profile:String):List<JSONObject>{
+        val token=access()?:error("Sessão expirada")
+        val a=request(listOf("rest","v1","nexo_listener_nudges"),mapOf("radio_user_id" to "eq."+owner,"recipient_id" to "eq."+profile,"seen" to "eq.false","select" to "id,sender_id,kind","limit" to "30"),token=token) as? JSONArray
+        return (0 until (a?.length()?:0)).mapNotNull{a?.optJSONObject(it)}
+    }
+    suspend fun markNudge(owner:String,id:String){
+        val token=access()?:error("Sessão expirada")
+        request(listOf("rest","v1","nexo_listener_nudges"),mapOf("id" to "eq."+id,"radio_user_id" to "eq."+owner),JSONObject().put("seen",true),method="PATCH",token=token)
     }
 }

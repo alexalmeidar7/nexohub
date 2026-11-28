@@ -159,7 +159,7 @@ internal fun nativeProfileAvatar(url:String):Any{
             }
             NativeAvatarImage(nativeProfileAvatar(avatar),u.at(1340,285,280,280).clip(CircleShape))
         }else{
-            NativeMyStation(u,mode=="main",name,avatar,profile,account,accountTab,{accountTab=it;showLikes=it=="Músicas curtidas"&&mode=="main"},avatarPicker,{avatarPicker=it},busy,message,editFocus,{chosen->avatar=chosen;scope.launch{try{val radio=owner?:return@launch;busy=true;val updated=services.updateListenerProfile(radio,user){before->if(mode=="main")JSONObject().put("avatar_url",chosen)else JSONObject().put("sub_profiles",JSONArray(before.rows("sub_profiles").map{if(it.str("id")==editId)JSONObject(it.toString()).put("avatar_url",chosen)else it}))};onProfile(updated);avatarPicker=false;message=""}catch(e:CancellationException){throw e}catch(_:Exception){message="Não foi possível salvar o avatar."}finally{busy=false}}},{confirmLogout=true},{confirmDelete=true},{mode="select"},accountLikes,likesStatus)
+            NativeMyStation(u,mode=="main",name,avatar,profile,account,accountTab,{accountTab=it;showLikes=it=="Músicas curtidas"&&mode=="main"},avatarPicker,{avatarPicker=it},busy,message,editFocus,{chosen->avatar=chosen;scope.launch{try{val radio=owner?:return@launch;busy=true;val updated=services.updateListenerProfile(radio,user){before->if(mode=="main")JSONObject().put("avatar_url",chosen)else JSONObject().put("sub_profiles",JSONArray(before.rows("sub_profiles").map{if(it.str("id")==editId)JSONObject(it.toString()).put("avatar_url",chosen)else it}))};onProfile(updated);avatarPicker=false;message=""}catch(e:CancellationException){throw e}catch(_:Exception){message="Não foi possível salvar o avatar."}finally{busy=false}}},{confirmLogout=true},{confirmDelete=true},{mode="select"},accountLikes,likesStatus,NativeAccountActions(services,owner,user),{song->scope.launch{try{val radio=owner?:return@launch;services.removeAccountLike(radio,user,song.str("id"));accountLikes=accountLikes.filterNot{it.str("id")==song.str("id")};likesStatus=if(accountLikes.isEmpty())"Nenhuma música curtida." else ""}catch(e:CancellationException){throw e}catch(_:Exception){likesStatus="Não foi possível remover a curtida."}}})
         }
         if(confirmLogout||confirmDelete)Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.64f)),contentAlignment=Alignment.Center){
             Column(Modifier.width(u.space(580)).background(interactionGlass,u.round(28)).padding(u.space(35)),verticalArrangement=Arrangement.spacedBy(u.space(20))){
@@ -172,10 +172,10 @@ internal fun nativeProfileAvatar(url:String):Any{
     }
 }
 
-@Composable private fun NativeMyStation(u:TvUnits,main:Boolean,name:String,avatar:String,profile:JSONObject?,account:JSONObject,tab:String,onTab:(String)->Unit,picker:Boolean,onPicker:(Boolean)->Unit,busy:Boolean,message:String,focus:FocusRequester,onAvatar:(String)->Unit,onLogout:()->Unit,onDelete:()->Unit,onBack:()->Unit,likes:List<JSONObject>,likesStatus:String){
+@Composable private fun NativeMyStation(u:TvUnits,main:Boolean,name:String,avatar:String,profile:JSONObject?,account:JSONObject,tab:String,onTab:(String)->Unit,picker:Boolean,onPicker:(Boolean)->Unit,busy:Boolean,message:String,focus:FocusRequester,onAvatar:(String)->Unit,onLogout:()->Unit,onDelete:()->Unit,onBack:()->Unit,likes:List<JSONObject>,likesStatus:String,actions:NativeAccountActions,onUnlike:(JSONObject)->Unit){
     Box(u.at(180,195,1560,800)){
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(u.space(24))){
-            Row(horizontalArrangement=Arrangement.spacedBy(u.space(18)),verticalAlignment=Alignment.CenterVertically){
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(u.space(10)),verticalArrangement=Arrangement.spacedBy(u.space(24))){
+            Row(Modifier.padding(u.space(8)),horizontalArrangement=Arrangement.spacedBy(u.space(18)),verticalAlignment=Alignment.CenterVertically){
                 listOf("Início","Amigos","Músicas curtidas").forEachIndexed{i,t->GlassButton(u,t,Modifier.height(u.space(58)).then(if(i==0)Modifier.focusRequester(focus)else Modifier),outline=tab==t){onTab(t)}}
                 GlassButton(u,"Voltar",Modifier.height(u.space(58)),icon="left",onClick=onBack)
             }
@@ -186,38 +186,47 @@ internal fun nativeProfileAvatar(url:String):Any{
                         val source=remember{MutableInteractionSource()};val hovered by source.collectIsHoveredAsState()
                         Box(Modifier.size(u.space(185)).onFocusChanged{focused=it.isFocused}.hoverable(source).clip(CircleShape).clickable(enabled=!busy){onPicker(true)},contentAlignment=Alignment.Center){
                             NativeAvatarImage(nativeProfileAvatar(avatar),Modifier.fillMaxSize())
-                            if(focused||hovered)Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.55f)),contentAlignment=Alignment.Center){Copy("▣  Imagem",u,22,400)}
+                            if(focused||hovered)Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent,Color.Black.copy(alpha=.80f)))),contentAlignment=Alignment.BottomCenter){Copy("▣  Alterar",u,19,400,Modifier.padding(bottom=u.space(25)))}
                         }
                         Column(verticalArrangement=Arrangement.spacedBy(u.space(12))){
                             Copy(name,u,36,600)
-                            Copy("Pontuação indisponível",u,23,400)
+                            Copy(LocalNexoRewards.current?.total?.let{nativePointsLabel(it)+" pontos"}?:"Pontuação indisponível",u,23,400)
                             if(main)GlassButton(u,"Sair da conta Google",Modifier.height(u.space(44)),enabled=!busy,onClick=onLogout)
                             else GlassButton(u,"Excluir perfil",Modifier.height(u.space(44)),enabled=!busy,onClick=onDelete)
                         }
                     }
                     Copy("Dados cadastrais",u,29,600)
-                    val fields=if(main)listOf("Nome completo" to name,"E-mail" to profile.str("email").ifBlank{account.str("email")},"CPF" to profile.str("cpf"),"Data de nascimento" to profile.str("data_nascimento"),"WhatsApp" to profile.str("whatsapp"),"Sexo" to profile.str("sexo"),"Cidade" to profile.str("cidade"),"Estado" to profile.str("estado"),"Setor / Bairro" to profile.str("setor"))else listOf("Nome" to name)
-                    fields.chunked(3).forEach{group->Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(u.space(24))){group.forEach{(label,value)->Column(Modifier.weight(1f).background(glass,u.round(14)).padding(u.space(15)),verticalArrangement=Arrangement.spacedBy(u.space(5))){Copy(label,u,18,400);Copy(value.ifBlank{"Não informado"},u,23,500,lines=2)}}}}
+                    val fields=if(main)listOf("Nome completo" to name,"E-mail" to profile.str("email").ifBlank{account.str("email")},"CPF" to profile.str("cpf"),"Data de nascimento" to profile.str("data_nascimento"),"WhatsApp" to profile.str("whatsapp"),"Sexo" to profile.str("sexo"),"Cidade" to profile.str("cidade"),"Estado" to profile.str("estado"),"Setor / Bairro" to profile.str("setor"),"CEP" to profile.str("cep"))else listOf("Nome" to name)
+                    fields.chunked(3).forEach{group->Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(u.space(24))){group.forEach{(label,value)->Column(Modifier.weight(1f).border(u.space(1),Color.White.copy(alpha=.65f),u.round(14)).padding(u.space(15)),verticalArrangement=Arrangement.spacedBy(u.space(5))){Copy(label,u,18,400);Copy(value.ifBlank{"Não informado"},u,23,500,lines=2)}}}}
                     Copy("Para editar os dados cadastrais, acesse Minha Rádio pelo celular.",u,22,400)
                 }
-                "Amigos"->Copy("A sincronização de amigos ainda não está disponível.",u,25,400)
+                "Amigos"->NativeFriends(u,actions.services,actions.owner,profile.str("id"))
                 else->{
                     if(!main)Copy("Curtidas individuais deste perfil ainda não estão disponíveis.",u,23,400)
-                    else{if(likesStatus.isNotBlank())Copy(likesStatus,u,23,400);likes.forEach{song->Row(Modifier.fillMaxWidth().background(glass,u.round(12)).padding(u.space(10)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(16))){Artwork(safeImage(song.str("capa")),Modifier.size(u.space(70)).clip(u.round(8)),scale=ContentScale.Crop);Column{Copy(song.str("titulo").ifBlank{song.str("musica")},u,24,500);Copy(song.str("artista"),u,20,400)}}}}
+                    else{if(likesStatus.isNotBlank())Copy(likesStatus,u,23,400);likes.forEach{song->NativeLikedSongRow(u,song){onUnlike(song)}}}
                 }
             }
             if(message.isNotBlank())Copy(message,u,22,400)
         }
         if(picker){
-            Box(Modifier.offset(y=u.space(70)).width(u.space(1040)).background(interactionGlass,u.round(24)).padding(u.space(22))){
+            Box(Modifier.align(Alignment.Center).width(u.space(1320)).background(interactionGlass,u.round(32)).padding(u.space(22))){
                 val first=remember{FocusRequester()}
                 LaunchedEffect(Unit){withFrameNanos{};runCatching{first.requestFocus()}}
                 Column(verticalArrangement=Arrangement.spacedBy(u.space(16))){
-                    Row(verticalAlignment=Alignment.CenterVertically){Copy("Escolher avatar",u,26,500,Modifier.weight(1f));GlassButton(u,"Fechar",Modifier.height(u.space(48))){onPicker(false)}}
                     val choices=(if(main)listOfNotNull(nativeGooglePhoto(account).takeIf{it.isNotBlank()})else emptyList())+profileAvatarPaths
-                    LazyRow(horizontalArrangement=Arrangement.spacedBy(u.space(12))){items(choices){path->AccountCircle(u,nativeProfileAvatar(path),"Selecionar avatar",if(path==choices.first())Modifier.focusRequester(first)else Modifier){if(!busy)onAvatar(path)}}}
+                    Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(12))){LazyRow(Modifier.weight(1f),horizontalArrangement=Arrangement.spacedBy(u.space(12)),contentPadding=PaddingValues(u.space(8))){items(choices){path->AccountCircle(u,nativeProfileAvatar(path),"Selecionar avatar",if(path==choices.first())Modifier.focusRequester(first)else Modifier){if(!busy)onAvatar(path)}}};GlassButton(u,"",Modifier.size(u.space(60)),icon="left"){onPicker(false)}}
                 }
             }
         }
+    }
+}
+
+private data class NativeAccountActions(val services:NativeServices,val owner:String?,val user:String)
+@Composable private fun NativeLikedSongRow(u:TvUnits,song:JSONObject,onUnlike:()->Unit){
+    var focused by remember{mutableStateOf(false)}
+    Row(Modifier.fillMaxWidth().border(u.space(if(focused)2 else 0),Color.White,u.round(12)).background(glass,u.round(12)).padding(u.space(10)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(16))){
+        Artwork(safeImage(song.str("capa")),Modifier.size(u.space(70)).clip(u.round(8)),scale=ContentScale.Crop)
+        Column(Modifier.weight(1f)){Copy(song.str("titulo").ifBlank{song.str("musica")},u,24,500);Copy(song.str("artista"),u,20,400)}
+        GlassButton(u,"Descurtir",Modifier.height(u.space(48)).onFocusChanged{focused=it.isFocused},onClick=onUnlike)
     }
 }

@@ -91,6 +91,7 @@ import com.google.zxing.qrcode.QRCodeWriter
 }
 @Composable internal fun NativeLike(u:TvUnits,services:NativeServices,account:JSONObject?,owner:String,title:String,artist:String,cover:String,modifier:Modifier,buttonModifier:Modifier=Modifier,videoStyle:Boolean=false,enabled:Boolean=true){
     val user=account.str("id")
+    val rewards=LocalNexoRewards.current
     var liked by remember(user,title,artist){mutableStateOf(false)}
     var busy by remember(user,title,artist){mutableStateOf(false)}
     var msg by remember(user,title,artist){mutableStateOf("")}
@@ -98,18 +99,18 @@ import com.google.zxing.qrcode.QRCodeWriter
     LaunchedEffect(user,title,artist){if(user.isNotBlank())try{liked=services.liked(owner,user,title,artist)}catch(e:CancellationException){throw e}catch(_:Exception){}}
     var focused by remember{mutableStateOf(false)}
     val controlsEnabled=LocalControlsEnabled.current
-    val active=controlsEnabled&&enabled&&!busy&&owner.isNotBlank()&&title!="Ao vivo"&&title.isNotBlank()
+    val active=controlsEnabled&&enabled&&owner.isNotBlank()&&title!="Ao vivo"&&title.isNotBlank()
     if(videoStyle){
-        Row(modifier.then(buttonModifier).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=controlsEnabled&&enabled}.clip(u.round(20)).background(glass).border(u.space(if(focused)3 else 0),if(focused)Color.White else Color.Transparent,u.round(20)).clickable(enabled=active){if(user.isBlank())msg="Conecte sua conta Google." else{busy=true;scope.launch{try{liked=services.toggleLike(owner,user,title,artist,cover);msg=""}catch(e:CancellationException){throw e}catch(_:Exception){msg="Não foi possível salvar."}finally{busy=false}}}}.padding(u.space(12)),verticalAlignment=Alignment.CenterVertically){
+        Row(modifier.then(buttonModifier).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=controlsEnabled&&enabled}.clip(u.round(20)).background(glass).border(u.space(if(focused)3 else 0),if(focused)Color.White else Color.Transparent,u.round(20)).clickable(enabled=active){if(busy)Unit else if(user.isBlank())msg="Conecte sua conta Google." else{busy=true;scope.launch{try{val wasLiked=liked;val before=if(!wasLiked)rewards?.read() else null;liked=services.toggleLike(owner,user,title,artist,cover);msg="";if(liked&&!wasLiked)rewards?.confirm(before,if(videoStyle)500f else 320f,520f)}catch(e:CancellationException){throw e}catch(_:Exception){msg="Não foi possível salvar."}finally{busy=false}}}}.padding(u.space(12)),verticalAlignment=Alignment.CenterVertically){
             Artwork(safeImage(cover),Modifier.size(u.space(144)).clip(u.round(22)),scale=ContentScale.Crop)
-            Spacer(Modifier.width(u.space(18)));Column(Modifier.weight(1f)){Copy("tocando",u,18,700);Copy(title,u,40,700);Copy(artist,u,29);if(msg.isNotBlank())Copy(msg,u,17)};Spacer(Modifier.width(u.space(14)));FlatHeart(liked,Modifier.size(u.space(38)));Spacer(Modifier.width(u.space(14)))
+            Spacer(Modifier.width(u.space(18)));Column(Modifier.weight(1f)){Copy("tocando",u,18,700);NativeTrackText(u,title,artist,40,29,u.space(2));if(msg.isNotBlank())Copy(msg,u,17)};Spacer(Modifier.width(u.space(14)));FlatHeart(liked,Modifier.size(u.space(38)));Spacer(Modifier.width(u.space(14)))
         };return
     }
     Box(modifier.then(buttonModifier).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=controlsEnabled&&enabled}
         .clip(u.round(36)).background(glass).border(u.space(if(focused)4 else 3),Color.White.copy(alpha=if(focused)1f else .27f),u.round(36))
         .clickable(enabled=active){
-            if(user.isBlank())msg="Conecte sua conta Google." else {busy=true;scope.launch{
-                try{liked=services.toggleLike(owner,user,title,artist,cover);msg=""}catch(e:CancellationException){throw e}catch(_:Exception){msg="Não foi possível salvar."}finally{busy=false}
+            if(busy)Unit else if(user.isBlank())msg="Conecte sua conta Google." else {busy=true;scope.launch{
+                try{val wasLiked=liked;val before=if(!wasLiked)rewards?.read() else null;liked=services.toggleLike(owner,user,title,artist,cover);msg="";if(liked&&!wasLiked)rewards?.confirm(before,if(videoStyle)500f else 320f,520f)}catch(e:CancellationException){throw e}catch(_:Exception){msg="Não foi possível salvar."}finally{busy=false}
             }}
         }.semantics{contentDescription=if(liked)"Remover curtida" else "Curtir música"},contentAlignment=Alignment.Center){
         Crossfade(cover,modifier=Modifier.fillMaxSize(),animationSpec=tween(350),label="audioCover"){url->
@@ -120,6 +121,7 @@ import com.google.zxing.qrcode.QRCodeWriter
     }
 }
 @Composable internal fun NativeCommunity(u:TvUnits,panel:String,owner:String,services:NativeServices,account:JSONObject?,chatAds:List<JSONObject> = emptyList(),accent:Color=Color.White,emptyFocus:FocusRequester=remember{FocusRequester()}){
+    val rewards=LocalNexoRewards.current
     val scope=rememberCoroutineScope()
     val focus=remember{FocusRequester()}
     var msg by remember(panel){mutableStateOf("Carregando...")}
@@ -175,7 +177,7 @@ import com.google.zxing.qrcode.QRCodeWriter
         if(!qr)Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.Start){
             Row(Modifier.height(u.space(48)).focusRequester(focus).onFocusChanged{chatFocused=it.isFocused}.hoverable(chatInteraction).clip(u.round(24)).background(Color.White.copy(alpha=.12f)).border(u.space(if(chatFocused)2 else 0),if(chatFocused)Color.White else Color.Transparent,u.round(24)).clickable{if(account==null)qr=true}.animateContentSize().padding(horizontal=u.space(12)),verticalAlignment=Alignment.CenterVertically){
                 Symbol("chat",Modifier.size(u.space(24)))
-                if(chatFocused||chatHovered){Spacer(Modifier.width(u.space(9)));Copy("Participe do chat através da sua área no celular.",u,17,300,Modifier.width(u.space(320)),lines=2)}
+                if(chatFocused||chatHovered){Spacer(Modifier.width(u.space(9)));Copy("Participe do chat pelo celular!",u,18,400,Modifier.width(u.space(340)),lines=1)}
             }
         }
     }else{
@@ -191,10 +193,11 @@ import com.google.zxing.qrcode.QRCodeWriter
                         if(account==null){msg="Conecte sua conta Google para votar."}
                         else{busy=true;scope.launch{
                             try{
+                                val before=rewards?.read()
                                 val args=JSONObject().put(if(poll)"p_poll_id" else "p_battle_id",item.str("id")).put(if(poll)"p_answer_index" else "p_choice",choice)
                                 val r=services.rpc(if(poll)"submit_player_poll_vote" else "nexo_tv_vote_battle_v24",args,true) as? JSONObject
                                 check(r?.optBoolean("ok")==true);if(poll)check(r.optInt("answer_index",-1)==choice)
-                                voted=choice;editing=false;msg="Voto registrado."
+                                voted=choice;editing=false;msg="Voto registrado.";rewards?.confirm(before,1580f,490f)
                                 if(poll)counts=(services.rpc("get_player_poll_results",JSONObject().put("p_poll_id",item.str("id"))) as? JSONObject)?.optJSONArray("counts") else if(r.has("p1")&&r.has("p2"))row=JSONObject(item.toString()).put("artista1_porcentagem",r.optDouble("p1")).put("artista2_porcentagem",r.optDouble("p2"))
                             }catch(e:CancellationException){throw e}catch(_:Exception){msg="Não foi possível registrar o voto."}finally{busy=false}
                         }}

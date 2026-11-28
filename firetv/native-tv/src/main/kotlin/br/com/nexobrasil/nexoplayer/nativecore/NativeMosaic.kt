@@ -50,7 +50,7 @@ internal fun mosaicDirectStream(url:String):Boolean = url.startsWith("https://",
             if(e.type!=KeyEventType.KeyDown||channels.isEmpty())false else when(e.key){
                 Key.DirectionRight,Key.DirectionDown->{index=if(index<0)0 else (index+1)%channels.size;true}
                 Key.DirectionLeft,Key.DirectionUp->{index=if(index<0)channels.lastIndex else (index-1+channels.size)%channels.size;true}
-                Key.DirectionCenter,Key.Enter->{channels.getOrNull(index)?.takeIf{mosaicDirectStream(it.url)}?.let(onSelect);true}
+                Key.DirectionCenter,Key.Enter->{channels.getOrNull(index)?.takeIf{mosaicDirectStream(it.url)||youtubeVideoId(it.url)!=null}?.let(onSelect);true}
                 else->false
             }
         }.focusable()){
@@ -64,9 +64,10 @@ internal fun mosaicDirectStream(url:String):Boolean = url.startsWith("https://",
                     Column(Modifier.width(u.space(width)),horizontalAlignment=Alignment.CenterHorizontally){
                         Box(Modifier.fillMaxWidth().aspectRatio(16f/9f).border(u.space(3),if(index==i)Color.White else Color.Transparent,shape).padding(u.space(5)).clip(shape).background(Color.Black),contentAlignment=Alignment.Center){
                             if(p!=null)AndroidView(factory={ctx->PlayerView(ctx).apply{useController=false;player=p;isFocusable=false;isFocusableInTouchMode=false;descendantFocusability=android.view.ViewGroup.FOCUS_BLOCK_DESCENDANTS}},modifier=Modifier.fillMaxSize(),onRelease={it.player=null},update={it.player=p})
+                            else if(youtubeVideoId(ch.url)!=null)NativeYoutubeEmbed(requireNotNull(youtubeVideoId(ch.url)),Modifier.fillMaxSize(),foreground&&(i==index||channels.indexOfFirst{youtubeVideoId(it.url)!=null}==i),i!=index,{}, {})
                             else if(mosaicDirectStream(ch.url)){Artwork(safeImage(ch.coverUrl),Modifier.fillMaxSize());Copy("Selecione para reproduzir",u,20,400,lines=2,align=TextAlign.Center)}else Copy("Stream direto indisponível",u,20,400,lines=2,align=TextAlign.Center)
                         }
-                        Copy(ch.name+(if(index==i&&p!=null)"  •  Áudio ativo" else ""),u,20,500,Modifier.fillMaxWidth(),align=TextAlign.Center)
+                        Copy(ch.name+(if(index==i&&(p!=null||youtubeVideoId(ch.url)!=null))"  •  Áudio ativo" else ""),u,20,500,Modifier.fillMaxWidth(),align=TextAlign.Center)
                     }
                 }}}
             }

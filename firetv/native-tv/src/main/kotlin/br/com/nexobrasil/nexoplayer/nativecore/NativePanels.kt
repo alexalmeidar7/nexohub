@@ -219,12 +219,13 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
 @Composable private fun NativeInteractionPanel(u:TvUnits,panel:String,track:JSONObject?,history:List<JSONObject>,loading:Boolean,error:Boolean,forecast:JSONObject?,lyrics:String?,owner:String?,accent:Color,onClose:()->Unit,services:NativeServices,account:JSONObject?,historyAd:JSONObject?,panelAd:JSONObject?,chatAds:List<JSONObject>,pinned:Boolean,onPin:()->Unit,preview:Boolean,focus:FocusRequester,panelBottom:Int){
     Box(u.at(1350,if(preview)145 else 150,470,if(preview)620 else panelBottom-150)){
         Column(Modifier.fillMaxSize().clip(u.round(28)).background(interactionGlass).padding(u.space(20)),horizontalAlignment=Alignment.CenterHorizontally){
-            NativeInteractionHeader(u,panel,track,history.isEmpty(),forecast?.optJSONObject("daily")?.optJSONArray("time")==null,pinned,onPin,preview,focus,onClose)
+            val pinFocus=remember{FocusRequester()}
+            NativeInteractionHeader(u,panel,track,history.isEmpty(),forecast?.optJSONObject("daily")?.optJSONArray("time")==null,pinned,onPin,preview,focus,onClose,pinFocus)
             Column(Modifier.weight(1f,fill=true).fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally){
                 when(panel){
                     "history" -> NativeHistoryContent(u,history,track,loading,error,historyAd,services,account,owner,focus)
                     "weather" -> NativeWeatherContent(u,forecast,preview,focus)
-                    "lyrics" -> NativeLyricsContent(u,lyrics,focus)
+                    "lyrics" -> NativeLyricsContent(u,lyrics,focus,pinFocus)
                     else -> if(owner!=null)NativeCommunity(u,panel,owner,services,account,chatAds,accent,focus) else Copy("Emissora indisponível.",u,23)
                 }
             }
@@ -233,14 +234,14 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
     }
 }
 
-@Composable private fun NativeInteractionHeader(u:TvUnits,panel:String,track:JSONObject?,historyEmpty:Boolean,forecastEmpty:Boolean,pinned:Boolean,onPin:()->Unit,preview:Boolean,focus:FocusRequester,onClose:()->Unit){
+@Composable private fun NativeInteractionHeader(u:TvUnits,panel:String,track:JSONObject?,historyEmpty:Boolean,forecastEmpty:Boolean,pinned:Boolean,onPin:()->Unit,preview:Boolean,focus:FocusRequester,onClose:()->Unit,pinFocus:FocusRequester){
     Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(8))){
         Column(Modifier.weight(1f)){
             Copy(when(panel){"lyrics"->track.str("titulo").ifBlank{"Letra da música"};"chat"->"Chat";"poll"->"Enquete";"battle"->"Batalha musical";"weather"->"Previsão do tempo";"history"->"Músicas tocadas";else->panel},u,23,500,lines=2)
             if(panel=="lyrics")Copy(track.str("artista"),u,18,300,lines=2)
         }
         if(!preview){
-            GlassButton(u,if(pinned)"Desafixar" else "Fixar",Modifier.height(u.space(42)),onClick=onPin)
+            GlassButton(u,if(pinned)"Desafixar" else "Fixar",Modifier.height(u.space(42)).focusRequester(pinFocus).focusProperties{down=focus},onClick=onPin)
             GlassButton(u,"",Modifier.size(u.space(42)).then(if(panel=="poll"||panel=="battle"||(panel=="history"&&historyEmpty)||(panel=="weather"&&forecastEmpty))Modifier.focusRequester(focus)else Modifier),icon="left",onClick=onClose)
         }
     }
@@ -257,16 +258,18 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
     LaunchedEffect(song){if(song!=null&&image.isBlank())image=resolveHistoryCover(context,song,track)}
     if(song==null){Copy(if(loading)"Carregando músicas tocadas..." else if(error)"Histórico indisponível" else "Nenhuma música registrada.",u,23,400,lines=3)}
     else{
-        Box(Modifier.fillMaxWidth().height(u.space(96)),contentAlignment=Alignment.Center){AnimatedContent(index to adStep,label="historyInfo"){state->val item=history.getOrNull(state.first);Column(Modifier.fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally){Copy(if(state.second)"publicidade" else item.str("horario").take(5),u,20,400,Modifier.fillMaxWidth(),align=TextAlign.Center);if(!state.second){Copy(item.str("musica").uppercase(),u,25,700,Modifier.fillMaxWidth(),lines=2,align=TextAlign.Center);Copy(item.str("artista").uppercase(),u,20,400,Modifier.fillMaxWidth(),lines=2,align=TextAlign.Center)}}}}
-        Spacer(Modifier.weight(1f))
-        GlassButton(u,"",Modifier.size(u.space(46)),icon="up"){move(-1)}
-        Spacer(Modifier.height(u.space(14)))
-        Box(Modifier.size(u.space(235)).clip(u.round(18)).background(Color.White.copy(alpha=.06f)),contentAlignment=Alignment.Center){
-            if(adStep){Artwork(safeImage(historyAd.str("url")),Modifier.fillMaxSize(),scale=ContentScale.Fit)}else NativeLike(u,services,account,owner.orEmpty(),song.str("musica"),song.str("artista"),image,Modifier.fillMaxSize())
+        Box(Modifier.fillMaxWidth().height(u.space(112)),contentAlignment=Alignment.Center){AnimatedContent(index to adStep,label="historyInfo"){state->val item=history.getOrNull(state.first);Column(Modifier.fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally){Copy(if(state.second)"publicidade" else item.str("horario").take(5),u,20,400,Modifier.fillMaxWidth(),align=TextAlign.Center);if(!state.second){Copy(item.str("musica").uppercase(),u,25,700,Modifier.fillMaxWidth(),lines=2,align=TextAlign.Center);Copy(item.str("artista").uppercase(),u,20,400,Modifier.fillMaxWidth(),lines=2,align=TextAlign.Center)}}}}
+        BoxWithConstraints(Modifier.weight(1f).fillMaxWidth(),contentAlignment=Alignment.Center){
+            val artSize=(maxHeight-u.space(112)).coerceAtMost(maxWidth-u.space(24)).coerceAtLeast(u.space(48))
+            Column(horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(12))){
+                GlassButton(u,"",Modifier.size(u.space(40)),icon="up"){move(-1)}
+                Box(Modifier.size(artSize).clip(u.round(18)).background(Color.White.copy(alpha=.06f)),contentAlignment=Alignment.Center){
+                    if(adStep)Artwork(safeImage(historyAd.str("url")),Modifier.fillMaxSize(),scale=ContentScale.Fit)
+                    else NativeLike(u,services,account,owner.orEmpty(),song.str("musica"),song.str("artista"),image,Modifier.fillMaxSize())
+                }
+                GlassButton(u,"",Modifier.size(u.space(40)).focusRequester(focus),icon="down"){move(1)}
+            }
         }
-        Spacer(Modifier.height(u.space(14)))
-        GlassButton(u,"",Modifier.size(u.space(46)).focusRequester(focus),icon="down"){move(1)}
-        Spacer(Modifier.weight(1f))
         Box(Modifier.fillMaxWidth().height(u.space(24))){Copy((index+1).toString()+"/"+history.size,u,19,500,Modifier.align(Alignment.BottomEnd))}
     }
 }
@@ -276,39 +279,42 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
     val temp=forecast?.optJSONObject("current")?.optDouble("temperature_2m")
     val current=forecast?.optJSONObject("current")
     val humid=current?.optDouble("relative_humidity_2m");val rain=d?.optJSONArray("precipitation_probability_max")?.optDouble(0)
-    Column(Modifier.fillMaxWidth().padding(top=u.space(4),bottom=u.space(5)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(8))){
-        Copy("Tempo agora",u,22,600)
-        Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(18))){NativeWeatherIcon(current?.optInt("weather_code",-1)?:-1,Modifier.size(u.space(64)),isDay=current?.optInt("is_day",1)!=0);Copy(temp?.takeIf{it.isFinite()}?.let{it.toInt().toString()+"°"}?:"--°",u,52,600)}
-        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(u.space(16))){
-            Column(Modifier.weight(1f).background(Color.White.copy(alpha=.07f),u.round(12)).padding(vertical=u.space(10)),horizontalAlignment=Alignment.CenterHorizontally){Copy("Chuva",u,18,400);Copy(rain?.takeIf{it.isFinite()}?.toInt()?.toString()?.plus("%")?:"—",u,24,600)}
-            Column(Modifier.weight(1f).background(Color.White.copy(alpha=.07f),u.round(12)).padding(vertical=u.space(10)),horizontalAlignment=Alignment.CenterHorizontally){Copy("Umidade",u,18,400);Copy(humid?.takeIf{it.isFinite()}?.toInt()?.toString()?.plus("%")?:"—",u,24,600)}
+    Row(Modifier.fillMaxWidth().padding(top=u.space(4),bottom=u.space(14)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(8))){
+        Column(Modifier.weight(1.25f),horizontalAlignment=Alignment.CenterHorizontally){
+            Copy("Tempo agora",u,17,500)
+            Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(4))){NativeWeatherIcon(current?.optInt("weather_code",-1)?:-1,Modifier.size(u.space(44)),isDay=current?.optInt("is_day",1)!=0);Copy(temp?.takeIf{it.isFinite()}?.let{it.toInt().toString()+"°"}?:"--°",u,33,600)}
         }
+        Column(Modifier.weight(1f).background(Color.White.copy(alpha=.07f),u.round(12)).padding(vertical=u.space(9)),horizontalAlignment=Alignment.CenterHorizontally){Copy("Chuva",u,17,400);Copy(rain?.takeIf{it.isFinite()}?.toInt()?.toString()?.plus("%")?:"—",u,24,600)}
+        Column(Modifier.weight(1f).background(Color.White.copy(alpha=.07f),u.round(12)).padding(vertical=u.space(9)),horizontalAlignment=Alignment.CenterHorizontally){Copy("Umidade",u,17,400);Copy(humid?.takeIf{it.isFinite()}?.toInt()?.toString()?.plus("%")?:"—",u,24,600)}
     }
     if(dates==null){Copy("Previsão indisponível.",u,22)}
-    else LazyColumn(Modifier.weight(1f).fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(u.space(6))){
+    else BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()){
+      val dayHeight=((maxHeight-u.space(30))/7).coerceIn(u.space(38),u.space(55))
+      LazyColumn(Modifier.fillMaxSize(),verticalArrangement=Arrangement.spacedBy(u.space(5))){
         items(minOf(7,dates.length())){i->
             val code=d?.optJSONArray("weather_code")?.optInt(i)?:0
             val min=d?.optJSONArray("temperature_2m_min")?.optDouble(i);val max=d?.optJSONArray("temperature_2m_max")?.optDouble(i)
             var focused by remember{mutableStateOf(false)}
             val date=forecastDayLabel(dates.optString(i))
             val shape=u.round(15)
-            Row((if(i==0&&!preview)Modifier.focusRequester(focus)else Modifier).fillMaxWidth().height(u.space(55)).onFocusChanged{focused=it.isFocused}.clip(shape).background(Color.White.copy(alpha=.08f)).border(u.space(if(focused)2.5f else 0f),if(focused)Color.White else Color.Transparent,shape).focusable(enabled=!preview).padding(horizontal=u.space(9)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(7))){
+            Row((if(i==0&&!preview)Modifier.focusRequester(focus)else Modifier).fillMaxWidth().height(dayHeight).onFocusChanged{focused=it.isFocused}.clip(shape).background(Color.White.copy(alpha=.08f)).border(u.space(if(focused)2.5f else 0f),if(focused)Color.White else Color.Transparent,shape).focusable(enabled=!preview).padding(horizontal=u.space(9)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(7))){
                 Row(Modifier.width(u.space(108)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(5))){NativeWeatherIcon(code,Modifier.size(u.space(36)));Copy(date.first,u,18,500)}
                 Box(Modifier.weight(1f),contentAlignment=Alignment.Center){Box(Modifier.background(Color.Black.copy(alpha=.28f),androidx.compose.foundation.shape.CircleShape).padding(horizontal=u.space(10),vertical=u.space(6))){Copy(date.second,u,16,300,align=TextAlign.Center)}}
                 Copy((min?.takeIf{it.isFinite()}?.toInt()?.toString()?:"--")+"° / "+(max?.takeIf{it.isFinite()}?.toInt()?.toString()?:"--")+"°",u,18,500,Modifier.width(u.space(100)),align=TextAlign.End)
             }
         }
+      }
     }
 }
 
-@Composable private fun ColumnScope.NativeLyricsContent(u:TvUnits,lyrics:String?,focus:FocusRequester){
+@Composable private fun ColumnScope.NativeLyricsContent(u:TvUnits,lyrics:String?,focus:FocusRequester,pinFocus:FocusRequester){
     // Track title and artist are displayed in the common header.
     Spacer(Modifier.height(u.space(13)))
     Box(Modifier.fillMaxWidth().height(u.space(1)).background(Color.White.copy(alpha=.28f)))
     Spacer(Modifier.height(u.space(14)))
     val scroll=rememberScrollState();val scope=rememberCoroutineScope();val distance=with(androidx.compose.ui.platform.LocalDensity.current){u.space(140).roundToPx()}
     LaunchedEffect(lyrics){scroll.scrollTo(0)}
-    Column(Modifier.weight(1f).fillMaxWidth().focusRequester(focus).onPreviewKeyEvent{event->if(event.type==KeyEventType.KeyDown&&(event.key==Key.DirectionDown||event.key==Key.DirectionUp)){val delta=if(event.key==Key.DirectionDown)distance else -distance;scope.launch{scroll.animateScrollTo((scroll.value+delta).coerceIn(0,scroll.maxValue),tween(300))};true}else false}.focusable().verticalScroll(scroll)){Text(lyrics?:"Carregando letra...",style=u.referenceText(22),color=Color.White)}
+    Column(Modifier.weight(1f).fillMaxWidth().focusRequester(focus).onPreviewKeyEvent{event->if(event.type==KeyEventType.KeyDown){when(event.key){Key.DirectionUp->{if(scroll.value==0){runCatching{pinFocus.requestFocus()}}else scope.launch{scroll.animateScrollTo((scroll.value-distance).coerceAtLeast(0),tween(300))};true};Key.DirectionDown->{if(scroll.value>=scroll.maxValue)false else{scope.launch{scroll.animateScrollTo((scroll.value+distance).coerceAtMost(scroll.maxValue),tween(300))};true}};Key.DirectionRight->{runCatching{pinFocus.requestFocus()};true};else->false}}else false}.focusable().verticalScroll(scroll)){Text(lyrics?:"Carregando letra...",style=u.referenceText(22),color=Color.White)}
 }
 
 @Composable internal fun NativeSyncPanel(u:TvUnits,status:SyncStatus,manual:Long?,onSave:(Long?)->Unit,onCalibrate:()->Unit,canCalibrate:Boolean,onClose:()->Unit){
