@@ -189,6 +189,7 @@ import com.google.zxing.qrcode.QRCodeWriter
             if(poll)androidx.tv.material3.Text(item.str("pergunta"),style=u.referenceText(24,600),color=Color.White) else Copy("Quem merece ganhar essa batalha?",u,20,500,lines=2,align=TextAlign.Center)
             Spacer(Modifier.height(u.space(10)))
             val answers=if(poll)(1..4).map{item.str("resposta"+it)}.filter{it.isNotBlank()} else (1..2).map{item.str("artista"+it+"_musica")+" — "+item.str("artista"+it+"_nome")}
+            fun undo(){if(account==null||busy)return;busy=true;scope.launch{try{val r=services.rpc("nexo_tv_undo_vote",JSONObject().put("p_kind",if(poll)"poll" else "battle").put("p_id",item.str("id")),true) as? JSONObject;check(r?.optBoolean("ok")==true);voted=-1;editing=false;msg="Voto desfeito.";if(poll)counts=(services.rpc("get_player_poll_results",JSONObject().put("p_poll_id",item.str("id"))) as? JSONObject)?.optJSONArray("counts") else row=services.rpc("nexo_tv_active_battle_v24",JSONObject().put("p_radio_id",owner)) as? JSONObject}catch(e:CancellationException){throw e}catch(_:Exception){msg="Não foi possível desfazer o voto."}finally{busy=false}}}
             fun submit(choice:Int){
                         if(account==null){msg="Conecte sua conta Google para votar."}
                         else{busy=true;scope.launch{
@@ -205,12 +206,12 @@ import com.google.zxing.qrcode.QRCodeWriter
             Column(Modifier.fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(10))){
                 if(poll)answers.forEachIndexed{i,answer->
                     val result=counts?.optInt(i)?.let{" · "+it+" votos"}.orEmpty()
-                    NativePollAnswer(u,answer+result+(if(voted==i)" · ✓ Seu voto" else ""),answer,Modifier.fillMaxWidth().height(u.space(66)).then(if(i==voted||i==0&&voted<0)Modifier.focusRequester(focus)else Modifier),enabled=!busy){if(voted!=i)submit(i)else editing=true}
+                    NativePollAnswer(u,answer+result+(if(voted==i)" · Desfazer voto" else ""),answer,Modifier.fillMaxWidth().height(u.space(66)).then(if(i==voted||i==0&&voted<0)Modifier.focusRequester(focus)else Modifier),enabled=!busy){if(voted!=i)submit(i)else undo()}
                 }else Column(Modifier.fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(u.space(18))){
                     (1..2).forEach{choice->
                         var focused by remember{mutableStateOf(false)}
                         val enabled=!busy;val shape=u.round(24)
-                        Box(Modifier.fillMaxWidth().height(u.space(155)).then(if((choice==voted||voted<0&&choice==1)&&enabled)Modifier.focusRequester(focus)else Modifier).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=enabled}.border(u.space(if(focused)4 else if(voted==choice)2 else 0),if(focused||voted==choice)Color.White else Color.Transparent,shape).clip(shape).background(Color(0xFF242529)).clickable(enabled=enabled){if(voted!=choice)submit(choice)else editing=true}){
+                        Box(Modifier.fillMaxWidth().height(u.space(155)).then(if((choice==voted||voted<0&&choice==1)&&enabled)Modifier.focusRequester(focus)else Modifier).onFocusChanged{focused=it.isFocused}.focusProperties{canFocus=enabled}.border(u.space(if(focused)4 else if(voted==choice)2 else 0),if(focused||voted==choice)Color.White else Color.Transparent,shape).clip(shape).background(Color(0xFF242529)).clickable(enabled=enabled){if(voted!=choice)submit(choice)else undo()}){
                             Row(Modifier.fillMaxSize().padding(u.space(10)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(14))){
                                 Artwork(safeImage(item.str("artista"+choice+"_imagem")),Modifier.size(u.space(132)).clip(u.round(15)),scale=ContentScale.Crop)
                                 Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(u.space(6))){
@@ -218,7 +219,7 @@ import com.google.zxing.qrcode.QRCodeWriter
                                     Copy(item.str("artista"+choice+"_nome"),u,19,500,lines=2)
                                     val percent=item.optDouble("artista"+choice+"_porcentagem",Double.NaN)
                                     if(percent.isFinite()){val pct=percent.coerceIn(0.0,100.0);Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(8))){Box(Modifier.weight(1f).height(u.space(6)).clip(CircleShape).background(Color.White.copy(alpha=.16f))){Box(Modifier.fillMaxWidth((pct/100).toFloat()).fillMaxHeight().background(accent))};Copy(pct.toInt().toString()+"%",u,18,600)}}
-                                    if(voted==choice)Copy("✓ Seu voto · mudar voto",u,15,500,color=Color(0xFF78D99B))
+                                    if(voted==choice)Copy("✓ Seu voto · desfazer",u,15,500,color=Color(0xFF78D99B))
                                 }
                             }
                         }

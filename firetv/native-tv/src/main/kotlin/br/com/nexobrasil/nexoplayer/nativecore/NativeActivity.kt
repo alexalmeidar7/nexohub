@@ -684,7 +684,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
         }
     }
     Box(Modifier.fillMaxSize()) {
-    if(!startup && mosaic && ad==null && smartQueue.isEmpty()) NativeMosaic(video,data,foreground=foreground,onExit={mosaic=false;val ch=mosaicReturn?:video.firstOrNull();if(ch!=null)select(ch,Screen.VIDEO)else home()},onSelect={select(it,Screen.VIDEO)},weather=weather,avatar=displayAvatar,onProfile={mosaic=false;openPage(Screen.PROFILE)})
+    if(!startup && mosaic && ad==null && smartQueue.isEmpty()) NativeMosaic(video,data,foreground=foreground,onExit={mosaic=false;val ch=mosaicReturn?:video.firstOrNull();if(ch!=null)select(ch,Screen.VIDEO)else home()},onSelect={select(it,Screen.VIDEO)},weather=weather,avatar=displayAvatar,onProfile={mosaic=false;openPage(Screen.PROFILE)},onHome={home()},onAudio={audio.firstOrNull()?.let{select(it,Screen.AUDIO)}})
     else if(!startup && ad==null && smartQueue.isEmpty()) NativeRewardHost(services,station?.ownerId,account,screen){ NativeLayout(
         screen=screen, inputSerial=activity, station=station, stationName=stationName, payload=data, track=track,
         program=currentProgram,presenter=currentPresenter,artistArtwork=artistArtwork,backgroundAd=visibleBackgroundAd.takeIf{screen==Screen.HOME&&it in latestBackgroundAds}.orEmpty(),bannerLink=banners.getOrNull(bannerIndex).takeIf{it?.optBoolean("clickable")==true}.str("link"),bannerQr=bannerQr,onBannerQr={bannerQr=it},player=player,playing=actualPlaying,buffering=actualBuffering,
