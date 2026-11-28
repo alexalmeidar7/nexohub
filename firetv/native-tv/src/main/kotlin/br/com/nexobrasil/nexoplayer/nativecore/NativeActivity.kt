@@ -185,7 +185,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
     var account by remember { mutableStateOf<JSONObject?>(null) }
     var listenerProfile by remember(account.str("id"),station?.ownerId){mutableStateOf<JSONObject?>(null)}
     var selectedProfileId by remember(account.str("id"),station?.ownerId){mutableStateOf("")}
-    LaunchedEffect(account.str("id"),station?.ownerId){val user=account.str("id");val owner=station?.ownerId?:return@LaunchedEffect;if(user.isNotBlank())try{listenerProfile=services.listenerProfile(owner,user)}catch(e:CancellationException){throw e}catch(_:Exception){}}
+    LaunchedEffect(account.str("id"),station?.ownerId,screen==Screen.PROFILE){val user=account.str("id");val owner=station?.ownerId?:return@LaunchedEffect;if(user.isNotBlank())try{listenerProfile=services.listenerProfile(owner,user)}catch(e:CancellationException){throw e}catch(_:Exception){}}
     val mainProfileName=listenerProfile.str("nome").ifBlank{nativeGoogleName(account)}.ifBlank{guestName}
     val mainAvatar=if(account!=null)nativeProfileAvatar(listenerProfile.str("avatar_url").ifBlank{nativeGooglePhoto(account)})else guestAvatar
     val selectedProfile=listenerProfile.rows("sub_profiles").firstOrNull{it.str("id")==selectedProfileId}
@@ -200,11 +200,13 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
     var cep by remember { mutableStateOf(prefs.getString("cep","").orEmpty()) }
     var panel by remember { mutableStateOf<String?>(null) }
     var panelPinned by remember { mutableStateOf(false) }
-    LaunchedEffect(panel,screen){if(panel !in listOf("lyrics","chat","poll","weather","history","battle") || screen !in listOf(Screen.HOME,Screen.AUDIO,Screen.VIDEO))panelPinned=false}
+    var suspendedPin by remember { mutableStateOf<String?>(null) }
+    fun showTemporaryPanel(next:String){if(panelPinned){suspendedPin=panel;panelPinned=false};panel=next}
+    fun restorePinnedPanel(){panel=suspendedPin;panelPinned=suspendedPin!=null;suspendedPin=null}
     var scheduleOpening by remember { mutableStateOf(false) }
     var interactionReturn by remember { mutableIntStateOf(0) }
     var fromInteraction by remember { mutableStateOf(false) }
-    fun closePanel(){if(fromInteraction){interactionReturn++;controls=true};fromInteraction=false;panelPinned=false;panel=null;interaction=false}
+    fun closePanel(){if(fromInteraction){interactionReturn++;controls=true};fromInteraction=false;panelPinned=false;restorePinnedPanel();interaction=false}
     var forecast by remember { mutableStateOf<JSONObject?>(null) }
     var lyrics by remember { mutableStateOf<String?>(null) }
     var history by remember { mutableStateOf<List<JSONObject>>(emptyList()) }
@@ -321,14 +323,14 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
         if (ad!=null) return
         if(pendingWatch!=null){pendingWatch=null;return}
         if (notice != null) notice = null
-        else if (panel != null) closePanel()
+        else if (panel != null && !panelPinned) closePanel()
         else if(scheduleOpening){scheduleOpening=false}
         else if (startup || entryPending) return
         else if (interaction) {interaction = false;interactionReturn++}
         else if (screen in listOf(Screen.SCHEDULE,Screen.HISTORY,Screen.PROFILE,Screen.SEARCH,Screen.CATALOG)) screen = returnScreen
         else home()
     }
-    fun animatedBack(){if(ad==null&&pendingWatch==null&&panel==null&&notice==null&&!interaction&&!scheduleOpening&&!entryPending)transition{back()}else back()}
+    fun animatedBack(){if(ad==null&&pendingWatch==null&&(panel==null||panelPinned)&&notice==null&&!interaction&&!scheduleOpening&&!entryPending)transition{back()}else back()}
     BackHandler(ad!=null || pendingWatch!=null || screen != Screen.HOME || interaction || notice != null || panel != null) { animatedBack() }
     DisposableEffect(player) {
         val listener = object : Player.Listener {
@@ -562,9 +564,9 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
     LaunchedEffect(smartQueue.isNotEmpty()){
         if(smartQueue.isEmpty()){if(player.isPlaying){player.volume=0f;fadeRequest++}else player.volume=1f}
     }
-    LaunchedEffect(screen,activity,interaction,notice,panel,buffering,playerError,playing,scheduleOpening,interactionReturn,videoTrayFocused) {
+    LaunchedEffect(screen,activity,interaction,notice,panel,panelPinned,buffering,playerError,playing,scheduleOpening,interactionReturn,videoTrayFocused) {
         controls = true
-        if (watch && !videoTrayFocused && !scheduleOpening && !interaction && notice == null && panel == null && (screen == Screen.AUDIO || (playing && !buffering && playerError == null))) {
+        if (watch && !videoTrayFocused && !scheduleOpening && !interaction && notice == null && (panel == null || panelPinned) && (screen == Screen.AUDIO || (playing && !buffering && playerError == null))) {
             delay(8000)
             controls = false
         }
@@ -677,10 +679,10 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
         banner=banners.getOrNull(bannerIndex).str("url"),historyAd=historyAd,panelAd=panelAd,chatAds=eligibleInteractionAds["chat_ads"].orEmpty(),backgroundAdEndsAt=backgroundAdEndsAt,sponsor=sponsorUrls.getOrNull(sponsorIndex),weather=weather,history=history,historyLoading=historyLoading,historyError=historyError,
         notice=notice,video=video,selected=selected, onRetry={retry++},onToggle=::toggle,onBack=::animatedBack,leavingScreen=leavingScreen,onVideoTrayFocus={videoTrayFocused=it},
         entryPending=entryPending, guestName=displayProfileName, guestAvatar=guestAvatar, displayAvatar=displayAvatar, mainProfileName=mainProfileName, mainAvatar=mainAvatar, listenerProfile=listenerProfile, onListenerProfile={listenerProfile=it}, onSelectProfile={selectedProfileId=it},
-        spectrum=spectrum, panel=panel,panelPinned=panelPinned,onPin={panelPinned=!panelPinned;controls=true},forecast=forecast,lyrics=lyrics,cep=cep,api=api,services=services,account=account,
-        onAccount={account=it;panel=null},onLogout={scope.launch{try{services.logout();account=null}catch(e:CancellationException){throw e}catch(_:Exception){notice="Não foi possível encerrar a sessão."}}},
+        spectrum=spectrum, panel=panel,panelPinned=panelPinned,onPin={panelPinned=!panelPinned;suspendedPin=null;controls=true},forecast=forecast,lyrics=lyrics,cep=cep,api=api,services=services,account=account,
+        onAccount={account=it;restorePinnedPanel()},onLogout={scope.launch{try{services.logout();account=null}catch(e:CancellationException){throw e}catch(_:Exception){notice="Não foi possível encerrar a sessão."}}},
         scheduleOpening=scheduleOpening,interactionReturn=interactionReturn,channelOpening=pendingWatch?.second,syncStatus=syncStatus,manualSync=manualSync,onSaveSync=::saveSync,onCalibrateSync=::calibrateNow,canCalibrateSync=playing&&sync.latestStart()?.let{System.currentTimeMillis()+api.serverClockOffsetMs-it in 0L..120000L}==true,
-        onPanel={next->if(next==null)closePanel()else{if(next!=panel)panelPinned=false;fromInteraction=interaction;panel=next;interaction=false;if(next=="schedule"){scheduleOpening=false;controls=true}}},onCepSaved={digits,loc -> prefs.edit().putString("cep",digits).putString("location",loc.toString()).apply();cep=digits;location=loc;panel=null},
+        onPanel={next->if(next==null)closePanel()else{if(next in listOf("schedule","search","cep","pair"))showTemporaryPanel(next)else{if(next!=panel){panelPinned=false;suspendedPin=null};panel=next};fromInteraction=interaction;interaction=false;if(next=="schedule"){scheduleOpening=false;controls=true}}},onCepSaved={digits,loc -> prefs.edit().putString("cep",digits).putString("location",loc.toString()).apply();cep=digits;location=loc;restorePinnedPanel()},
         onGuestSave={name,avatar -> guestName=name;guestAvatar=avatar},
         onProfileContinue={transition{
             if(entryPending) {
@@ -694,10 +696,10 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
                 Screen.HOME -> home()
                 Screen.AUDIO -> { if(audio.isEmpty()) notice="Canal de áudio indisponível" else select(audio.first(),Screen.AUDIO,audioIntent) }
                 Screen.VIDEO -> { if(video.isEmpty()) notice="Canal de vídeo indisponível" else { if(selected?.type=="audio_live") audioIntent=player.playWhenReady; select(video.first(),Screen.VIDEO) } }
-                Screen.SEARCH -> { fromInteraction=false;panelPinned=false;panel="search";interaction=false }
+                Screen.SEARCH -> { fromInteraction=false;showTemporaryPanel("search");interaction=false }
                 Screen.SCHEDULE -> { if(!scheduleOpening)scheduleOpening=true }
-                Screen.HISTORY -> { panelPinned=false;panel="history";interaction=false }
-                else -> {if(panelPinned){panelPinned=false;panel=null};openPage(destination)}
+                Screen.HISTORY -> { if(panel!="history"){panelPinned=false;suspendedPin=null};panel="history";interaction=false }
+                else -> openPage(destination)
             }}
             if(destination in listOf(Screen.HOME,Screen.PROFILE,Screen.VIDEO,Screen.CATALOG))transition(navigate) else navigate()
         },onChannel=onChannel,onVideo={select(it,Screen.VIDEO)},onMosaic={if(video.size>1){mosaicReturn=selected;pendingWatch=null;ad=null;smartQueue=emptyList();liveRequested=false;player.pause();player.stop();player.clearMediaItems();selected=null;sync.resetPlayback();syncEpoch=0L;mosaic=true}},onInteraction={if(interaction){interaction=false;interactionReturn++}else interaction=true},

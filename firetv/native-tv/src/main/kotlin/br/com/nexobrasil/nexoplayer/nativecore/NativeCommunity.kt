@@ -36,6 +36,10 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.contentDescription
@@ -179,8 +183,9 @@ import com.google.zxing.qrcode.QRCodeWriter
         Spacer(Modifier.height(u.space(12)))
         val item=row
         if(item!=null){
-            Column(Modifier.weight(1f,fill=false).fillMaxWidth().verticalScroll(rememberScrollState()),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(10))){
-            if(poll)Copy(item.str("pergunta"),u,24,600,lines=3) else Copy("Quem merece ganhar essa batalha?",u,20,500,lines=2,align=TextAlign.Center)
+            Column(Modifier.weight(1f,fill=true).fillMaxWidth().verticalScroll(rememberScrollState()),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(18))){
+            if(poll)androidx.tv.material3.Text(item.str("pergunta"),style=u.referenceText(24,600),color=Color.White) else Copy("Quem merece ganhar essa batalha?",u,20,500,lines=2,align=TextAlign.Center)
+            Spacer(Modifier.height(u.space(10)))
             val answers=if(poll)(1..4).map{item.str("resposta"+it)}.filter{it.isNotBlank()} else (1..2).map{item.str("artista"+it+"_musica")+" — "+item.str("artista"+it+"_nome")}
             fun submit(choice:Int){
                         if(account==null){msg="Conecte sua conta Google para votar."}
@@ -197,8 +202,8 @@ import com.google.zxing.qrcode.QRCodeWriter
             Column(Modifier.fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(10))){
                 if(poll)answers.forEachIndexed{i,answer->
                     val result=counts?.optInt(i)?.let{" · "+it+" votos"}.orEmpty()
-                    GlassButton(u,(if(voted==i)"✓ " else "")+answer+result,Modifier.fillMaxWidth().height(u.space(66)).then(if(i==0&&(voted<0||editing))Modifier.focusRequester(focus)else Modifier),enabled=!busy&&(voted<0||editing)){submit(i)}
-                }else Column(Modifier.fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(u.space(12))){
+                    NativePollAnswer(u,(if(voted==i)"✓ " else "")+answer+result,answer,Modifier.fillMaxWidth().height(u.space(66)).then(if(i==0&&(voted<0||editing))Modifier.focusRequester(focus)else Modifier),enabled=!busy&&(voted<0||editing)){submit(i)}
+                }else Column(Modifier.fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(u.space(18))){
                     (1..2).forEach{choice->
                         var focused by remember{mutableStateOf(false)}
                         val enabled=!busy&&(voted<0||editing);val shape=u.round(24)
@@ -233,4 +238,20 @@ import com.google.zxing.qrcode.QRCodeWriter
 internal data class NativeChatRow(val key:String,val media:JSONObject,val ad:Boolean)
 internal fun nativeChatRows(messages:List<JSONObject>,ads:List<JSONObject>):List<NativeChatRow> = buildList{
     messages.forEachIndexed{index,m->val key=m.str("id").ifBlank{"message-$index"};add(NativeChatRow("message:$key",m,false));if((index+1)%8==0&&ads.isNotEmpty()&&index<messages.lastIndex){val a=ads[((index+1)/8-1)%ads.size];add(NativeChatRow("ad:$key",a,true))}}
+}
+
+@Composable private fun NativePollAnswer(u:TvUnits,label:String,fullAnswer:String,modifier:Modifier,enabled:Boolean,onClick:()->Unit){
+    val source=remember{MutableInteractionSource()}
+    val hovered by source.collectIsHoveredAsState()
+    var focused by remember{mutableStateOf(false)}
+    var truncated by remember(label){mutableStateOf(false)}
+    Box(modifier.onFocusChanged{focused=it.isFocused}.hoverable(source).border(u.space(if(focused)2 else 1),if(focused)Color.White else Color.White.copy(alpha=.16f),CircleShape).background(glass,CircleShape).clickable(enabled=enabled,onClick=onClick).padding(horizontal=u.space(20)),contentAlignment=Alignment.Center){
+        androidx.tv.material3.Text(label,style=u.referenceText(22,500),color=Color.White,maxLines=1,overflow=TextOverflow.Ellipsis,onTextLayout={truncated=it.hasVisualOverflow})
+        if(truncated&&(focused||hovered)){
+            val gap=with(androidx.compose.ui.platform.LocalDensity.current){u.space(70).roundToPx()}
+            Popup(alignment=Alignment.TopCenter,offset=IntOffset(0,-gap),properties=PopupProperties(focusable=false,clippingEnabled=false)){
+                Box(Modifier.widthIn(max=u.space(430)).background(Color(0xFF303030),u.round(12)).padding(u.space(14))){androidx.tv.material3.Text(fullAnswer,style=u.referenceText(20,400),color=Color.White)}
+            }
+        }
+    }
 }

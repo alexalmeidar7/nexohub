@@ -117,12 +117,12 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
 }
 // Keep these composables small: Android ART on older TVs rejects oversized
 // Compose-generated methods with incompatible register types (VerifyError).
-@Composable internal fun NativePanel(u:TvUnits,panel:String,payload:JSONObject?,track:JSONObject?,history:List<JSONObject>,loading:Boolean,error:Boolean,forecast:JSONObject?,lyrics:String?,cep:String,api:HouseMixClient,owner:String?,accent:Color,onClose:()->Unit,onCepSaved:(String,JSONObject)->Unit,onOpen:(Screen)->Unit,services:NativeServices,account:JSONObject?,onAccount:(JSONObject)->Unit,historyAd:JSONObject?=null,panelAd:JSONObject?=null,chatAds:List<JSONObject> = emptyList(),pinned:Boolean=false,onPin:()->Unit={},preview:Boolean=false) {
+@Composable internal fun NativePanel(u:TvUnits,panel:String,payload:JSONObject?,track:JSONObject?,history:List<JSONObject>,loading:Boolean,error:Boolean,forecast:JSONObject?,lyrics:String?,cep:String,api:HouseMixClient,owner:String?,accent:Color,onClose:()->Unit,onCepSaved:(String,JSONObject)->Unit,onOpen:(Screen)->Unit,services:NativeServices,account:JSONObject?,onAccount:(JSONObject)->Unit,historyAd:JSONObject?=null,panelAd:JSONObject?=null,chatAds:List<JSONObject> = emptyList(),pinned:Boolean=false,onPin:()->Unit={},preview:Boolean=false,panelBottom:Int=850) {
     val focus=remember(panel){FocusRequester()}
     when(panel){
         "pair" -> NativePairPanel(u,services,onClose,onAccount)
         "search","cep" -> NativeSearchCepPanel(u,panel,payload,history,loading,cep,api,onClose,onCepSaved,onOpen,focus)
-        else -> NativeInteractionPanel(u,panel,track,history,loading,error,forecast,lyrics,owner,accent,onClose,services,account,historyAd,panelAd,chatAds,pinned,onPin,preview,focus)
+        else -> NativeInteractionPanel(u,panel,track,history,loading,error,forecast,lyrics,owner,accent,onClose,services,account,historyAd,panelAd,chatAds,pinned,onPin,preview,focus,panelBottom)
     }
     LaunchedEffect(panel,loading,history.isNotEmpty(),forecast!=null){
         if(panel!="pair"&&!preview&&!pinned&&panel!="chat"&&panel!="poll"&&panel!="battle")runCatching{focus.requestFocus()}
@@ -216,11 +216,11 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
     Spacer(Modifier.height(u.space(12)))
 }
 
-@Composable private fun NativeInteractionPanel(u:TvUnits,panel:String,track:JSONObject?,history:List<JSONObject>,loading:Boolean,error:Boolean,forecast:JSONObject?,lyrics:String?,owner:String?,accent:Color,onClose:()->Unit,services:NativeServices,account:JSONObject?,historyAd:JSONObject?,panelAd:JSONObject?,chatAds:List<JSONObject>,pinned:Boolean,onPin:()->Unit,preview:Boolean,focus:FocusRequester){
-    Box(u.at(1350,if(preview)145 else 150,470,620)){
+@Composable private fun NativeInteractionPanel(u:TvUnits,panel:String,track:JSONObject?,history:List<JSONObject>,loading:Boolean,error:Boolean,forecast:JSONObject?,lyrics:String?,owner:String?,accent:Color,onClose:()->Unit,services:NativeServices,account:JSONObject?,historyAd:JSONObject?,panelAd:JSONObject?,chatAds:List<JSONObject>,pinned:Boolean,onPin:()->Unit,preview:Boolean,focus:FocusRequester,panelBottom:Int){
+    Box(u.at(1350,if(preview)145 else 150,470,if(preview)620 else panelBottom-150)){
         Column(Modifier.fillMaxSize().clip(u.round(28)).background(interactionGlass).padding(u.space(20)),horizontalAlignment=Alignment.CenterHorizontally){
             NativeInteractionHeader(u,panel,track,history.isEmpty(),forecast?.optJSONObject("daily")?.optJSONArray("time")==null,pinned,onPin,preview,focus,onClose)
-            Column(Modifier.weight(1f).fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally){
+            Column(Modifier.weight(1f,fill=true).fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally){
                 when(panel){
                     "history" -> NativeHistoryContent(u,history,track,loading,error,historyAd,services,account,owner,focus)
                     "weather" -> NativeWeatherContent(u,forecast,preview,focus)
@@ -228,7 +228,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
                     else -> if(owner!=null)NativeCommunity(u,panel,owner,services,account,chatAds,accent,focus) else Copy("Emissora indisponível.",u,23)
                 }
             }
-            if(panel!="history"&&panel!="chat"&&safeImage(panelAd.str("url"))!=null){Spacer(Modifier.height(u.space(8)));NativeInteractionBanner(u,panelAd,interactive=!preview)}
+            if(panel!="history"&&panel!="chat"&&safeImage(panelAd.str("url"))!=null){Spacer(Modifier.height(u.space(8)));NativeInteractionBanner(u,panelAd,interactive=!preview,alignBottom=true)}
         }
     }
 }
@@ -350,7 +350,7 @@ internal suspend fun resolveHistoryCover(context:android.content.Context,song:JS
 
 internal fun forecastDayLabel(raw:String):Pair<String,String> = runCatching{val day=java.time.LocalDate.parse(raw);val locale=Locale("pt","BR");day.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM",locale)) to day.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL,locale)}.getOrDefault(raw to "")
 
-@Composable internal fun NativeInteractionBanner(u:TvUnits,media:JSONObject?,interactive:Boolean=true){
+@Composable internal fun NativeInteractionBanner(u:TvUnits,media:JSONObject?,interactive:Boolean=true,alignBottom:Boolean=false){
     val url=safeImage(media.str("url"))?:return
     val link=safeImage(media.str("link")).takeIf{interactive&&media?.optBoolean("clickable")==true}
     var focused by remember(url){mutableStateOf(false)}
@@ -359,7 +359,7 @@ internal fun forecastDayLabel(raw:String):Pair<String,String> = runCatching{val 
     val controls=if(link!=null)Modifier.onFocusChanged{focused=it.isFocused;if(!focused)qr=false}.border(u.space(if(focused)3 else 0),Color.White,shape).clickable{qr=!qr}else Modifier
     BackHandler(qr){qr=false}
     Box(Modifier.fillMaxWidth().aspectRatio(2.5f).then(controls).clip(shape),contentAlignment=Alignment.Center){
-        Artwork(url,Modifier.fillMaxSize().clip(shape),"Banner publicitário",scale=ContentScale.Fit)
+        coil.compose.AsyncImage(url,"Banner publicitário",Modifier.fillMaxSize().clip(shape),contentScale=ContentScale.Fit,alignment=if(alignBottom)Alignment.BottomCenter else Alignment.Center)
         if(qr&&link!=null)Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.82f)),contentAlignment=Alignment.Center){NativeQr(link,Modifier.size(u.space(142)).clip(u.round(4)),compact=true)}
     }
 }

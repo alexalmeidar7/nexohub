@@ -106,7 +106,7 @@ internal class NativeServices(private val api:HouseMixClient,context:Context) {
     private fun listenerFilter(owner:String,user:String)=mapOf("auth_user_id" to "eq."+user,"radio_user_id" to "eq."+owner)
     suspend fun listenerProfile(owner:String,user:String):JSONObject?{
         val token=access()?:error("Conecte sua conta Google.")
-        val rows=request(listOf("rest","v1","player_listener_profiles"),listenerFilter(owner,user)+mapOf("select" to "nome,avatar_url,sub_profiles,updated_at,cidade,estado","limit" to "1"),token=token) as? JSONArray
+        val rows=request(listOf("rest","v1","player_listener_profiles"),listenerFilter(owner,user)+mapOf("select" to "id,nome,email,avatar_url,sub_profiles,updated_at,cidade,estado,whatsapp,sexo,cpf,data_nascimento,setor","limit" to "1"),token=token) as? JSONArray
         return rows?.optJSONObject(0)
     }
     suspend fun updateListenerProfile(owner:String,user:String,change:(JSONObject?)->JSONObject):JSONObject{

@@ -218,6 +218,8 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     LaunchedEffect(homeBackgroundAd){if(homeBackgroundAd){homeFocusSuppressed=true;focusManager.clearFocus(force=true);adInput=inputSerial}else if(homeFocusSuppressed){focusManager.clearFocus(force=true);adInput=inputSerial}}
     LaunchedEffect(inputSerial,screen,homeBackgroundAd){if(screen!=Screen.HOME)homeFocusSuppressed=false else if(!homeBackgroundAd&&homeFocusSuppressed&&inputSerial!=adInput){homeFocusSuppressed=false;withFrameNanos{};runCatching{focus.requestFocus()}}}
     val watchScreen=screen==Screen.AUDIO||screen==Screen.VIDEO
+    val encourage by rememberInteractivePrompt(watchScreen&&panel==null&&!interaction&&notice==null&&!leavingScreen&&channelOpening==null,inputSerial)
+    LaunchedEffect(encourage){if(encourage){withFrameNanos{};runCatching{sparkFocus.requestFocus()}}}
     val ready=station!=null||failure!=null
     var restoredInteraction by remember { mutableIntStateOf(interactionReturn) }
     LaunchedEffect(screen,ready,modal,if(watchScreen)controls else true,interactionReturn) {
@@ -259,7 +261,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                     Crossfade(artistPhoto,animationSpec=tween(800),label="artistChange"){url->Artwork(safeImage(url),Modifier.fillMaxSize().alpha(fade),scale=ContentScale.Crop)}
                     Box(Modifier.fillMaxSize().alpha(fade).background(Brush.horizontalGradient(listOf(Color.Black.copy(alpha=.74f),Color.Black.copy(alpha=.45f)))))
                     if(screen==Screen.HOME) Crossfade(backgroundAd,animationSpec=tween(700),label="backgroundAd"){url->if(url.isNotBlank())Artwork(safeImage(url),Modifier.fillMaxSize(),scale=ContentScale.Crop)}
-                    if(screen==Screen.HOME||screen==Screen.SCHEDULE) AnimatedVisibility(screen!=Screen.HOME||backgroundAd.isBlank(),modifier=u.at(1152,108,768,972),enter=fadeIn(tween(650))+slideInHorizontally(tween(650)){it/10},exit=fadeOut(tween(500))){AnimatedPresenter(u,activePresenter.str("foto"),Modifier.fillMaxSize())}
+                    if(screen==Screen.HOME||screen==Screen.SCHEDULE||screen==Screen.AUDIO) AnimatedVisibility(screen!=Screen.HOME||backgroundAd.isBlank(),modifier=u.at(1152,108,768,972),enter=fadeIn(tween(650))+slideInHorizontally(tween(650)){it/10},exit=fadeOut(tween(500))){AnimatedPresenter(u,activePresenter.str("foto"),Modifier.fillMaxSize())}
                     Box(Modifier.fillMaxSize().graphicsLayer{alpha=if(screen==Screen.HOME)homeChrome.value else 1f}.background(Brush.verticalGradient(listOf(Color.Transparent,Color.Transparent,Color.Black.copy(alpha=.78f)))))
                 }
             }
@@ -347,7 +349,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                     val programX by animateDpAsState(u.space(if(screen==Screen.AUDIO&&!controls)100 else 280),tween(350),label="programX")
                     if(!interaction && panelAllowsNavigation && (screen==Screen.AUDIO || chrome>.01f)) Row(Modifier.offset(programX,u.space(928)-lift).width(u.space(900)).height(u.space(85)).alpha(if(screen==Screen.VIDEO)chrome else 1f),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(15))) {
                         Badge(u,"Agora",accent)
-                        Column { Copy(program.str("nome"),u,26,700);Copy(program.str("horario_inicio").take(5)+" – "+program.str("horario_fim").take(5)+"   "+presenter.str("nome"),u,18) }
+                        Column { Copy(program.str("nome"),u,26,700);Copy(program.str("horario_inicio").take(5)+" – "+program.str("horario_fim").take(5)+"   "+activePresenter.str("nome"),u,18) }
                     }
                     if(chrome>.01f && panelAllowsNavigation) {
                         GlassButton(u,"",u.at(100,936,40,40).offset(y=-lift).alpha(chrome).focusRequester(backFocus).focusProperties{right=focus},icon="left",enabled=controls){onBack()}
@@ -370,7 +372,10 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                             }
                         }
                     }
-                    if(panelAllowsNavigation && (screen==Screen.AUDIO || chrome>.01f)) GlassButton(u,"",u.at(1744,922,64,64).offset(y=-lift).alpha(if(screen==Screen.VIDEO)chrome else 1f).focusRequester(sparkFocus).focusProperties{left=programFocus;up=if(screen==Screen.AUDIO||title!="Ao vivo")likeFocus else clockFocus;down=if(hasTray)trayFocus else FocusRequester.Default},icon="spark",enabled=screen==Screen.AUDIO||controls){onInteraction()}
+                    if(panelAllowsNavigation && (screen==Screen.AUDIO || chrome>.01f || encourage)) {
+                        if(encourage) NativeInteractionInvitation(u,accent,u.at(1694,872,164,164).offset(y=-lift))
+                        GlassButton(u,"",u.at(1744,922,64,64).offset(y=-lift).alpha(if(screen==Screen.VIDEO&&!encourage)chrome else 1f).focusRequester(sparkFocus).focusProperties{left=programFocus;up=if(screen==Screen.AUDIO||title!="Ao vivo")likeFocus else clockFocus;down=if(hasTray)trayFocus else FocusRequester.Default},icon="spark",enabled=screen==Screen.AUDIO||controls||encourage){onInteraction()}
+                    }
                     playerError?.let { Copy(it,u,25,500,u.at(100,800,900,50)) }
                 }
                 if(screen==Screen.SCHEDULE) Schedule(u,payload,program,accent,focus,onBack,account.str("id").ifBlank{guestName},scheduleGrid)
@@ -391,7 +396,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                 }
                 }
                 if(interaction && (panel==null||panelPinned)&&!homeBackgroundAd) InteractionCards(u, {onPanel(it)}, onInteraction,sparkFocus,screen==Screen.HOME)
-                if(scheduleOverlay){Box(Modifier.fillMaxSize()){Schedule(u,payload,program,accent,scheduleFocus,{onPanel(null)},account.str("id").ifBlank{guestName},scheduleGrid)}} else if(panel!=null && (!panelPinned||screen in listOf(Screen.HOME,Screen.AUDIO,Screen.VIDEO))) NativePanel(u,panel,payload,track,history,historyLoading,historyError,forecast,lyrics,cep,api,station?.ownerId,accent,{onPanel(null)},onCepSaved,onOpen,services,account,onAccount,historyAd,panelAd,chatAds,pinned=panelPinned,onPin=onPin)
+                if(scheduleOverlay){Box(Modifier.fillMaxSize()){Schedule(u,payload,program,accent,scheduleFocus,{onPanel(null)},account.str("id").ifBlank{guestName},scheduleGrid)}} else if(panel!=null) NativePanel(u,panel,payload,track,history,historyLoading,historyError,forecast,lyrics,cep,api,station?.ownerId,accent,{onPanel(null)},onCepSaved,onOpen,services,account,onAccount,historyAd,panelAd,chatAds,pinned=panelPinned,onPin=onPin,panelBottom=if(screen==Screen.VIDEO&&trayOpen)760 else 850)
                 if(clockPeek&&cep.length==8&&panel==null&&!interaction&&notice==null&&screen!=Screen.PROFILE){
                     NativePanel(u,"weather",payload,track,history,historyLoading,historyError,forecast,lyrics,cep,api,station?.ownerId,accent,{},onCepSaved,onOpen,services,account,onAccount,preview=true)
                 }

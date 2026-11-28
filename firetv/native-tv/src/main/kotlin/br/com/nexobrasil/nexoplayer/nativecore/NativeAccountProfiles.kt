@@ -76,6 +76,8 @@ internal fun nativeProfileAvatar(url:String):Any{
     var confirmLogout by remember{mutableStateOf(false)}
     var confirmDelete by remember{mutableStateOf(false)}
     var showLikes by remember{mutableStateOf(false)}
+    var accountTab by remember{mutableStateOf("Início")}
+    var avatarPicker by remember{mutableStateOf(false)}
     var accountLikes by remember{mutableStateOf<List<JSONObject>>(emptyList())}
     var likesStatus by remember{mutableStateOf("")}
     LaunchedEffect(showLikes,mode,owner,account.str("id")){if(showLikes&&mode=="main"&&owner!=null){likesStatus="Carregando…";try{accountLikes=services.listAccountLikes(owner,account.str("id"));likesStatus=if(accountLikes.isEmpty())"Nenhuma música curtida." else ""}catch(e:CancellationException){throw e}catch(_:Exception){likesStatus="Não foi possível consultar as curtidas."}}}
@@ -83,7 +85,7 @@ internal fun nativeProfileAvatar(url:String):Any{
     val user=account.str("id");val subs=profile.rows("sub_profiles")
     val myStation=when(BuildConfig.STATION_SLUG){"positivafm"->"Minha Positiva";"interativafm"->"Minha Interativa";else->"Minha "+BuildConfig.STATION_NAME}
     val enabled=owner!=null&&user.isNotBlank()
-    fun openEditor(target:JSONObject?=null,add:Boolean=false){showLikes=false;accountLikes=emptyList();editId=target.str("id");name=if(add)"" else target.str("name").ifBlank{mainName};avatar=(if(target==null&&!add)profile.str("avatar_url").ifBlank{nativeGooglePhoto(account)}else target.str("avatar_url")).ifBlank{"/avatars/usr-default.png"};mode=if(add)"add" else if(target==null)"main" else "sub";message=""}
+    fun openEditor(target:JSONObject?=null,add:Boolean=false){showLikes=false;accountTab="Início";avatarPicker=false;accountLikes=emptyList();editId=target.str("id");name=if(add)"" else target.str("name").ifBlank{mainName};avatar=(if(target==null&&!add)profile.str("avatar_url").ifBlank{nativeGooglePhoto(account)}else target.str("avatar_url")).ifBlank{"/avatars/usr-default.png"};mode=if(add)"add" else if(target==null)"main" else "sub";message=""}
     fun mutate(remove:Boolean=false){
         if(!enabled||busy||(!remove&&name.isBlank()))return
         val radio=owner?:return;val clean=name.trim();val currentMode=mode;val id=editId;val chosen=avatar
@@ -101,11 +103,11 @@ internal fun nativeProfileAvatar(url:String):Any{
                         JSONObject().put("sub_profiles",JSONArray(next))
                     }
                 }
-                onProfile(updated);if(remove)onSelect("");mode="select";confirmDelete=false
+                onProfile(updated);if(remove)onSelect("");if(currentMode=="add"||remove)mode="select";avatarPicker=false;confirmDelete=false
             }catch(e:CancellationException){throw e}catch(e:Exception){message=e.message?:"Não foi possível salvar o perfil.";confirmDelete=false}finally{busy=false}
         }
     }
-    BackHandler(mode!="select"||confirmLogout||confirmDelete){if(!busy){when{confirmLogout->confirmLogout=false;confirmDelete->confirmDelete=false;else->mode="select"}}}
+    BackHandler(mode!="select"||confirmLogout||confirmDelete){if(!busy){when{avatarPicker->avatarPicker=false;confirmLogout->confirmLogout=false;confirmDelete->confirmDelete=false;else->mode="select"}}}
     LaunchedEffect(mode,confirmLogout,confirmDelete){withFrameNanos{};runCatching{(if(confirmLogout||confirmDelete)cancelFocus else if(mode=="select")focus else editFocus).requestFocus()}}
     val enter=remember{Animatable(0f)};LaunchedEffect(mode){enter.snapTo(0f);if(mode=="select")kotlinx.coroutines.delay(650);enter.animateTo(1f,tween(420))}
     Box(Modifier.fillMaxSize().background(Brush.linearGradient(if(BuildConfig.STATION_SLUG=="positivafm")listOf(Color(0xFFDF1B22),Color(0xFF8D1E23),Color(0xFF111114))else listOf(accent,androidx.compose.ui.graphics.lerp(accent,Color.Black,.43f),Color(0xFF111114))))){
@@ -120,7 +122,7 @@ internal fun nativeProfileAvatar(url:String):Any{
                             Copy(mainName,u,29,600,lines=2)
                             Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(12))){
                                 Box(Modifier.background(Color.White.copy(alpha=.15f),CircleShape).padding(horizontal=u.space(14),vertical=u.space(5))){Copy("Conta Google",u,18)}
-                                GlassButton(u,myStation,Modifier.height(u.space(44)),enabled=enabled){openEditor()}
+                                GlassButton(u,"★  "+myStation,Modifier.height(u.space(44)),enabled=enabled){openEditor()}
                                 // Logout is inside Minha Rádio.
                             }
                         }
@@ -128,7 +130,7 @@ internal fun nativeProfileAvatar(url:String):Any{
                     subs.forEach{sub->key(sub.str("id")){
                         Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))){
                             AccountCircle(u,nativeProfileAvatar(sub.str("avatar_url")),"Entrar no perfil "+sub.str("name")){onSelect(sub.str("id"));onContinue()}
-                            Column(verticalArrangement=Arrangement.spacedBy(u.space(8))){Copy(sub.str("name"),u,29,600);GlassButton(u,myStation,Modifier.height(u.space(44)),enabled=enabled){openEditor(sub)}}
+                            Column(verticalArrangement=Arrangement.spacedBy(u.space(8))){Copy(sub.str("name"),u,29,600);GlassButton(u,"★  "+myStation,Modifier.height(u.space(44)),enabled=enabled){openEditor(sub)}}
                         }
                     }}
                     Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))){
@@ -137,7 +139,7 @@ internal fun nativeProfileAvatar(url:String):Any{
                     }
                 }
             }
-        }else{
+        }else if(mode=="add"){
             Column(u.at(180,235,1000,680).graphicsLayer{alpha=enter.value},verticalArrangement=Arrangement.spacedBy(u.space(24))){
                 if(mode=="add"){
                     Copy("Nome do perfil",u,25,500)
@@ -153,22 +155,11 @@ internal fun nativeProfileAvatar(url:String):Any{
                     if(mode=="sub")GlassButton(u,"Excluir perfil",Modifier.height(u.space(64)),enabled=!busy){confirmDelete=true}
                     if(mode=="main")GlassButton(u,"Sair da conta Google",Modifier.height(u.space(64)),enabled=!busy){confirmLogout=true}
                 }
-                if(mode=="main")GlassButton(u,"Músicas curtidas",Modifier.height(u.space(48))){showLikes=true}
                 if(message.isNotBlank())Copy(message,u,21,500,lines=3)
             }
             NativeAvatarImage(nativeProfileAvatar(avatar),u.at(1340,285,280,280).clip(CircleShape))
-        }
-        if(showLikes&&mode=="main"){
-            BackHandler{showLikes=false}
-            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.70f)),contentAlignment=Alignment.Center){
-                val likesFocus=remember{FocusRequester()}
-                LaunchedEffect(Unit){withFrameNanos{};runCatching{likesFocus.requestFocus()}}
-                Column(Modifier.width(u.space(680)).height(u.space(650)).background(interactionGlass,u.round(28)).padding(u.space(24)),verticalArrangement=Arrangement.spacedBy(u.space(12))){
-                    Row(verticalAlignment=Alignment.CenterVertically){Copy("Músicas curtidas",u,28,500,Modifier.weight(1f));GlassButton(u,"Voltar",Modifier.height(u.space(48)).focusRequester(likesFocus),icon="left"){showLikes=false}}
-                    if(likesStatus.isNotBlank())Copy(likesStatus,u,20,300)
-                    LazyColumn(Modifier.weight(1f).fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(u.space(8))){items(accountLikes){song->Row(Modifier.fillMaxWidth().background(Color.White.copy(alpha=.08f),u.round(12)).padding(u.space(8)),verticalAlignment=Alignment.CenterVertically){Artwork(safeImage(song.str("capa")),Modifier.size(u.space(60)).clip(u.round(8)),scale=ContentScale.Crop);Spacer(Modifier.width(u.space(12)));Column{Copy(song.str("titulo").ifBlank{song.str("musica")},u,22,500);Copy(song.str("artista"),u,18,300)}}}}
-                }
-            }
+        }else{
+            NativeMyStation(u,mode=="main",name,avatar,profile,account,accountTab,{accountTab=it;showLikes=it=="Músicas curtidas"&&mode=="main"},avatarPicker,{avatarPicker=it},busy,message,editFocus,{chosen->avatar=chosen;scope.launch{try{val radio=owner?:return@launch;busy=true;val updated=services.updateListenerProfile(radio,user){before->if(mode=="main")JSONObject().put("avatar_url",chosen)else JSONObject().put("sub_profiles",JSONArray(before.rows("sub_profiles").map{if(it.str("id")==editId)JSONObject(it.toString()).put("avatar_url",chosen)else it}))};onProfile(updated);avatarPicker=false;message=""}catch(e:CancellationException){throw e}catch(_:Exception){message="Não foi possível salvar o avatar."}finally{busy=false}}},{confirmLogout=true},{confirmDelete=true},{mode="select"},accountLikes,likesStatus)
         }
         if(confirmLogout||confirmDelete)Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.64f)),contentAlignment=Alignment.Center){
             Column(Modifier.width(u.space(580)).background(interactionGlass,u.round(28)).padding(u.space(35)),verticalArrangement=Arrangement.spacedBy(u.space(20))){
@@ -178,5 +169,55 @@ internal fun nativeProfileAvatar(url:String):Any{
             }
         }
         Copy("Nexo TV v"+BuildConfig.VERSION_NAME,u,18,400,u.at(100,1030,800,30),color=Color.White.copy(alpha=.6f))
+    }
+}
+
+@Composable private fun NativeMyStation(u:TvUnits,main:Boolean,name:String,avatar:String,profile:JSONObject?,account:JSONObject,tab:String,onTab:(String)->Unit,picker:Boolean,onPicker:(Boolean)->Unit,busy:Boolean,message:String,focus:FocusRequester,onAvatar:(String)->Unit,onLogout:()->Unit,onDelete:()->Unit,onBack:()->Unit,likes:List<JSONObject>,likesStatus:String){
+    Box(u.at(180,195,1560,800)){
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(u.space(24))){
+            Row(horizontalArrangement=Arrangement.spacedBy(u.space(18)),verticalAlignment=Alignment.CenterVertically){
+                listOf("Início","Amigos","Músicas curtidas").forEachIndexed{i,t->GlassButton(u,t,Modifier.height(u.space(58)).then(if(i==0)Modifier.focusRequester(focus)else Modifier),outline=tab==t){onTab(t)}}
+                GlassButton(u,"Voltar",Modifier.height(u.space(58)),icon="left",onClick=onBack)
+            }
+            when(tab){
+                "Início"->{
+                    Row(horizontalArrangement=Arrangement.spacedBy(u.space(36)),verticalAlignment=Alignment.CenterVertically){
+                        var focused by remember{mutableStateOf(false)}
+                        val source=remember{MutableInteractionSource()};val hovered by source.collectIsHoveredAsState()
+                        Box(Modifier.size(u.space(185)).onFocusChanged{focused=it.isFocused}.hoverable(source).clip(CircleShape).clickable(enabled=!busy){onPicker(true)},contentAlignment=Alignment.Center){
+                            NativeAvatarImage(nativeProfileAvatar(avatar),Modifier.fillMaxSize())
+                            if(focused||hovered)Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.55f)),contentAlignment=Alignment.Center){Copy("▣  Imagem",u,22,400)}
+                        }
+                        Column(verticalArrangement=Arrangement.spacedBy(u.space(12))){
+                            Copy(name,u,36,600)
+                            Copy("Pontuação indisponível",u,23,400)
+                            if(main)GlassButton(u,"Sair da conta Google",Modifier.height(u.space(44)),enabled=!busy,onClick=onLogout)
+                            else GlassButton(u,"Excluir perfil",Modifier.height(u.space(44)),enabled=!busy,onClick=onDelete)
+                        }
+                    }
+                    Copy("Dados cadastrais",u,29,600)
+                    val fields=if(main)listOf("Nome completo" to name,"E-mail" to profile.str("email").ifBlank{account.str("email")},"CPF" to profile.str("cpf"),"Data de nascimento" to profile.str("data_nascimento"),"WhatsApp" to profile.str("whatsapp"),"Sexo" to profile.str("sexo"),"Cidade" to profile.str("cidade"),"Estado" to profile.str("estado"),"Setor / Bairro" to profile.str("setor"))else listOf("Nome" to name)
+                    fields.chunked(3).forEach{group->Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(u.space(24))){group.forEach{(label,value)->Column(Modifier.weight(1f).background(glass,u.round(14)).padding(u.space(15)),verticalArrangement=Arrangement.spacedBy(u.space(5))){Copy(label,u,18,400);Copy(value.ifBlank{"Não informado"},u,23,500,lines=2)}}}}
+                    Copy("Para editar os dados cadastrais, acesse Minha Rádio pelo celular.",u,22,400)
+                }
+                "Amigos"->Copy("A sincronização de amigos ainda não está disponível.",u,25,400)
+                else->{
+                    if(!main)Copy("Curtidas individuais deste perfil ainda não estão disponíveis.",u,23,400)
+                    else{if(likesStatus.isNotBlank())Copy(likesStatus,u,23,400);likes.forEach{song->Row(Modifier.fillMaxWidth().background(glass,u.round(12)).padding(u.space(10)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(16))){Artwork(safeImage(song.str("capa")),Modifier.size(u.space(70)).clip(u.round(8)),scale=ContentScale.Crop);Column{Copy(song.str("titulo").ifBlank{song.str("musica")},u,24,500);Copy(song.str("artista"),u,20,400)}}}}
+                }
+            }
+            if(message.isNotBlank())Copy(message,u,22,400)
+        }
+        if(picker){
+            Box(Modifier.offset(y=u.space(70)).width(u.space(1040)).background(interactionGlass,u.round(24)).padding(u.space(22))){
+                val first=remember{FocusRequester()}
+                LaunchedEffect(Unit){withFrameNanos{};runCatching{first.requestFocus()}}
+                Column(verticalArrangement=Arrangement.spacedBy(u.space(16))){
+                    Row(verticalAlignment=Alignment.CenterVertically){Copy("Escolher avatar",u,26,500,Modifier.weight(1f));GlassButton(u,"Fechar",Modifier.height(u.space(48))){onPicker(false)}}
+                    val choices=(if(main)listOfNotNull(nativeGooglePhoto(account).takeIf{it.isNotBlank()})else emptyList())+profileAvatarPaths
+                    LazyRow(horizontalArrangement=Arrangement.spacedBy(u.space(12))){items(choices){path->AccountCircle(u,nativeProfileAvatar(path),"Selecionar avatar",if(path==choices.first())Modifier.focusRequester(first)else Modifier){if(!busy)onAvatar(path)}}}
+                }
+            }
+        }
     }
 }
