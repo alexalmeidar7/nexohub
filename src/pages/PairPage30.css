@@ -1,3 +1,427 @@
 /* NEXO PAIR 30 — scoped mobile layout */
 .pair30 { min-height:100svh; color:#fff; background:linear-gradient(180deg,#080707,var(--pair-color)); background:linear-gradient(180deg,#080707 0%,color-mix(in srgb,var(--pair-color) 28%,#100707) 40%,color-mix(in srgb,var(--pair-color) 80%,#210000) 100%); font-family:Montserrat,Arial,sans-serif; }
 .pair30 * {box-sizing:border-box} .pair30-screen{position:relative;max-width:650px;min-height:100svh;margin:auto;padding:clamp(28px,6vh,65px) 10% 24px;display:flex;flex-direction:column;align-items:center;text-align:center;overflow:hidden;animation:pair30-in .28s ease-out} .pair30 header{font-size:clamp(13px,3.3vw,22px);color:#999;margin-bottom:clamp(12px,2.4vh,25px);font-weight:400} .pair30 h1{font-size:clamp(20px,4.6vw,33px);line-height:1.18;font-weight:800;margin:0} .pair30 h2{font-size:clamp(14px,3.1vw,21px);font-weight:750;margin:6px 0 0;line-height:1.25} .pair30-center{display:grid;place-content:center;flex:1;min-height:180px;width:100%} .pair30-google{width:clamp(112px,30vw,180px);aspect-ratio:1;border-radius:50%;background:white;display:grid;place-items:center;border:0;color:#333;cursor:pointer} .pair30-google svg{width:64%;height:64%} .pair30-identity{display:flex;flex-direction:column;align-items:center;width:100%;gap:4px} .pair30-avatar{position:relative;width:clamp(85px,22vw,140px);aspect-ratio:1;border:3px solid var(--pair-color);padding:5px;border-radius:50%;display:grid;place-items:center;font-size:38px} .pair30-avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover} .pair30-avatar b{position:absolute;right:-20px;top:40%;font-size:12px;padding:4px 8px;border-radius:20px;background:var(--pair-color);white-space:nowrap} .pair30-identity>strong{font-size:clamp(23px,4.7vw,34px);color:var(--pair-color);font-weight:800} .pair30-code-area{flex:1;width:100%;display:flex;flex-direction:column;justify-content:center;gap:18px;padding:22px 0} .pair30-code-area p{font-size:clamp(14px,3.5vw,23px);line-height:1.3;margin:0} .pair30-code{width:100%;border-radius:999px;background:#fff;color:#080808;padding:8px 12px 12px;display:flex;flex-direction:column;font-size:clamp(13px,3vw,20px);font-weight:750} .pair30-code input{width:100%;background:transparent;color:#080808;text-align:center;border:0;outline-offset:-3px;font-size:clamp(58px,18vw,112px);font-weight:800;line-height:1.05;font-family:inherit;letter-spacing:-.04em} .pair30-confirm{border:1px solid #fff8;border-radius:999px;padding:11px 16px;background:transparent;font-weight:700;color:white} .pair30 button:disabled{opacity:.45;cursor:not-allowed} .pair30 button:focus-visible{outline:3px solid white;outline-offset:4px} .pair30 footer{position:relative;z-index:2;margin-top:auto;min-height:80px;display:grid;place-items:center;padding:12px 0 4px} .pair30 footer img{width:clamp(80px,19vw,125px);height:clamp(80px,19vw,125px);object-fit:contain} .pair30-live{position:relative;flex:1;width:100%;min-height:230px;display:flex;flex-direction:column;justify-content:flex-end;padding-top:100px;gap:12px} .pair30-presenter{position:absolute;right:-15%;bottom:-105px;width:85%;height:calc(100% + 85px);object-fit:contain;object-position:right bottom;pointer-events:none;z-index:0} .pair30-onair{position:relative;text-align:left;z-index:1;display:flex;flex-direction:column;align-items:flex-start;line-height:1.2} .pair30-onair b{background:var(--pair-color);border-radius:8px;padding:5px 10px;margin-bottom:5px} .pair30-onair strong{font-size:clamp(14px,3vw,20px)} .pair30-actions{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;width:100%} .pair30-actions button{min-width:0;border:0;aspect-ratio:1.05;border-radius:15%;background:linear-gradient(145deg,var(--pair-color),#202020);background:linear-gradient(145deg,color-mix(in srgb,var(--pair-color) 65%,#222),#202020);color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12%;font-size:clamp(9px,2.5vw,15px);font-weight:750;line-height:1.1;padding:6px} .pair30-actions svg{width:42%;height:42%} .pair30-note,.pair30-error{position:relative;z-index:2;font-size:12px;margin:0;background:#151515b0;padding:6px 9px;border-radius:8px} .pair30-error{margin:10px 0} .pair30-back{display:block;width:100%;background:#111;color:white;padding:15px;border:0;text-align:left} @keyframes pair30-in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}} @media(prefers-reduced-motion:reduce){.pair30-screen{animation:none}}
+
+/* NEXO PAIRING MOBILE V7 — escopo exclusivo de PairPage. */
+.pair30 .pair30-screen.pair7-screen {min-height:100svh; padding-top:clamp(20px,4vh,40px); padding-bottom:14px; gap:0; overflow:hidden;}
+.pair30 .pair7-login-brand {width:100%; min-height:84px; display:grid; place-items:center; margin:0 0 12px;}
+.pair30 .pair7-login-brand img {width:clamp(76px,23vw,106px); height:clamp(76px,23vw,106px); object-fit:contain;}
+.pair30 .pair7-screen .pair7-login-title {font-size:clamp(15px,4vw,19px); font-weight:700; line-height:1.25; text-align:center;}
+.pair30 .pair7-screen .pair30-google {width:clamp(100px,28vw,140px);}
+.pair30 .pair7-header {position:relative; z-index:4; width:100%; flex:none; display:grid; grid-template-columns:clamp(54px,16vw,74px) minmax(0,1fr) clamp(48px,15vw,70px); align-items:center; gap:10px; padding:3px 0 10px; text-align:left;}
+.pair30 .pair7-header .pair30-avatar {width:100%; padding:3px; border-width:2px; font-size:24px;}
+.pair30 .pair7-person {min-width:0; display:flex; flex-direction:column; align-items:flex-start; gap:4px;}
+.pair30 .pair7-person > strong {color:var(--pair-color);font-size:clamp(16px,4.5vw,21px); font-weight:700;line-height:1;}
+.pair30 .pair7-person h1 {font-size:clamp(13px,3.8vw,18px); font-weight:700; overflow-wrap:anywhere; text-align:left; line-height:1.2;}
+.pair30 .pair7-header .pair6-points {position:static; display:inline-flex; width:max-content; max-width:100%; font-size:10px; line-height:1; padding:5px 8px; margin-top:2px;}
+.pair30 .pair7-header .pair7-brand {width:100%; aspect-ratio:1; object-fit:contain; justify-self:end;}
+.pair30 .pair7-screen .pair7-footer {min-height:34px; flex:none; margin-top:auto; padding:16px 0 5px; color:#fff; font-size:11px; font-weight:400; opacity:.75;}
+.pair30 .pair7-screen .pair30-code-area {gap:16px; align-items:center; padding:16px 0;}
+.pair30 .pair7-screen .pair30-code-area p {font-size:clamp(13px,3.6vw,16px);}
+.pair30 .pair7-screen .pair30-confirm {width:min(78%,260px); min-height:43px; border:2px solid #fff; opacity:1; font-size:12px; font-weight:600; padding:9px 14px;}
+.pair30 .pair7-screen .pair30-confirm:disabled {opacity:.65; cursor:not-allowed;}
+.pair30 .pair7-screen .pair30-success-sequence {position:relative; isolation:isolate; width:100%; flex:1 1 auto; min-height:0; margin-top:10px; overflow:hidden;}
+.pair30 .pair7-screen .pair30-success-message {z-index:3; display:grid; place-items:center; pointer-events:none; text-align:center; margin:0; font-size:clamp(22px,6vw,30px); font-weight:300; line-height:1.25; animation:pair7-message-exit 1.65s both;}
+.pair30 .pair7-screen .pair7-first {grid-area:1/1; animation:pair7-first .50s both; font-weight:300;}
+.pair30 .pair7-screen .pair7-phrase {grid-area:1/1; font-weight:300;}
+.pair30 .pair7-screen .pair7-word {display:inline-block; margin-right:.23em; opacity:0; animation:pair7-word .25s var(--word-delay) both;}
+.pair30 .pair7-screen .pair7-radio {display:block; font-size:1.12em; margin-top:7px; font-weight:300; opacity:0; animation:pair7-word .30s 1.02s both;}
+@keyframes pair7-first {0%{opacity:0; transform:translateY(7px)} 28%,70%{opacity:1;transform:none} 100%{opacity:0; transform:translateY(-5px)}}
+@keyframes pair7-word {from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes pair7-message-exit {0%,86%{opacity:1;visibility:visible}100%{opacity:0;visibility:hidden;transform:translateY(-4px)}}
+.pair30 .pair7-screen .pair30-success-live {display:grid; grid-template-rows:minmax(120px,1fr) auto auto; gap:9px; padding:0; min-height:0; flex:1; overflow:hidden; animation:pair7-live .30s 1.65s both;}
+@keyframes pair7-live {from{opacity:0;visibility:hidden;transform:translateY(7px)}to{opacity:1;visibility:visible;transform:none}}
+.pair30 .pair7-screen .pair30-success-live .pair5-portraits {position:relative; inset:auto; width:100%; height:auto; min-height:120px; align-self:stretch; overflow:hidden;}
+.pair30 .pair7-screen .pair5-portraits img {position:absolute; inset:0; object-fit:contain; object-position:center bottom; mask-image:linear-gradient(to bottom,#000 0%,#000 75%,transparent 100%); -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 75%,transparent 100%);}
+.pair30 .pair7-screen .pair30-success-live .pair30-onair {min-height:0; position:relative; text-align:center; gap:1px;}
+.pair30 .pair7-screen .pair30-onair b {margin-bottom:2px; padding:4px 9px; font-size:11px;}
+.pair30 .pair7-screen .pair30-actions {gap:7px;}
+.pair30 .pair7-screen .pair30-actions button {aspect-ratio:1.05; border-radius:14px; cursor:pointer;}
+.pair30 .pair7-chat {display:grid;gap:12px;color:#222;font-size:14px;}
+.pair30 .pair7-chat-intro {margin:0; color:#555;}
+.pair30 .pair7-chat-list {max-height:38svh;min-height:110px;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:8px;}
+.pair30 .pair7-chat-list article {background:#f1f2f4;border-radius:12px;padding:10px 12px;}
+.pair30 .pair7-chat-list article p {margin:3px 0 0;overflow-wrap:anywhere;white-space:pre-wrap;}
+.pair30 .pair7-chat form {display:grid;gap:8px;}
+.pair30 .pair7-chat textarea {width:100%;border-radius:12px;padding:12px;font-size:16px;resize:vertical;}
+.pair30 .pair7-primary {display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;border:0;border-radius:13px;background:var(--pair-color);color:#fff;font-weight:700;}
+.pair30 .pair7-chat-error {color:#a42222;}
+.pair30 .pair7-remote-note {padding:14px;border-radius:12px;background:#f2f3f5;color:#333;line-height:1.5;}
+@media(max-width:340px){.pair30 .pair7-header {gap:7px;grid-template-columns:52px minmax(0,1fr) 45px;}}
+@media(prefers-reduced-motion:reduce){.pair30 .pair7-screen .pair30-success-message {animation:none;display:none;}.pair30 .pair7-screen .pair30-success-live {animation:none;opacity:1;visibility:visible;}}
+
+/* NEXO_PAIRING_MOBILE_V9 — chat somente no Pairing. */
+.pair30 .pair5-overlay.pair9-overlay {align-items:flex-end; padding:12px 12px max(12px,env(safe-area-inset-bottom));}
+.pair30 .pair5-modal[data-kind="chat"] {width:min(100%,400px);max-height:min(67svh,620px);padding:12px 14px 14px;border-radius:22px;display:flex;flex-direction:column;overflow:hidden;}
+.pair30 .pair5-modal[data-kind="chat"] .pair5-close {position:absolute;top:12px;right:14px;float:none;width:30px;height:30px;}
+.pair30 .pair9-chat {display:flex;flex-direction:column;gap:10px;min-height:0;overflow:hidden;color:#222;}
+.pair30 .pair9-chat-tools {display:flex;align-items:center;min-height:30px;padding-right:44px;}
+.pair30 .pair9-friends-toggle {display:flex;align-items:center;gap:6px;border:0;background:transparent;color:#333;font-size:12px;font-weight:650;padding:5px 2px;}
+.pair30 .pair9-message-wrap {position:relative;min-height:100px;flex:1;display:flex;overflow:hidden;}
+.pair30 .pair9-message-list,.pair30 .pair9-friends-list {width:100%;height:clamp(150px,36svh,340px);min-height:0;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:8px;padding:4px 2px;}
+.pair30 .pair9-row {display:flex;flex-direction:column;align-items:flex-start;gap:5px;flex:none;}
+.pair30 .pair9-row.own {align-items:flex-end;}
+.pair30 .pair9-bubble {display:flex;flex-direction:column;align-items:flex-start;max-width:91%;min-width:0;text-align:left;gap:3px;padding:9px 12px;border:0;background:#f0f1f3;color:#222;border-radius:13px 13px 13px 4px;line-height:1.35;}
+.pair30 .pair9-row.own .pair9-bubble {background:color-mix(in srgb,var(--pair-color) 12%,white);border-radius:13px 13px 4px 13px;}
+.pair30 .pair9-bubble strong {font-size:12px;color:#222;font-weight:700;}
+.pair30 .pair9-bubble span {font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere;}
+.pair30 .pair9-quote {font-size:10px;max-width:100%;border-left:2px solid var(--pair-color);padding-left:6px;color:#666;overflow-wrap:anywhere;}
+.pair30 .pair9-message-actions {order:-1;display:flex;gap:6px;flex-wrap:wrap;}
+.pair30 .pair9-message-actions button {border:0;background:#242424;color:#fff;border-radius:9px;padding:7px 9px;display:flex;align-items:center;gap:5px;font-size:11px;}
+.pair30 .pair9-compose {display:flex;gap:8px;align-items:flex-end;flex:none;}
+.pair30 .pair9-compose textarea {width:100%;min-width:0;flex:1;min-height:54px;max-height:90px;resize:none;border-radius:15px;padding:11px 12px;font-size:16px;line-height:1.25;}
+.pair30 .pair9-send {display:grid;place-items:center;width:48px;height:48px;flex:none;border:0;border-radius:15px;background:var(--pair-color);color:white;}
+.pair30 .pair9-reply {display:flex;align-items:center;gap:8px;border-left:3px solid var(--pair-color);background:#f4f4f5;border-radius:7px;padding:7px 9px;flex:none;}
+.pair30 .pair9-reply div {flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+.pair30 .pair9-reply strong {font-size:11px;}.pair30 .pair9-reply span {font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pair30 .pair9-reply button,.pair30 .pair9-friends-list button {border:0;background:transparent;color:#444;display:inline-flex;align-items:center;padding:5px;}
+.pair30 .pair9-empty,.pair30 .pair9-notice,.pair30 .pair9-friends-list>p {font-size:12px;color:#555;line-height:1.35;margin:0;}
+.pair30 .pair9-notice {max-height:48px;overflow:auto;flex:none;}
+.pair30 .pair9-latest {position:absolute;right:5px;bottom:5px;width:32px;height:32px;border:0;border-radius:50%;background:#222;color:white;display:grid;place-items:center;}
+.pair30 .pair9-friends-list article {display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px;background:#f0f1f3;border-radius:10px;flex:none;}
+.pair30 .pair9-friends-list article strong,.pair30 .pair9-friends-list article small {display:block;font-size:12px;}.pair30 .pair9-friends-list article small {font-size:11px;color:#666;}
+@media(max-height:550px){.pair30 .pair5-modal[data-kind="chat"]{max-height:calc(100dvh - 24px);}.pair30 .pair9-message-list,.pair30 .pair9-friends-list{height:clamp(85px,32dvh,200px);}}
+
+/* NEXO_PAIRING_MOBILE_V10 — corrige alinhamento e dimensões da área final. */
+.pair30 .pair30-screen.pair7-screen { width: min(100%,420px)!important; min-width:0; }
+.pair30 .pair7-screen:has(.pair30-success-sequence) {height:max(100svh,540px)!important; min-height:100svh!important;}
+.pair30 .pair7-screen .pair30-success-sequence {
+  display:flex!important; flex-direction:column!important; align-items:stretch!important;
+  width:100%!important; min-width:0!important; min-height:0!important;
+  flex:1 1 0!important; margin:10px 0 0!important; padding:0!important;
+  align-self:stretch!important; justify-content:flex-end!important; overflow:hidden!important;
+}
+.pair30 .pair7-screen .pair30-success-sequence .pair30-success-live {
+  position:relative!important; display:grid!important; grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:minmax(0,1fr) auto auto!important; gap:10px!important;
+  flex:1 1 0!important; align-self:stretch!important; width:100%!important; min-width:0!important;
+  min-height:340px!important; margin:0!important; padding:0!important;
+  justify-items:stretch!important; align-items:stretch!important;
+  overflow:hidden!important; animation:pair7-live .30s 1.65s both;
+}
+.pair30 .pair7-screen .pair30-success-live .pair5-portraits {
+  grid-column:1!important; position:relative!important; inset:auto!important;
+  width:100%!important; height:100%!important; min-height:0!important;
+  margin:0!important; padding:0!important; overflow:hidden!important;
+  align-self:stretch!important; justify-self:stretch!important;
+}
+.pair30 .pair7-screen .pair30-success-live .pair5-portraits img {
+  position:absolute!important; top:0!important; bottom:auto!important; left:50%!important; right:auto!important;
+  width:100%!important; max-width:340px!important; height:100%!important;
+  margin:0!important; transform:translateX(-50%)!important;
+  object-fit:contain!important; object-position:center top!important;
+  mask-image:linear-gradient(to bottom,#000 0%,#000 72%,transparent 100%);
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 72%,transparent 100%);
+}
+.pair30 .pair7-screen .pair30-success-live .pair30-onair {
+  grid-column:1!important; display:flex!important; flex-direction:column!important;
+  width:100%!important; max-width:none!important; min-width:0!important; margin:0!important;
+  align-items:center!important; justify-content:center!important; text-align:center!important;
+  gap:3px!important; padding:0 5px 5px!important;
+}
+.pair30 .pair7-screen .pair30-success-live .pair30-onair b {font-size:13px!important; padding:5px 12px!important; margin:0 0 3px!important;}
+.pair30 .pair7-screen .pair30-success-live .pair30-onair strong {font-size:clamp(20px,5.8vw,26px)!important; line-height:1.1!important; text-align:center!important;}
+.pair30 .pair7-screen .pair30-success-live .pair30-onair small {font-size:13px!important; line-height:1.25!important; text-align:center!important;}
+.pair30 .pair7-screen .pair30-success-live .pair30-actions {
+  grid-column:1!important; width:100%!important; max-width:none!important; min-width:0!important; margin:0!important;
+  display:grid!important; grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  justify-self:stretch!important; align-self:end!important; gap:8px!important;
+}
+.pair30 .pair7-screen .pair30-success-live .pair30-actions button {
+  width:100%!important; min-width:0!important; height:clamp(84px,25vw,108px)!important; min-height:0!important; aspect-ratio:auto!important;
+  padding:8px 4px!important; gap:8px!important; font-size:clamp(10px,3vw,13px)!important; border-radius:15px!important;
+}
+.pair30 .pair7-screen .pair30-success-live .pair30-actions button svg {width:30px!important;height:30px!important;flex:none!important;}
+/* The chat is a bottom sheet, scoped to its own modal. */
+.pair30 .pair5-overlay.pair9-overlay {align-items:flex-end!important; justify-content:center!important; padding:12px 12px max(12px,env(safe-area-inset-bottom))!important;}
+.pair30 .pair5-modal[data-kind="chat"] {width:min(100%,400px)!important; max-height:min(67dvh,620px)!important; margin:0!important;}
+.pair30 .pair5-modal[data-kind="chat"] > h2, .pair30 .pair5-modal[data-kind="chat"] > p {display:none!important;}
+@media(max-height:650px){
+  .pair30 .pair7-screen .pair30-success-sequence .pair30-success-live {min-height:250px!important;gap:6px!important;}
+  .pair30 .pair7-screen .pair30-success-live .pair30-actions button {height:78px!important;}
+  .pair30 .pair7-screen .pair30-success-live .pair30-onair strong {font-size:19px!important;}
+}
+@media(prefers-reduced-motion:reduce){.pair30 .pair7-screen .pair30-success-sequence .pair30-success-live {animation:none!important;opacity:1!important;visibility:visible!important;}}
+
+/* NEXO_PAIRING_MOBILE_V11 — visual exclusivo do Pairing */
+.pair30 .pair7-screen .pair30-success-live .pair30-actions button {position:relative;}
+.pair30 .pair11-action-count {position:absolute;top:7px;right:7px;display:grid;place-items:center;min-width:20px;height:20px;padding:0 5px;border-radius:99px;background:#fff;color:#b20e16;font-size:11px;font-weight:800;line-height:1;}
+.pair30 .pair7-screen .pair7-header .pair30-avatar {animation:pair11-left .4s ease-out both;}
+.pair30 .pair7-screen .pair7-person > strong {animation:pair11-left .4s .12s ease-out both;}
+.pair30 .pair7-screen .pair7-person > h1 {animation:pair11-left .4s .20s ease-out both;}
+.pair30 .pair7-screen .pair7-person > .pair6-points {animation:pair11-left .4s .30s ease-out both;}
+.pair30 .pair7-screen .pair7-brand {animation:pair11-right .45s ease-out both;}
+.pair30 .pair7-screen .pair30-success-live .pair5-portraits {animation:pair11-up .45s 1.65s ease-out both;}
+.pair30 .pair7-screen .pair30-success-live .pair30-onair {animation:pair11-up .4s 1.82s ease-out both;}
+.pair30 .pair7-screen .pair30-success-live .pair30-actions button {animation:pair11-up .38s 1.94s ease-out both;}
+.pair30 .pair7-screen .pair30-success-live .pair30-actions button:nth-child(2) {animation-delay:2.04s;}
+.pair30 .pair7-screen .pair30-success-live .pair30-actions button:nth-child(3) {animation-delay:2.14s;}
+@keyframes pair11-left {from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:translateX(0)}}
+@keyframes pair11-right {from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
+@keyframes pair11-up {from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.pair30 .pair7-screen.pair11-friends-open .pair30-success-sequence {display:none!important;}
+.pair30 .pair11-friends-page {flex:1 1 0;min-height:0;width:100%;display:flex;flex-direction:column;gap:14px;text-align:left;animation:pair11-up .24s ease-out both;margin-top:12px;}
+.pair30 .pair11-friends-title {display:flex;gap:9px;align-items:center;}
+.pair30 .pair11-friends-title h2 {font-size:21px;font-weight:600;margin:0;}
+.pair30 .pair11-friends-title button,.pair30 .pair11-conversation-header button,.pair30 .pair11-selected button {display:grid;place-items:center;border:0;border-radius:50%;background:#ffffff16;color:inherit;width:34px;height:34px;flex:none;}
+.pair30 .pair11-tabs {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;width:100%;}
+.pair30 .pair11-tabs button {display:flex;align-items:center;justify-content:center;gap:4px;min-height:38px;border:1px solid #ffffff38;border-radius:99px;background:transparent;color:inherit;font-size:clamp(10px,2.8vw,12px);font-weight:600;padding:7px 4px;white-space:nowrap;}
+.pair30 .pair11-tabs button[aria-pressed=true] {background:#fff;color:#252525;border-color:#fff;}
+.pair30 .pair11-tabs b,.pair30 .pair11-thread b {background:var(--pair-color);color:#fff;border-radius:50%;min-width:16px;height:16px;font-size:10px;display:grid;place-items:center;}
+.pair30 .pair11-friends-content {flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;}
+.pair30 .pair11-friends-grid {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px 6px;padding:7px 1px 14px;}
+.pair30 .pair11-friends-grid button {min-width:0;background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:6px;color:#fff;font-size:10px;padding:0;}
+.pair30 .pair11-friends-grid button>span:last-child {overflow:hidden;text-overflow:ellipsis;max-width:100%;white-space:nowrap;}
+.pair30 .pair11-friend-avatar {position:relative;display:grid;place-items:center;border:2px solid #ffffff38;width:100%;max-width:60px;aspect-ratio:1;border-radius:50%;color:white;font-size:22px;font-weight:600;flex:none;}
+.pair30 .pair11-friends-grid button[aria-pressed=true] .pair11-friend-avatar {border-color:#fff;}
+.pair30 .pair11-shake-icon {position:absolute;right:-3px;bottom:0;background:#f6ca65;color:#272222;border-radius:50%;display:grid;place-items:center;width:20px;height:20px;}
+.pair30 .pair11-shake .pair11-friend-avatar {animation:pair11-wiggle .14s ease-in-out 4;}
+@keyframes pair11-wiggle {0%,100%{transform:translateX(0)}25%{transform:translateX(-3px) rotate(-5deg)}75%{transform:translateX(3px) rotate(5deg)}}
+.pair30 .pair11-friend-actions {display:grid;gap:6px;border-radius:16px;background:#202124;padding:12px;animation:pair11-up .2s ease-out;}
+.pair30 .pair11-selected {display:flex;align-items:center;justify-content:space-between;}
+.pair30 .pair11-friend-actions>button {display:flex;align-items:center;gap:10px;background:#35363a;border:0;border-radius:10px;color:#fff;padding:12px;text-align:left;font-size:13px;}
+.pair30 .pair11-social-list {display:grid;gap:8px;}
+.pair30 .pair11-social-list article,.pair30 .pair11-thread {display:flex;align-items:center;gap:9px;background:#242426;border-radius:13px;padding:10px;border:0;color:#fff;text-align:left;width:100%;}
+.pair30 .pair11-social-list .pair11-friend-avatar,.pair30 .pair11-conversation-header .pair11-friend-avatar {width:42px;font-size:17px;}
+.pair30 .pair11-social-list article>div,.pair30 .pair11-thread>div {flex:1;min-width:0;}
+.pair30 .pair11-social-list strong,.pair30 .pair11-thread strong {font-size:13px;display:block;}
+.pair30 .pair11-social-list small,.pair30 .pair11-thread small {display:block;font-size:11px;color:#c8c8c8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pair30 .pair11-social-list article>button {display:grid;place-items:center;border:0;color:white;background:#ffffff20;width:30px;height:30px;border-radius:50%;flex:none;}
+.pair30 .pair11-private-chat {display:flex;flex-direction:column;gap:10px;min-height:230px;}
+.pair30 .pair11-conversation-header {display:flex;align-items:center;gap:9px;}
+.pair30 .pair11-private-messages {display:flex;flex-direction:column;gap:8px;flex:1;max-height:40svh;overflow:auto;}
+.pair30 .pair11-private-messages p {max-width:85%;margin:0;padding:10px 12px;border-radius:12px;background:#29292e;font-size:13px;overflow-wrap:anywhere;align-self:flex-start;}
+.pair30 .pair11-private-messages p.own {background:var(--pair-color);align-self:flex-end;}
+.pair30 .pair11-private-chat form {display:flex;gap:8px;}
+.pair30 .pair11-private-chat input {flex:1;min-width:0;border:0;border-radius:12px;background:#242426;color:white;padding:10px;font-size:16px;}
+.pair30 .pair11-private-chat form button {border:0;background:var(--pair-color);color:white;border-radius:12px;padding:10px;}
+.pair30 .pair11-demo,.pair30 .pair11-notice {font-size:11px;opacity:.8;text-align:center;margin:5px 0;}
+.pair30 .pair11-empty {display:grid;place-items:center;text-align:center;gap:10px;padding:24px 12px;font-size:13px;color:#c7c7c7;}
+/* Minha Rádio: fundo escuro e escopo separado do chat. */
+.pair30 .pair5-modal[data-kind="profile"] {background:#202124!important;color:#fff!important;height:auto!important;max-height:min(92dvh,760px)!important;padding:22px 17px 20px!important;}
+.pair30 .pair5-modal[data-kind="profile"] .pair5-close {background:#38393c;color:white;}
+.pair30 .pair11-my-radio {display:grid;gap:16px;text-align:left;color:#fff;}
+.pair30 .pair11-my-radio > h2 {display:flex;align-items:center;gap:7px;font-size:19px!important;line-height:1.2;margin:4px 34px 0 0!important;color:#fff!important;}
+.pair30 .pair11-my-radio > h2 svg {color:#ffd45d;flex:none;}
+.pair30 .pair11-profile-hero {display:grid;justify-items:center;gap:10px;padding:8px 0 4px;}
+.pair30 .pair11-big-avatar {width:clamp(100px,32vw,130px);aspect-ratio:1;border-radius:50%;background:#35363a;display:grid;place-items:center;overflow:hidden;border:2px solid var(--pair-color);padding:4px;}
+.pair30 .pair11-big-avatar img {width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.pair30 .pair11-score {display:flex;gap:5px;align-items:center;padding:6px 12px;border-radius:99px;background:var(--pair-color);font-size:12px;font-weight:600;}
+.pair30 .pair11-profile-hero h3 {margin:0;font-size:21px;font-weight:500;text-align:center;overflow-wrap:anywhere;}
+.pair30 .pair11-profile-links {display:grid;gap:8px;}
+.pair30 .pair11-profile-links button,.pair30 .pair11-likes article {display:flex;align-items:center;gap:12px;text-align:left;background:#303136;color:white;border:0;border-radius:13px;padding:13px;min-width:0;}
+.pair30 .pair11-profile-links button>span,.pair30 .pair11-likes article>div {flex:1;min-width:0;display:grid;gap:4px;}
+.pair30 .pair11-profile-links strong,.pair30 .pair11-likes strong {font-size:13px;}
+.pair30 .pair11-profile-links small,.pair30 .pair11-likes small {font-size:11px;color:#bfc0c3;}
+.pair30 .pair11-profile-links button>svg:first-child,.pair30 .pair11-likes article>svg {color:#ff6b72;flex:none;}
+.pair30 .pair11-pending {display:inline-block;width:8px;height:8px;background:#ff555e;border-radius:50%;flex:none;animation:pair11-pulse 1.2s ease-in-out infinite;}
+@keyframes pair11-pulse {0%,100%{opacity:1}50%{opacity:.35}}
+.pair30 .pair11-likes {display:grid;gap:8px;}
+.pair30 .pair11-song-art {display:grid;place-items:center;background:#404146;color:#ddd;border-radius:8px;width:40px;height:40px;flex:none;}
+.pair30 .pair5-modal[data-kind="profile"] .pair11-profile-form main {background:transparent!important;color:white!important;}
+.pair30 .pair5-modal[data-kind="profile"] .pair11-profile-form main header,.pair30 .pair5-modal[data-kind="profile"] .pair11-profile-form main h1,.pair30 .pair5-modal[data-kind="profile"] .pair11-profile-form main footer {display:none!important;}
+.pair30 .pair5-modal[data-kind="profile"] .pair11-profile-form label,.pair30 .pair5-modal[data-kind="profile"] .pair11-profile-form p,.pair30 .pair5-modal[data-kind="profile"] .pair11-profile-form small,.pair30 .pair5-modal[data-kind="profile"] .pair11-profile-form>div {color:#ddd!important;}
+.pair30 .pair5-modal[data-kind="profile"] .pair11-profile-form input,.pair30 .pair5-modal[data-kind="profile"] .pair11-profile-form select {background:#36373c!important;color:#fff!important;}
+@media(prefers-reduced-motion:reduce){.pair30 .pair7-screen .pair7-header *,.pair30 .pair7-screen .pair30-success-live .pair5-portraits,.pair30 .pair7-screen .pair30-success-live .pair30-onair,.pair30 .pair7-screen .pair30-success-live .pair30-actions button,.pair30 .pair11-friends-page,.pair30 .pair11-shake .pair11-friend-avatar,.pair30 .pair11-pending {animation:none!important;opacity:1!important;}}
+
+/* NEXO_PAIRING_MOBILE_V12 — vidro fumê e área única para os três painéis. */
+.pair30 .pair7-screen.pair12-success {
+  --pair12-glass: linear-gradient(145deg,rgba(255,255,255,.115),rgba(255,255,255,.035));
+  --pair12-border: rgba(255,255,255,.19);
+  --pair12-panel-bg: linear-gradient(150deg,rgba(25,25,28,.96),rgba(10,10,12,.94));
+}
+/* Keep the welcome/portrait/action DOM mounted while changing panels. */
+.pair30 .pair7-screen.pair12-success .pair30-success-sequence .pair30-success-live {
+  grid-template-rows:minmax(0,1fr) auto!important;
+  gap:12px!important;
+  min-height:0!important;
+}
+.pair30 .pair7-screen.pair12-success .pair12-stage {
+  position:relative;display:grid;grid-template-rows:minmax(0,1fr) auto;grid-template-columns:minmax(0,1fr);
+  min-width:0;min-height:0;width:100%;gap:8px;isolation:isolate;
+}
+.pair30 .pair7-screen.pair12-success .pair12-stage>.pair5-portraits{grid-row:1;}
+.pair30 .pair7-screen.pair12-success .pair12-stage>.pair30-onair{grid-row:2;}
+.pair30 .pair7-screen.pair12-success .pair30-actions{grid-row:2!important;}
+.pair30 .pair7-screen.pair12-success .pair30-actions button,
+.pair30 .pair7-screen.pair12-success .pair30-onair b,
+.pair30 .pair7-screen.pair12-success .pair7-header .pair6-points,
+.pair30 .pair7-screen.pair12-success .pair7-header .pair30-avatar {
+  background:var(--pair12-glass),rgba(12,12,15,.38)!important;
+  border:1px solid var(--pair12-border)!important;
+  color:#fff!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.09)!important;
+  -webkit-backdrop-filter:blur(15px) saturate(125%);backdrop-filter:blur(15px) saturate(125%);
+}
+.pair30 .pair7-screen.pair12-success .pair7-header .pair30-avatar{border-radius:50%;padding:4px;}
+.pair30 .pair7-screen.pair12-success .pair7-header .pair6-points{border-radius:99px;}
+.pair30 .pair7-screen.pair12-success .pair30-onair b{border-radius:99px!important;}
+.pair30 .pair7-screen.pair12-success .pair30-actions button:active{background:rgba(255,255,255,.16)!important;}
+.pair30 .pair7-screen.pair12-success .pair11-action-count{background:var(--pair-color)!important;color:#fff!important;border:1px solid #ffffff40;}
+/* Exactly the same top, bottom, width and radius for profile, chat and friends. */
+.pair30 .pair7-screen .pair12-panel {
+  position:absolute;inset:4px 0 2px;z-index:5;display:flex;flex-direction:column;min-width:0;min-height:0;
+  padding:13px;overflow:hidden;border:1px solid rgba(255,255,255,.17);border-radius:22px;
+  color:#f7f7f8;background:var(--pair12-panel-bg);box-shadow:inset 0 1px 0 rgba(255,255,255,.055);
+  -webkit-backdrop-filter:blur(22px) saturate(115%);backdrop-filter:blur(22px) saturate(115%);
+  text-align:left;animation:pair12-panel-in .24s cubic-bezier(.2,.8,.2,1) both;
+}
+.pair30 .pair7-screen .pair12-panel[hidden],.pair30 .pair12-friends-slot[hidden]{display:none!important;}
+.pair30 .pair7-screen .pair12-panel[data-leaving="true"]{animation:pair12-panel-out .23s ease-in both;pointer-events:none;}
+@keyframes pair12-panel-in{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes pair12-panel-out{from{opacity:1;transform:none}to{opacity:0;transform:translateY(9px) scale(.985)}}
+.pair30 .pair12-close{position:absolute;z-index:7;right:13px;top:13px;width:30px;height:30px;display:grid;place-items:center;border-radius:50%;border:1px solid #ffffff29;background:#ffffff0d;color:#fff;font-size:22px;line-height:1;cursor:pointer;}
+.pair30 .pair12-panel-body {flex:1 1 0;min-height:0;min-width:0;display:flex;flex-direction:column;overflow:hidden;}
+.pair30 .pair12-panel[data-kind="profile"] .pair12-panel-body{overflow:auto;overscroll-behavior:contain;padding-right:2px;}
+.pair30 .pair12-panel .pair11-my-radio {gap:12px;color:#f7f7f8;}
+.pair30 .pair12-panel .pair11-my-radio>h2{padding-right:34px;margin:4px 0 0!important;color:#fff!important;font-size:18px!important;}
+.pair30 .pair12-panel .pair11-profile-hero{gap:7px;padding:4px 0;}
+.pair30 .pair12-panel .pair11-big-avatar{width:clamp(85px,27vw,120px);background:var(--pair12-glass);border:1px solid var(--pair12-border);}
+.pair30 .pair12-panel .pair11-score{background:var(--pair12-glass);border:1px solid var(--pair12-border);color:white;}
+.pair30 .pair12-panel .pair11-profile-links button,.pair30 .pair12-panel .pair11-likes article,
+.pair30 .pair12-panel .pair11-friend-actions,.pair30 .pair12-panel .pair11-friend-actions>button,
+.pair30 .pair12-panel .pair11-social-list article,.pair30 .pair12-panel .pair11-thread,
+.pair30 .pair12-panel .pair11-private-messages p,.pair30 .pair12-panel .pair9-bubble,
+.pair30 .pair12-panel .pair9-friends-list article,.pair30 .pair12-panel .pair9-reply,
+.pair30 .pair12-panel .pair9-message-actions button {
+  background:var(--pair12-glass)!important;border:1px solid var(--pair12-border)!important;color:#f6f6f7!important;
+}
+.pair30 .pair12-panel .pair11-tabs button {background:#ffffff08;border:1px solid #ffffff29;color:#dedee2;}
+.pair30 .pair12-panel .pair11-tabs button[aria-pressed="true"]{background:linear-gradient(145deg,#ffffff22,#ffffff0c);color:#fff;border-color:color-mix(in srgb,var(--pair-color) 60%,#ffffff40);}
+.pair30 .pair12-panel .pair11-private-messages p.own,.pair30 .pair12-panel .pair9-row.own .pair9-bubble {background:linear-gradient(145deg,color-mix(in srgb,var(--pair-color) 24%,#242426),#202023)!important;}
+.pair30 .pair12-panel .pair12-friends-slot {display:flex;flex:1 1 0;min-height:0;overflow:hidden;}
+.pair30 .pair12-panel .pair11-friends-page {margin:0;min-height:0;gap:10px;animation:none;}
+.pair30 .pair12-panel .pair11-friends-title {min-height:30px;padding-right:34px;}
+.pair30 .pair12-panel .pair11-friends-title>button {display:none;}
+.pair30 .pair12-panel .pair11-friends-title h2 {font-size:18px;color:#fff;}
+.pair30 .pair12-panel .pair11-friend-avatar {background-image:linear-gradient(145deg,#ffffff20,#00000030);border:1px solid #ffffff38;}
+.pair30 .pair12-panel .pair11-friends-grid {gap:10px 5px;}
+.pair30 .pair12-panel .pair11-private-chat{min-height:0;}
+.pair30 .pair12-panel .pair11-private-messages{max-height:none;min-height:80px;}
+.pair30 .pair12-panel .pair9-chat {flex:1 1 0;min-height:0;gap:8px;color:#f5f5f5;}
+.pair30 .pair12-panel .pair9-message-wrap {min-height:0;flex:1 1 0;}
+.pair30 .pair12-panel .pair9-message-list,.pair30 .pair12-panel .pair9-friends-list {height:auto;flex:1 1 0;min-height:0;overflow:auto;}
+.pair30 .pair12-panel .pair9-chat-tools {min-height:30px;}
+.pair30 .pair12-panel .pair9-friends-toggle,.pair30 .pair12-panel .pair9-bubble strong,
+.pair30 .pair12-panel .pair9-reply button,.pair30 .pair12-panel .pair9-friends-list button{color:#f5f5f5!important;}
+.pair30 .pair12-panel .pair9-empty,.pair30 .pair12-panel .pair9-notice,.pair30 .pair12-panel .pair9-quote,.pair30 .pair12-panel .pair9-friends-list>p,.pair30 .pair12-panel .pair9-friends-list article small {color:#bfc0c4!important;}
+.pair30 .pair12-panel input,.pair30 .pair12-panel textarea,.pair30 .pair12-panel select {
+  background:#ffffff09!important;color:#fff!important;border:1px solid #ffffff24!important;border-radius:12px;
+  box-shadow:none!important;min-width:0;
+}
+.pair30 .pair12-panel input::placeholder,.pair30 .pair12-panel textarea::placeholder{color:#a1a1a9;}
+.pair30 .pair12-panel select option{background:#19191c;color:#fff;}
+.pair30 .pair12-panel .pair9-compose textarea{min-height:45px;max-height:70px;}
+.pair30 .pair12-panel .pair9-send,.pair30 .pair12-panel .pair11-private-chat form button {background:var(--pair12-glass),color-mix(in srgb,var(--pair-color) 24%,#202024);border:1px solid #ffffff29;color:white;}
+.pair30 .pair12-panel .pair11-profile-form main{min-height:0!important;background:transparent!important;padding:0!important;color:#fff!important;}
+.pair30 .pair12-panel .pair11-profile-form main header,.pair30 .pair12-panel .pair11-profile-form main h1,.pair30 .pair12-panel .pair11-profile-form main footer{display:none!important;}
+.pair30 .pair12-panel .pair11-profile-form label,.pair30 .pair12-panel .pair11-profile-form p,.pair30 .pair12-panel .pair11-profile-form small,.pair30 .pair12-panel .pair11-profile-form>div{color:#d5d5d8!important;}
+.pair30 .pair12-panel .pair11-profile-form button[type="submit"]{background:var(--pair12-glass),color-mix(in srgb,var(--pair-color) 24%,#202024)!important;border:1px solid #ffffff29!important;color:#fff!important;}
+@media(max-height:650px){.pair30 .pair7-screen.pair12-success .pair30-success-sequence .pair30-success-live{gap:9px!important;}.pair30 .pair7-screen .pair12-panel{padding:10px;border-radius:19px;}.pair30 .pair12-close{top:10px;right:10px;}.pair30 .pair12-panel .pair9-compose textarea{min-height:40px;}.pair30 .pair12-panel .pair9-send{height:42px;width:42px;}}
+@media(prefers-reduced-motion:reduce){.pair30 .pair7-screen .pair12-panel,.pair30 .pair7-screen .pair12-panel[data-leaving="true"]{animation:none!important;}}
+
+/* NEXO_PAIRING_MOBILE_V13 — galeria de avatares, locutores e Chat Ads. */
+.pair30 .pair12-panel .pair13-filled-star{fill:var(--pair-color);stroke:var(--pair-color);flex:none;}
+.pair30 .pair12-panel .pair13-avatar-wrap{position:relative;display:inline-grid;place-items:center;}
+.pair30 .pair12-panel .pair13-avatar-edit{position:absolute;right:-5px;bottom:1px;display:grid;place-items:center;width:35px;height:35px;border-radius:50%;border:1px solid #ffffff50;background:#29292de8;color:#fff;backdrop-filter:blur(12px);cursor:pointer;}
+.pair30 .pair12-panel .pair13-avatar-gallery{width:100%;padding:10px;border-radius:14px;background:var(--pair12-glass);border:1px solid var(--pair12-border);text-align:left;}
+.pair30 .pair12-panel .pair13-avatar-gallery h3{font-size:13px!important;margin:0 0 9px!important;}
+.pair30 .pair12-panel .pair13-avatar-gallery>div{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;align-items:start;}
+.pair30 .pair12-panel .pair13-avatar-gallery button{display:flex;flex-direction:column;align-items:center;min-width:0;gap:3px;background:none;color:#fff;border:0;padding:0;cursor:pointer;}
+.pair30 .pair12-panel .pair13-avatar-gallery img{display:block;width:100%;aspect-ratio:1;object-fit:cover;border:2px solid #ffffff26;border-radius:50%;}
+.pair30 .pair12-panel .pair13-avatar-gallery button[aria-pressed=true] img{border-color:var(--pair-color);}
+.pair30 .pair12-panel .pair13-avatar-gallery small{font-size:9px;}
+.pair30 .pair12-panel .pair13-avatar-gallery p{font-size:12px;color:#ffbdbd;margin:6px 0 0;}
+.pair30 .pair12-panel .pair11-big-avatar img{animation:pair13-avatar-in .22s ease both;}
+@keyframes pair13-avatar-in{from{opacity:.25;transform:scale(.96)}to{opacity:1;transform:none}}
+.pair30 .pair12-panel .pair13-presenters{margin:0 0 12px;padding-bottom:8px;border-bottom:1px solid #ffffff18;}
+.pair30 .pair12-panel .pair13-presenters h3,.pair30 .pair12-panel .pair13-friends-label{font-size:12px!important;color:#e8e8eb;font-weight:650;margin:0 0 8px!important;text-align:left;}
+.pair30 .pair12-panel .pair13-presenter-strip{display:flex;overflow-x:auto;overflow-y:hidden;gap:8px;padding:2px 2px 8px;scroll-snap-type:x proximity;overscroll-behavior-x:contain;scrollbar-width:thin;}
+.pair30 .pair12-panel .pair13-presenter-strip button{display:flex;flex:0 0 calc((100% - 32px)/5);min-width:43px;flex-direction:column;align-items:center;gap:6px;background:none;border:0;color:#e0e0e2;font-size:10px;padding:0;scroll-snap-align:start;cursor:pointer;}
+.pair30 .pair12-panel .pair13-presenter-strip button>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
+.pair30 .pair12-panel .pair13-presenter-wrap{position:relative;display:block;width:100%;max-width:60px;}
+.pair30 .pair12-panel .pair11-friend-avatar[data-presenter=true]{background:linear-gradient(135deg,#0b090a 10%,var(--pair-color) 140%);overflow:visible;}
+.pair30 .pair12-panel .pair11-friend-avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover;}
+.pair30 .pair12-panel .pair13-presenter-strip .pair11-friend-avatar{opacity:.58;}
+.pair30 .pair12-panel .pair13-add{position:absolute;bottom:-2px;right:-2px;width:18px;height:18px;display:grid;place-items:center;color:white;background:#39393e;border:1px solid #ffffff50;border-radius:50%;}
+.pair30 .pair12-panel .pair13-chat-ad{flex:none;max-width:100%;margin:30px 0 4px;}
+.pair30 .pair12-panel .pair13-chat-ad:empty{display:none;}
+.pair30 .pair12-panel .pair13-chat-ad .nexo-ad-slot{width:100%;max-height:90px;overflow:hidden;border-radius:10px;}
+.pair30 .pair12-panel .pair13-chat-ad img{width:100%;max-height:80px;object-fit:contain;display:block;}
+.pair30 .pair12-panel .pair13-chat-ad .nexo-ad-qr{max-width:100%;}
+@media(prefers-reduced-motion:reduce){.pair30 .pair12-panel .pair11-big-avatar img{animation:none;}}
+
+/* NEXO_PAIRING_MOBILE_V14 — Friends e cadastro */
+.pair30 .pair12-panel .pair13-presenter-strip{--portrait-size:clamp(45px,14vw,58px);gap:9px;padding:3px 2px 9px;scrollbar-width:none;scroll-snap-type:x proximity;align-items:flex-start;}
+.pair30 .pair12-panel .pair13-presenter-strip::-webkit-scrollbar{display:none;}
+.pair30 .pair12-panel .pair13-presenter-strip>button{flex:0 0 max(var(--portrait-size),calc((100% - 36px)/4.65));min-width:0;max-width:none;align-items:center;justify-content:flex-start;gap:7px;}
+.pair30 .pair12-panel .pair13-presenter-wrap{width:var(--portrait-size);height:var(--portrait-size);min-height:var(--portrait-size);max-width:none;flex:none;}
+.pair30 .pair12-panel .pair13-presenter-wrap>.pair11-friend-avatar{width:100%;height:100%;min-height:0;max-width:none;aspect-ratio:1;border-radius:50%;}
+.pair30 .pair12-panel .pair11-friend-avatar{display:block;position:relative;flex:none;aspect-ratio:1/1;height:auto;overflow:visible;}
+.pair30 .pair12-panel .pair14-avatar-clip{position:absolute;inset:0;border-radius:50%;overflow:hidden;display:grid;place-items:center;}
+.pair30 .pair12-panel .pair14-avatar-clip>img{display:block;width:100%;height:100%;max-width:100%;max-height:100%;border-radius:0;object-fit:cover;}
+.pair30 .pair12-panel .pair11-friend-avatar[data-presenter=true] .pair14-avatar-clip>img{width:86%;height:86%;object-fit:contain;object-position:center;}
+.pair30 .pair12-panel .pair13-presenter-strip .pair11-friend-avatar{opacity:.65;}
+.pair30 .pair12-panel .pair14-friend-row{min-width:0;}
+.pair30 .pair12-panel .pair14-friend-row .pair11-friends-grid{padding:4px 0 9px;}
+.pair30 .pair12-panel .pair14-inline-actions{margin:0 0 10px;padding:9px;animation:pair14-menu-in .18s ease both;scroll-margin:8px;}
+@keyframes pair14-menu-in{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+.pair30 .pair12-panel .pair14-registration{display:grid;gap:12px;text-align:left;padding:4px 0 12px;}
+.pair30 .pair14-registration label{display:grid;gap:5px;font-size:12px;color:#ddd;}
+.pair30 .pair14-registration input,.pair30 .pair14-registration select{width:100%;min-width:0;min-height:42px;padding:10px 12px;font-size:16px;color:#fff!important;border-radius:11px;background:#ffffff0c!important;border:1px solid #ffffff20!important;}
+.pair30 .pair14-registration input:focus,.pair30 .pair14-registration select:focus{outline:1px solid var(--pair-color);}
+.pair30 .pair14-registration select option{background:#222;color:#fff;}
+.pair30 .pair14-registration .pair14-field-caption{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.pair30 .pair14-registration .pair14-field-caption small{color:#e9bf68;font-size:10px;}
+.pair30 .pair14-registration .pair14-suggestions{display:grid;gap:2px;max-height:145px;overflow:auto;background:#222226;border:1px solid #ffffff22;border-radius:10px;padding:4px;}
+.pair30 .pair14-registration .pair14-suggestions button{text-align:left;background:none;color:#fff;border:0;border-radius:6px;padding:9px;font-size:13px;}
+.pair30 .pair14-registration .pair14-suggestions button:focus,.pair30 .pair14-registration .pair14-suggestions button:hover{background:#ffffff16;}
+.pair30 .pair14-registration .pair14-save{width:100%;min-height:45px;border-radius:12px;border:1px solid #ffffff36;background:color-mix(in srgb,var(--pair-color) 35%,#222);color:#fff;font-weight:700;}
+.pair30 .pair14-registration .pair14-form-status{font-size:12px;line-height:1.4;color:#ddd;margin:0;}
+.pair30 .pair14-registration .pair14-sound{display:flex;align-items:center;justify-content:space-between;font-size:11px;gap:8px;}
+.pair30 .pair14-registration .pair14-sound input{width:16px;min-height:16px;accent-color:var(--pair-color);}
+.pair30 .pair14-registration .pair14-done{font-size:13px;color:#f7d67a;font-weight:700;}
+.pair14-flying-star{position:fixed!important;z-index:2147483647;pointer-events:none;color:#ffd66b;font-size:19px;line-height:1;will-change:transform,opacity;text-shadow:0 0 9px #ffcf7380;}
+.pair30 .pair6-points.pair14-reward-pulse{animation:pair14-reward-pulse .45s ease-out!important;}
+@keyframes pair14-reward-pulse{0%,100%{scale:1}45%{scale:1.14;filter:brightness(1.4)}}
+@media(prefers-reduced-motion:reduce){.pair14-flying-star{display:none!important}.pair30 .pair12-panel .pair14-inline-actions,.pair30 .pair6-points.pair14-reward-pulse{animation:none!important;}}
+
+/* NEXO_PAIRING_MOBILE_V15 — contraste exclusivo Interativa FM. */
+.pair30[data-pair-station="interativafm"] {
+  --pair15-on-accent: #151515;
+}
+/* Verde-lima sólido: os numerais e ícones devem ser escuros, inclusive
+   em badges dentro de abas, conversas e no botão Friends. */
+.pair30[data-pair-station="interativafm"] .pair7-screen.pair12-success .pair11-action-count,
+.pair30[data-pair-station="interativafm"] .pair11-tabs b,
+.pair30[data-pair-station="interativafm"] .pair11-thread b {
+  color:var(--pair15-on-accent)!important;
+}
+/* Superfícies claras na base do degradê: presentes nas três etapas. */
+.pair30[data-pair-station="interativafm"] .pair7-screen .pair7-footer {
+  color:var(--pair15-on-accent)!important;
+  opacity:1;
+}
+.pair30[data-pair-station="interativafm"] .pair7-screen.pair12-success .pair30-onair strong,
+.pair30[data-pair-station="interativafm"] .pair7-screen.pair12-success .pair30-onair small {
+  color:var(--pair15-on-accent)!important;
+}
+/* O código já é preto sobre branco. O login Google, o cabeçalho, os
+   selos de vidro fumê, os campos e os três painéis escuros mantêm as
+   cores originais. Botão de confirmação e botões de ação sobre vidro
+   escuro mantêm branco: não são superfícies verde-lima sólidas. */
+
+/* NEXO_PAIRING_MOBILE_V16 — identidade oficial antes de liberar as três etapas. */
+.pair16-brand-wait{min-height:100vh;min-height:100svh;display:grid;place-items:center;background:#090909;color:#e5e5e5;text-align:center;font-family:Montserrat,Arial,sans-serif;padding:24px;box-sizing:border-box;}
+.pair16-brand-wait>div{display:flex;flex-direction:column;align-items:center;gap:14px;max-width:270px;font-size:14px;}
+.pair16-brand-wait p{margin:0;line-height:1.45;}
+.pair16-brand-wait button{border:1px solid #777;background:transparent;color:#eee;padding:10px 18px;border-radius:24px;cursor:pointer;font-weight:600;}
+.pair16-brand-spinner{width:26px;height:26px;animation:pair16-spin .8s linear infinite;}
+@keyframes pair16-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.pair16-brand-spinner{animation:none;}}
+/* Somente Interativa. O selo de código é verde sólido; o da tela final é vidro escuro. */
+.pair30[data-pair-station="interativafm"] .pair7-screen:not(.pair12-success) .pair7-header .pair6-points,
+.pair30[data-pair-station="interativafm"] .pair7-screen:not(.pair12-success) .pair7-header .pair6-points span,
+.pair30[data-pair-station="interativafm"] .pair7-screen:not(.pair12-success) .pair7-header .pair6-points svg{
+ color:#151515!important;stroke:currentColor;
+}
+.pair30[data-pair-station="interativafm"] .pair7-screen:not(.pair12-success) .pair7-header .pair6-points{background:var(--pair-color)!important;}
