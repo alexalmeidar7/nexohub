@@ -432,7 +432,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     }
 }
 
-@Composable private fun Badge(u:TvUnits,label:String,accent:Color,compact:Boolean=false) {
+@Composable internal fun Badge(u:TvUnits,label:String,accent:Color,compact:Boolean=false) {
     Box(Modifier.background(accentGlass(accent),u.round(if(compact)10 else 13)).border(u.space(1),Color.White.copy(alpha=.25f),u.round(if(compact)10 else 13)).padding(horizontal=u.space(if(compact)13 else 15),vertical=u.space(if(compact)5 else 6))) { Copy(label,u,if(compact)15 else 21,650) }
 }
 @Composable private fun Clock(u:TvUnits,modifier:Modifier,weather:JSONObject?,onPeek:(Boolean)->Unit,onClick:()->Unit) {
