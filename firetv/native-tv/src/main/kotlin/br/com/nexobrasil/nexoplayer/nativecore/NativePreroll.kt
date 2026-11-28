@@ -15,6 +15,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedContent
@@ -62,7 +63,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
-@Composable internal fun NativePreroll(media:JSONObject,audio:Boolean,onStarted:()->Unit,onFinish:()->Unit,smart:Boolean=false,breakStart:Long=0L,breakDuration:Double=0.0,serverClockOffset:Long=0L,onPlayed:()->Unit={},onBack:()->Unit={},commercialPhone:String="",smartSerial:Int=0,smartActive:Boolean=true,onSaveProduct:suspend (JSONObject)->Boolean={false}){
+@Composable internal fun NativePreroll(media:JSONObject,audio:Boolean,onStarted:()->Unit,onFinish:()->Unit,smart:Boolean=false,breakStart:Long=0L,breakDuration:Double=0.0,serverClockOffset:Long=0L,onPlayed:()->Unit={},onBack:()->Unit={},commercialPhone:String="",smartSerial:Int=0,smartActive:Boolean=true,onSaveProduct:suspend (JSONObject)->Boolean={false},productAvatar:Any?=null){
     val context=LocalContext.current
     val finish by rememberUpdatedState(onFinish)
     val started by rememberUpdatedState(onStarted)
@@ -92,6 +93,9 @@ import org.json.JSONObject
     var productSaved by remember(media,smartSerial){mutableStateOf(false)}
     var productBusy by remember(media,smartSerial){mutableStateOf(false)}
     val productScope=rememberCoroutineScope()
+    val cartFlight=remember(media,smartSerial){Animatable(0f)}
+    var flying by remember(media,smartSerial){mutableStateOf(false)}
+    LaunchedEffect(productSaved){if(productSaved){flying=true;cartFlight.snapTo(0f);cartFlight.animateTo(1f,tween(700));delay(900);flying=false}}
     fun openProduct(){productOpen=true;if(!productBusy&&!productSaved&&media.str("productDescription").isNotBlank()){productBusy=true;productScope.launch{try{productSaved=onSaveProduct(media)}finally{productBusy=false}}}}
     var qrFocused by remember{mutableStateOf(false)}
     val qrInteraction=remember{MutableInteractionSource()}
@@ -168,6 +172,11 @@ import org.json.JSONObject
                     Copy(if(breakRemaining>=0)formatSmartBreakTime(breakRemaining)else "--:--",u,22,600,Modifier.width(u.space(84)),align=TextAlign.Center)
                     if(breakRemaining>=0)Canvas(Modifier.size(u.space(30))){val sw=size.minDimension*.11f;val top=Offset(sw,sw);val arc=Size(size.width-2*sw,size.height-2*sw);drawArc(Color.White.copy(alpha=.25f),-90f,360f,false,top,arc,style=Stroke(sw));drawArc(Color.White,-90f,360f*ring.value.coerceIn(0f,1f),false,top,arc,style=Stroke(sw,cap=StrokeCap.Round))}else NativeSpinner(u,Modifier.size(u.space(30)))
                 }
+            }
+            if(flying&&productAvatar!=null){
+                val t=cartFlight.value
+                NativeAvatarImage(productAvatar,u.at(1750,65,70,70).clip(CircleShape))
+                if(t<1f)Box(u.at(1480+270*t,800-735*t,130-65*t,130-65*t).clip(u.round(20)).background(interactionGlass),contentAlignment=Alignment.Center){val image=media.str("productImage").ifBlank{media.str("artistImage")};if(safeImage(image)!=null)Artwork(image,Modifier.fillMaxSize(),scale=ContentScale.Crop)else Copy("✓",u,36,700)}
             }
             if(smart&&info)Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.65f))){
                 val panelX by animateDpAsState(u.space(if(contact)300 else 435),tween(350),label="smartPanelX")

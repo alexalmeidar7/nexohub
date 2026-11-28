@@ -241,13 +241,13 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     val title=track.str("titulo").ifBlank{"Ao vivo"}
     val artist=track.str("artista")
     val people=remember(payload){payload.rows("apresentadores").associateBy{it.str("id")}}
-    val presenters=program.strings("apresentadores_ids").ifEmpty{listOf(program.str("apresentador_id"))}.mapNotNull{people[it]}.ifEmpty{listOfNotNull(presenter)}
+    val presenters=remember(program,people,presenter){program.strings("apresentadores_ids").ifEmpty{listOf(program.str("apresentador_id"))}.mapNotNull{people[it]}.ifEmpty{listOfNotNull(presenter)}}
     val artistPhoto=artistArtwork.takeUnless{url->presenters.any{it.str("foto")==url}}.orEmpty()
     var presenterIndex by remember(program.str("id"),presenters.map{it.str("id")}){mutableIntStateOf(0)}
     LaunchedEffect(program.str("id"),presenters.map{it.str("id")}){if(presenters.size>1)while(true){delay(4000);presenterIndex=(presenterIndex+1)%presenters.size}}
     val activePresenter=presenters.getOrNull(presenterIndex)
     val portraitContext=androidx.compose.ui.platform.LocalContext.current
-    val portraitUrls=presenters.map{it.str("foto")}.filter{safeImage(it)!=null}.distinct()
+    val portraitUrls=remember(presenters){presenters.map{it.str("foto")}.filter{safeImage(it)!=null}.distinct()}
     LaunchedEffect(portraitUrls){portraitUrls.forEach{url->coil.Coil.imageLoader(portraitContext).enqueue(coil.request.ImageRequest.Builder(portraitContext).data(url).size(768,972).build())}}
     val reminderContext=androidx.compose.ui.platform.LocalContext.current
     val reminderPrefs=remember{reminderContext.getSharedPreferences("native_tv_settings",0)}

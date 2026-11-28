@@ -29,7 +29,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import org.json.JSONObject
 internal fun mosaicDirectStream(url:String):Boolean = url.startsWith("https://",true)&&!url.contains("youtu",true)
-@Composable internal fun NativeMosaic(channels:List<StationChannel>,payload:JSONObject?,foreground:Boolean,onExit:()->Unit,onSelect:(StationChannel)->Unit,weather:JSONObject?=null,avatar:Any=R.drawable.visitor_avatar,onProfile:()->Unit=onExit,onHome:()->Unit=onExit,onAudio:()->Unit=onExit){
+@Composable internal fun NativeMosaic(channels:List<StationChannel>,payload:JSONObject?,foreground:Boolean,onExit:()->Unit,onSelect:(StationChannel)->Unit,weather:JSONObject?=null,avatar:Any=R.drawable.visitor_avatar,onProfile:()->Unit=onExit,onHome:()->Unit=onExit,onAudio:()->Unit=onExit,onInteraction:()->Unit=onExit){
     val context=LocalContext.current
     val focus=remember{FocusRequester()}
     var index by remember(channels.map{it.id}){mutableIntStateOf(0)}
@@ -47,7 +47,7 @@ internal fun mosaicDirectStream(url:String):Boolean = url.startsWith("https://",
         channels.mapIndexed{i,ch->if(i !in activeIndices)null else ExoPlayer.Builder(context).setLoadControl(nativeLoadControl(context,true)).build().apply{
             setAudioAttributes(AudioAttributes.DEFAULT,false)
             volume=0f
-            trackSelectionParameters=trackSelectionParameters.buildUpon().setMaxVideoSize(640,360).setMaxVideoBitrate(900000).build()
+            trackSelectionParameters=trackSelectionParameters.buildUpon().setMaxVideoSize(960,540).setMaxVideoBitrate(1600000).build()
             val item=MediaItem.Builder().setUri(ch.url);if(ch.url.contains(".m3u8",true))item.setMimeType(MimeTypes.APPLICATION_M3U8)
             setMediaItem(item.build());prepare();playWhenReady=foreground
         }}
@@ -60,14 +60,14 @@ internal fun mosaicDirectStream(url:String):Boolean = url.startsWith("https://",
         Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(accent,androidx.compose.ui.graphics.lerp(accent,Color.Black,.55f),Color(0xFF111114)))).focusRequester(focus).onPreviewKeyEvent{e->
             if(e.type!=KeyEventType.KeyDown||channels.isEmpty())false else if(expanding)true else when(e.key){
                 Key.DirectionDown->{footerFocus=0;true}
-                Key.DirectionRight->{if(footerFocus>=0)footerFocus=(footerFocus+1)%4 else index=(index+1)%channels.size;true}
+                Key.DirectionRight->{if(footerFocus>=0)footerFocus=(footerFocus+1)%5 else index=(index+1)%channels.size;true}
                 Key.DirectionUp->{footerFocus=-1;true}
-                Key.DirectionLeft->{if(footerFocus>=0)footerFocus=(footerFocus+3)%4 else index=(index-1+channels.size)%channels.size;true}
-                Key.DirectionCenter,Key.Enter->{if(footerFocus>=0){when(footerFocus){0->onHome();1->onAudio();2->paused=!paused;3->onExit()}}else channels.getOrNull(index)?.takeIf{mosaicDirectStream(it.url)||youtubeVideoId(it.url)!=null}?.let{expanding=true};true}
+                Key.DirectionLeft->{if(footerFocus>=0)footerFocus=(footerFocus+4)%5 else index=(index-1+channels.size)%channels.size;true}
+                Key.DirectionCenter,Key.Enter->{if(footerFocus>=0){when(footerFocus){0->onHome();1->onAudio();2->paused=!paused;3->onExit();4->onInteraction()}}else channels.getOrNull(index)?.takeIf{mosaicDirectStream(it.url)||youtubeVideoId(it.url)!=null}?.let{expanding=true};true}
                 else->false
             }
         }.focusable()){
-            WatchHeader(u,payload?.optJSONObject("empresa").str("logo").ifBlank{payload?.optJSONObject("empresa").str("logo_url")},BuildConfig.STATION_NAME,Screen.VIDEO,accent,weather,1f,false,avatar,onProfile,{})
+            WatchHeader(u,payload?.optJSONObject("empresa").str("logo").ifBlank{payload?.optJSONObject("empresa").str("logo_url")},BuildConfig.STATION_NAME,Screen.VIDEO,accent,weather,1f,true,avatar,onProfile,{})
             val columns=if(channels.size<=2)channels.size.coerceAtLeast(1) else kotlin.math.ceil(kotlin.math.sqrt(channels.size.toDouble())).toInt()
             val rows=(channels.size+columns-1)/columns
             val width=minOf(820f,(1720f-(columns-1)*24f)/columns,(740f/rows-42f)*16f/9f).coerceAtLeast(110f)
@@ -85,7 +85,7 @@ internal fun mosaicDirectStream(url:String):Boolean = url.startsWith("https://",
                     }
                 }}}
             }
-            Row(u.at(100,930,1720,80),horizontalArrangement=Arrangement.Center,verticalAlignment=Alignment.CenterVertically){listOf("Home","Ouvir",if(paused)"Reproduzir" else "Pausar","Voltar").forEachIndexed{j,label->Box(Modifier.padding(horizontal=u.space(12)).border(u.space(2),if(footerFocus==j)Color.White else Color.Transparent,u.round(24)).background(glass,u.round(24)).padding(horizontal=u.space(25),vertical=u.space(15))){Copy(label,u,23,600)}}}
+            Row(u.at(100,930,1720,80),horizontalArrangement=Arrangement.Center,verticalAlignment=Alignment.CenterVertically){listOf("Home","Ouvir",if(paused)"Reproduzir" else "Pausar","Voltar","Interatividade").forEachIndexed{j,label->Box(Modifier.padding(horizontal=u.space(12)).border(u.space(2),if(footerFocus==j)Color.White else Color.Transparent,u.round(24)).background(glass,u.round(24)).padding(horizontal=u.space(25),vertical=u.space(15))){Copy(label,u,23,600)}}}
         }
     }
 }

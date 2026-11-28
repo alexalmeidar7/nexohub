@@ -254,7 +254,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
     fun move(delta:Int){if(adStep){adStep=false;if(delta<0)return}else if(delta>0&&historyAd!=null&&(index+1)%5==0&&index<history.lastIndex){adStep=true;return};index=(index+delta).coerceIn(0,history.lastIndex.coerceAtLeast(0))}
     val song=history.getOrNull(index)
     val reward=LocalNexoRewards.current
-    LaunchedEffect(index,adStep,reward){if(!adStep&&index>0&&song!=null)reward?.visitHistory(song)}
+    LaunchedEffect(index,adStep,reward){if(!adStep&&song!=null)reward?.visitHistory(song)}
     val context=LocalContext.current
     var image by remember(song){mutableStateOf(cachedHistoryCover(song))}
     LaunchedEffect(song){if(song!=null&&image.isBlank())image=resolveHistoryCover(context,song,track)}
