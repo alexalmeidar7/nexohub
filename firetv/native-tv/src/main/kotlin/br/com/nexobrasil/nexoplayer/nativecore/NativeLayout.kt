@@ -193,7 +193,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     }
     val focus=remember(screen){FocusRequester()}
     val screenMotion=remember(screen){Animatable(0f)}
-    LaunchedEffect(screen,leavingScreen){screenMotion.animateTo(if(leavingScreen)0f else 1f,tween(if(leavingScreen)220 else 420))}
+    LaunchedEffect(screen,leavingScreen){screenMotion.animateTo(if(leavingScreen&&screen!=Screen.PROFILE)0f else 1f,tween(if(leavingScreen)220 else 300))}
     val trayFocus=remember{FocusRequester()}
     var trayOpen by remember(screen){mutableStateOf(false)}
     LaunchedEffect(screen,controls,panel,interaction,panelPinned){if(screen!=Screen.VIDEO||!controls||(panel!=null&&!panelPinned)||interaction){trayOpen=false;onVideoTrayFocus(false)}}
@@ -406,7 +406,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                     GlassButton(u,"Voltar",u.at(100,950,155,56).focusRequester(focus),icon="left",onClick=onBack)
                 }
                 if(screen==Screen.PROFILE) {
-                    if(account!=null) NativeAuthenticatedProfiles(u,logo,accent,focus,mainProfileName,mainAvatar,listenerProfile,station?.ownerId,account,services,onListenerProfile,onSelectProfile,onProfileContinue,onLogout)
+                    if(account!=null) NativeAuthenticatedProfiles(u,logo,accent,focus,mainProfileName,mainAvatar,listenerProfile,station?.ownerId,account,services,onListenerProfile,onSelectProfile,onProfileContinue,onLogout,leavingScreen)
                     else NativeProfiles(u,logo,accent,focus,entryPending,guestName,guestAvatar,onProfileContinue,onGuestSave,
                         onConnect={onPanel("pair")},account=null,onLogout=onLogout)
                 }
@@ -470,7 +470,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
     GlassButton(u,"",u.at(1512,76,56,56).then(searchModifier),icon="search",onClick=onSearch)
     Clock(u,u.at(1592,76,230,56).then(clockModifier),weather,onClockPeek,onCep)
 }
-@Composable private fun WatchHeader(u:TvUnits,logo:String?,name:String,screen:Screen,accent:Color,weather:JSONObject?,alpha:Float,enabled:Boolean,guestAvatar:Any,onProfile:()->Unit,onCep:()->Unit,clockModifier:Modifier=Modifier,onClockPeek:(Boolean)->Unit={}) {
+@Composable internal fun WatchHeader(u:TvUnits,logo:String?,name:String,screen:Screen,accent:Color,weather:JSONObject?,alpha:Float,enabled:Boolean,guestAvatar:Any,onProfile:()->Unit,onCep:()->Unit,clockModifier:Modifier=Modifier,onClockPeek:(Boolean)->Unit={}) {
     Row(u.at(100,76,1000,64).alpha(alpha),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(25))) {
         Artwork(logo,Modifier.size(u.space(70),u.space(60)));Copy(name,u,22,500);Badge(u,if(screen==Screen.VIDEO)"Vídeo" else "Áudio",accent)
     }

@@ -66,7 +66,7 @@ internal fun nativeProfileAvatar(url:String):Any{
         }
     }
 }
-@Composable internal fun NativeAuthenticatedProfiles(u:TvUnits,logo:String?,accent:Color,focus:FocusRequester,mainName:String,mainAvatar:Any,profile:JSONObject?,owner:String?,account:JSONObject,services:NativeServices,onProfile:(JSONObject)->Unit,onSelect:(String)->Unit,onContinue:()->Unit,onLogout:()->Unit){
+@Composable internal fun NativeAuthenticatedProfiles(u:TvUnits,logo:String?,accent:Color,focus:FocusRequester,mainName:String,mainAvatar:Any,profile:JSONObject?,owner:String?,account:JSONObject,services:NativeServices,onProfile:(JSONObject)->Unit,onSelect:(String)->Unit,onContinue:()->Unit,onLogout:()->Unit,leaving:Boolean=false){
     var mode by remember{mutableStateOf("select")}
     var editId by remember{mutableStateOf("")}
     var name by remember{mutableStateOf("")}
@@ -118,7 +118,7 @@ internal fun nativeProfileAvatar(url:String):Any{
         if(mode=="select"){
             CompositionLocalProvider(LocalControlsEnabled provides (!confirmLogout&&!confirmDelete&&!mobileQr)){
                 Column(u.at(180,275,1100,705).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(u.space(20))){
-                    Row(profileEntrance(u,0),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))){
+                    Row(profileEntrance(u,0,leaving),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))){
                         AccountCircle(u,mainAvatar,"Entrar no perfil $mainName",Modifier.focusRequester(focus)){onSelect("");onContinue()}
                         Column(verticalArrangement=Arrangement.spacedBy(u.space(8))){
                             Copy(mainName,u,29,600,lines=2)
@@ -131,12 +131,12 @@ internal fun nativeProfileAvatar(url:String):Any{
                         }
                     }
                     subs.forEachIndexed{index,sub->key(sub.str("id")){
-                        Row(profileEntrance(u,index+1),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))){
+                        Row(profileEntrance(u,index+1,leaving),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))){
                             AccountCircle(u,nativeProfileAvatar(sub.str("avatar_url")),"Entrar no perfil "+sub.str("name")){onSelect(sub.str("id"));onContinue()}
                             Column(verticalArrangement=Arrangement.spacedBy(u.space(8))){Copy(sub.str("name"),u,29,600);GlassButton(u,"★  "+myStation,Modifier.height(u.space(44)),enabled=enabled){openEditor(sub)}}
                         }
                     }}
-                    Row(profileEntrance(u,subs.size+1),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))){
+                    Row(profileEntrance(u,subs.size+1,leaving),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(24))){
                         AccountCircle(u,null,"Criar novo perfil"){if(enabled)openEditor(add=true)}
                         Copy("Novo perfil",u,29,500)
                     }
@@ -243,8 +243,8 @@ private data class NativeAccountActions(val services:NativeServices,val owner:St
     }
 }
 
-@Composable private fun profileEntrance(u:TvUnits,index:Int):Modifier {
+@Composable private fun profileEntrance(u:TvUnits,index:Int,leaving:Boolean):Modifier {
     val motion=remember{Animatable(0f)}
-    LaunchedEffect(index){motion.snapTo(0f);kotlinx.coroutines.delay(index*120L);motion.animateTo(1f,tween(280))}
+    LaunchedEffect(index,leaving){kotlinx.coroutines.delay(index.coerceAtMost(5)*120L);motion.animateTo(if(leaving)0f else 1f,tween(240))}
     return Modifier.graphicsLayer{alpha=motion.value;translationX=(1f-motion.value)*-u.space(30).toPx()}
 }

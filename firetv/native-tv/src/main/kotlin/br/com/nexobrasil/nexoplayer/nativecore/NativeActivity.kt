@@ -181,7 +181,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
 
     fun transition(action:()->Unit){
         if(leavingScreen)return
-        if(screen==Screen.PROFILE||screen==Screen.AUDIO){leavingScreen=true;scope.launch{delay(240);action();leavingScreen=false}}else action()
+        if(screen==Screen.PROFILE||screen==Screen.AUDIO){leavingScreen=true;scope.launch{delay(if(screen==Screen.PROFILE) 850L else 240L);action();leavingScreen=false}}else action()
     }
     var account by remember { mutableStateOf<JSONObject?>(null) }
     var listenerProfile by remember(account.str("id"),station?.ownerId){mutableStateOf<JSONObject?>(null)}
@@ -684,7 +684,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
         }
     }
     Box(Modifier.fillMaxSize()) {
-    if(!startup && mosaic && ad==null && smartQueue.isEmpty()) NativeMosaic(video,data,foreground=foreground,onExit={mosaic=false;val ch=mosaicReturn?:video.firstOrNull();if(ch!=null)select(ch,Screen.VIDEO)else home()},onSelect={select(it,Screen.VIDEO)})
+    if(!startup && mosaic && ad==null && smartQueue.isEmpty()) NativeMosaic(video,data,foreground=foreground,onExit={mosaic=false;val ch=mosaicReturn?:video.firstOrNull();if(ch!=null)select(ch,Screen.VIDEO)else home()},onSelect={select(it,Screen.VIDEO)},weather=weather,avatar=displayAvatar,onProfile={mosaic=false;openPage(Screen.PROFILE)})
     else if(!startup && ad==null && smartQueue.isEmpty()) NativeRewardHost(services,station?.ownerId,account,screen){ NativeLayout(
         screen=screen, inputSerial=activity, station=station, stationName=stationName, payload=data, track=track,
         program=currentProgram,presenter=currentPresenter,artistArtwork=artistArtwork,backgroundAd=visibleBackgroundAd.takeIf{screen==Screen.HOME&&it in latestBackgroundAds}.orEmpty(),bannerLink=banners.getOrNull(bannerIndex).takeIf{it?.optBoolean("clickable")==true}.str("link"),bannerQr=bannerQr,onBannerQr={bannerQr=it},player=player,playing=actualPlaying,buffering=actualBuffering,
