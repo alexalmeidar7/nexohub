@@ -43,6 +43,7 @@ internal fun nativeVideoChannels(channels:List<StationChannel>,slug:String):List
             val origin="https://"+context.packageName
             WebView(context).apply{
                 setBackgroundColor(android.graphics.Color.BLACK)
+                setLayerType(android.view.View.LAYER_TYPE_HARDWARE,null)
                 settings.javaScriptEnabled=true
                 settings.domStorageEnabled=true
                 settings.allowFileAccess=false
@@ -55,7 +56,7 @@ internal fun nativeVideoChannels(channels:List<StationChannel>,slug:String):List
                 }
                 isFocusable=false;isFocusableInTouchMode=false
                 val html="""
-                  <!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body,#player{margin:0;width:100%;height:100%;background:#000;overflow:hidden}</style></head>
+                  <!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body,#player,iframe{margin:0;width:100%;height:100%;background:#000;overflow:hidden;display:block}</style></head>
                   <body><div id="player"></div><script>
                   var player=null, ready=false, status=-1, fault=0, wants=false, silent=false;
                   function applyIntent(){if(!ready)return;if(silent)player.mute();else player.unMute();if(wants&&(status!==1&&status!==3))player.playVideo();else if(!wants&&(status===1||status===3))player.pauseVideo();}

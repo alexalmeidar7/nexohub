@@ -217,7 +217,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
 }
 
 @Composable private fun NativeInteractionPanel(u:TvUnits,panel:String,track:JSONObject?,history:List<JSONObject>,loading:Boolean,error:Boolean,forecast:JSONObject?,lyrics:String?,owner:String?,accent:Color,onClose:()->Unit,services:NativeServices,account:JSONObject?,historyAd:JSONObject?,panelAd:JSONObject?,chatAds:List<JSONObject>,pinned:Boolean,onPin:()->Unit,preview:Boolean,focus:FocusRequester,panelBottom:Int){
-    Box(u.at(1350,if(preview)145 else 150,470,if(preview)620 else panelBottom-150)){
+    Box(u.at(1350,150,470,panelBottom-150)){
         Column(Modifier.fillMaxSize().clip(u.round(28)).background(interactionGlass).padding(u.space(20)),horizontalAlignment=Alignment.CenterHorizontally){
             val pinFocus=remember{FocusRequester()}
             NativeInteractionHeader(u,panel,track,history.isEmpty(),forecast?.optJSONObject("daily")?.optJSONArray("time")==null,pinned,onPin,preview,focus,onClose,pinFocus)
@@ -253,6 +253,8 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
     var adStep by remember(historyAd.str("url")){mutableStateOf(false)}
     fun move(delta:Int){if(adStep){adStep=false;if(delta<0)return}else if(delta>0&&historyAd!=null&&(index+1)%5==0&&index<history.lastIndex){adStep=true;return};index=(index+delta).coerceIn(0,history.lastIndex.coerceAtLeast(0))}
     val song=history.getOrNull(index)
+    val reward=LocalNexoRewards.current
+    LaunchedEffect(index,adStep,reward){if(!adStep&&song!=null)reward?.visitHistory(song)}
     val context=LocalContext.current
     var image by remember(song){mutableStateOf(cachedHistoryCover(song))}
     LaunchedEffect(song){if(song!=null&&image.isBlank())image=resolveHistoryCover(context,song,track)}

@@ -15,6 +15,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedContent
@@ -59,9 +60,10 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 
-@Composable internal fun NativePreroll(media:JSONObject,audio:Boolean,onStarted:()->Unit,onFinish:()->Unit,smart:Boolean=false,breakStart:Long=0L,breakDuration:Double=0.0,serverClockOffset:Long=0L,onPlayed:()->Unit={},onBack:()->Unit={},commercialPhone:String="",smartSerial:Int=0,smartActive:Boolean=true){
+@Composable internal fun NativePreroll(media:JSONObject,audio:Boolean,onStarted:()->Unit,onFinish:()->Unit,smart:Boolean=false,breakStart:Long=0L,breakDuration:Double=0.0,serverClockOffset:Long=0L,onPlayed:()->Unit={},onBack:()->Unit={},commercialPhone:String="",smartSerial:Int=0,smartActive:Boolean=true,onSaveProduct:suspend (JSONObject)->Boolean={false},productAvatar:Any?=null){
     val context=LocalContext.current
     val finish by rememberUpdatedState(onFinish)
     val started by rememberUpdatedState(onStarted)
@@ -87,6 +89,14 @@ import org.json.JSONObject
     val contactUrl=if(phone.length in 12..15)"https://wa.me/"+phone else ""
     val showLink=safeImage(media.str("link"))!=null
     val qrEnabled=smart&&showLink&&smartActive&&!info
+    var productOpen by remember(media,smartSerial){mutableStateOf(false)}
+    var productSaved by remember(media,smartSerial){mutableStateOf(false)}
+    var productBusy by remember(media,smartSerial){mutableStateOf(false)}
+    val productScope=rememberCoroutineScope()
+    val cartFlight=remember(media,smartSerial){Animatable(0f)}
+    var flying by remember(media,smartSerial){mutableStateOf(false)}
+    LaunchedEffect(productSaved){if(productSaved){flying=true;cartFlight.snapTo(0f);cartFlight.animateTo(1f,tween(700));delay(900);flying=false}}
+    fun openProduct(){productOpen=true;if(!productBusy&&!productSaved&&media.str("productDescription").isNotBlank()){productBusy=true;productScope.launch{try{productSaved=onSaveProduct(media)}finally{productBusy=false}}}}
     var qrFocused by remember{mutableStateOf(false)}
     val qrInteraction=remember{MutableInteractionSource()}
     val qrHovered by qrInteraction.collectIsHoveredAsState()
@@ -145,15 +155,15 @@ import org.json.JSONObject
             if(smart){
                 // Identity includes the playback sequence so identical links animate on every creative change.
                 val target=smartSerial to if(smartActive)smartCreativeDetails(media)else null
-                Box(Modifier.align(Alignment.BottomEnd).padding(end=u.space(105),bottom=u.space(75)).focusRequester(qrFocus).onFocusChanged{qrFocused=it.isFocused}.focusProperties{canFocus=qrEnabled;up=infoFocus;left=infoFocus}.semantics{contentDescription="Saiba mais, QR Code da publicidade"}.hoverable(qrInteraction,enabled=qrEnabled).focusable(enabled=qrEnabled)){
+                Box(Modifier.align(Alignment.BottomEnd).padding(end=u.space(105),bottom=u.space(75)).focusRequester(qrFocus).onFocusChanged{qrFocused=it.isFocused}.focusProperties{canFocus=qrEnabled;up=infoFocus;left=infoFocus}.semantics{contentDescription="Saiba mais, QR Code da publicidade"}.hoverable(qrInteraction,enabled=qrEnabled).clickable(enabled=qrEnabled){openProduct()}){
                     AnimatedContent(targetState=target,contentAlignment=Alignment.BottomEnd,transitionSpec={
                         ((slideInHorizontally(tween(700,delayMillis=550,easing=FastOutSlowInEasing)){it+(120*u.pixelsPerUnit).toInt()}+fadeIn(tween(700,delayMillis=550))) togetherWith (slideOutHorizontally(tween(550,easing=FastOutSlowInEasing)){it+(120*u.pixelsPerUnit).toInt()}+fadeOut(tween(550)))).using(SizeTransform(clip=false))
                     },label="smartCreativeQr"){entry->
-                        entry.second?.let{details->if(details.hasContent)SmartMusicCard(u,details,(qrFocused||qrHovered)&&qrEnabled&&entry==target)else if(details.link.isNotBlank())CreativeQr(u,details.link,focused=(qrFocused||qrHovered)&&qrEnabled&&entry==target,smart=true)}
+                        entry.second?.let{details->if(details.hasContent)SmartMusicCard(u,details,(qrFocused||qrHovered)&&qrEnabled&&entry==target,productOpen,productSaved)else if(details.link.isNotBlank())CreativeQr(u,details.link,focused=(qrFocused||qrHovered)&&qrEnabled&&entry==target,smart=true)}
                     }
                 }
             }else if(showLink){
-                Box(Modifier.align(Alignment.BottomEnd).padding(end=u.space(105),bottom=u.space(75))){CreativeQr(u,media.str("link"))}
+                Box(Modifier.align(Alignment.BottomEnd).padding(end=u.space(105),bottom=u.space(75))){if(media.str("productDescription").isNotBlank())Box(Modifier.clickable{openProduct()}){SmartMusicCard(u,smartCreativeDetails(media),false,productOpen,productSaved)}else CreativeQr(u,media.str("link"))}
             }
             if(smart){
                 val ring=animateFloatAsState(progress,tween(250,easing=LinearEasing),label="breakProgress")
@@ -162,6 +172,11 @@ import org.json.JSONObject
                     Copy(if(breakRemaining>=0)formatSmartBreakTime(breakRemaining)else "--:--",u,22,600,Modifier.width(u.space(84)),align=TextAlign.Center)
                     if(breakRemaining>=0)Canvas(Modifier.size(u.space(30))){val sw=size.minDimension*.11f;val top=Offset(sw,sw);val arc=Size(size.width-2*sw,size.height-2*sw);drawArc(Color.White.copy(alpha=.25f),-90f,360f,false,top,arc,style=Stroke(sw));drawArc(Color.White,-90f,360f*ring.value.coerceIn(0f,1f),false,top,arc,style=Stroke(sw,cap=StrokeCap.Round))}else NativeSpinner(u,Modifier.size(u.space(30)))
                 }
+            }
+            if(flying&&productAvatar!=null){
+                val t=cartFlight.value
+                NativeAvatarImage(productAvatar,u.at(1750,65,70,70).clip(CircleShape))
+                if(t<1f)Box(u.at(1480+270*t,800-735*t,130-65*t,130-65*t).clip(u.round(20)).background(interactionGlass),contentAlignment=Alignment.Center){val image=media.str("productImage").ifBlank{media.str("artistImage")};if(safeImage(image)!=null)Artwork(image,Modifier.fillMaxSize(),scale=ContentScale.Crop)else Copy("✓",u,36,700)}
             }
             if(smart&&info)Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.65f))){
                 val panelX by animateDpAsState(u.space(if(contact)300 else 435),tween(350),label="smartPanelX")
@@ -204,21 +219,23 @@ internal data class SmartCreativeDetails(val music:Boolean,val song:String,val a
     val hasMusic:Boolean get()=song.isNotBlank()||artist.isNotBlank()||image.isNotBlank()
     val hasContent:Boolean get()=hasMusic||description.isNotBlank()||price.isNotBlank()||cta.isNotBlank()
 }
-internal fun smartCreativeDetails(media:JSONObject):SmartCreativeDetails=SmartCreativeDetails(media.str("categoryKind")=="music",media.str("song"),media.str("artist"),safeImage(media.str("artistImage")).orEmpty(),safeImage(media.str("link")).orEmpty(),media.str("productDescription"),media.str("productPrice"),media.str("buttonLabel"))
-@Composable private fun SmartMusicCard(u:TvUnits,details:SmartCreativeDetails,focused:Boolean){
+internal fun smartCreativeDetails(media:JSONObject):SmartCreativeDetails=SmartCreativeDetails(media.str("categoryKind")=="music",media.str("song"),media.str("artist"),safeImage(media.str("productImage").ifBlank{media.str("artistImage")}).orEmpty(),safeImage(media.str("link")).orEmpty(),media.str("productDescription"),media.str("productPrice"),media.str("buttonLabel"))
+@Composable private fun SmartMusicCard(u:TvUnits,details:SmartCreativeDetails,focused:Boolean,productOpen:Boolean=false,productSaved:Boolean=false){
     val shape=u.round(24)
     val ring by animateFloatAsState(if(focused)1f else 0f,tween(180),label="musicRing")
     Box(Modifier.border(u.space(3),Color.White.copy(alpha=ring),u.round(33)).padding(u.space(9))){
-    Row(Modifier.width(u.space(if(details.link.isNotBlank())760 else 530)).clip(shape).background(interactionGlass).border(u.space(1),Color.White.copy(alpha=.22f),shape).padding(u.space(22)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(20))){
+    val product=!details.music&&details.description.isNotBlank()
+    val width by animateDpAsState(u.space(if(details.link.isNotBlank()&&(!product||productOpen))760 else 530),tween(300),label="productWidth")
+    Row(Modifier.width(width).clip(shape).background(interactionGlass).border(u.space(1),Color.White.copy(alpha=.22f),shape).padding(u.space(22)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(20))){
         if(details.image.isNotBlank())Artwork(details.image,Modifier.size(u.space(174)).clip(u.round(18)),"Foto do artista",scale=ContentScale.Crop)
         Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(u.space(10))){
-            if(details.music)Copy("Tocando agora",u,19,500,color=Color.White.copy(alpha=.72f))
+            if(details.music)Copy("Tocando agora",u,19,500,color=Color.White.copy(alpha=.72f)) else if(product)Copy("oferta especial",u,19,400,color=Color.White.copy(alpha=.72f))
             if(details.description.isNotBlank())Copy(details.description,u,27,700,lines=3)
-            if(details.price.isNotBlank())Copy(details.price,u,23,600)
-            if(details.cta.isNotBlank())Copy(details.cta,u,21,500,lines=2)
+            if(details.price.isNotBlank())Copy("▸ R$ "+details.price.removePrefix("R$").trim(),u,30,400)
+            if(product)Box(Modifier.background(Color.White.copy(alpha=.28f),CircleShape).padding(horizontal=u.space(18),vertical=u.space(8))){Copy("comprar  🛒",u,22,700)}else if(details.cta.isNotBlank())Copy(details.cta,u,21,500,lines=2)
             if(details.song.isNotBlank())Copy(details.song,u,27,700,lines=3)
             if(details.artist.isNotBlank())Copy(details.artist,u,22,500,lines=2)
         }
-        if(details.link.isNotBlank())NativeQr(details.link,Modifier.size(u.space(218)).clip(u.round(8)),compact=true)
+        if(details.link.isNotBlank()&&(!product||productOpen))Column(Modifier.width(u.space(218)),verticalArrangement=Arrangement.spacedBy(u.space(8))){NativeQr(details.link,Modifier.size(u.space(218)).clip(u.round(8)),compact=true);if(product&&productSaved)Copy("Adicionado no seu carrinho",u,16,600,lines=2)}
     }}
 }

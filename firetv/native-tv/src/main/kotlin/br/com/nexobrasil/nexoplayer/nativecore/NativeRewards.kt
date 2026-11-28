@@ -26,6 +26,17 @@ internal class NativeRewardState(private val services:NativeServices,private val
     var serial by mutableIntStateOf(0);private set
     var source by mutableStateOf(Offset(1580f,490f));private set
     var gained by mutableDoubleStateOf(0.0);private set
+    private val historyItems=linkedSetOf<String>()
+    private var historyBusy=false
+    suspend fun visitHistory(item:JSONObject){
+        val id=listOf(item.str("dia"),item.str("horario"),item.str("musica"),item.str("artista")).joinToString("|")
+        if(item.str("musica").isBlank())return
+        historyItems.add(id)
+        if(historyItems.size<8||historyBusy)return
+        historyBusy=true
+        val batch=historyItems.take(8)
+        try{val before=total?:read();val after=services.historyReward(owner,batch);total=after;historyItems.removeAll(batch.toSet());if(before!=null&&after>before){gained=after-before;source=Offset(1580f,490f);serial++}}catch(e:CancellationException){throw e}catch(_:Exception){}finally{historyBusy=false}
+    }
     suspend fun read():Double?{
         return try{services.pointsTotal(owner).also{total=it}}catch(e:CancellationException){throw e}catch(_:Exception){null}
     }

@@ -181,7 +181,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
 
     fun transition(action:()->Unit){
         if(leavingScreen)return
-        if(screen==Screen.PROFILE||screen==Screen.AUDIO){leavingScreen=true;scope.launch{delay(240);action();leavingScreen=false}}else action()
+        if(screen==Screen.PROFILE||screen==Screen.AUDIO){leavingScreen=true;scope.launch{delay(if(screen==Screen.PROFILE) 850L else 240L);action();leavingScreen=false}}else action()
     }
     var account by remember { mutableStateOf<JSONObject?>(null) }
     var listenerProfile by remember(account.str("id"),station?.ownerId){mutableStateOf<JSONObject?>(null)}
@@ -452,6 +452,8 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
         }}finally{wake?.close()}
     }
     LaunchedEffect(station?.ownerId,incomingTrack.str("titulo"),incomingTrack.str("artista"),incomingStart){
+        // Allow the metadata transition to finish before fetching the full station payload.
+        delay(1000)
         val owner=station?.ownerId?:return@LaunchedEffect
         val title=incomingTrack.str("titulo");val artist=incomingTrack.str("artista");val start=incomingStart
         if(title.isBlank())return@LaunchedEffect
@@ -682,7 +684,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
         }
     }
     Box(Modifier.fillMaxSize()) {
-    if(!startup && mosaic && ad==null && smartQueue.isEmpty()) NativeMosaic(video,data,foreground=foreground,onExit={mosaic=false;val ch=mosaicReturn?:video.firstOrNull();if(ch!=null)select(ch,Screen.VIDEO)else home()},onSelect={select(it,Screen.VIDEO)})
+    if(!startup && mosaic && ad==null && smartQueue.isEmpty()) NativeMosaic(video,data,foreground=foreground,onExit={mosaic=false;val ch=mosaicReturn?:video.firstOrNull();if(ch!=null)select(ch,Screen.VIDEO)else home()},onSelect={select(it,Screen.VIDEO)},weather=weather,avatar=displayAvatar,onProfile={mosaic=false;openPage(Screen.PROFILE)},onHome={home()},onAudio={audio.firstOrNull()?.let{select(it,Screen.AUDIO)}},onInteraction={val ch= mosaicReturn?:video.firstOrNull();if(ch!=null){select(ch,Screen.VIDEO);interaction=true}})
     else if(!startup && ad==null && smartQueue.isEmpty()) NativeRewardHost(services,station?.ownerId,account,screen){ NativeLayout(
         screen=screen, inputSerial=activity, station=station, stationName=stationName, payload=data, track=track,
         program=currentProgram,presenter=currentPresenter,artistArtwork=artistArtwork,backgroundAd=visibleBackgroundAd.takeIf{screen==Screen.HOME&&it in latestBackgroundAds}.orEmpty(),bannerLink=banners.getOrNull(bannerIndex).takeIf{it?.optBoolean("clickable")==true}.str("link"),bannerQr=bannerQr,onBannerQr={bannerQr=it},player=player,playing=actualPlaying,buffering=actualBuffering,
@@ -715,12 +717,13 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
             if(destination in listOf(Screen.HOME,Screen.PROFILE,Screen.VIDEO,Screen.CATALOG))transition(navigate) else navigate()
         },onChannel=onChannel,onVideo={select(it,Screen.VIDEO)},onMosaic={if(video.size>1){mosaicReturn=selected;pendingWatch=null;ad=null;smartQueue=emptyList();liveRequested=false;player.pause();player.stop();player.clearMediaItems();selected=null;sync.resetPlayback();syncEpoch=0L;mosaic=true}},onInteraction={if(interaction){interaction=false;interactionReturn++}else interaction=true},
         onNotice={notice=it}) }
-    ad?.let{media->NativePreroll(media,selected?.type=="audio_live",onStarted={prerollFrequency.played(activeAdPlacement,System.currentTimeMillis())},onFinish={ad=null;activeAdPlacement="";scope.launch { withFrameNanos { };resumeLive(resumeAfterAd) }})}
+    val saveAdvertisedProduct:suspend (JSONObject)->Boolean={media->val owner=station?.ownerId;if(owner==null||account.str("id").isBlank())false else try{services.saveProduct(owner,media);true}catch(e:CancellationException){throw e}catch(_:Exception){false}}
+    ad?.let{media->NativePreroll(media,selected?.type=="audio_live",onSaveProduct=saveAdvertisedProduct,productAvatar=displayAvatar,onStarted={prerollFrequency.played(activeAdPlacement,System.currentTimeMillis())},onFinish={ad=null;activeAdPlacement="";scope.launch { withFrameNanos { };resumeLive(resumeAfterAd) }})}
     val activeSmartMedia=if(ad==null)smartQueue.getOrNull(smartIndex)?.let{smartSerial to it}else null
     var retainedSmartMedia by remember{mutableStateOf<Pair<Int,JSONObject>?>(null)}
     SideEffect{if(activeSmartMedia!=null)retainedSmartMedia=activeSmartMedia}
     AnimatedVisibility(visible=activeSmartMedia!=null,enter=fadeIn(tween(500)),exit=fadeOut(tween(500))){
-        (activeSmartMedia?:retainedSmartMedia)?.let{(serial,media)->NativePreroll(media,false,onStarted={},onFinish={if(smartQueue.isNotEmpty()&&smartSerial==serial){smartFailures++;if(smartFailures>=smartQueue.size)smartQueue=emptyList()else{smartIndex=(smartIndex+1)%smartQueue.size;smartSerial++}}},smart=true,breakStart=breakStart,breakDuration=breakDuration,serverClockOffset=api.serverClockOffsetMs,onPlayed={if(smartSerial==serial)smartFailures=0},onBack={home()},commercialPhone=data?.optJSONObject("empresa").str("telefone_comercial"),smartSerial=serial,smartActive=activeSmartMedia!=null)}
+        (activeSmartMedia?:retainedSmartMedia)?.let{(serial,media)->NativePreroll(media,false,onStarted={},onFinish={if(smartQueue.isNotEmpty()&&smartSerial==serial){smartFailures++;if(smartFailures>=smartQueue.size)smartQueue=emptyList()else{smartIndex=(smartIndex+1)%smartQueue.size;smartSerial++}}},smart=true,breakStart=breakStart,breakDuration=breakDuration,serverClockOffset=api.serverClockOffsetMs,onPlayed={if(smartSerial==serial)smartFailures=0},onBack={home()},commercialPhone=data?.optJSONObject("empresa").str("telefone_comercial"),smartSerial=serial,smartActive=activeSmartMedia!=null,onSaveProduct=saveAdvertisedProduct,productAvatar=displayAvatar)}
     }
     AnimatedVisibility(visible=startup, enter=fadeIn(tween(650)), exit=fadeOut(tween(650))) {
         StartupSplash(startupStage)
