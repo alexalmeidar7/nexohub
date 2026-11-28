@@ -240,7 +240,7 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
             Copy(when(panel){"lyrics"->track.str("titulo").ifBlank{"Letra da música"};"chat"->"Chat";"poll"->"Enquete";"battle"->"Batalha musical";"weather"->"Previsão do tempo";"history"->"Músicas tocadas";else->panel},u,23,500,lines=2)
             if(panel=="lyrics")Copy(track.str("artista"),u,18,300,lines=2)
         }
-        if(!preview){
+        if(!preview||panel=="weather"){
             GlassButton(u,if(pinned)"Desafixar" else "Fixar",Modifier.height(u.space(42)).focusRequester(pinFocus).focusProperties{down=focus},onClick=onPin)
             GlassButton(u,"",Modifier.size(u.space(42)).then(if(panel=="poll"||panel=="battle"||(panel=="history"&&historyEmpty)||(panel=="weather"&&forecastEmpty))Modifier.focusRequester(focus)else Modifier),icon="left",onClick=onClose)
         }
@@ -262,8 +262,8 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
     else{
         Box(Modifier.fillMaxWidth().height(u.space(112)),contentAlignment=Alignment.Center){AnimatedContent(index to adStep,label="historyInfo"){state->val item=history.getOrNull(state.first);Column(Modifier.fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally){Copy(if(state.second)"publicidade" else item.str("horario").take(5),u,20,400,Modifier.fillMaxWidth(),align=TextAlign.Center);if(!state.second){Copy(item.str("musica").uppercase(),u,25,700,Modifier.fillMaxWidth(),lines=2,align=TextAlign.Center);Copy(item.str("artista").uppercase(),u,20,400,Modifier.fillMaxWidth(),lines=2,align=TextAlign.Center)}}}}
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth(),contentAlignment=Alignment.Center){
-            val artSize=(maxHeight-u.space(112)).coerceAtMost(maxWidth-u.space(24)).coerceAtLeast(u.space(48))
-            Column(horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(12))){
+            val artSize=(maxHeight-u.space(140)).coerceAtMost(maxWidth-u.space(24)).coerceAtLeast(u.space(48))
+            Column(horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(24))){
                 GlassButton(u,"",Modifier.size(u.space(40)),icon="up"){move(-1)}
                 Box(Modifier.size(artSize).clip(u.round(18)).background(Color.White.copy(alpha=.06f)),contentAlignment=Alignment.Center){
                     if(adStep)Artwork(safeImage(historyAd.str("url")),Modifier.fillMaxSize(),scale=ContentScale.Fit)

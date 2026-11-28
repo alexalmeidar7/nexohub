@@ -485,13 +485,13 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
     suspend fun refreshHistory(owner:String){
         if(historyLoading)return
         historyLoading=true;historyError=false
-        try{val data=api.recentMusic(owner);check(data.optBoolean("ok"));history=deduplicateNativeHistory(data.rows("items")).take(50);historyFetchedAt=System.currentTimeMillis()}
+        try{val data=api.recentMusic(owner);check(data.optBoolean("ok"));history=deduplicateNativeHistory(data.rows("items")).distinctBy{listOf(it.str("dia").take(10),it.str("horario").take(5),it.str("musica").trim().lowercase(),it.str("artista").trim().lowercase())}.take(50);historyFetchedAt=System.currentTimeMillis()}
         catch(e:CancellationException){throw e}catch(_:Exception){historyError=true}finally{historyLoading=false}
     }
     LaunchedEffect(station?.ownerId){
         val owner=station?.ownerId?:return@LaunchedEffect
         historyWarmFinished=false
-        try{val key="history_cache:"+owner;runCatching{val cached=org.json.JSONArray(prefs.getString(key,"[]"));history=(0 until cached.length()).mapNotNull{cached.optJSONObject(it)}};refreshHistory(owner);if(history.isNotEmpty())prefs.edit().putString(key,org.json.JSONArray(history).toString()).apply();while(startup)delay(200);for(batch in history.take(50).chunked(2)){coroutineScope{batch.map{song->async{resolveHistoryCover(context,song,track)}}.awaitAll()};delay(300)}}finally{historyWarmFinished=true}
+        try{val key="history_cache:"+owner;runCatching{val cached=org.json.JSONArray(prefs.getString(key,"[]"));history=deduplicateNativeHistory((0 until cached.length()).mapNotNull{cached.optJSONObject(it)})};refreshHistory(owner);if(history.isNotEmpty())prefs.edit().putString(key,org.json.JSONArray(history).toString()).apply();while(startup)delay(200);for(batch in history.take(50).chunked(2)){coroutineScope{batch.map{song->async{resolveHistoryCover(context,song,track)}}.awaitAll()};delay(300)}}finally{historyWarmFinished=true}
     }
     LaunchedEffect(panel,station?.ownerId){if(panel in listOf("history","search")){val owner=station?.ownerId?:return@LaunchedEffect;if(System.currentTimeMillis()-historyFetchedAt>60_000L)refreshHistory(owner)}}
     LaunchedEffect(selected?.id,foreground,mosaic){
@@ -685,7 +685,7 @@ private fun NativeTv(player: ExoPlayer, spectrum:PcmSpectrum, activity: Int, for
     }
     Box(Modifier.fillMaxSize()) {
     if(!startup && mosaic && ad==null && smartQueue.isEmpty()) NativeMosaic(video,data,foreground=foreground,onExit={mosaic=false;val ch=mosaicReturn?:video.firstOrNull();if(ch!=null)select(ch,Screen.VIDEO)else home()},onSelect={select(it,Screen.VIDEO)},weather=weather,avatar=displayAvatar,onProfile={mosaic=false;openPage(Screen.PROFILE)},onHome={home()},onAudio={audio.firstOrNull()?.let{select(it,Screen.AUDIO)}},onInteraction={val ch= mosaicReturn?:video.firstOrNull();if(ch!=null){select(ch,Screen.VIDEO);interaction=true}})
-    else if(!startup && ad==null && smartQueue.isEmpty()) NativeRewardHost(services,station?.ownerId,account,screen){ NativeLayout(
+    else if(!startup && ad==null && smartQueue.isEmpty()) NativeRewardHost(services,station?.ownerId,account,screen,selectedProfileId){ NativeLayout(
         screen=screen, inputSerial=activity, station=station, stationName=stationName, payload=data, track=track,
         program=currentProgram,presenter=currentPresenter,artistArtwork=artistArtwork,backgroundAd=visibleBackgroundAd.takeIf{screen==Screen.HOME&&it in latestBackgroundAds}.orEmpty(),bannerLink=banners.getOrNull(bannerIndex).takeIf{it?.optBoolean("clickable")==true}.str("link"),bannerQr=bannerQr,onBannerQr={bannerQr=it},player=player,playing=actualPlaying,buffering=actualBuffering,
         failure=failure,playerError=playerError,controls=controls,chrome=chrome,interaction=interaction,videoPrompt=videoPrompt,youtubeRequested=liveRequested&&foreground,onYoutubePlaying={youtubePlaying=it},onYoutubeError={playerError=it},

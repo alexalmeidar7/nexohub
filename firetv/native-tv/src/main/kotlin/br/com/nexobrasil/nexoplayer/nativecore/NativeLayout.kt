@@ -415,7 +415,7 @@ internal fun TvUnits.round(radius:Number)=RoundedCornerShape(space(radius))
                 if(interaction && (panel==null||panelPinned)&&!homeBackgroundAd) InteractionCards(u, {onPanel(it)}, onInteraction,sparkFocus,screen==Screen.HOME)
                 if(scheduleOverlay){Box(Modifier.fillMaxSize()){Schedule(u,payload,program,accent,scheduleFocus,{onPanel(null)},account.str("id").ifBlank{guestName},scheduleGrid)}} else if(panel!=null) NativePanel(u,panel,payload,track,history,historyLoading,historyError,forecast,lyrics,cep,api,station?.ownerId,accent,{onPanel(null)},onCepSaved,onOpen,services,account,onAccount,historyAd,panelAd,chatAds,pinned=panelPinned,onPin=onPin,panelBottom=if(screen==Screen.VIDEO&&trayOpen)760 else 850)
                 AnimatedVisibility(clockPeek&&cep.length==8&&panel==null&&!interaction&&notice==null&&screen!=Screen.PROFILE,modifier=Modifier.fillMaxSize(),enter=fadeIn(tween(300))+slideInVertically(tween(320,easing=FastOutSlowInEasing)){-it/30},exit=fadeOut(tween(260))+slideOutVertically(tween(300)){-it/30}){
-                    NativePanel(u,"weather",payload,track,history,historyLoading,historyError,forecast,lyrics,cep,api,station?.ownerId,accent,{},onCepSaved,onOpen,services,account,onAccount,preview=true)
+                    NativePanel(u,"weather",payload,track,history,historyLoading,historyError,forecast,lyrics,cep,api,station?.ownerId,accent,{},onCepSaved,onOpen,services,account,onAccount,panelAd=panelAd,preview=true,panelBottom=850)
                 }
 
             }

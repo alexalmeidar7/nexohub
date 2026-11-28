@@ -21,7 +21,7 @@ import org.json.JSONObject
 
 internal val LocalNexoRewards=compositionLocalOf<NativeRewardState?>{null}
 internal fun nativePointsLabel(value:Double)=if(value%1.0==0.0)value.toLong().toString()else String.format(java.util.Locale("pt","BR"),"%.1f",value)
-internal class NativeRewardState(private val services:NativeServices,private val owner:String){
+internal class NativeRewardState(private val services:NativeServices,private val owner:String,private val profile:String){
     var total by mutableStateOf<Double?>(null);private set
     var serial by mutableIntStateOf(0);private set
     var source by mutableStateOf(Offset(1580f,490f));private set
@@ -35,10 +35,10 @@ internal class NativeRewardState(private val services:NativeServices,private val
         if(historyItems.size<8||historyBusy)return
         historyBusy=true
         val batch=historyItems.take(8)
-        try{val before=total?:read();val after=services.historyReward(owner,batch);total=after;historyItems.removeAll(batch.toSet());if(before!=null&&after>before){gained=after-before;source=Offset(1580f,490f);serial++}}catch(e:CancellationException){throw e}catch(_:Exception){}finally{historyBusy=false}
+        try{val before=total?:read();val after=services.historyReward(owner,batch,profile);total=after;historyItems.removeAll(batch.toSet());if(before!=null&&after>before){gained=after-before;source=Offset(1580f,490f);serial++}}catch(e:CancellationException){throw e}catch(_:Exception){}finally{historyBusy=false}
     }
     suspend fun read():Double?{
-        return try{services.pointsTotal(owner).also{total=it}}catch(e:CancellationException){throw e}catch(_:Exception){null}
+        return try{services.pointsTotal(owner,profile).also{total=it}}catch(e:CancellationException){throw e}catch(_:Exception){null}
     }
     suspend fun confirm(before:Double?,x:Float,y:Float){
         val after=read()
@@ -86,9 +86,9 @@ private suspend fun launchChime()=withContext(Dispatchers.IO){
     }
 }
 
-@Composable internal fun NativeRewardHost(services:NativeServices,owner:String?,account:JSONObject?,screen:Screen,content:@Composable ()->Unit){
+@Composable internal fun NativeRewardHost(services:NativeServices,owner:String?,account:JSONObject?,screen:Screen,profile:String="",content:@Composable ()->Unit){
     val user=account.str("id")
-    val state=remember(owner,user){if(owner.isNullOrBlank()||user.isBlank())null else NativeRewardState(services,owner)}
+    val state=remember(owner,user,profile){if(owner.isNullOrBlank()||user.isBlank())null else NativeRewardState(services,owner,profile)}
     LaunchedEffect(state,screen==Screen.PROFILE){state?.read()}
     CompositionLocalProvider(LocalNexoRewards provides state,content=content)
 }
