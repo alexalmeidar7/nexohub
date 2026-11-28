@@ -151,12 +151,12 @@ internal class NativeServices(private val api:HouseMixClient,context:Context) {
     suspend fun saveProduct(owner:String,media:JSONObject){
         rpc("nexo_save_tv_product",JSONObject().put("p_radio",owner).put("p_link",media.str("link")).put("p_title",media.str("productDescription")).put("p_price",media.str("productPrice")).put("p_image",media.str("productImage").ifBlank{media.str("artistImage")}),true)
     }
-    suspend fun historyReward(owner:String,items:List<String>):Double{
-        val value=rpc("nexo_history_reward",JSONObject().put("p_radio",owner).put("p_items",JSONArray(items)),true)
+    suspend fun historyReward(owner:String,items:List<String>,profile:String=""):Double{
+        val value=rpc("nexo_profile_history_reward",JSONObject().put("p_radio",owner).put("p_items",JSONArray(items)).put("p_profile",profile),true)
         return (value as? Number)?.toDouble()?:value?.toString()?.toDoubleOrNull()?:error("Pontuação indisponível")
     }
-    suspend fun pointsTotal(owner:String):Double{
-        val v=rpc("nexo_listener_points_total",JSONObject().put("p_radio",owner),true)
+    suspend fun pointsTotal(owner:String,profile:String=""):Double{
+        val v=rpc("nexo_profile_points_total",JSONObject().put("p_radio",owner).put("p_profile",profile),true)
         return (v as? Number)?.toDouble()?:v?.toString()?.toDoubleOrNull()?:error("Pontuação indisponível")
     }
     suspend fun removeAccountLike(owner:String,user:String,id:String){

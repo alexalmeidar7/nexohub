@@ -3,6 +3,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.ui.graphics.graphicsLayer
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.border
@@ -36,8 +37,8 @@ internal fun mosaicDirectStream(url:String):Boolean = url.startsWith("https://",
     var paused by remember{mutableStateOf(false)}
     var footerFocus by remember{mutableIntStateOf(-1)}
     var expanding by remember{mutableStateOf(false)}
-    val zoom by animateFloatAsState(if(expanding)1.65f else 1f,tween(300),label="mosaicExpand")
-    LaunchedEffect(expanding){if(expanding){delay(300);channels.getOrNull(index)?.let(onSelect)}}
+    val zoom by animateFloatAsState(if(expanding)1f else 0f,tween(480,easing=FastOutSlowInEasing),label="mosaicExpand")
+    LaunchedEffect(expanding){if(expanding){delay(500);channels.getOrNull(index)?.let(onSelect)}}
     val colors=payload?.optJSONObject("playerColors")
     val accent=runCatching{Color(android.graphics.Color.parseColor(colors.str("dominantColor").ifBlank{colors.str("homeAccent")}))}.getOrElse{if(BuildConfig.STATION_SLUG=="positivafm")Color(0xFFF20D0F)else Color(0xFF343434)}
     val memory=remember{context.getSystemService(android.content.Context.ACTIVITY_SERVICE) as android.app.ActivityManager}
@@ -74,7 +75,7 @@ internal fun mosaicDirectStream(url:String):Boolean = url.startsWith("https://",
             Column(Modifier.align(Alignment.Center),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(20))){
                 channels.chunked(columns).forEachIndexed{r,group->Row(horizontalArrangement=Arrangement.spacedBy(u.space(24))){group.forEachIndexed{c,ch->
                     val i=r*columns+c;val p=players[i];val shape=u.round(18)
-                    Column(Modifier.width(u.space(width)).graphicsLayer{if(index==i&&expanding){scaleX=zoom;scaleY=zoom}else if(expanding){alpha=0f}},horizontalAlignment=Alignment.CenterHorizontally){
+                    Column(Modifier.width(u.space(width)).graphicsLayer{if(index==i&&expanding){val target=1920f/width;scaleX=1f+(target-1f)*zoom;scaleY=scaleX;translationX=u.space(((columns-1)/2f-c)*(width+24)).toPx()*zoom;translationY=u.space(((rows-1)/2f-r)*(width*9/16+62)).toPx()*zoom}else if(expanding){alpha=0f}},horizontalAlignment=Alignment.CenterHorizontally){
                         Box(Modifier.fillMaxWidth().aspectRatio(16f/9f).border(u.space(3),if(index==i)Color.White else Color.Transparent,shape).padding(u.space(5)).clip(shape).background(Color.Black),contentAlignment=Alignment.Center){
                             if(p!=null)AndroidView(factory={ctx->PlayerView(ctx).apply{useController=false;player=p;isFocusable=false;isFocusableInTouchMode=false;descendantFocusability=android.view.ViewGroup.FOCUS_BLOCK_DESCENDANTS}},modifier=Modifier.fillMaxSize(),onRelease={it.player=null},update={it.player=p})
                             else if(youtubeVideoId(ch.url)!=null)NativeYoutubeEmbed(requireNotNull(youtubeVideoId(ch.url)),Modifier.fillMaxSize(),foreground&&!paused&&(i==index||channels.indexOfFirst{youtubeVideoId(it.url)!=null}==i),i!=index,{}, {})
@@ -85,7 +86,14 @@ internal fun mosaicDirectStream(url:String):Boolean = url.startsWith("https://",
                     }
                 }}}
             }
-            Row(u.at(100,930,1720,80),horizontalArrangement=Arrangement.Center,verticalAlignment=Alignment.CenterVertically){listOf("Home","Ouvir",if(paused)"Reproduzir" else "Pausar","Voltar","Interatividade").forEachIndexed{j,label->Box(Modifier.padding(horizontal=u.space(12)).border(u.space(2),if(footerFocus==j)Color.White else Color.Transparent,u.round(24)).background(glass,u.round(24)).padding(horizontal=u.space(25),vertical=u.space(15))){Copy(label,u,23,600)}}}
+            GlassButton(u,"",u.at(100,936,40,40),icon="left"){onExit()}
+            GlassButton(u,"",u.at(160,912,88,88),icon=if(paused)"play" else "pause"){paused=!paused}
+            GlassButton(u,"",u.at(184,854,40,40),icon="up"){index=(index+channels.size-1)%channels.size}
+            GlassButton(u,"",u.at(184,1018,40,40),icon="down"){index=(index+1)%channels.size}
+            GlassButton(u,"programação",u.at(1490,922,225,64),icon="calendar"){onInteraction()}
+            GlassButton(u,"",u.at(1744,922,64,64),icon="spark"){onInteraction()}
+            val currentProgram=payload.rows("programas").firstOrNull{it.str("horario_inicio").take(5)<=java.time.LocalTime.now().toString().take(5)&&it.str("horario_fim").take(5)>=java.time.LocalTime.now().toString().take(5)}
+            Row(u.at(280,928,900,85),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(15))){Badge(u,"Agora",accent);Column{Copy(currentProgram.str("nome"),u,26,700);Copy(currentProgram.str("horario_inicio").take(5)+" – "+currentProgram.str("horario_fim").take(5),u,18)}}
         }
     }
 }

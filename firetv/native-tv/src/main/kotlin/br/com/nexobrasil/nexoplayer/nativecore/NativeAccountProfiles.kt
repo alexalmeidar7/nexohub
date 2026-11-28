@@ -168,7 +168,7 @@ internal fun nativeProfileAvatar(url:String):Any{
             LaunchedEffect(Unit){withFrameNanos{};runCatching{mobileFocus.requestFocus()}}
             Column(Modifier.width(u.space(510)).background(interactionGlass,u.round(28)).padding(u.space(24)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(20))){
                 Copy("Acessar no celular",u,30,600)
-                NativeQr("https://housemix.nexobrasil.net/"+BuildConfig.STATION_SLUG+"/pair?resume=1",Modifier.size(u.space(300)))
+                NativeQr("https://housemix.nexobrasil.net/"+(if(BuildConfig.STATION_SLUG=="positivafm")"positiva" else if(BuildConfig.STATION_SLUG=="interativafm")"interativa" else BuildConfig.STATION_SLUG)+"/pair?resume=1",Modifier.size(u.space(300)))
                 Copy("Escaneie e entre com sua conta Google se necessário.",u,22,400,lines=3,align=androidx.compose.ui.text.style.TextAlign.Center)
                 GlassButton(u,"Fechar",Modifier.height(u.space(52)).focusRequester(mobileFocus)){mobileQr=false;runCatching{focus.requestFocus()}}
             }
@@ -186,11 +186,12 @@ internal fun nativeProfileAvatar(url:String):Any{
 
 @Composable private fun NativeMyStation(u:TvUnits,main:Boolean,name:String,avatar:String,profile:JSONObject?,account:JSONObject,tab:String,onTab:(String)->Unit,picker:Boolean,onPicker:(Boolean)->Unit,busy:Boolean,message:String,focus:FocusRequester,onAvatar:(String)->Unit,onLogout:()->Unit,onDelete:()->Unit,onBack:()->Unit,likes:List<JSONObject>,likesStatus:String,actions:NativeAccountActions,onUnlike:(JSONObject)->Unit){
     Box(u.at(180,195,1560,800)){
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(u.space(10)),verticalArrangement=Arrangement.spacedBy(u.space(24))){
+        Column(Modifier.fillMaxSize().padding(u.space(10)),verticalArrangement=Arrangement.spacedBy(u.space(24))){
             Row(Modifier.padding(u.space(8)),horizontalArrangement=Arrangement.spacedBy(u.space(18)),verticalAlignment=Alignment.CenterVertically){
-                listOf("Início","Amigos","Músicas curtidas").forEachIndexed{i,t->GlassButton(u,t,Modifier.height(u.space(58)).then(if(i==0)Modifier.focusRequester(focus)else Modifier),outline=tab==t){onTab(t)}}
                 GlassButton(u,"Voltar",Modifier.height(u.space(58)),icon="left",onClick=onBack)
+                listOf("Início","Amigos","Músicas curtidas").forEachIndexed{i,t->GlassButton(u,t,Modifier.height(u.space(58)).then(if(i==0)Modifier.focusRequester(focus)else Modifier),outline=tab==t){onTab(t)}}
             }
+            Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(u.space(24))){
             when(tab){
                 "Início"->{
                     Row(horizontalArrangement=Arrangement.spacedBy(u.space(36)),verticalAlignment=Alignment.CenterVertically){
@@ -215,10 +216,11 @@ internal fun nativeProfileAvatar(url:String):Any{
                 "Amigos"->NativeFriends(u,actions.services,actions.owner,profile.str("id"))
                 else->{
                     if(!main)Copy("Curtidas individuais deste perfil ainda não estão disponíveis.",u,23,400)
-                    else{if(likesStatus.isNotBlank())Copy(likesStatus,u,23,400);likes.forEach{song->NativeLikedSongRow(u,song){onUnlike(song)}}}
+                    else{if(likesStatus.isNotBlank())Copy(likesStatus,u,23,400);likes.chunked(5).forEach{songs->Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(u.space(20))){songs.forEach{song->Column(Modifier.weight(1f)){NativeLikedSongRow(u,song){onUnlike(song)}}};repeat(5-songs.size){Spacer(Modifier.weight(1f))}}}}
                 }
             }
             if(message.isNotBlank())Copy(message,u,22,400)
+            }
         }
         if(picker){
             Box(Modifier.align(Alignment.Center).width(u.space(1320)).background(interactionGlass,u.round(32)).padding(u.space(22))){
@@ -236,10 +238,9 @@ internal fun nativeProfileAvatar(url:String):Any{
 private data class NativeAccountActions(val services:NativeServices,val owner:String?,val user:String)
 @Composable private fun NativeLikedSongRow(u:TvUnits,song:JSONObject,onUnlike:()->Unit){
     var focused by remember{mutableStateOf(false)}
-    Row(Modifier.fillMaxWidth().border(u.space(if(focused)2 else 0),Color.White,u.round(12)).background(glass,u.round(12)).padding(u.space(10)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(16))){
-        Artwork(safeImage(song.str("capa")),Modifier.size(u.space(70)).clip(u.round(8)),scale=ContentScale.Crop)
-        Column(Modifier.weight(1f)){Copy(song.str("titulo").ifBlank{song.str("musica")},u,24,500);Copy(song.str("artista"),u,20,400)}
-        GlassButton(u,"Descurtir",Modifier.height(u.space(48)).onFocusChanged{focused=it.isFocused},onClick=onUnlike)
+    Column(Modifier.fillMaxWidth().onFocusChanged{focused=it.isFocused}.border(u.space(if(focused)3 else 0),Color.White,u.round(20)).padding(u.space(6)).clickable(onClick=onUnlike),verticalArrangement=Arrangement.spacedBy(u.space(10))){
+        Box(Modifier.fillMaxWidth().aspectRatio(1f).clip(u.round(16)),contentAlignment=Alignment.Center){Artwork(safeImage(song.str("capa")),Modifier.fillMaxSize(),scale=ContentScale.Crop);Box(Modifier.size(u.space(54)).background(Color.Black.copy(alpha=.48f),CircleShape),contentAlignment=Alignment.Center){Copy("♥",u,32,700,color=Color(0xFFF20D0F))}}
+        Column(Modifier.fillMaxWidth().background(glass,u.round(14)).padding(u.space(10))){Copy(song.str("titulo").ifBlank{song.str("musica")},u,20,600,lines=2);Copy(song.str("artista"),u,17,400,lines=2)}
     }
 }
 
