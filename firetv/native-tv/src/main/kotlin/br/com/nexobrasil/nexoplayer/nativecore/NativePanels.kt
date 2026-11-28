@@ -115,178 +115,201 @@ private fun searchHits(payload:JSONObject?,history:List<JSONObject>):List<Search
 @Composable private fun InputBox(u:TvUnits,value:String,onChange:(String)->Unit,placeholder:String,modifier:Modifier=Modifier,numeric:Boolean=false) {
     BasicTextField(value,onChange,modifier.clip(u.round(18)).background(Color(0xFF303030)).padding(u.space(16)),singleLine=true,textStyle=u.referenceText(23).copy(color=Color.White),cursorBrush=SolidColor(Color.White),keyboardOptions=KeyboardOptions(keyboardType=if(numeric)KeyboardType.Number else KeyboardType.Text),decorationBox={inner->Box{if(value.isEmpty())Copy(placeholder,u,23,400,color=Color.White.copy(alpha=.55f));inner()}})
 }
+// Keep these composables small: Android ART on older TVs rejects oversized
+// Compose-generated methods with incompatible register types (VerifyError).
 @Composable internal fun NativePanel(u:TvUnits,panel:String,payload:JSONObject?,track:JSONObject?,history:List<JSONObject>,loading:Boolean,error:Boolean,forecast:JSONObject?,lyrics:String?,cep:String,api:HouseMixClient,owner:String?,accent:Color,onClose:()->Unit,onCepSaved:(String,JSONObject)->Unit,onOpen:(Screen)->Unit,services:NativeServices,account:JSONObject?,onAccount:(JSONObject)->Unit,historyAd:JSONObject?=null,panelAd:JSONObject?=null,chatAds:List<JSONObject> = emptyList(),pinned:Boolean=false,onPin:()->Unit={},preview:Boolean=false) {
     val focus=remember(panel){FocusRequester()}
-    val scope=rememberCoroutineScope()
-    if(panel=="pair"){NativePairPanel(u,services,onClose,onAccount);return}
-    if(panel=="search"||panel=="cep") {
-        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.58f)),contentAlignment=Alignment.Center){
-            Column(Modifier.width(u.space(if(panel=="cep")580 else 760)).clip(u.round(26)).background(glass).padding(u.space(if(panel=="cep")32 else 20)),verticalArrangement=Arrangement.spacedBy(u.space(if(panel=="cep")20 else 12)),horizontalAlignment=if(panel=="cep")Alignment.CenterHorizontally else Alignment.Start){
-                if(panel=="search"){
-                    val context=LocalContext.current
-                    val prefs=remember{context.getSharedPreferences("native_tv_settings",0)}
-                    var query by remember{mutableStateOf("")}
-                    var recent by remember{mutableStateOf(runCatching{JSONArray(prefs.getString("recent_searches","[]")).let{a->(0 until a.length()).map{a.getString(it)}}}.getOrDefault(emptyList()))}
-                    val hits=remember(query,payload,history){if(query.isBlank())emptyList() else searchHits(payload,history).filter{norm(it.title+" "+it.sub).contains(norm(query.trim()))}.take(24)}
-                    Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(12))){
-                        Box(Modifier.weight(1f).height(u.space(60)).background(Color(0xFF303030),u.round(18)).padding(u.space(12)),contentAlignment=Alignment.CenterStart){Copy(query.ifBlank{"Buscar em tudo..."},u,23)}
-                        GlassButton(u,"",Modifier.size(u.space(50)),icon="left",onClick=onClose)
-                    }
-                    Column(verticalArrangement=Arrangement.spacedBy(u.space(5))){
-                        listOf("QWERTYUIOP","ASDFGHJKL","ZXCVBNM","1234567890").forEachIndexed{r,line->Row(horizontalArrangement=Arrangement.spacedBy(u.space(4))){line.forEachIndexed{c,ch->GlassButton(u,ch.toString(),Modifier.size(u.space(62),u.space(46)).then(if(r==0&&c==0)Modifier.focusRequester(focus)else Modifier)){query=(query+ch).take(120)}}}}
-                        Row(horizontalArrangement=Arrangement.spacedBy(u.space(8))){GlassButton(u,"Espaço",Modifier.height(u.space(48))){query=(query+" ").take(120)};GlassButton(u,"⌫",Modifier.height(u.space(48))){query=query.dropLast(1)};GlassButton(u,"Limpar",Modifier.height(u.space(48))){query=""}}
-                    }
-                    LazyColumn(Modifier.heightIn(max=u.space(300)).clip(u.round(18)).background(Color(0xFF303030)).padding(u.space(16)),verticalArrangement=Arrangement.spacedBy(u.space(8))){
-                        if(query.isBlank()){
-                            item{Copy("Últimas pesquisas",u,18)}
-                            items(recent){term->GlassButton(u,term,Modifier.fillMaxWidth().height(u.space(60))){query=term}}
-                            if(recent.isEmpty())item{Copy("Suas últimas pesquisas aparecem aqui.",u,19)}
-                        }else{
-                            items(hits){hit->
-                                Row(Modifier.fillMaxWidth().height(u.space(76)).clip(u.round(16)).background(Color(0xFF404040)).clickable{
-                                    val term=query.trim();recent=(listOf(term)+recent.filter{it!=term}).take(3);prefs.edit().putString("recent_searches",JSONArray(recent).toString()).apply()
-                                    onClose();onOpen(hit.destination)
-                                }.padding(u.space(10)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(16))){
-                                    Artwork(safeImage(hit.image),Modifier.size(u.space(56)).clip(u.round(8)),scale=ContentScale.Crop)
-                                    Column{Copy(hit.title,u,21,500);Copy(hit.kind+" · "+hit.sub,u,17)}
-                                }
-                            }
-                            if(hits.isEmpty())item{Copy(if(loading)"Carregando…" else "Nenhum conteúdo encontrado.",u,19)}
-                        }
-                    }
-                }else{
-                    var digits by remember{mutableStateOf(cep)}
-                    var msg by remember{mutableStateOf("")}
-                    var busy by remember{mutableStateOf(false)}
-                    var city by remember{mutableStateOf("")}
-                    LaunchedEffect(digits){city="";msg="";if(digits.length==8){delay(300);try{val a=getJson("https://viacep.com.br/ws/$digits/json/");if(!a.optBoolean("erro"))city=a.str("localidade")+" / "+a.str("uf")}catch(e:CancellationException){throw e}catch(_:Exception){}}}
-                    Box(Modifier.fillMaxWidth().height(u.space(64)),contentAlignment=Alignment.Center){Copy("Configurar tempo pelo CEP",u,27,600,Modifier.fillMaxWidth().padding(horizontal=u.space(50)),lines=2,align=TextAlign.Center);GlassButton(u,"",Modifier.align(Alignment.CenterEnd).size(u.space(44)),icon="left",onClick=onClose)}
-                    Copy("Informe seu CEP para buscar o tempo da sua região.",u,22,400,lines=2,align=TextAlign.Center)
-                    Box(Modifier.fillMaxWidth().height(u.space(92)).background(Color(0xFF303030),u.round(18)),contentAlignment=Alignment.Center){
-                        Copy(if(digits.isEmpty())"00000-000" else digits.take(5)+(if(digits.length>5)"-"+digits.drop(5)else ""),u,42,500)
-                    }
-                    Column(Modifier.align(Alignment.CenterHorizontally),verticalArrangement=Arrangement.spacedBy(u.space(6))){
-                        listOf(listOf("1","2","3"),listOf("4","5","6"),listOf("7","8","9"),listOf("Limpar","0","⌫")).forEachIndexed{r,keys->
-                            Row(horizontalArrangement=Arrangement.spacedBy(u.space(8))){
-                                keys.forEachIndexed{c,k->
-                                    GlassButton(u,k,Modifier.size(u.space(128),u.space(52)).then(if(cep.length!=8&&r==0&&c==0)Modifier.focusRequester(focus)else Modifier),enabled=!busy){
-                                        digits=when(k){"Limpar"->"";"⌫"->digits.dropLast(1);else->(digits+k).take(8)}
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    Copy(if(city.isNotBlank())"Tempo para: $city" else msg,u,20,400,lines=3,align=TextAlign.Center)
-                    GlassButton(u,if(busy)"localizando..." else "salvar CEP",Modifier.width(u.space(330)).height(u.space(66)).then(if(cep.length==8)Modifier.focusRequester(focus)else Modifier),enabled=!busy){
-                        if(digits.length!=8)msg="Digite um CEP válido com 8 números." else {busy=true;msg="";scope.launch{
-                            try{
-                                val a=getJson("https://viacep.com.br/ws/$digits/json/")
-                                check(!a.optBoolean("erro")&&a.str("localidade").isNotBlank()){"CEP não encontrado."}
-                                val state=a.str("estado").ifBlank{states[a.str("uf")].orEmpty()}
-                                val municipality=a.str("localidade")
-                                val candidates=api.geocode(municipality+", "+state+", Brasil").rows("results")
-                                val match=matchCepCity(candidates,municipality,state,a.str("uf"))
-                                    ?:matchCepCity(api.geocode(municipality).rows("results"),municipality,state,a.str("uf"))
-                                    ?:matchCepCity(getJson("https://geocoding-api.open-meteo.com/v1/search?name="+URLEncoder.encode(municipality,"UTF-8")+"&count=20&language=pt&format=json&countryCode=BR").rows("results"),municipality,state,a.str("uf"))
-                                check(match!=null){"Não foi possível confirmar a cidade e o estado."}
-                                onCepSaved(digits,JSONObject().put("lat",match.optDouble("latitude")).put("lon",match.optDouble("longitude")))
-                            }catch(e:CancellationException){throw e}catch(e:Exception){msg=e.message?:"Não foi possível salvar o CEP."}finally{busy=false}
-                        }}
-                    }
-                    if(msg.isNotBlank())Copy(msg,u,19,400,lines=3,align=TextAlign.Center)
-                    Spacer(Modifier.height(u.space(12)))
+    when(panel){
+        "pair" -> NativePairPanel(u,services,onClose,onAccount)
+        "search","cep" -> NativeSearchCepPanel(u,panel,payload,history,loading,cep,api,onClose,onCepSaved,onOpen,focus)
+        else -> NativeInteractionPanel(u,panel,track,history,loading,error,forecast,lyrics,owner,accent,onClose,services,account,historyAd,panelAd,chatAds,pinned,onPin,preview,focus)
+    }
+    LaunchedEffect(panel,loading,history.isNotEmpty(),forecast!=null){
+        if(panel!="pair"&&!preview&&!pinned&&panel!="chat"&&panel!="poll"&&panel!="battle")runCatching{focus.requestFocus()}
+    }
+}
+
+@Composable private fun NativeSearchCepPanel(u:TvUnits,panel:String,payload:JSONObject?,history:List<JSONObject>,loading:Boolean,cep:String,api:HouseMixClient,onClose:()->Unit,onCepSaved:(String,JSONObject)->Unit,onOpen:(Screen)->Unit,focus:FocusRequester){
+    Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.58f)),contentAlignment=Alignment.Center){
+        Column(Modifier.width(u.space(if(panel=="cep")580 else 760)).clip(u.round(26)).background(glass).padding(u.space(if(panel=="cep")32 else 20)),verticalArrangement=Arrangement.spacedBy(u.space(if(panel=="cep")20 else 12)),horizontalAlignment=if(panel=="cep")Alignment.CenterHorizontally else Alignment.Start){
+            if(panel=="search") NativeSearchContent(u,payload,history,loading,onClose,onOpen,focus)
+            else NativeCepContent(u,cep,api,onClose,onCepSaved,focus)
+        }
+    }
+}
+
+@Composable private fun ColumnScope.NativeSearchContent(u:TvUnits,payload:JSONObject?,history:List<JSONObject>,loading:Boolean,onClose:()->Unit,onOpen:(Screen)->Unit,focus:FocusRequester){
+    val context=LocalContext.current
+    val prefs=remember{context.getSharedPreferences("native_tv_settings",0)}
+    var query by remember{mutableStateOf("")}
+    var recent by remember{mutableStateOf(runCatching{JSONArray(prefs.getString("recent_searches","[]")).let{a->(0 until a.length()).map{a.getString(it)}}}.getOrDefault(emptyList()))}
+    val hits=remember(query,payload,history){if(query.isBlank())emptyList() else searchHits(payload,history).filter{norm(it.title+" "+it.sub).contains(norm(query.trim()))}.take(24)}
+    Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(12))){
+        Box(Modifier.weight(1f).height(u.space(60)).background(Color(0xFF303030),u.round(18)).padding(u.space(12)),contentAlignment=Alignment.CenterStart){Copy(query.ifBlank{"Buscar em tudo..."},u,23)}
+        GlassButton(u,"",Modifier.size(u.space(50)),icon="left",onClick=onClose)
+    }
+    Column(verticalArrangement=Arrangement.spacedBy(u.space(5))){
+        listOf("QWERTYUIOP","ASDFGHJKL","ZXCVBNM","1234567890").forEachIndexed{r,line->Row(horizontalArrangement=Arrangement.spacedBy(u.space(4))){line.forEachIndexed{c,ch->GlassButton(u,ch.toString(),Modifier.size(u.space(62),u.space(46)).then(if(r==0&&c==0)Modifier.focusRequester(focus)else Modifier)){query=(query+ch).take(120)}}}}
+        Row(horizontalArrangement=Arrangement.spacedBy(u.space(8))){GlassButton(u,"Espaço",Modifier.height(u.space(48))){query=(query+" ").take(120)};GlassButton(u,"⌫",Modifier.height(u.space(48))){query=query.dropLast(1)};GlassButton(u,"Limpar",Modifier.height(u.space(48))){query=""}}
+    }
+    LazyColumn(Modifier.heightIn(max=u.space(300)).clip(u.round(18)).background(Color(0xFF303030)).padding(u.space(16)),verticalArrangement=Arrangement.spacedBy(u.space(8))){
+        if(query.isBlank()){
+            item{Copy("Últimas pesquisas",u,18)}
+            items(recent){term->GlassButton(u,term,Modifier.fillMaxWidth().height(u.space(60))){query=term}}
+            if(recent.isEmpty())item{Copy("Suas últimas pesquisas aparecem aqui.",u,19)}
+        }else{
+            items(hits){hit->
+                Row(Modifier.fillMaxWidth().height(u.space(76)).clip(u.round(16)).background(Color(0xFF404040)).clickable{
+                    val term=query.trim();recent=(listOf(term)+recent.filter{it!=term}).take(3);prefs.edit().putString("recent_searches",JSONArray(recent).toString()).apply()
+                    onClose();onOpen(hit.destination)
+                }.padding(u.space(10)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(16))){
+                    Artwork(safeImage(hit.image),Modifier.size(u.space(56)).clip(u.round(8)),scale=ContentScale.Crop)
+                    Column{Copy(hit.title,u,21,500);Copy(hit.kind+" · "+hit.sub,u,17)}
                 }
             }
+            if(hits.isEmpty())item{Copy(if(loading)"Carregando…" else "Nenhum conteúdo encontrado.",u,19)}
         }
-    }else{
-        Box(u.at(1350,if(preview)145 else 150,470,620)){
-            Column(Modifier.fillMaxSize().clip(u.round(28)).background(interactionGlass).padding(u.space(20)),horizontalAlignment=Alignment.CenterHorizontally){
-                Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(8))){
-                    Column(Modifier.weight(1f)){
-                        Copy(when(panel){"lyrics"->track.str("titulo").ifBlank{"Letra da música"};"chat"->"Chat";"poll"->"Enquete";"battle"->"Batalha musical";"weather"->"Previsão do tempo";"history"->"Músicas tocadas";else->panel},u,23,500,lines=2)
-                        if(panel=="lyrics")Copy(track.str("artista"),u,18,300,lines=2)
-                    }
-                    if(!preview){
-                        GlassButton(u,if(pinned)"Desafixar" else "Fixar",Modifier.height(u.space(42)),onClick=onPin)
-                        GlassButton(u,"",Modifier.size(u.space(42)).then(if(panel=="poll"||panel=="battle"||(panel=="history"&&history.isEmpty())||(panel=="weather"&&forecast?.optJSONObject("daily")?.optJSONArray("time")==null))Modifier.focusRequester(focus)else Modifier),icon="left",onClick=onClose)
+    }
+}
+
+@Composable private fun ColumnScope.NativeCepContent(u:TvUnits,cep:String,api:HouseMixClient,onClose:()->Unit,onCepSaved:(String,JSONObject)->Unit,focus:FocusRequester){
+    val scope=rememberCoroutineScope()
+    var digits by remember{mutableStateOf(cep)}
+    var msg by remember{mutableStateOf("")}
+    var busy by remember{mutableStateOf(false)}
+    var city by remember{mutableStateOf("")}
+    LaunchedEffect(digits){city="";msg="";if(digits.length==8){delay(300);try{val a=getJson("https://viacep.com.br/ws/$digits/json/");if(!a.optBoolean("erro"))city=a.str("localidade")+" / "+a.str("uf")}catch(e:CancellationException){throw e}catch(_:Exception){}}}
+    Box(Modifier.fillMaxWidth().height(u.space(64)),contentAlignment=Alignment.Center){Copy("Configurar tempo pelo CEP",u,27,600,Modifier.fillMaxWidth().padding(horizontal=u.space(50)),lines=2,align=TextAlign.Center);GlassButton(u,"",Modifier.align(Alignment.CenterEnd).size(u.space(44)),icon="left",onClick=onClose)}
+    Copy("Informe seu CEP para buscar o tempo da sua região.",u,22,400,lines=2,align=TextAlign.Center)
+    Box(Modifier.fillMaxWidth().height(u.space(92)).background(Color(0xFF303030),u.round(18)),contentAlignment=Alignment.Center){
+        Copy(if(digits.isEmpty())"00000-000" else digits.take(5)+(if(digits.length>5)"-"+digits.drop(5)else ""),u,42,500)
+    }
+    Column(Modifier.align(Alignment.CenterHorizontally),verticalArrangement=Arrangement.spacedBy(u.space(6))){
+        listOf(listOf("1","2","3"),listOf("4","5","6"),listOf("7","8","9"),listOf("Limpar","0","⌫")).forEachIndexed{r,keys->
+            Row(horizontalArrangement=Arrangement.spacedBy(u.space(8))){
+                keys.forEachIndexed{c,k->
+                    GlassButton(u,k,Modifier.size(u.space(128),u.space(52)).then(if(cep.length!=8&&r==0&&c==0)Modifier.focusRequester(focus)else Modifier),enabled=!busy){
+                        digits=when(k){"Limpar"->"";"⌫"->digits.dropLast(1);else->(digits+k).take(8)}
                     }
                 }
-                Spacer(Modifier.height(u.space(14)))
-                Column(Modifier.weight(1f).fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally){when(panel){
-                    "history" -> {
-                        var index by remember{mutableIntStateOf(0)}
-                        var adStep by remember(historyAd.str("url")){mutableStateOf(false)}
-                        fun move(delta:Int){if(adStep){adStep=false;if(delta<0)return}else if(delta>0&&historyAd!=null&&(index+1)%5==0&&index<history.lastIndex){adStep=true;return};index=(index+delta).coerceIn(0,history.lastIndex.coerceAtLeast(0))}
-                        val song=history.getOrNull(index)
-                        val context=LocalContext.current
-                        var image by remember(song){mutableStateOf(cachedHistoryCover(song))}
-                        LaunchedEffect(song){if(song!=null&&image.isBlank())image=resolveHistoryCover(context,song,track)}
-                        if(song==null){Copy(if(loading)"Carregando músicas tocadas..." else if(error)"Histórico indisponível" else "Nenhuma música registrada.",u,23,400,lines=3)}
-                        else{
-                            Box(Modifier.fillMaxWidth().height(u.space(96)),contentAlignment=Alignment.Center){AnimatedContent(index to adStep,label="historyInfo"){state->val item=history.getOrNull(state.first);Column(Modifier.fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally){Copy(if(state.second)"publicidade" else item.str("horario").take(5),u,20,400,Modifier.fillMaxWidth(),align=TextAlign.Center);if(!state.second){Copy(item.str("musica").uppercase(),u,25,700,Modifier.fillMaxWidth(),lines=2,align=TextAlign.Center);Copy(item.str("artista").uppercase(),u,20,400,Modifier.fillMaxWidth(),lines=2,align=TextAlign.Center)}}}}
-                            Spacer(Modifier.weight(1f))
-                            GlassButton(u,"",Modifier.size(u.space(46)),icon="up"){move(-1)}
-                            Spacer(Modifier.height(u.space(14)))
-                            Box(Modifier.size(u.space(235)).clip(u.round(18)).background(Color.White.copy(alpha=.06f)),contentAlignment=Alignment.Center){
-                                if(adStep){Artwork(safeImage(historyAd.str("url")),Modifier.fillMaxSize(),scale=ContentScale.Fit)}else NativeLike(u,services,account,owner.orEmpty(),song.str("musica"),song.str("artista"),image,Modifier.fillMaxSize())
-                            }
-                            Spacer(Modifier.height(u.space(14)))
-                            GlassButton(u,"",Modifier.size(u.space(46)).focusRequester(focus),icon="down"){move(1)}
-                            Spacer(Modifier.weight(1f))
-                            Box(Modifier.fillMaxWidth().height(u.space(24))){Copy((index+1).toString()+"/"+history.size,u,19,500,Modifier.align(Alignment.BottomEnd))}
-                        }
-                    }
-                    "weather" -> {
-                        val d=forecast?.optJSONObject("daily");val dates=d?.optJSONArray("time")
-                        val temp=forecast?.optJSONObject("current")?.optDouble("temperature_2m")
-                        val current=forecast?.optJSONObject("current")
-                        val humid=current?.optDouble("relative_humidity_2m");val rain=d?.optJSONArray("precipitation_probability_max")?.optDouble(0)
-                        Column(Modifier.fillMaxWidth().padding(top=u.space(4),bottom=u.space(5)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(8))){
-                            Copy("Tempo agora",u,22,600)
-                            Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(18))){NativeWeatherIcon(current?.optInt("weather_code",-1)?:-1,Modifier.size(u.space(64)),isDay=current?.optInt("is_day",1)!=0);Copy(temp?.takeIf{it.isFinite()}?.let{it.toInt().toString()+"°"}?:"--°",u,52,600)}
-                            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(u.space(16))){
-                                Column(Modifier.weight(1f).background(Color.White.copy(alpha=.07f),u.round(12)).padding(vertical=u.space(10)),horizontalAlignment=Alignment.CenterHorizontally){Copy("Chuva",u,18,400);Copy(rain?.takeIf{it.isFinite()}?.toInt()?.toString()?.plus("%")?:"—",u,24,600)}
-                                Column(Modifier.weight(1f).background(Color.White.copy(alpha=.07f),u.round(12)).padding(vertical=u.space(10)),horizontalAlignment=Alignment.CenterHorizontally){Copy("Umidade",u,18,400);Copy(humid?.takeIf{it.isFinite()}?.toInt()?.toString()?.plus("%")?:"—",u,24,600)}
-                            }
-                        }
-                        if(dates==null){Copy("Previsão indisponível.",u,22)}
-                        else LazyColumn(Modifier.weight(1f).fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(u.space(6))){
-                            items(minOf(7,dates.length())){i->
-                                val code=d?.optJSONArray("weather_code")?.optInt(i)?:0
-                                val min=d?.optJSONArray("temperature_2m_min")?.optDouble(i);val max=d?.optJSONArray("temperature_2m_max")?.optDouble(i)
-                                var focused by remember{mutableStateOf(false)}
-                                val date=forecastDayLabel(dates.optString(i))
-                                val shape=u.round(15)
-                                Row((if(i==0&&!preview)Modifier.focusRequester(focus)else Modifier).fillMaxWidth().height(u.space(55)).onFocusChanged{focused=it.isFocused}.clip(shape).background(Color.White.copy(alpha=.08f)).border(u.space(if(focused)2.5f else 0f),if(focused)Color.White else Color.Transparent,shape).focusable(enabled=!preview).padding(horizontal=u.space(9)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(7))){
-                                    Row(Modifier.width(u.space(108)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(5))){NativeWeatherIcon(code,Modifier.size(u.space(36)));Copy(date.first,u,18,500)}
-                                    Box(Modifier.weight(1f),contentAlignment=Alignment.Center){Box(Modifier.background(Color.Black.copy(alpha=.28f),androidx.compose.foundation.shape.CircleShape).padding(horizontal=u.space(10),vertical=u.space(6))){Copy(date.second,u,16,300,align=TextAlign.Center)}}
-                                    Copy((min?.takeIf{it.isFinite()}?.toInt()?.toString()?:"--")+"° / "+(max?.takeIf{it.isFinite()}?.toInt()?.toString()?:"--")+"°",u,18,500,Modifier.width(u.space(100)),align=TextAlign.End)
-                                }
-                            }
-                        }
-                    }
-                    "lyrics" -> {
-                        // Track title and artist are displayed in the common header.
-                        Spacer(Modifier.height(u.space(13)))
-                        Box(Modifier.fillMaxWidth().height(u.space(1)).background(Color.White.copy(alpha=.28f)))
-                        Spacer(Modifier.height(u.space(14)))
-                        val scroll=rememberScrollState();val scope=rememberCoroutineScope();val distance=with(androidx.compose.ui.platform.LocalDensity.current){u.space(140).roundToPx()}
-                        LaunchedEffect(lyrics){scroll.scrollTo(0)}
-                        Column(Modifier.weight(1f).fillMaxWidth().focusRequester(focus).onPreviewKeyEvent{event->if(event.type==KeyEventType.KeyDown&&(event.key==Key.DirectionDown||event.key==Key.DirectionUp)){val delta=if(event.key==Key.DirectionDown)distance else -distance;scope.launch{scroll.animateScrollTo((scroll.value+delta).coerceIn(0,scroll.maxValue),tween(300))};true}else false}.focusable().verticalScroll(scroll)){Text(lyrics?:"Carregando letra...",style=u.referenceText(22),color=Color.White)}
-
-                    }
-                    else -> {
-                        if(owner!=null)NativeCommunity(u,panel,owner,services,account,chatAds,accent,focus) else Copy("Emissora indisponível.",u,23)
-                    }
-                }}
-                if(panel!="history"&&panel!="chat"&&safeImage(panelAd.str("url"))!=null){Spacer(Modifier.height(u.space(8)));NativeInteractionBanner(u,panelAd,interactive=!preview)}
             }
         }
     }
-    LaunchedEffect(panel,loading,history.isNotEmpty(),forecast!=null){if(!preview&&!pinned&&panel!="chat"&&panel!="poll"&&panel!="battle")runCatching{focus.requestFocus()}}
+    Copy(if(city.isNotBlank())"Tempo para: $city" else msg,u,20,400,lines=3,align=TextAlign.Center)
+    GlassButton(u,if(busy)"localizando..." else "salvar CEP",Modifier.width(u.space(330)).height(u.space(66)).then(if(cep.length==8)Modifier.focusRequester(focus)else Modifier),enabled=!busy){
+        if(digits.length!=8)msg="Digite um CEP válido com 8 números." else {busy=true;msg="";scope.launch{
+            try{
+                val a=getJson("https://viacep.com.br/ws/$digits/json/")
+                check(!a.optBoolean("erro")&&a.str("localidade").isNotBlank()){"CEP não encontrado."}
+                val state=a.str("estado").ifBlank{states[a.str("uf")].orEmpty()}
+                val municipality=a.str("localidade")
+                val candidates=api.geocode(municipality+", "+state+", Brasil").rows("results")
+                val match=matchCepCity(candidates,municipality,state,a.str("uf"))
+                    ?:matchCepCity(api.geocode(municipality).rows("results"),municipality,state,a.str("uf"))
+                    ?:matchCepCity(getJson("https://geocoding-api.open-meteo.com/v1/search?name="+URLEncoder.encode(municipality,"UTF-8")+"&count=20&language=pt&format=json&countryCode=BR").rows("results"),municipality,state,a.str("uf"))
+                check(match!=null){"Não foi possível confirmar a cidade e o estado."}
+                onCepSaved(digits,JSONObject().put("lat",match.optDouble("latitude")).put("lon",match.optDouble("longitude")))
+            }catch(e:CancellationException){throw e}catch(e:Exception){msg=e.message?:"Não foi possível salvar o CEP."}finally{busy=false}
+        }}
+    }
+    if(msg.isNotBlank())Copy(msg,u,19,400,lines=3,align=TextAlign.Center)
+    Spacer(Modifier.height(u.space(12)))
 }
 
+@Composable private fun NativeInteractionPanel(u:TvUnits,panel:String,track:JSONObject?,history:List<JSONObject>,loading:Boolean,error:Boolean,forecast:JSONObject?,lyrics:String?,owner:String?,accent:Color,onClose:()->Unit,services:NativeServices,account:JSONObject?,historyAd:JSONObject?,panelAd:JSONObject?,chatAds:List<JSONObject>,pinned:Boolean,onPin:()->Unit,preview:Boolean,focus:FocusRequester){
+    Box(u.at(1350,if(preview)145 else 150,470,620)){
+        Column(Modifier.fillMaxSize().clip(u.round(28)).background(interactionGlass).padding(u.space(20)),horizontalAlignment=Alignment.CenterHorizontally){
+            NativeInteractionHeader(u,panel,track,history.isEmpty(),forecast?.optJSONObject("daily")?.optJSONArray("time")==null,pinned,onPin,preview,focus,onClose)
+            Column(Modifier.weight(1f).fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally){
+                when(panel){
+                    "history" -> NativeHistoryContent(u,history,track,loading,error,historyAd,services,account,owner,focus)
+                    "weather" -> NativeWeatherContent(u,forecast,preview,focus)
+                    "lyrics" -> NativeLyricsContent(u,lyrics,focus)
+                    else -> if(owner!=null)NativeCommunity(u,panel,owner,services,account,chatAds,accent,focus) else Copy("Emissora indisponível.",u,23)
+                }
+            }
+            if(panel!="history"&&panel!="chat"&&safeImage(panelAd.str("url"))!=null){Spacer(Modifier.height(u.space(8)));NativeInteractionBanner(u,panelAd,interactive=!preview)}
+        }
+    }
+}
 
+@Composable private fun NativeInteractionHeader(u:TvUnits,panel:String,track:JSONObject?,historyEmpty:Boolean,forecastEmpty:Boolean,pinned:Boolean,onPin:()->Unit,preview:Boolean,focus:FocusRequester,onClose:()->Unit){
+    Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(8))){
+        Column(Modifier.weight(1f)){
+            Copy(when(panel){"lyrics"->track.str("titulo").ifBlank{"Letra da música"};"chat"->"Chat";"poll"->"Enquete";"battle"->"Batalha musical";"weather"->"Previsão do tempo";"history"->"Músicas tocadas";else->panel},u,23,500,lines=2)
+            if(panel=="lyrics")Copy(track.str("artista"),u,18,300,lines=2)
+        }
+        if(!preview){
+            GlassButton(u,if(pinned)"Desafixar" else "Fixar",Modifier.height(u.space(42)),onClick=onPin)
+            GlassButton(u,"",Modifier.size(u.space(42)).then(if(panel=="poll"||panel=="battle"||(panel=="history"&&historyEmpty)||(panel=="weather"&&forecastEmpty))Modifier.focusRequester(focus)else Modifier),icon="left",onClick=onClose)
+        }
+    }
+    Spacer(Modifier.height(u.space(14)))
+}
+
+@Composable private fun ColumnScope.NativeHistoryContent(u:TvUnits,history:List<JSONObject>,track:JSONObject?,loading:Boolean,error:Boolean,historyAd:JSONObject?,services:NativeServices,account:JSONObject?,owner:String?,focus:FocusRequester){
+    var index by remember{mutableIntStateOf(0)}
+    var adStep by remember(historyAd.str("url")){mutableStateOf(false)}
+    fun move(delta:Int){if(adStep){adStep=false;if(delta<0)return}else if(delta>0&&historyAd!=null&&(index+1)%5==0&&index<history.lastIndex){adStep=true;return};index=(index+delta).coerceIn(0,history.lastIndex.coerceAtLeast(0))}
+    val song=history.getOrNull(index)
+    val context=LocalContext.current
+    var image by remember(song){mutableStateOf(cachedHistoryCover(song))}
+    LaunchedEffect(song){if(song!=null&&image.isBlank())image=resolveHistoryCover(context,song,track)}
+    if(song==null){Copy(if(loading)"Carregando músicas tocadas..." else if(error)"Histórico indisponível" else "Nenhuma música registrada.",u,23,400,lines=3)}
+    else{
+        Box(Modifier.fillMaxWidth().height(u.space(96)),contentAlignment=Alignment.Center){AnimatedContent(index to adStep,label="historyInfo"){state->val item=history.getOrNull(state.first);Column(Modifier.fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally){Copy(if(state.second)"publicidade" else item.str("horario").take(5),u,20,400,Modifier.fillMaxWidth(),align=TextAlign.Center);if(!state.second){Copy(item.str("musica").uppercase(),u,25,700,Modifier.fillMaxWidth(),lines=2,align=TextAlign.Center);Copy(item.str("artista").uppercase(),u,20,400,Modifier.fillMaxWidth(),lines=2,align=TextAlign.Center)}}}}
+        Spacer(Modifier.weight(1f))
+        GlassButton(u,"",Modifier.size(u.space(46)),icon="up"){move(-1)}
+        Spacer(Modifier.height(u.space(14)))
+        Box(Modifier.size(u.space(235)).clip(u.round(18)).background(Color.White.copy(alpha=.06f)),contentAlignment=Alignment.Center){
+            if(adStep){Artwork(safeImage(historyAd.str("url")),Modifier.fillMaxSize(),scale=ContentScale.Fit)}else NativeLike(u,services,account,owner.orEmpty(),song.str("musica"),song.str("artista"),image,Modifier.fillMaxSize())
+        }
+        Spacer(Modifier.height(u.space(14)))
+        GlassButton(u,"",Modifier.size(u.space(46)).focusRequester(focus),icon="down"){move(1)}
+        Spacer(Modifier.weight(1f))
+        Box(Modifier.fillMaxWidth().height(u.space(24))){Copy((index+1).toString()+"/"+history.size,u,19,500,Modifier.align(Alignment.BottomEnd))}
+    }
+}
+
+@Composable private fun ColumnScope.NativeWeatherContent(u:TvUnits,forecast:JSONObject?,preview:Boolean,focus:FocusRequester){
+    val d=forecast?.optJSONObject("daily");val dates=d?.optJSONArray("time")
+    val temp=forecast?.optJSONObject("current")?.optDouble("temperature_2m")
+    val current=forecast?.optJSONObject("current")
+    val humid=current?.optDouble("relative_humidity_2m");val rain=d?.optJSONArray("precipitation_probability_max")?.optDouble(0)
+    Column(Modifier.fillMaxWidth().padding(top=u.space(4),bottom=u.space(5)),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(u.space(8))){
+        Copy("Tempo agora",u,22,600)
+        Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(18))){NativeWeatherIcon(current?.optInt("weather_code",-1)?:-1,Modifier.size(u.space(64)),isDay=current?.optInt("is_day",1)!=0);Copy(temp?.takeIf{it.isFinite()}?.let{it.toInt().toString()+"°"}?:"--°",u,52,600)}
+        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(u.space(16))){
+            Column(Modifier.weight(1f).background(Color.White.copy(alpha=.07f),u.round(12)).padding(vertical=u.space(10)),horizontalAlignment=Alignment.CenterHorizontally){Copy("Chuva",u,18,400);Copy(rain?.takeIf{it.isFinite()}?.toInt()?.toString()?.plus("%")?:"—",u,24,600)}
+            Column(Modifier.weight(1f).background(Color.White.copy(alpha=.07f),u.round(12)).padding(vertical=u.space(10)),horizontalAlignment=Alignment.CenterHorizontally){Copy("Umidade",u,18,400);Copy(humid?.takeIf{it.isFinite()}?.toInt()?.toString()?.plus("%")?:"—",u,24,600)}
+        }
+    }
+    if(dates==null){Copy("Previsão indisponível.",u,22)}
+    else LazyColumn(Modifier.weight(1f).fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(u.space(6))){
+        items(minOf(7,dates.length())){i->
+            val code=d?.optJSONArray("weather_code")?.optInt(i)?:0
+            val min=d?.optJSONArray("temperature_2m_min")?.optDouble(i);val max=d?.optJSONArray("temperature_2m_max")?.optDouble(i)
+            var focused by remember{mutableStateOf(false)}
+            val date=forecastDayLabel(dates.optString(i))
+            val shape=u.round(15)
+            Row((if(i==0&&!preview)Modifier.focusRequester(focus)else Modifier).fillMaxWidth().height(u.space(55)).onFocusChanged{focused=it.isFocused}.clip(shape).background(Color.White.copy(alpha=.08f)).border(u.space(if(focused)2.5f else 0f),if(focused)Color.White else Color.Transparent,shape).focusable(enabled=!preview).padding(horizontal=u.space(9)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(7))){
+                Row(Modifier.width(u.space(108)),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(u.space(5))){NativeWeatherIcon(code,Modifier.size(u.space(36)));Copy(date.first,u,18,500)}
+                Box(Modifier.weight(1f),contentAlignment=Alignment.Center){Box(Modifier.background(Color.Black.copy(alpha=.28f),androidx.compose.foundation.shape.CircleShape).padding(horizontal=u.space(10),vertical=u.space(6))){Copy(date.second,u,16,300,align=TextAlign.Center)}}
+                Copy((min?.takeIf{it.isFinite()}?.toInt()?.toString()?:"--")+"° / "+(max?.takeIf{it.isFinite()}?.toInt()?.toString()?:"--")+"°",u,18,500,Modifier.width(u.space(100)),align=TextAlign.End)
+            }
+        }
+    }
+}
+
+@Composable private fun ColumnScope.NativeLyricsContent(u:TvUnits,lyrics:String?,focus:FocusRequester){
+    // Track title and artist are displayed in the common header.
+    Spacer(Modifier.height(u.space(13)))
+    Box(Modifier.fillMaxWidth().height(u.space(1)).background(Color.White.copy(alpha=.28f)))
+    Spacer(Modifier.height(u.space(14)))
+    val scroll=rememberScrollState();val scope=rememberCoroutineScope();val distance=with(androidx.compose.ui.platform.LocalDensity.current){u.space(140).roundToPx()}
+    LaunchedEffect(lyrics){scroll.scrollTo(0)}
+    Column(Modifier.weight(1f).fillMaxWidth().focusRequester(focus).onPreviewKeyEvent{event->if(event.type==KeyEventType.KeyDown&&(event.key==Key.DirectionDown||event.key==Key.DirectionUp)){val delta=if(event.key==Key.DirectionDown)distance else -distance;scope.launch{scroll.animateScrollTo((scroll.value+delta).coerceIn(0,scroll.maxValue),tween(300))};true}else false}.focusable().verticalScroll(scroll)){Text(lyrics?:"Carregando letra...",style=u.referenceText(22),color=Color.White)}
+}
 
 @Composable internal fun NativeSyncPanel(u:TvUnits,status:SyncStatus,manual:Long?,onSave:(Long?)->Unit,onCalibrate:()->Unit,canCalibrate:Boolean,onClose:()->Unit){
     val focus=remember{FocusRequester()}
